@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DD8CA4E3-F1B7-4293-BC0A-246CDDFA9F2B}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Teecsharp</RootNamespace>
+    <AssemblyName>teecsharp_srv</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Teeworlds_srv.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>Teecsharp.CServer</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="zlib.net">
+      <HintPath>src\libs\zlib.net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\base\constants.cs" />
+    <Compile Include="src\base\math.cs" />
+    <Compile Include="src\base\system.cs" />
+    <Compile Include="src\base\vmath.cs" />
+    <Compile Include="src\engine\abstract\iconfig.cs" />
+    <Compile Include="src\engine\abstract\iconsole.cs" />
+    <Compile Include="src\engine\abstract\iengine.cs" />
+    <Compile Include="src\engine\abstract\iinterface.cs" />
+    <Compile Include="src\engine\abstract\ikernel.cs" />
+    <Compile Include="src\engine\abstract\imap.cs" />
+    <Compile Include="src\engine\abstract\iserver.cs" />
+    <Compile Include="src\engine\abstract\istorage.cs" />
+    <Compile Include="src\engine\server\client.cs" />
+    <Compile Include="src\engine\server\register.cs" />
+    <Compile Include="src\engine\server\server.cs" />
+    <Compile Include="src\engine\server\server_data.cs" />
+    <Compile Include="src\engine\server\snapidpool.cs" />
+    <Compile Include="src\engine\shared\aes.cs" />
+    <Compile Include="src\engine\shared\compression.cs" />
+    <Compile Include="src\engine\shared\config.cs" />
+    <Compile Include="src\engine\shared\config_variables.cs" />
+    <Compile Include="src\engine\shared\console.cs" />
+    <Compile Include="src\engine\shared\datafile.cs" />
+    <Compile Include="src\engine\shared\engine.cs" />
+    <Compile Include="src\engine\shared\huffman.cs" />
+    <Compile Include="src\engine\shared\jobs.cs" />
+    <Compile Include="src\engine\shared\kernel.cs" />
+    <Compile Include="src\engine\shared\map.cs" />
+    <Compile Include="src\engine\shared\message.cs" />
+    <Compile Include="src\engine\shared\netban.cs" />
+    <Compile Include="src\engine\shared\network.cs" />
+    <Compile Include="src\engine\shared\network_conn.cs" />
+    <Compile Include="src\engine\shared\network_server.cs" />
+    <Compile Include="src\engine\shared\new_console.cs" />
+    <Compile Include="src\engine\shared\packer.cs" />
+    <Compile Include="src\engine\shared\protocol.cs" />
+    <Compile Include="src\engine\shared\snapshot.cs" />
+    <Compile Include="src\engine\shared\storage.cs" />
+    <Compile Include="src\game\collision.cs" />
+    <Compile Include="src\game\gamecore.cs" />
+    <Compile Include="src\game\layers.cs" />
+    <Compile Include="src\game\mapitems.cs" />
+    <Compile Include="src\game\server\chatcontroller.cs" />
+    <Compile Include="src\game\server\entities\character.cs" />
+    <Compile Include="src\game\server\entities\flag.cs" />
+    <Compile Include="src\game\server\entities\laser.cs" />
+    <Compile Include="src\game\server\entities\pickup.cs" />
+    <Compile Include="src\game\server\entities\projectile.cs" />
+    <Compile Include="src\game\server\entity.cs" />
+    <Compile Include="src\game\server\eventhandler.cs" />
+    <Compile Include="src\game\server\gamecontext.cs" />
+    <Compile Include="src\game\server\gamecontroller.cs" />
+    <Compile Include="src\game\server\gamemodes\ctf.cs" />
+    <Compile Include="src\game\server\gamemodes\dm.cs" />
+    <Compile Include="src\game\server\gamemodes\mod.cs" />
+    <Compile Include="src\game\server\gamemodes\tdm.cs" />
+    <Compile Include="src\game\server\gameworld.cs" />
+    <Compile Include="src\game\server\localization.cs" />
+    <Compile Include="src\game\server\player.cs" />
+    <Compile Include="src\game\tuning.cs" />
+    <Compile Include="src\game\variables.cs" />
+    <Compile Include="src\game\version.cs" />
+    <Compile Include="src\game\voting.cs" />
+    <Compile Include="src\mastersrv\mastersrv.cs" />
+    <Compile Include="src\other\crc32.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="autoexec.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="maps\dm1.map">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="storage.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="langs\ru.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Teeworlds_srv.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5.1 %28x86 и x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties langs_4ru_1json__JSONSchema="http://json.schemastore.org/babelrc" />
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
