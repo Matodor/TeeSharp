@@ -1,5 +1,0 @@
-C:\TeeworldsDev\TeeSharp\TeeSharp\bin\Debug\TeeSharp.dll
-C:\TeeworldsDev\TeeSharp\TeeSharp\bin\Debug\TeeSharp.pdb
-C:\TeeworldsDev\TeeSharp\TeeSharp\obj\Debug\TeeSharp.csprojResolveAssemblyReference.cache
-C:\TeeworldsDev\TeeSharp\TeeSharp\obj\Debug\TeeSharp.dll
-C:\TeeworldsDev\TeeSharp\TeeSharp\obj\Debug\TeeSharp.pdb
