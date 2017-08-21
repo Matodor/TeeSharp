@@ -8,15 +8,17 @@ namespace TeeSharp
 {
     public class ConsoleCommand
     {
+        public event ConsoleCallback Callback;
+
         public readonly string Command;
         public readonly string FormatArguments;
-        public readonly Configuration.ConfigFlags Flags;
-        public readonly ConsoleCallback Callback;
+        public readonly ConfigFlags Flags;
         public readonly string Description;
-        public readonly AccessLevel AccessLevel;
+        public readonly ConsoleAccessLevel AccessLevel;
+        public readonly object Data;
 
-        public ConsoleCommand(string command, string formatArguments, Configuration.ConfigFlags flags,
-            ConsoleCallback callback, string description, AccessLevel accessLevel)
+        public ConsoleCommand(string command, string formatArguments, ConfigFlags flags,
+            ConsoleCallback callback, object data, string description, ConsoleAccessLevel accessLevel)
         {
             Command = command;
             FormatArguments = formatArguments;
@@ -24,6 +26,7 @@ namespace TeeSharp
             Callback = callback;
             Description = description;
             AccessLevel = accessLevel;
+            Data = data;
         }
     }
 }

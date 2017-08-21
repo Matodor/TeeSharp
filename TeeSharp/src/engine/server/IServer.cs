@@ -8,8 +8,12 @@ namespace TeeSharp.Server
 {
     public interface IServer
     {
+        ulong Tick { get; }
+
         void Run();
         void Init(string[] args);
+
+        Client GetClient(int clientId);
 
         void RegisterCommands();
         bool LoadMap(string mapName);

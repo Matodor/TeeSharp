@@ -18,12 +18,12 @@ namespace TeeSharp
             _getInstancesByType = new Dictionary<Type, Func<object>>();
         }
 
-        private static Func<object> CreateInstanceActivator(Type type)
+        private static Func<object> CreateInstanceActivator(Type bind, Type to)
         {
-            if (_getInstancesByType.ContainsKey(type))
+            if (_getInstancesByType.ContainsKey(bind))
                 return null;
 
-            var constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null,
+            var constructor = to.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null,
                 new Type[] {}, null);
 
             if (constructor == null)
@@ -31,7 +31,7 @@ namespace TeeSharp
 
             var e = Expression.New(constructor);
             var f = Expression.Lambda<Func<object>>(e).Compile();
-            _getInstancesByType.Add(type, f);
+            _getInstancesByType.Add(bind, f);
 
             return f;
         }
@@ -77,7 +77,7 @@ namespace TeeSharp
             if (_bindedTypes.ContainsKey(bind))
                 throw new Exception($"Type '{bind.Name}' already binded");
 
-            CreateInstanceActivator(to);
+            CreateInstanceActivator(bind, to);
             _bindedTypes.Add(bind, to);
         }
 

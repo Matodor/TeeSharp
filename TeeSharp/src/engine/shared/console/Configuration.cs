@@ -8,7 +8,7 @@ namespace TeeSharp
     {
         public string Name;
         public string ConsoleCommand;
-        public Configuration.ConfigFlags Flags;
+        public ConfigFlags Flags;
         public string Description;
     }
 
@@ -19,7 +19,7 @@ namespace TeeSharp
         public int Max;
 
         public ConfigInt(string name, string consoleCommand, int def, int min, int max, 
-            Configuration.ConfigFlags flags, string desc)
+            ConfigFlags flags, string desc)
         {
             Name = name;
             ConsoleCommand = consoleCommand;
@@ -37,7 +37,7 @@ namespace TeeSharp
         public string Default;
 
         public ConfigStr(string name, string consoleCommand, int maxLength, string def, 
-            Configuration.ConfigFlags flags, string desc)
+            ConfigFlags flags, string desc)
         {
             Name = name;
             ConsoleCommand = consoleCommand;
@@ -48,19 +48,19 @@ namespace TeeSharp
         }
     }
 
+    [Flags]
+    public enum ConfigFlags
+    {
+        SAVE = 1 << 0,
+        CLIENT = 1 << 1,
+        SERVER = 1 << 2,
+        STORE = 1 << 3,
+        MASTER = 1 << 4,
+        ECON = 1 << 5,
+    }
+
     public partial class Configuration
     {
-        [Flags]
-        public enum ConfigFlags
-        {
-            SAVE = 1 << 0,
-            CLIENT = 1 << 1,
-            SERVER = 1 << 2,
-            STORE = 1 << 3,
-            MASTER = 1 << 4,
-            ECON = 1 << 5,
-        }
-
         public IReadOnlyList<KeyValuePair<string, object>> Variables => _variablesDictionary.ToList().AsReadOnly();
 
         private readonly Dictionary<string, object> _variablesDictionary = new Dictionary<string, object>();

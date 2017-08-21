@@ -8,5 +8,16 @@ namespace TeeSharp
 {
     public class ConsoleResult
     {
+        public int NumArguments { get; }
+
+        public int GetInteger(int index)
+        {
+            return 0;
+        }
+
+        public string GetString(int index)
+        {
+            return "";
+        }
     }
 }

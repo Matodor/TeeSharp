@@ -8,7 +8,14 @@ namespace TeeSharp
 {
     public delegate void ConsoleCallback(ConsoleResult result, object data);
 
-    public enum AccessLevel
+    public enum ConsoleOutputLevel
+    {
+        STANDARD = 0,
+        ADDINFO = 1,
+        DEBUG = 2,
+    }
+
+    public enum ConsoleAccessLevel
     {
         ADMIN,
         MODERATOR,
@@ -21,8 +28,12 @@ namespace TeeSharp
         void ExecuteFile(string path);
         void ParseArguments(string[] args);
 
+        void Print(ConsoleOutputLevel level, string from, string str);
+        void OnExecuteCommand(string command, ConsoleCallback callback);
         void RegisterCommand(string command, string formatArguments, 
-            Configuration.ConfigFlags configFlags, ConsoleCallback callback, object data, 
-            string description, AccessLevel accessLevel);
+            ConfigFlags configFlags, ConsoleCallback callback, object data, 
+            string description, ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN);
+
+        ConsoleCommand GetCommand(string command);
     }
 }
