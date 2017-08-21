@@ -8,13 +8,16 @@ namespace TeeSharp.Server
 {
     public class GameContext : IGameContext
     {
-        protected GameContext()
+        private readonly Player[] _players;
+
+        public GameContext()
         {
+            _players = new Player[Consts.MAX_CLIENTS];
         }
 
-        public static GameContext Create()
+        public Player GetPlayer(int clientId)
         {
-            return new GameContext();
+            return _players[clientId];
         }
     }
 }

@@ -6,63 +6,72 @@ using System.Threading.Tasks;
 
 namespace TeeSharp.Server
 {
-    public class Server : ISingleton
+    public class Server : IServer
     {
         public bool IsRunning;
 
+        protected IGameConsole _gameConsole;
         protected IGameContext _gameContext;
         protected IEngineMap _map;
         protected IStorage _storage;
         protected INetworkServer _networkServer;
         protected Configuration _config;
 
-        protected Server()
+        protected readonly Client[] _clients;
+
+        protected ulong _currentGameTick;
+
+        public Server()
+        {
+            _currentGameTick = 0;
+            _clients = new Client[Consts.MAX_CLIENTS];
+
+            for (var i = 0; i < _clients.Length; i++)
+            {
+                _clients[i] = new Client()
+                {
+                    
+                };
+            }
+        }
+
+        public virtual bool LoadMap(string mapName)
+        {
+            return true;
+        }
+
+        public virtual void RegisterCommands()
         {
         }
 
-        protected virtual void Init(Kernel kernel)
+        public virtual void Init(string[] args)
         {
-            kernel.RegisterSingleton<Server>(this);
-
-            var gameContext = kernel.RequestSingleton<IGameContext>() ??
-                kernel.RegisterSingleton<IGameContext>(GameContext.Create());
-            var mapEngine = kernel.RequestSingleton<IEngineMap>() ??
-                kernel.RegisterSingleton<IEngineMap>(Map.Create());
-            var storage = kernel.RequestSingleton<IStorage>() ??
-                kernel.RegisterSingleton<IStorage>(Storage.Create("Teeworlds", IStorage.StorageType.SERVER));
-            var networkServer = kernel.RequestSingleton<INetworkServer>() ??
-                kernel.RegisterSingleton<INetworkServer>(NetworkServer.Create());
-            var configuration = kernel.RequestSingleton<Configuration>() ??
-                kernel.RegisterSingleton<Configuration>(Configuration.Create());
+            _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext>(new GameContext());
+            _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap>(new Map());
+            _storage = Kernel.Get<IStorage>()             ?? Kernel.BindGet<IStorage>(new Storage());
+            _networkServer = Kernel.Get<INetworkServer>() ?? Kernel.BindGet<INetworkServer>(new NetworkServer());
+            _config = Kernel.Get<Configuration>()         ?? Kernel.BindGet<Configuration>(new Configuration());
+            _gameConsole = Kernel.Get<IGameConsole>()     ?? Kernel.BindGet<IGameConsole>(new GameConsole());
 
             var registerFail = false;
-            registerFail = registerFail || gameContext == null;
-            registerFail = registerFail || mapEngine == null;
-            registerFail = registerFail || storage == null;
-            registerFail = registerFail || networkServer == null;
-            registerFail = registerFail || configuration == null;
+            registerFail = registerFail || _gameContext == null;
+            registerFail = registerFail || _map == null;
+            registerFail = registerFail || _storage == null;
+            registerFail = registerFail || _networkServer == null;
+            registerFail = registerFail || _config == null;
+            registerFail = registerFail || _gameConsole == null;
 
             if (registerFail)
                 throw new Exception("Register components fail");
-        }
 
-        public static Server Create(Kernel kernel = null)
-        {
-            var server = new Server();
-            server.Init(kernel ?? Kernel.Create());
-            return server;
-        }
+            _gameConsole.Init();
 
-        public static T Create<T>(Kernel kernel = null) where T : Server, new()
-        {
-            var server = new T();
-            server.Init(kernel ?? Kernel.Create());
-            return server;
-        }
+            // register all console commands
+            RegisterCommands();
 
-        protected virtual bool LoadMap(string mapName)
-        {
-            return true;
+            // execute autoexec file
+            _gameConsole.ExecuteFile("autoexec.cfg");
+            _gameConsole.ParseArguments(args);
         }
 
         public virtual void Run()
@@ -70,16 +79,10 @@ namespace TeeSharp.Server
             if (IsRunning)
                 return;
 
-            System.DbgMessage("server", "starting...");
+            System.DbgMessage("server", "starting...", ConsoleColor.Red);
 #if DEBUG
             System.DbgMessage("server", "running on debug version", ConsoleColor.Red);
 #endif
-
-            _gameContext   = Kernel.RequestSingleton<IGameContext>();
-            _map           = Kernel.RequestSingleton<IEngineMap>();
-            _storage       = Kernel.RequestSingleton<IStorage>();
-            _networkServer = Kernel.RequestSingleton<INetworkServer>();
-            _config        = Kernel.RequestSingleton<Configuration>();
 
             if (!LoadMap(_config.GetString("SvMap")))
             {

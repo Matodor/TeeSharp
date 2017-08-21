@@ -45,8 +45,14 @@
     <Compile Include="src\base\Extensions.cs" />
     <Compile Include="src\base\Math.cs" />
     <Compile Include="src\base\System.cs" />
+    <Compile Include="src\engine\server\Client.cs" />
+    <Compile Include="src\engine\server\IServer.cs" />
     <Compile Include="src\engine\server\Server.cs" />
-    <Compile Include="src\engine\shared\Configuration.cs" />
+    <Compile Include="src\engine\shared\console\Configuration.cs" />
+    <Compile Include="src\engine\shared\console\ConsoleCommand.cs" />
+    <Compile Include="src\engine\shared\console\ConsoleResult.cs" />
+    <Compile Include="src\engine\shared\console\GameConsole.cs" />
+    <Compile Include="src\engine\shared\console\IGameConsole.cs" />
     <Compile Include="src\engine\shared\IMap.cs" />
     <Compile Include="src\engine\shared\INetworkServer.cs" />
     <Compile Include="src\engine\shared\IntCompression.cs" />

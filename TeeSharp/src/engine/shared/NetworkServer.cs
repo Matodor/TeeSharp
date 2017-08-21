@@ -8,14 +8,9 @@ namespace TeeSharp
 {
     public class NetworkServer : INetworkServer
     {
-        protected NetworkServer()
+        public NetworkServer()
         {
             
-        }
-
-        public static NetworkServer Create()
-        {
-            return new NetworkServer();
         }
     }
 }

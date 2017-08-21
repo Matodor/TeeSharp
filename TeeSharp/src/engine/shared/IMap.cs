@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace TeeSharp
 {
-    public abstract class IMap : ISingleton
+    public interface IMap
     {
         
     }
 
 
-    public abstract class IEngineMap : IMap
+    public interface IEngineMap : IMap
     {
         
     }

@@ -8,14 +8,14 @@ namespace TeeSharp
 {
     public class Storage : IStorage
     {
-        protected Storage(string applicationName, StorageType storageType)
+        public Storage()
         {
             
         }
 
-        public static Storage Create(string applicationName, StorageType storageType)
+        public void Init(string applicationName, StorageType storageType)
         {
-            return new Storage(applicationName, storageType);
+            
         }
     }
 }

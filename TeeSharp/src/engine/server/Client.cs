@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TeeSharp
+namespace TeeSharp.Server
 {
-    public class Map : IEngineMap
+    public class Client
     {
-        public Map()
-        {
-            
-        }
     }
 }

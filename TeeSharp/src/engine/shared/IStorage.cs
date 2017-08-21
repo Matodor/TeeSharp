@@ -6,17 +6,14 @@ using System.Threading.Tasks;
 
 namespace TeeSharp
 {
-    public class IStorage : ISingleton
+    public enum StorageType
     {
-        public enum StorageType
-        {
-            BASIC = 0,
-            SERVER = 1,
-            CLIENT = 2
-        }
+        BASIC = 0,
+        SERVER = 1,
+        CLIENT = 2
+    }
 
-        public const int
-            TYPE_SAVE = 0,
-            TYPE_ALL = -1;
+    public interface IStorage
+    {
     }
 }

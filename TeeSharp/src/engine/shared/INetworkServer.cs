@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TeeSharp
 {
-    public class INetworkServer : ISingleton
+    public interface INetworkServer
     {
     }
 }

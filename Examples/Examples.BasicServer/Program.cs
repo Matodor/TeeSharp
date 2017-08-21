@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TeeSharp;
 using TeeSharp.Server;
 
@@ -12,8 +8,12 @@ namespace Examples.BasicServer
     {
         static void Main(string[] args)
         {
-            var server = Server.Create();
+            Kernel.Bind<IServer, Server>();
+
+            var server = Kernel.Get<IServer>();
+            server.Init(args);
             server.Run();
+
             Console.ReadLine();
         }
     }
