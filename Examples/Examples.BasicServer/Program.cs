@@ -8,13 +8,10 @@ namespace Examples.BasicServer
     {
         static void Main(string[] args)
         {
-            Kernel.Bind<IServer, Server>();
-
-            var server = Kernel.Get<IServer>();
+            // register server singleton
+            var server = Kernel.BindGet<IServer, Server>(new Server());
             server.Init(args);
             server.Run();
-
-            Console.ReadLine();
         }
     }
 }

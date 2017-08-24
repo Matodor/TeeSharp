@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace TeeSharp.Server
 {
@@ -128,12 +124,12 @@ namespace TeeSharp.Server
 
         public virtual void Init(string[] args)
         {
-            _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext>(new GameContext());
-            _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap>(new Map());
-            _storage = Kernel.Get<IStorage>()             ?? Kernel.BindGet<IStorage>(new Storage());
-            _networkServer = Kernel.Get<INetworkServer>() ?? Kernel.BindGet<INetworkServer>(new NetworkServer());
-            _config = Kernel.Get<Configuration>()         ?? Kernel.BindGet<Configuration>(new Configuration());
-            _gameConsole = Kernel.Get<IGameConsole>()     ?? Kernel.BindGet<IGameConsole>(new GameConsole());
+            _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext, GameContext>(new GameContext());
+            _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap, Map>(new Map());
+            _storage = Kernel.Get<IStorage>()             ?? Kernel.BindGet<IStorage, Storage>(new Storage());
+            _networkServer = Kernel.Get<INetworkServer>() ?? Kernel.BindGet<INetworkServer, NetworkServer>(new NetworkServer());
+            _config = Kernel.Get<Configuration>()         ?? Kernel.BindGet<Configuration, Configuration>(new Configuration());
+            _gameConsole = Kernel.Get<IGameConsole>()     ?? Kernel.BindGet<IGameConsole, GameConsole>(new GameConsole());
 
             var registerFail = false;
             registerFail = registerFail || _gameContext == null;

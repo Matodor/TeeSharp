@@ -18,13 +18,12 @@ namespace TeeSharp
             _getInstancesByType = new Dictionary<Type, Func<object>>();
         }
 
-        private static Func<object> CreateInstanceActivator(Type bind, Type to)
+        private static void CreateInstanceActivator(Type bind, Type to)
         {
             if (_getInstancesByType.ContainsKey(bind))
-                return null;
+                return;
 
-            var constructor = to.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null,
-                new Type[] {}, null);
+            var constructor = to.GetConstructor(new Type[] { });
 
             if (constructor == null)
                 throw new Exception("The given type has not public construcor");
@@ -32,8 +31,6 @@ namespace TeeSharp
             var e = Expression.New(constructor);
             var f = Expression.Lambda<Func<object>>(e).Compile();
             _getInstancesByType.Add(bind, f);
-
-            return f;
         }
 
         public static T Get<T>()
@@ -52,9 +49,9 @@ namespace TeeSharp
             return null;
         }
 
-        public static void Bind<T>(object singleton)
+        public static void Bind<T1, T2>(T2 singleton) where T2 : T1
         {
-            Bind(typeof(T), singleton);
+            Bind(typeof(T1), singleton);
         }
 
         public static void Bind(Type bind, object singleton)
@@ -81,10 +78,10 @@ namespace TeeSharp
             _bindedTypes.Add(bind, to);
         }
 
-        public static T BindGet<T>(object singleton)
+        public static T1 BindGet<T1, T2>(T2 singleton) where T2 : T1
         {
-            Bind(typeof(T), singleton);
-            return Get<T>();
+            Bind(typeof(T1), singleton);
+            return Get<T1>();
         }
 
         public static object BindGet(Type bind, object singleton)
