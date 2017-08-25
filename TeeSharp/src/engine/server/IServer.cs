@@ -8,7 +8,7 @@ namespace TeeSharp.Server
 {
     public interface IServer
     {
-        ulong Tick { get; }
+        long Tick { get; }
 
         void Run();
         void Init(string[] args);

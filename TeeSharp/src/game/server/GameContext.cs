@@ -19,5 +19,15 @@ namespace TeeSharp.Server
         {
             return _players[clientId];
         }
+
+        public void OnInit()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnTick()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

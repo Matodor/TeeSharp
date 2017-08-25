@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 
 namespace TeeSharp.Server
 {
     public class Server : IServer
     {
-        public ulong Tick => _currentGameTick;
+        public long Tick => _currentGameTick;
         public bool IsRunning;
 
         protected IGameConsole _gameConsole;
@@ -16,7 +17,8 @@ namespace TeeSharp.Server
         protected Configuration _config;
 
         protected readonly Client[] _clients;
-        protected ulong _currentGameTick;
+        protected long _currentGameTick;
+        protected long _gameStartTime;
 
         public Server()
         {
@@ -51,13 +53,9 @@ namespace TeeSharp.Server
             _gameConsole.RegisterCommand("status", "", ConfigFlags.SERVER, ConsoleStatus, this, "List players");
             _gameConsole.RegisterCommand("shutdown", "", ConfigFlags.SERVER, ConsoleShutdown, this, "Shut down");
             _gameConsole.RegisterCommand("reload", "", ConfigFlags.SERVER, ConsoleMapReload, this, "Reload the map");
-
-            //_gameConsole.RegisterCommand("record", "?s", ConfigFlags.SERVER | ConfigFlags.STORE, ConRecord, this, "Record to a file");
-            //_gameConsole.RegisterCommand("stoprecord", "", ConfigFlags.SERVER, ConStopRecord, this, "Stop recording");
             
             _gameConsole.OnExecuteCommand("sv_name", SpecialInfoUpdate);
             _gameConsole.OnExecuteCommand("password", SpecialInfoUpdate);
-
             _gameConsole.OnExecuteCommand("sv_max_clients_per_ip", MaxClientsPerIpUpdate);
             _gameConsole.OnExecuteCommand("mod_command", ModCommandUpdate);
             _gameConsole.OnExecuteCommand("console_output_level", ConsoleOutputLevelUpdate);
@@ -67,68 +65,73 @@ namespace TeeSharp.Server
             //GameContext.Instance.OnConsoleInit();
         }
 
-        private void ConsoleOutputLevelUpdate(ConsoleResult result, object data)
+        protected virtual void ConsoleOutputLevelUpdate(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ModCommandUpdate(ConsoleResult result, object data)
+        protected virtual void ModCommandUpdate(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void MaxClientsPerIpUpdate(ConsoleResult result, object data)
+        protected virtual void MaxClientsPerIpUpdate(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void SpecialInfoUpdate(ConsoleResult result, object data)
+        protected virtual void SpecialInfoUpdate(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleMapReload(ConsoleResult result, object data)
+        protected virtual void ConsoleMapReload(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleShutdown(ConsoleResult result, object data)
+        protected virtual void ConsoleShutdown(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleStatus(ConsoleResult result, object data)
+        protected virtual void ConsoleStatus(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleBans(ConsoleResult result, object data)
+        protected virtual void ConsoleBans(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleUnBan(ConsoleResult result, object data)
+        protected virtual void ConsoleUnBan(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleBan(ConsoleResult result, object data)
+        protected virtual void ConsoleBan(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
         }
 
-        private void ConsoleKick(ConsoleResult result, object data)
+        protected virtual void ConsoleKick(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
+        }
+
+        protected virtual long TickStartTime(long tick)
+        {
+            return _gameStartTime + (System.TimeFreq() * tick) / Consts.SERVER_TICK_SPEED;
         }
 
         public virtual void Init(string[] args)
         {
+            _config = Kernel.Get<Configuration>() ?? Kernel.BindGet<Configuration, Configuration>(new Configuration());
             _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext, GameContext>(new GameContext());
             _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap, Map>(new Map());
             _storage = Kernel.Get<IStorage>()             ?? Kernel.BindGet<IStorage, Storage>(new Storage());
             _networkServer = Kernel.Get<INetworkServer>() ?? Kernel.BindGet<INetworkServer, NetworkServer>(new NetworkServer());
-            _config = Kernel.Get<Configuration>()         ?? Kernel.BindGet<Configuration, Configuration>(new Configuration());
             _gameConsole = Kernel.Get<IGameConsole>()     ?? Kernel.BindGet<IGameConsole, GameConsole>(new GameConsole());
 
             var registerFail = false;
@@ -143,6 +146,7 @@ namespace TeeSharp.Server
                 throw new Exception("Register components fail");
 
             _gameConsole.Init();
+            _networkServer.Init();
 
             // register all console commands
             RegisterCommands();
@@ -162,18 +166,66 @@ namespace TeeSharp.Server
             System.DbgMessage("server", "running on debug version", ConsoleColor.Red);
 #endif
 
+            // load map
             if (!LoadMap(_config.GetString("SvMap")))
             {
                 System.DbgMessage("server", $"failed to load map. mapname='{_config.GetString("SvMap")}'");
                 return;
             }
 
+            _networkServer.Open(new IPEndPoint(IPAddress.Any, _config.GetInt("SvPort")),
+                _config.GetInt("SvMaxClients"), _config.GetInt("SvMaxClientsPerIP"));
+            _networkServer.SetCallbacks(NewClientCallback, DelClientCallback);
+
+            _gameConsole.Print(ConsoleOutputLevel.STANDARD, "server", $"server name is '{_config.GetString("SvName")}'");
+            _gameContext.OnInit();
+
+            _gameStartTime = System.TimeGet();
             IsRunning = true;
+
+            var time = 0L;
+            var ticks = 0;
 
             while (IsRunning)
             {
+                time = System.TimeGet();
+                ticks = 0;
+
+                while (time > TickStartTime(_gameStartTime + 1))
+                {
+                    _currentGameTick++;
+                    ticks++;
+
+                    // TODO
+                    /*for (var c = 0; c < Consts.MAX_CLIENTS; c++)
+                    {
+                        if (_clients[c].ClientState != ClientState.STATE_INGAME)
+                            continue;
+                        for (var i = 0; i < 200; i++)
+                        {
+                            if (_clients[c].m_aInputs[i].m_GameTick == Tick)
+                            {
+                                gameServer.OnClientPredictedInput(c, _clients[c].m_aInputs[i].m_aData);
+                                break;
+                            }
+                        }
+                    }*/
+
+                    _gameContext.OnTick();
+                }
+
                 Thread.Sleep(5);
             }    
+        }
+
+        protected virtual void DelClientCallback(int clientId, string reason)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void NewClientCallback(int clientId)
+        {
+            throw new NotImplementedException();
         }
     }
 }
