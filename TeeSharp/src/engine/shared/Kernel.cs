@@ -101,5 +101,15 @@ namespace TeeSharp
             Bind(typeof(T1), typeof(T2));
             return Get<T1>();
         }
+
+        public static bool IsBinded(Type type)
+        {
+            return _bindedTypes.ContainsKey(type);
+        }
+
+        public static bool IsBinded<T>()
+        {
+            return IsBinded(typeof(T));
+        }
     }
 }

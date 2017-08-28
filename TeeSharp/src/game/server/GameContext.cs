@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TeeSharp.Server
 {
@@ -21,6 +17,11 @@ namespace TeeSharp.Server
         }
 
         public void OnInit()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnShutdown()
         {
             throw new NotImplementedException();
         }

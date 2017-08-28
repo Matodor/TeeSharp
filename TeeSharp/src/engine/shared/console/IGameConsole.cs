@@ -25,6 +25,7 @@ namespace TeeSharp
     public interface IGameConsole
     {
         void Init();
+        void ExecuteLine(string line, ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN);
         void ExecuteFile(string path);
         void ParseArguments(string[] args);
 
@@ -34,6 +35,7 @@ namespace TeeSharp
             ConfigFlags configFlags, ConsoleCallback callback, object data, 
             string description, ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN);
 
+        ConsoleCommand FindCommand(string command, ConfigFlags flagMask);
         ConsoleCommand GetCommand(string command);
     }
 }

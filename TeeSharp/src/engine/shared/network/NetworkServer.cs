@@ -21,7 +21,7 @@ namespace TeeSharp
 
         public virtual void Open(IPEndPoint endPoint, int maxClients, int maxClientsPerIp)
         {
-            if (!System.CreateUdpClient(endPoint, out _udpClient))
+            if (!Base.CreateUdpClient(endPoint, out _udpClient))
                 throw new Exception($"couldn't open socket. port {_config.GetInt("SvPort")} might already be in use");
 
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,9 +13,11 @@ namespace TeeSharp
         protected Configuration _config;
 
         protected readonly IDictionary<string, ConsoleCommand> _commands;
+        protected readonly IList<string> _executedFiles;
 
         public GameConsole()
         {
+            _executedFiles = new List<string>();
             _commands = new Dictionary<string, ConsoleCommand>();
         }
 
@@ -43,8 +46,17 @@ namespace TeeSharp
 
         }
 
+        public virtual ConsoleCommand FindCommand(string command, ConfigFlags flagMask)
+        {
+            command = command.ToLower();
+            return _commands.ContainsKey(command) && (_commands[command].Flags & flagMask) != 0 
+                ? _commands[command] 
+                : null;
+        }
+
         public virtual ConsoleCommand GetCommand(string command)
         {
+            command = command.ToLower();
             return _commands.ContainsKey(command) ? _commands[command] : null;
         }
 
@@ -82,18 +94,54 @@ namespace TeeSharp
                 Print(ConsoleOutputLevel.STANDARD, "console", $"Value: {configInt.Default}");
         }
 
-        public virtual void ExecuteFile(string path)
+        public virtual void ExecuteLine(string line, ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN)
         {
-            throw new NotImplementedException();
+            
         }
 
+        public virtual void ExecuteFile(string fileName)
+        {
+            if (_executedFiles.Any(p => p == fileName))
+                return;
+
+            using (var file = _storage.OpenFile(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                if (file == null)
+                {
+                    Print(ConsoleOutputLevel.STANDARD, "console", $"failed to open '{fileName}'");
+                    return;
+                }
+
+                using (var reader = new StreamReader(file))
+                {
+                    string line;
+                    Print(ConsoleOutputLevel.STANDARD, "console", $"executing '{fileName}'");
+
+                    while (!reader.EndOfStream && (line = reader.ReadLine()) != null)
+                        ExecuteLine(line);
+                }
+            }
+        }
+        
         public virtual void ParseArguments(string[] args)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-f" && i + 1 < args.Length)
+                {
+                    ExecuteFile(args[i + 1]);
+                    i++;
+                    continue;
+                }
+
+                // search arguments for overrides
+                ExecuteLine(args[i]);
+            }
         }
 
         public virtual void RegisterCommand(string command, string formatArguments, ConfigFlags flags, 
-            ConsoleCallback callback, object data, string description, ConsoleAccessLevel accessLevel)
+            ConsoleCallback callback, object data, string description, 
+            ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN)
         {
             if (_commands.ContainsKey(command))
                 return;

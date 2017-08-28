@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace TeeSharp.Server
 {
-    public class Client
+    public class ServerClient : IServerClient
     {
+        public ServerClientState ClientState { get; set; }
     }
 }

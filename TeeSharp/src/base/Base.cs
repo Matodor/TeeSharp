@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TeeSharp
 {
-    public static class System
+    public static class Base
     {
         public static void DbgMessage(string sys, string fmt, ConsoleColor color = ConsoleColor.White)
         {
@@ -33,6 +30,18 @@ namespace TeeSharp
             return Stopwatch.GetTimestamp();
         }
 
+        // file system
+        public static string GetCurrentWorkingDirectory()
+        {
+            return Environment.CurrentDirectory;
+        }
+
+        public static string GetStoragePath(string applicationName)
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/" + applicationName;
+        }
+        
+        // network
         public static bool CreateUdpClient(IPEndPoint endPoint, out UdpClient client)
         {
             try

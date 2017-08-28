@@ -13,7 +13,7 @@ namespace TeeSharp.Server
         void Run();
         void Init(string[] args);
 
-        Client GetClient(int clientId);
+        ServerClient GetClient(int clientId);
 
         void RegisterCommands();
         bool LoadMap(string mapName);

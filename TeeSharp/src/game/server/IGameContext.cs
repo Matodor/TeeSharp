@@ -6,5 +6,6 @@
         
         void OnTick();
         void OnInit();
+        void OnShutdown();
     }
 }

@@ -16,30 +16,16 @@ namespace TeeSharp.Server
         protected INetworkServer _networkServer;
         protected Configuration _config;
 
-        protected readonly Client[] _clients;
+        protected IServerClient[] _clients;
         protected long _currentGameTick;
         protected long _gameStartTime;
-
-        public Server()
-        {
-            _currentGameTick = 0;
-            _clients = new Client[Consts.MAX_CLIENTS];
-
-            for (var i = 0; i < _clients.Length; i++)
-            {
-                _clients[i] = new Client()
-                {
-                    
-                };
-            }
-        }
 
         public virtual bool LoadMap(string mapName)
         {
             return true;
         }
 
-        public Client GetClient(int clientId)
+        public ServerClient GetClient(int clientId)
         {
             throw new NotImplementedException();
         }
@@ -122,11 +108,20 @@ namespace TeeSharp.Server
 
         protected virtual long TickStartTime(long tick)
         {
-            return _gameStartTime + (System.TimeFreq() * tick) / Consts.SERVER_TICK_SPEED;
+            return _gameStartTime + (Base.TimeFreq() * tick) / Consts.SERVER_TICK_SPEED;
         }
 
         public virtual void Init(string[] args)
         {
+            _currentGameTick = 0;
+            _clients = new IServerClient[Consts.MAX_CLIENTS];
+
+            if (!Kernel.IsBinded<IServerClient>())
+                Kernel.Bind<IServerClient, ServerClient>();
+
+            for (var i = 0; i < _clients.Length; i++)
+                _clients[i] = Kernel.Get<IServerClient>();
+
             _config = Kernel.Get<Configuration>() ?? Kernel.BindGet<Configuration, Configuration>(new Configuration());
             _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext, GameContext>(new GameContext());
             _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap, Map>(new Map());
@@ -145,6 +140,7 @@ namespace TeeSharp.Server
             if (registerFail)
                 throw new Exception("Register components fail");
 
+            _storage.Init("Teeworlds");
             _gameConsole.Init();
             _networkServer.Init();
 
@@ -161,15 +157,15 @@ namespace TeeSharp.Server
             if (IsRunning)
                 return;
 
-            System.DbgMessage("server", "starting...", ConsoleColor.Red);
+            Base.DbgMessage("server", "starting...", ConsoleColor.Red);
 #if DEBUG
-            System.DbgMessage("server", "running on debug version", ConsoleColor.Red);
+            Base.DbgMessage("server", "running on debug version", ConsoleColor.Red);
 #endif
 
             // load map
             if (!LoadMap(_config.GetString("SvMap")))
             {
-                System.DbgMessage("server", $"failed to load map. mapname='{_config.GetString("SvMap")}'");
+                Base.DbgMessage("server", $"failed to load map. mapname='{_config.GetString("SvMap")}'");
                 return;
             }
 
@@ -180,7 +176,7 @@ namespace TeeSharp.Server
             _gameConsole.Print(ConsoleOutputLevel.STANDARD, "server", $"server name is '{_config.GetString("SvName")}'");
             _gameContext.OnInit();
 
-            _gameStartTime = System.TimeGet();
+            _gameStartTime = Base.TimeGet();
             IsRunning = true;
 
             var time = 0L;
@@ -188,7 +184,7 @@ namespace TeeSharp.Server
 
             while (IsRunning)
             {
-                time = System.TimeGet();
+                time = Base.TimeGet();
                 ticks = 0;
 
                 while (time > TickStartTime(_gameStartTime + 1))
@@ -196,36 +192,56 @@ namespace TeeSharp.Server
                     _currentGameTick++;
                     ticks++;
 
-                    // TODO
-                    /*for (var c = 0; c < Consts.MAX_CLIENTS; c++)
+                    for (var c = 0; c < Consts.MAX_CLIENTS; c++)
                     {
-                        if (_clients[c].ClientState != ClientState.STATE_INGAME)
+                        if (_clients[c].ClientState != ServerClientState.INGAME)
                             continue;
-                        for (var i = 0; i < 200; i++)
+
+                        /*for (var i = 0; i < 200; i++)
                         {
                             if (_clients[c].m_aInputs[i].m_GameTick == Tick)
                             {
                                 gameServer.OnClientPredictedInput(c, _clients[c].m_aInputs[i].m_aData);
                                 break;
                             }
-                        }
-                    }*/
+                        }*/
+                    }
 
                     _gameContext.OnTick();
                 }
 
+                if (ticks != 0)
+                {
+                    if (_currentGameTick % 2 == 0 || _config.GetInt("SvHighBandwidth") != 0)
+                        DoSnapshot();
+                }
+
                 Thread.Sleep(5);
-            }    
+            }
+
+            for (var i = 0; i < Consts.MAX_CLIENTS; ++i)
+            {
+                if (_clients[i].ClientState != ServerClientState.EMPTY)
+                    _networkServer.Drop(i, "Server shutdown");
+            }
+
+            _gameContext.OnShutdown();
+            
+        }
+
+        protected virtual void DoSnapshot()
+        {
+            throw new NotImplementedException();
         }
 
         protected virtual void DelClientCallback(int clientId, string reason)
         {
-            throw new NotImplementedException();
+            _clients[clientId].ClientState = ServerClientState.AUTH;
         }
 
         protected virtual void NewClientCallback(int clientId)
         {
-            throw new NotImplementedException();
+            _clients[clientId].ClientState = ServerClientState.EMPTY;
         }
     }
 }

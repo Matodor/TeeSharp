@@ -10,6 +10,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.BasicServer", "Exa
 		{43801A18-1091-407A-AF31-F8EE4B644D44} = {43801A18-1091-407A-AF31-F8EE4B644D44}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.OverrideServer", "Examples\Examples.OverrideServer\Examples.OverrideServer.csproj", "{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43801A18-1091-407A-AF31-F8EE4B644D44} = {43801A18-1091-407A-AF31-F8EE4B644D44}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +29,10 @@ Global
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
