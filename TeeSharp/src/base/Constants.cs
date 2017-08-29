@@ -242,7 +242,7 @@ namespace TeeSharp
         NUM_SOUNDS,
     }
 
-    public enum ChatTeam
+    public enum ChatTeams
     {
         CHAT_ALL = -2,
         CHAT_SPEC = -1,
@@ -250,14 +250,14 @@ namespace TeeSharp
         CHAT_BLUE = 1
     }
 
-    public class Consts
+    public partial class Consts
     {
         public const int
-            INPUT_STATE_MASK = 0x3f,
+            INPUT_STATE_MASK = 63,
             SPEC_FREEVIEW = -1,
 
             SERVER_TICK_SPEED = 50,
-            SERVER_FLAG_PASSWORD = 0x1,
+            SERVER_FLAG_PASSWORD = 1 << 0,
 
             MAX_CLIENTS = 64,
             VANILLA_MAX_CLIENTS = 16,

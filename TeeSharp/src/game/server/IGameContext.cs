@@ -2,7 +2,7 @@
 {
     public interface IGameContext
     {
-        Player GetPlayer(int clientId);
+        IPlayer GetPlayer(int clientId);
         
         void OnTick();
         void OnInit();

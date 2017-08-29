@@ -93,6 +93,8 @@ namespace TeeSharp
                     }
                     break;
                 case CURRENTDIR:
+                    _storagePaths.Add("");
+                    Base.DbgMessage("storage", $"added path '$CURRENTDIR' ('{Base.GetCurrentWorkingDirectory()}')");
                     break;
                 default:
                     if (Directory.Exists(path))

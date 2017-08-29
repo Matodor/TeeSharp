@@ -13,8 +13,8 @@ namespace TeeSharp
         void SetCallbacks(NewClientCallback newClientCallback, DelClientCallback delClientCallback);
 
         void Update();
-        void Receive();
-        void SendPacket(NetChunk chunk);
+        bool Receive(out NetChunk chunk);
+        void Send(NetChunk chunk);
 
         void Drop(int clientId, string reason);
     }

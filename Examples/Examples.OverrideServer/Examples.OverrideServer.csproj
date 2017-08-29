@@ -9,4 +9,10 @@
     <ProjectReference Include="..\..\TeeSharp\TeeSharp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="autoexec.cfg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

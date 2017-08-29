@@ -33,7 +33,7 @@ namespace TeeSharp
         // file system
         public static string GetCurrentWorkingDirectory()
         {
-            return Environment.CurrentDirectory;
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
 
         public static string GetStoragePath(string applicationName)
@@ -54,6 +54,16 @@ namespace TeeSharp
                 client = null;
                 return false;
             }
+        }
+
+        public static byte[] ReceiveUdp(UdpClient client, ref IPEndPoint addr)
+        {
+            return client.Receive(ref addr);
+        }
+
+        public static int SendUdp(UdpClient client, IPEndPoint addr, byte[] data, int dataSize)
+        {
+            return client.Send(data, dataSize, addr);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TeeSharp.Server
 {
-    public class Player
+    public class Player : IPlayer
     {
         public Player()
         {

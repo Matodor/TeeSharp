@@ -29,6 +29,8 @@ namespace TeeSharp
         void ExecuteFile(string path);
         void ParseArguments(string[] args);
 
+        void RegisterPrintCallback(ConsoleOutputLevel outputLevel, PrintCallback.CallbackDelegate callback,
+            object data);
         void Print(ConsoleOutputLevel level, string from, string str);
         void OnExecuteCommand(string command, ConsoleCallback callback);
         void RegisterCommand(string command, string formatArguments, 

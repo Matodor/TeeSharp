@@ -7,6 +7,15 @@ using System.Threading.Tasks;
 
 namespace TeeSharp
 {
+    public class PrintCallback
+    {
+        public delegate void CallbackDelegate(string str, object data);
+
+        public CallbackDelegate Callback;
+        public ConsoleOutputLevel OutputLevel;
+        public object Data;
+    }
+
     public class GameConsole : IGameConsole
     {
         protected IStorage _storage;
@@ -14,9 +23,11 @@ namespace TeeSharp
 
         protected readonly IDictionary<string, ConsoleCommand> _commands;
         protected readonly IList<string> _executedFiles;
+        protected readonly IList<PrintCallback> _printCallbacks;
 
         public GameConsole()
         {
+            _printCallbacks = new List<PrintCallback>();
             _executedFiles = new List<string>();
             _commands = new Dictionary<string, ConsoleCommand>();
         }
@@ -43,7 +54,6 @@ namespace TeeSharp
                         StrVariableCommandCallback, configStr, configStr.Description, ConsoleAccessLevel.ADMIN);
                 }
             }
-
         }
 
         public virtual ConsoleCommand FindCommand(string command, ConfigFlags flagMask)
@@ -71,9 +81,28 @@ namespace TeeSharp
             consoleCommand.Callback += callback;
         }
 
+        public virtual void RegisterPrintCallback(ConsoleOutputLevel outputLevel, PrintCallback.CallbackDelegate callback,
+            object data)
+        {
+            _printCallbacks.Add(new PrintCallback()
+            {
+                Callback = callback,
+                Data = data,
+                OutputLevel = outputLevel
+            });
+        }
+
         public virtual void Print(ConsoleOutputLevel level, string from, string str)
         {
-            
+            Base.DbgMessage(from, str, ConsoleColor.DarkYellow);
+
+            for (int i = 0; i < _printCallbacks.Count; i++)
+            {
+                if (level <= _printCallbacks[i].OutputLevel)
+                {
+                    _printCallbacks[i].Callback?.Invoke($"[{from}]: {str}", _printCallbacks[i].Data);
+                }
+            }
         }
         
         protected virtual void StrVariableCommandCallback(ConsoleResult result, object data)
@@ -94,15 +123,52 @@ namespace TeeSharp
                 Print(ConsoleOutputLevel.STANDARD, "console", $"Value: {configInt.Default}");
         }
 
+        protected virtual bool ParseLine(string line, out ConsoleResult result, out ConsoleCommand cmd, 
+            out string strCmd)
+        {
+            line = line.TrimStart();
+            var spaceIndex = line.IndexOf(' ');
+            strCmd = spaceIndex >= 0 
+                ? line.Substring(0, spaceIndex) 
+                : line.Substring(0, line.Length);
+
+            cmd = FindCommand(strCmd, ConfigFlags.SERVER);
+            if (cmd == null)
+            {
+                result = null;
+                return false;
+            }
+
+            var args = "";
+            if (spaceIndex > 0 && spaceIndex + 1 < line.Length)
+                args = spaceIndex >= 0 ? line.Substring(spaceIndex + 1, line.Length - spaceIndex - 1) : "";
+
+            result = new ConsoleResult(args);
+            return true;
+        }
+
         public virtual void ExecuteLine(string line, ConsoleAccessLevel accessLevel = ConsoleAccessLevel.ADMIN)
         {
-            
+            ConsoleResult result;
+            ConsoleCommand command;
+            string strCmd;
+
+            if (ParseLine(line, out result, out command, out strCmd))
+            {
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(strCmd))
+                    return;
+                Print(ConsoleOutputLevel.STANDARD, "Console", $"No such command: {strCmd}.");
+            }
         }
 
         public virtual void ExecuteFile(string fileName)
         {
             if (_executedFiles.Any(p => p == fileName))
                 return;
+            _executedFiles.Add(fileName);
 
             using (var file = _storage.OpenFile(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
             {

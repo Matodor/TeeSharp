@@ -10,6 +10,11 @@ namespace TeeSharp
     {
         public int NumArguments { get; }
 
+        public ConsoleResult(string args)
+        {
+            
+        }
+
         public int GetInteger(int index)
         {
             return 0;

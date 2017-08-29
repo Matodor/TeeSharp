@@ -4,14 +4,14 @@ namespace TeeSharp.Server
 {
     public class GameContext : IGameContext
     {
-        private readonly Player[] _players;
+        private readonly IPlayer[] _players;
 
         public GameContext()
         {
-            _players = new Player[Consts.MAX_CLIENTS];
+            _players = new IPlayer[Consts.MAX_CLIENTS];
         }
 
-        public Player GetPlayer(int clientId)
+        public IPlayer GetPlayer(int clientId)
         {
             return _players[clientId];
         }

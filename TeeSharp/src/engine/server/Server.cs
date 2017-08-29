@@ -111,23 +111,36 @@ namespace TeeSharp.Server
             return _gameStartTime + (Base.TimeFreq() * tick) / Consts.SERVER_TICK_SPEED;
         }
 
+        protected virtual void DefaultBindinds()
+        {
+            if (!Kernel.IsBinded<IServerClient>()) Kernel.Bind<IServerClient, ServerClient>();
+            if (!Kernel.IsBinded<IPlayer>()) Kernel.Bind<IPlayer, Player>();
+
+            // bind singletons
+            if (!Kernel.IsBinded<Configuration>()) Kernel.Bind<Configuration, Configuration>(new Configuration());
+            if (!Kernel.IsBinded<IGameContext>()) Kernel.Bind<IGameContext, GameContext>(new GameContext());
+            if (!Kernel.IsBinded<IEngineMap>()) Kernel.Bind<IEngineMap, Map>(new Map());
+            if (!Kernel.IsBinded<IStorage>()) Kernel.Bind<IStorage, Storage>(new Storage());
+            if (!Kernel.IsBinded<INetworkServer>()) Kernel.Bind<INetworkServer, NetworkServer>(new NetworkServer());
+            if (!Kernel.IsBinded<IGameConsole>()) Kernel.Bind<IGameConsole, GameConsole>(new GameConsole());
+        }
+
         public virtual void Init(string[] args)
         {
+            DefaultBindinds();
+
             _currentGameTick = 0;
             _clients = new IServerClient[Consts.MAX_CLIENTS];
-
-            if (!Kernel.IsBinded<IServerClient>())
-                Kernel.Bind<IServerClient, ServerClient>();
 
             for (var i = 0; i < _clients.Length; i++)
                 _clients[i] = Kernel.Get<IServerClient>();
 
-            _config = Kernel.Get<Configuration>() ?? Kernel.BindGet<Configuration, Configuration>(new Configuration());
-            _gameContext = Kernel.Get<IGameContext>()     ?? Kernel.BindGet<IGameContext, GameContext>(new GameContext());
-            _map = Kernel.Get<IEngineMap>()               ?? Kernel.BindGet<IEngineMap, Map>(new Map());
-            _storage = Kernel.Get<IStorage>()             ?? Kernel.BindGet<IStorage, Storage>(new Storage());
-            _networkServer = Kernel.Get<INetworkServer>() ?? Kernel.BindGet<INetworkServer, NetworkServer>(new NetworkServer());
-            _gameConsole = Kernel.Get<IGameConsole>()     ?? Kernel.BindGet<IGameConsole, GameConsole>(new GameConsole());
+            _config = Kernel.Get<Configuration>();
+            _gameContext = Kernel.Get<IGameContext>();
+            _map = Kernel.Get<IEngineMap>();
+            _storage = Kernel.Get<IStorage>();
+            _networkServer = Kernel.Get<INetworkServer>();
+            _gameConsole = Kernel.Get<IGameConsole>();
 
             var registerFail = false;
             registerFail = registerFail || _gameContext == null;
@@ -152,6 +165,35 @@ namespace TeeSharp.Server
             _gameConsole.ParseArguments(args);
         }
 
+        protected virtual void SendRconLineAuthed(string str)
+        {
+            
+        }
+
+        protected virtual void ProcessClientPacket(NetChunk packet)
+        {
+            
+        }
+
+        protected virtual void PumpNetwork()
+        {
+            _networkServer.Update();
+
+            NetChunk packet;
+            while (_networkServer.Receive(out packet))
+            {
+                if (packet.ClientId == -1)
+                {
+                    continue;   
+                }
+
+                ProcessClientPacket(packet);
+            }
+
+            // server ban update
+            // econ update
+        }
+
         public virtual void Run()
         {
             if (IsRunning)
@@ -161,6 +203,9 @@ namespace TeeSharp.Server
 #if DEBUG
             Base.DbgMessage("server", "running on debug version", ConsoleColor.Red);
 #endif
+
+            _gameConsole.RegisterPrintCallback((ConsoleOutputLevel) _config.GetInt("ConsoleOutputLevel"),
+                SendRconLineAuthed, null);
 
             // load map
             if (!LoadMap(_config.GetString("SvMap")))
@@ -216,6 +261,8 @@ namespace TeeSharp.Server
                         DoSnapshot();
                 }
 
+                PumpNetwork();
+
                 Thread.Sleep(5);
             }
 
@@ -227,6 +274,11 @@ namespace TeeSharp.Server
 
             _gameContext.OnShutdown();
             
+        }
+
+        private void SendRconLineAuthed(string str, object data)
+        {
+            throw new NotImplementedException();
         }
 
         protected virtual void DoSnapshot()
