@@ -16,19 +16,31 @@ namespace TeeSharp.Server
             return _players[clientId];
         }
 
+        public bool IsClientPlayer(int ClientID)
+        {
+            return _players[ClientID] != null && _players[ClientID].Team != Teams.SPECTATORS;
+        }
+
+        public string GameType()
+        {
+            return "test";
+        }
+
         public void OnInit()
         {
-            throw new NotImplementedException();
+            
         }
 
         public void OnShutdown()
         {
-            throw new NotImplementedException();
+        }
+
+        public void OnConsoleInit()
+        {
         }
 
         public void OnTick()
         {
-            throw new NotImplementedException();
         }
     }
 }

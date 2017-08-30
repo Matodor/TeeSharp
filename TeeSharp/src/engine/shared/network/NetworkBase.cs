@@ -52,10 +52,13 @@ namespace TeeSharp
         public const int
             NET_MAX_PACKETSIZE = 1400,
             NET_MAX_PAYLOAD = NET_MAX_PACKETSIZE - 6,
+            NET_MAX_CHUNKHEADERSIZE = 5,
             NET_PACKETHEADERSIZE = 3,
 
             NET_MAX_CLIENTS = 64,
-            NET_MAX_SEQUENCE = 1024;
+            NET_MAX_SEQUENCE = 1024,
+
+            NET_CONN_BUFFERSIZE = 1024 * 32;
     }
 
     public static class NetworkBase
@@ -87,7 +90,7 @@ namespace TeeSharp
         }
 
         public static void SendControlMsg(UdpClient client, IPEndPoint addr, int ack, ControlMessage controlMsg,
-            string extraData)
+            string extra)
         {
             var packet = new NetPacketConstruct
             {
@@ -96,9 +99,9 @@ namespace TeeSharp
                 NumChunks = 0,
             };
 
-            if (!string.IsNullOrEmpty(extraData))
+            if (!string.IsNullOrEmpty(extra))
             {
-                var bytes = Encoding.UTF8.GetBytes(extraData);
+                var bytes = Encoding.UTF8.GetBytes(extra);
                 packet.DataSize = 1 + bytes.Length + 1;
                 packet.ChunkData = new byte[packet.DataSize];
                 Array.Copy(bytes, 0, packet.ChunkData, 1, bytes.Length);
@@ -112,6 +115,20 @@ namespace TeeSharp
             packet.ChunkData[0] = (byte) controlMsg;
         }
 
+        public static void SendPacketConnless(UdpClient client, IPEndPoint addr, byte[] data, int dataSize)
+        {
+            var buffer = new byte[dataSize + 6];
+            buffer[0] = 255;
+            buffer[1] = 255;
+            buffer[2] = 255;
+            buffer[3] = 255;
+            buffer[4] = 255;
+            buffer[5] = 255;
+
+            Array.Copy(data, 0, buffer, 6, dataSize);
+            Base.SendUdp(client, addr, buffer, buffer.Length);
+        }
+        
         public static void SendPacket(UdpClient client, IPEndPoint addr, NetPacketConstruct packet)
         {
             var buffer = new byte[Consts.NET_MAX_PACKETSIZE];

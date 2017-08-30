@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using TeeSharp.Server;
 
 namespace TeeSharp
 {
@@ -20,14 +21,18 @@ namespace TeeSharp
 
         public NetworkServer()
         {
-            
+            _recvUnpacker = new NetworkReceiveUnpacker();
+        }
+
+        public AddressFamily NetType()
+        {
+            return _udpClient.Client.AddressFamily;
         }
 
         public virtual void Init()
         {
-            _netBan = Kernel.Get<NetworkBan>();
+            _netBan = Kernel.Get<ServerBan>();
             _config = Kernel.Get<Configuration>();
-            _recvUnpacker = new NetworkReceiveUnpacker();
         }
 
         public virtual void Open(IPEndPoint endPoint, int maxClients, int maxClientsPerIp)
@@ -38,8 +43,11 @@ namespace TeeSharp
             _networkSlots = new Slot[Consts.NET_MAX_CLIENTS];
             SetMaxClientsPerIp(maxClientsPerIp);
 
-            for (int i = 0; i < _networkSlots.Length; i++)
+            for (var i = 0; i < _networkSlots.Length; i++)
+            {
                 _networkSlots[i] = new Slot();
+                _networkSlots[i].Connection.Init(_udpClient, true);
+            }
         }
 
         public void SetCallbacks(NewClientCallback newClientCallback, DelClientCallback delClientCallback)
@@ -62,17 +70,22 @@ namespace TeeSharp
         public void Update()
         {
             var time = Base.TimeGet();
-            for (int i = 0; i < Consts.NET_MAX_CLIENTS; i++)
+            for (var i = 0; i < Consts.NET_MAX_CLIENTS; i++)
             {
                 _networkSlots[i].Connection.Update();
                 if (_networkSlots[i].Connection.ConnectionState == ConnectionState.ERROR)
                 {
-                    //if (Now - m_aSlots[i].m_Connection.ConnectTime() < time_freq() && NetBan())
-                    //    NetBan()->BanAddr(ClientAddr(i), 60, "Stressing network");
-                    //else
+                    if (time - _networkSlots[i].Connection.ConnectionTime < Base.TimeFreq())
+                        _netBan.BanAddr(ClientAddr(i), 60, "Stressing network");
+                    else
                         Drop(i, _networkSlots[i].Connection.ErrorString());
                 }
             }
+        }
+
+        public IPEndPoint ClientAddr(int slot)
+        {
+            return _networkSlots[slot].Connection.PeerAddr;
         }
 
         public bool Receive(out NetChunk packet)
@@ -125,12 +138,13 @@ namespace TeeSharp
                         {
                             // allow only a specific number of players with the same ip
                             var sameIps = 0;
-                            for (int i = 0; i < Consts.NET_MAX_CLIENTS; i++)
+                            for (var i = 0; i < Consts.NET_MAX_CLIENTS; i++)
                             {
                                 if (_networkSlots[i].Connection.ConnectionState == ConnectionState.OFFLINE)
                                     continue;
 
-                                if (_networkSlots[i].Connection.PeerAddr.Address.Equals(remote.Address))
+                                if (Base.CompareAddresses(_networkSlots[i].Connection.PeerAddr,
+                                    remote, false))
                                 {
                                     sameIps++;
                                     if (sameIps >= _maxClientsPerIp)
@@ -144,7 +158,7 @@ namespace TeeSharp
                             }
 
                             // find free slot
-                            for (int i = 0; i < Consts.NET_MAX_CLIENTS; i++)
+                            for (var i = 0; i < Consts.NET_MAX_CLIENTS; i++)
                             {
                                 if (_networkSlots[i].Connection.ConnectionState == ConnectionState.OFFLINE)
                                 {
@@ -185,12 +199,11 @@ namespace TeeSharp
 
         public Slot FindSlot(IPEndPoint addr, bool comparePorts, out int slotId)
         {
-            for (int i = 0; i < Consts.NET_MAX_CLIENTS; i++)
+            for (var i = 0; i < Consts.NET_MAX_CLIENTS; i++)
             {
                 if (_networkSlots[i].Connection.ConnectionState != ConnectionState.OFFLINE &&
                     _networkSlots[i].Connection.ConnectionState != ConnectionState.ERROR &&
-                    _networkSlots[i].Connection.PeerAddr.Address.Equals(addr.Address) && 
-                    (!comparePorts || _networkSlots[i].Connection.PeerAddr.Port == addr.Port))
+                    Base.CompareAddresses(_networkSlots[i].Connection.PeerAddr, addr, true))
                 {
                     slotId = i;
                     return _networkSlots[i];
@@ -201,8 +214,38 @@ namespace TeeSharp
             return null;
         }
 
-        public void Send(NetChunk chunk)
+        public bool Send(NetChunk chunk)
         {
+            if (chunk.DataSize >= Consts.NET_MAX_PAYLOAD)
+            {
+                Base.DbgMessage("network", $"packet payload too big, {chunk.DataSize} bytes. dropping packet");
+                return false;
+            }
+
+            if ((chunk.Flags & SendFlag.CONNLESS) != 0)
+            {
+                NetworkBase.SendPacketConnless(_udpClient, chunk.Address, chunk.Data, chunk.DataSize);
+                return true;
+            }
+
+            Base.DbgAssert(chunk.ClientId >= 0, "errornous client id");
+            Base.DbgAssert(chunk.ClientId < Consts.NET_MAX_CLIENTS, "errornous client id");
+
+            var flags = (ChunkFlags) 0;
+            if ((chunk.Flags & SendFlag.VITAL) != 0)
+                flags = ChunkFlags.VITAL;
+
+            if (_networkSlots[chunk.ClientId].Connection.QueueChunk(flags, chunk.DataSize, chunk.Data))
+            {
+                if ((chunk.Flags & SendFlag.FLUSH) != 0)
+                    _networkSlots[chunk.ClientId].Connection.Flush();
+            }
+            else
+            {
+                Drop(chunk.ClientId, "Error sending data");
+            }
+
+            return true;
         }
     }
 }

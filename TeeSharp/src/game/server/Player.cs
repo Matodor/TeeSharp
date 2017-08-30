@@ -8,6 +8,8 @@ namespace TeeSharp.Server
 {
     public class Player : IPlayer
     {
+        public Teams Team { get; }
+
         public Player()
         {
             

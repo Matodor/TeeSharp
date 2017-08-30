@@ -41,7 +41,7 @@ namespace TeeSharp
             { "EcAuthTimeout", new ConfigInt("EcAuthTimeout", "ec_auth_timeout", 30, 1, 120, ConfigFlags.ECON, "Time in seconds before the the econ authentification times out ") },
             { "EcOutputLevel", new ConfigInt("EcOutputLevel", "ec_output_level", 1, 0, 2, ConfigFlags.ECON, "Adjusts the amount of information in the external console") },
 
-            { "Debug", new ConfigInt("Debug", "debug", 0, 0, 1, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Debug mode") },
+            { "Debug", new ConfigInt("Debug", "debug", 1, 0, 1, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Debug mode") },
 
             { "SvWarmup", new ConfigInt("SvWarmup", "sv_warmup", 0, 0, 0, ConfigFlags.SERVER, "Number of seconds to do warmup before round starts") },
             { "SvMotd", new ConfigStr("SvMotd", "sv_motd", 900, "", ConfigFlags.SERVER, "Message of the day to display for the clients") },

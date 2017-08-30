@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 
@@ -15,6 +17,8 @@ namespace TeeSharp.Server
         protected IStorage _storage;
         protected INetworkServer _networkServer;
         protected Configuration _config;
+        protected ServerBan _serverBan;
+        protected ServerRegister _register;
 
         protected IServerClient[] _clients;
         protected long _currentGameTick;
@@ -47,8 +51,8 @@ namespace TeeSharp.Server
             _gameConsole.OnExecuteCommand("console_output_level", ConsoleOutputLevelUpdate);
 
             // register console commands in sub parts
-            //m_ServerBan.InitServerBan(Console(), Storage(), this);
-            //GameContext.Instance.OnConsoleInit();
+            _serverBan.InitServerBan();
+            _gameContext.OnConsoleInit();
         }
 
         protected virtual void ConsoleOutputLevelUpdate(ConsoleResult result, object data)
@@ -117,6 +121,8 @@ namespace TeeSharp.Server
             if (!Kernel.IsBinded<IPlayer>()) Kernel.Bind<IPlayer, Player>();
 
             // bind singletons
+            if (!Kernel.IsBinded<ServerRegister>()) Kernel.Bind<ServerRegister, ServerRegister>(new ServerRegister());
+            if (!Kernel.IsBinded<ServerBan>()) Kernel.Bind<ServerBan, ServerBan>(new ServerBan());
             if (!Kernel.IsBinded<Configuration>()) Kernel.Bind<Configuration, Configuration>(new Configuration());
             if (!Kernel.IsBinded<IGameContext>()) Kernel.Bind<IGameContext, GameContext>(new GameContext());
             if (!Kernel.IsBinded<IEngineMap>()) Kernel.Bind<IEngineMap, Map>(new Map());
@@ -135,6 +141,8 @@ namespace TeeSharp.Server
             for (var i = 0; i < _clients.Length; i++)
                 _clients[i] = Kernel.Get<IServerClient>();
 
+            _serverBan = Kernel.Get<ServerBan>();
+            _register = Kernel.Get<ServerRegister>();
             _config = Kernel.Get<Configuration>();
             _gameContext = Kernel.Get<IGameContext>();
             _map = Kernel.Get<IEngineMap>();
@@ -153,6 +161,7 @@ namespace TeeSharp.Server
             if (registerFail)
                 throw new Exception("Register components fail");
 
+            _register.Init();
             _storage.Init("Teeworlds");
             _gameConsole.Init();
             _networkServer.Init();
@@ -175,6 +184,143 @@ namespace TeeSharp.Server
             
         }
 
+        private void SendServerInfo(IPEndPoint addr, int token, bool showMore, int offset = 0)
+        {
+            var packet = new NetChunk();
+            var p = new Packer();
+
+            // count the players
+            var playerCount = 0;
+            var clientCount = 0;
+
+            for (var i = 0; i < Consts.MAX_CLIENTS; i++)
+            {
+                if (_clients[i].ClientState != ServerClientState.EMPTY)
+                {
+                    if (_gameContext.IsClientPlayer(i))
+                        playerCount++;
+                    clientCount++;
+                }
+            }
+
+            p.Reset();
+
+            if (showMore)
+                p.AddRaw(MasterServer.SERVERBROWSE_INFO64, 0, MasterServer.SERVERBROWSE_INFO64.Length);
+            else
+                p.AddRaw(MasterServer.SERVERBROWSE_INFO, 0, MasterServer.SERVERBROWSE_INFO.Length);
+
+            p.AddString(token + "", 6);
+            p.AddString(GameVersion.GAME_VERSION, 32);
+
+            if (showMore)
+            {
+                p.AddString(_config.GetString("SvName"), 256);
+            }
+            else
+            {
+                if (Consts.NET_MAX_CLIENTS <= Consts.VANILLA_MAX_CLIENTS)
+                    p.AddString(_config.GetString("SvName"), 64);
+                else
+                {
+                    var aBuf = $"{_config.GetString("SvName")} [{clientCount}/{Consts.NET_MAX_CLIENTS}]";
+                    p.AddString(aBuf, 64);
+                }
+            }
+
+            p.AddString(GetMapName(), 32);
+            p.AddString(_gameContext.GameType(), 16);
+
+            // flags
+            var pass = 0;
+            if (!string.IsNullOrEmpty(_config.GetString("Password"))) // password set
+                pass |= Consts.SERVER_FLAG_PASSWORD;
+            p.AddString(pass.ToString(), 2);
+
+            var maxClients = Consts.NET_MAX_CLIENTS;
+            if (!showMore)
+            {
+                if (clientCount >= Consts.VANILLA_MAX_CLIENTS)
+                {
+                    if (clientCount < maxClients)
+                        clientCount = Consts.VANILLA_MAX_CLIENTS - 1;
+                    else
+                        clientCount = Consts.VANILLA_MAX_CLIENTS;
+                }
+
+                if (maxClients > Consts.VANILLA_MAX_CLIENTS)
+                    maxClients = Consts.VANILLA_MAX_CLIENTS;
+            }
+
+            if (playerCount > clientCount)
+                playerCount = clientCount;
+
+            p.AddString(playerCount + "", 3);                                       // num players
+            p.AddString((maxClients - _config.GetInt("SvSpectatorSlots")) + "", 3); // max players
+            p.AddString(clientCount + "", 3);                                       // num clients
+            p.AddString(maxClients + "", 3);                                        // max clients
+
+            if (showMore)
+                p.AddInt(offset);
+
+            var clientsPerPacket = showMore ? 24 : Consts.VANILLA_MAX_CLIENTS;
+            var skip = offset;
+            var take = clientsPerPacket;
+
+            for (var i = 0; i < Consts.MAX_CLIENTS; i++)
+            {
+                if (_clients[i].ClientState != ServerClientState.EMPTY)
+                {
+                    if (skip-- > 0)
+                        continue;
+                    if (--take < 0)
+                        break;
+
+                    p.AddString(ClientName(i), Consts.MAX_NAME_LENGTH);         // client name
+                    p.AddString(ClientClan(i), Consts.MAX_CLAN_LENGTH);         // client clan
+                    p.AddString($"{ClientCountry(i)}", 6);                      // client country
+                    p.AddString($"{ClientScore(i)}", 6);                        // client score
+                    p.AddString(_gameContext.IsClientPlayer(i) ? "1" : "0", 2); // is player?
+                }
+            }
+
+            packet.ClientId = -1;
+            packet.Address = addr;
+            packet.Flags = SendFlag.CONNLESS;
+            packet.DataSize = p.Size();
+            packet.Data = p.Data();
+
+            _networkServer.Send(packet);
+
+            if (showMore && take < 0)
+                SendServerInfo(addr, token, true, offset + clientsPerPacket);
+        }
+
+        public int ClientScore(int clientId)
+        {
+            return 0;
+        }
+
+        public string ClientClan(int clientId)
+        {
+            return "clan";
+        }
+
+        public int ClientCountry(int clientId)
+        {
+            return 0;
+        }
+
+        public string ClientName(int clientId)
+        {
+            return "name";
+        }
+
+        protected virtual string GetMapName()
+        {
+            return Path.GetFileNameWithoutExtension(_config.GetString("SvMap"));
+        }
+
         protected virtual void PumpNetwork()
         {
             _networkServer.Update();
@@ -184,13 +330,25 @@ namespace TeeSharp.Server
             {
                 if (packet.ClientId == -1)
                 {
+                    if (packet.DataSize == MasterServer.SERVERBROWSE_GETINFO.Length + 1 &&
+                        Base.CompareArrays(packet.Data, MasterServer.SERVERBROWSE_GETINFO, 
+                            MasterServer.SERVERBROWSE_GETINFO.Length))
+                    {
+                        SendServerInfo(packet.Address, packet.Data[MasterServer.SERVERBROWSE_GETINFO.Length], false);
+                    }
+                    else if (packet.DataSize == MasterServer.SERVERBROWSE_GETINFO64.Length + 1 &&
+                        Base.CompareArrays(packet.Data, MasterServer.SERVERBROWSE_GETINFO64,
+                            MasterServer.SERVERBROWSE_GETINFO64.Length))
+                    {
+                        SendServerInfo(packet.Address, packet.Data[MasterServer.SERVERBROWSE_GETINFO64.Length], true);
+                    }
                     continue;   
                 }
 
                 ProcessClientPacket(packet);
             }
 
-            // server ban update
+            _serverBan.Update();
             // econ update
         }
 
@@ -261,6 +419,7 @@ namespace TeeSharp.Server
                         DoSnapshot();
                 }
 
+                _register.RegisterUpdate(_networkServer.NetType());
                 PumpNetwork();
 
                 Thread.Sleep(5);
@@ -278,7 +437,7 @@ namespace TeeSharp.Server
 
         private void SendRconLineAuthed(string str, object data)
         {
-            throw new NotImplementedException();
+            
         }
 
         protected virtual void DoSnapshot()
@@ -288,12 +447,16 @@ namespace TeeSharp.Server
 
         protected virtual void DelClientCallback(int clientId, string reason)
         {
-            _clients[clientId].ClientState = ServerClientState.AUTH;
+            var ip = _networkServer.ClientAddr(clientId).Address.ToString();
+            Base.DbgMessage("clients", $"client dropped. cid={clientId} addr={ip} reason='{reason}'",
+                ConsoleColor.DarkGreen);
+
+            _clients[clientId].ClientState = ServerClientState.EMPTY;
         }
 
         protected virtual void NewClientCallback(int clientId)
         {
-            _clients[clientId].ClientState = ServerClientState.EMPTY;
+            _clients[clientId].ClientState = ServerClientState.AUTH;
         }
     }
 }

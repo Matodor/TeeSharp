@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 
 namespace TeeSharp
 {
@@ -14,8 +15,9 @@ namespace TeeSharp
 
         void Update();
         bool Receive(out NetChunk chunk);
-        void Send(NetChunk chunk);
-
+        bool Send(NetChunk chunk);
+        IPEndPoint ClientAddr(int slot);
+        AddressFamily NetType();
         void Drop(int clientId, string reason);
     }
 }

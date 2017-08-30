@@ -2,6 +2,6 @@
 {
     public interface IPlayer
     {
-        
+        Teams Team { get; }
     }
 }

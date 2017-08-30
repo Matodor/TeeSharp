@@ -18,12 +18,17 @@ namespace TeeSharp
             _currentIndex = 0;
         }
 
+        public byte[] Data()
+        {
+            return _buffer;
+        }
+
         public int Size()
         {
             return _currentIndex;
         }
 
-       public void Reset()
+        public void Reset()
         {
             Error = false;
             _currentIndex = 0;
