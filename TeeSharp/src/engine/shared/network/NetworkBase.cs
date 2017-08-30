@@ -113,6 +113,7 @@ namespace TeeSharp
             }
 
             packet.ChunkData[0] = (byte) controlMsg;
+            SendPacket(client, addr, packet);
         }
 
         public static void SendPacketConnless(UdpClient client, IPEndPoint addr, byte[] data, int dataSize)

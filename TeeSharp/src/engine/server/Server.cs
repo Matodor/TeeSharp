@@ -139,7 +139,10 @@ namespace TeeSharp.Server
             _clients = new IServerClient[Consts.MAX_CLIENTS];
 
             for (var i = 0; i < _clients.Length; i++)
+            {
                 _clients[i] = Kernel.Get<IServerClient>();
+                _clients[i].SnapshotStorage.Init();
+            }
 
             _serverBan = Kernel.Get<ServerBan>();
             _register = Kernel.Get<ServerRegister>();
@@ -181,7 +184,58 @@ namespace TeeSharp.Server
 
         protected virtual void ProcessClientPacket(NetChunk packet)
         {
-            
+            var clientId = packet.ClientId;
+            var unpacker = new Unpacker();
+            unpacker.Reset(packet.Data, packet.DataSize);
+
+            var msg = unpacker.GetInt();
+            var sys = msg & 1;
+            msg >>= 1;
+
+            if (unpacker.Error)
+                return;
+
+            var message = (NetMessages)msg;
+            if (_config.GetInt("SvNetlimit") != 0 && message != NetMessages.NETMSG_REQUEST_MAP_DATA)
+            {
+                var time = Base.TimeGet();
+                var diff = time - _clients[clientId].TrafficSince;
+                var alpha = _config.GetInt("SvNetlimitAlpha") / 100.0f;
+                var limit = (float) _config.GetInt("SvNetlimit") * 1024 / Base.TimeFreq();
+
+                if (_clients[clientId].Traffic > limit)
+                {
+                    _serverBan.BanAddr(packet.Address, 600, "Stressing network");
+                    return;
+                }
+
+                if (diff > 100)
+                {
+                    _clients[clientId].Traffic = (long) ((alpha * ((float) packet.DataSize / diff)) + (1.0f - alpha) * _clients[clientId].Traffic);
+                    _clients[clientId].TrafficSince = time;
+                }
+            }
+
+            if (sys != 0)
+            {
+                if (message == NetMessages.NETMSG_INFO)
+                {
+                }
+                else if (message == NetMessages.NETMSG_REQUEST_MAP_DATA) { }
+                else if (message == NetMessages.NETMSG_READY) { }
+                else if (message == NetMessages.NETMSG_ENTERGAME) { }
+                else if (message == NetMessages.NETMSG_INPUT) { }
+                else if (message == NetMessages.NETMSG_RCON_CMD) { }
+                else if (message == NetMessages.NETMSG_RCON_AUTH) { }
+                else if (message == NetMessages.NETMSG_PING) { }
+                else { }
+            }
+            else
+            {
+                // game message
+                if (_clients[clientId].ClientState >= ServerClientState.READY)
+                    _gameContext.On
+            }
         }
 
         private void SendServerInfo(IPEndPoint addr, int token, bool showMore, int offset = 0)
@@ -445,18 +499,38 @@ namespace TeeSharp.Server
             throw new NotImplementedException();
         }
 
-        protected virtual void DelClientCallback(int clientId, string reason)
-        {
-            var ip = _networkServer.ClientAddr(clientId).Address.ToString();
-            Base.DbgMessage("clients", $"client dropped. cid={clientId} addr={ip} reason='{reason}'",
-                ConsoleColor.DarkGreen);
-
-            _clients[clientId].ClientState = ServerClientState.EMPTY;
-        }
-
         protected virtual void NewClientCallback(int clientId)
         {
             _clients[clientId].ClientState = ServerClientState.AUTH;
+            _clients[clientId].Name = "";
+            _clients[clientId].Clan = "";
+            _clients[clientId].Country = -1;
+            _clients[clientId].AccessLevel = 0;
+            _clients[clientId].AuthTries = 0;
+
+            _clients[clientId].Traffic = 0;
+            _clients[clientId].TrafficSince = 0;
+
+            _clients[clientId].Reset();
+        }
+
+        protected virtual void DelClientCallback(int clientId, string reason)
+        {
+            var ip = _networkServer.ClientAddr(clientId).Address.ToString();
+            _gameConsole.Print(ConsoleOutputLevel.ADDINFO, "server", $"client dropped. cid={clientId} addr={ip} reason='{reason}'");
+
+            if (_clients[clientId].ClientState >= ServerClientState.READY)
+                _gameContext.OnClientDrop(clientId, reason);
+
+            _clients[clientId].ClientState = ServerClientState.EMPTY;
+            _clients[clientId].Name = null;
+            _clients[clientId].Clan = null;
+            _clients[clientId].Country = -1;
+
+            _clients[clientId].AccessLevel = 0;
+            _clients[clientId].AuthTries = 0;
+
+            _clients[clientId].SnapshotStorage.PurgeAll();
         }
     }
 }

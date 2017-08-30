@@ -14,6 +14,8 @@ namespace TeeSharp
         public long ConnectionTime { get; private set; }
         public IPEndPoint PeerAddr { get; private set; }
 
+        public int Ack { get; set; }
+
         private readonly NetPacketConstruct _packetConstruct;
         private readonly Queue<NetChunkResend> _resendBuffer;
 
@@ -25,7 +27,6 @@ namespace TeeSharp
         private string _errorString;
 
         private int _bufferSize;
-        private int _ack;
         private int _secuence;
 
         private long _lastSendTime;
@@ -63,8 +64,8 @@ namespace TeeSharp
             ConnectionTime = 0;
             ConnectionState = ConnectionState.OFFLINE;
 
+            Ack = 0;
             _secuence = 0;
-            _ack = 0;
             _remoteClosed = false;
 
             _lastSendTime = 0;
@@ -128,7 +129,7 @@ namespace TeeSharp
             if (numChunks == 0 && _packetConstruct.Flags == 0)
                 return 0;
 
-            _packetConstruct.Ack = _ack;
+            _packetConstruct.Ack = Ack;
             NetworkBase.SendPacket(_udpClient, PeerAddr, _packetConstruct);
             _lastSendTime = Base.TimeGet();
             ResetPacketConstruct();
@@ -192,7 +193,7 @@ namespace TeeSharp
         public void SendControl(ControlMessage message, string extra)
         {
             _lastSendTime = Base.TimeGet();
-            NetworkBase.SendControlMsg(_udpClient, PeerAddr, _ack, message, extra);
+            NetworkBase.SendControlMsg(_udpClient, PeerAddr, Ack, message, extra);
         }
 
         public void ResendChunk(NetChunkResend resend)
@@ -232,9 +233,6 @@ namespace TeeSharp
 
                 if (!string.IsNullOrEmpty(reason))
                     _errorString = reason;
-                
-                if (_config.GetInt("Debug") != 0)
-                    Base.DbgMessage("network", $"disconnect, reason={reason}");
             }
 
             Reset();

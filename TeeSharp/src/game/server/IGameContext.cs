@@ -11,5 +11,8 @@
         void OnInit();
         void OnShutdown();
         void OnConsoleInit();
+
+        void OnClientDrop(int clientId, string reason);
+        void OnMessage(NetMessages msg, Unpacker unpacker, int clientId);
     }
 }

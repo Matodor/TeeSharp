@@ -17,9 +17,9 @@ namespace TeeSharp
 
     public enum ConsoleAccessLevel
     {
-        ADMIN,
-        MODERATOR,
-        USER
+        ADMIN = 3,
+        MODERATOR = 2,
+        USER = 1
     }
 
     public interface IGameConsole

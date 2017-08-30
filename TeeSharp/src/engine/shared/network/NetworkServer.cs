@@ -31,6 +31,7 @@ namespace TeeSharp
 
         public virtual void Init()
         {
+            _recvUnpacker.Init();
             _netBan = Kernel.Get<ServerBan>();
             _config = Kernel.Get<Configuration>();
         }

@@ -39,6 +39,10 @@ namespace TeeSharp.Server
         {
         }
 
+        public void OnClientDrop(int clientId, string reason)
+        {
+        }
+
         public void OnTick()
         {
         }
