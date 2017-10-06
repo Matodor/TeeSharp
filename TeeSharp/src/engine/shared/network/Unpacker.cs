@@ -6,6 +6,14 @@ using System.Threading.Tasks;
 
 namespace TeeSharp
 {
+    [Flags]
+    public enum SanitizeType
+    {
+        SANITIZE = 1,
+        SANITIZE_CC = 2,
+        SKIP_START_WHITESPACES = 4
+    }
+
     public class Unpacker
     {
         public bool Error { get; private set; }
@@ -14,17 +22,12 @@ namespace TeeSharp
         private int _currentIndex;
         private int _endIndex;
 
-        public const int
-            SANITIZE = 1,
-            SANITIZE_CC = 2,
-            SKIP_START_WHITESPACES = 4;
-
         public void Reset(byte[] data, int size)
         {
             _buffer = data;
             _endIndex = size;
             _currentIndex = 0;
-            Error = true;
+            Error = false;
         }
 
         public int GetInt()
@@ -49,7 +52,7 @@ namespace TeeSharp
             return i;
         }
 
-        public string GetString(int sanitizeType = 0)
+        public string GetString(SanitizeType sanitizeType = 0)
         {
             if (Error || _currentIndex >= _endIndex)
                 return "";
@@ -71,12 +74,12 @@ namespace TeeSharp
             var strUTF8 = Encoding.UTF8.GetString(bytes.ToArray());
             ++_currentIndex;
 
-            if ((sanitizeType & SANITIZE) != 0)
+            if ((sanitizeType & SanitizeType.SANITIZE) != 0)
                 strUTF8 = strUTF8.Sanitize();
-            else if ((sanitizeType & SANITIZE_CC) != 0)
+            else if ((sanitizeType & SanitizeType.SANITIZE_CC) != 0)
                 strUTF8 = strUTF8.SanitizeCC();
 
-            return (sanitizeType & SKIP_START_WHITESPACES) != 0 
+            return (sanitizeType & SanitizeType.SKIP_START_WHITESPACES) != 0 
                 ? strUTF8.TrimStart(new[] { ' ', '\t', '\n', '\r' }) 
                 : strUTF8;
         }

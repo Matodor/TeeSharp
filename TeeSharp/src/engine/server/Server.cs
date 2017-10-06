@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 
 namespace TeeSharp.Server
@@ -20,9 +21,13 @@ namespace TeeSharp.Server
         protected ServerBan _serverBan;
         protected ServerRegister _register;
 
-        protected IServerClient[] _clients;
+        protected ServerClient[] _clients;
         protected long _currentGameTick;
         protected long _gameStartTime;
+
+        protected int _currentMapCrc;
+        protected int _currentMapSize;
+        protected byte[] _currentMapData;
 
         public virtual bool LoadMap(string mapName)
         {
@@ -31,7 +36,7 @@ namespace TeeSharp.Server
 
         public ServerClient GetClient(int clientId)
         {
-            throw new NotImplementedException();
+            return _clients[clientId];
         }
 
         public virtual void RegisterCommands()
@@ -117,7 +122,7 @@ namespace TeeSharp.Server
 
         protected virtual void DefaultBindinds()
         {
-            if (!Kernel.IsBinded<IServerClient>()) Kernel.Bind<IServerClient, ServerClient>();
+            if (!Kernel.IsBinded<ServerClient>()) Kernel.Bind<ServerClient, ServerClient>();
             if (!Kernel.IsBinded<IPlayer>()) Kernel.Bind<IPlayer, Player>();
 
             // bind singletons
@@ -136,11 +141,11 @@ namespace TeeSharp.Server
             DefaultBindinds();
 
             _currentGameTick = 0;
-            _clients = new IServerClient[Consts.MAX_CLIENTS];
+            _clients = new ServerClient[Consts.MAX_CLIENTS];
 
             for (var i = 0; i < _clients.Length; i++)
             {
-                _clients[i] = Kernel.Get<IServerClient>();
+                _clients[i] = Kernel.Get<ServerClient>();
                 _clients[i].SnapshotStorage.Init();
             }
 
@@ -218,24 +223,279 @@ namespace TeeSharp.Server
 
             if (sys != 0)
             {
-                if (message == NetMessages.NETMSG_INFO)
+                switch (message)
                 {
+                    case NetMessages.NETMSG_INFO:
+                        NetMsgInfo(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_REQUEST_MAP_DATA:
+                        NetMsgRequestMapData(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_READY:
+                        NetMsgReady(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_ENTERGAME:
+                        NetMsgEnterGame(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_INPUT:
+                        NetMsgInput(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_RCON_CMD:
+                        NetMsgRconCmd(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_RCON_AUTH:
+                        NetMsgRconAuth(packet, unpacker, clientId);
+                        break;
+                    case NetMessages.NETMSG_PING:
+                        NetMsgPing(packet, unpacker, clientId);
+                        break;
+                    default:
+                        if (_config.GetInt("Debug") != 0)
+                            _gameConsole.Print(ConsoleOutputLevel.DEBUG, "server", $"strange message clientId={clientId} msg={msg} data_size={packet.DataSize}");
+                        break;
                 }
-                else if (message == NetMessages.NETMSG_REQUEST_MAP_DATA) { }
-                else if (message == NetMessages.NETMSG_READY) { }
-                else if (message == NetMessages.NETMSG_ENTERGAME) { }
-                else if (message == NetMessages.NETMSG_INPUT) { }
-                else if (message == NetMessages.NETMSG_RCON_CMD) { }
-                else if (message == NetMessages.NETMSG_RCON_AUTH) { }
-                else if (message == NetMessages.NETMSG_PING) { }
-                else { }
             }
             else
             {
                 // game message
                 if (_clients[clientId].ClientState >= ServerClientState.READY)
-                    _gameContext.On
+                    _gameContext.OnMessage(message, unpacker, clientId);
             }
+        }
+
+        protected virtual void NetMsgPing(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            var msg = new MsgPacker(NetMessages.NETMSG_PING_REPLY);
+            SendMsgEx(msg, 0, clientId, true);
+        }
+
+        protected virtual void NetMsgRconAuth(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            
+        }
+
+        protected virtual void NetMsgRconCmd(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            var cmd = unpacker.GetString();
+            if (unpacker.Error || _clients[clientId].AccessLevel == 0)
+                return;
+
+            _gameConsole.Print(ConsoleOutputLevel.ADDINFO, "server", $"ClientID={clientId} rcon='{cmd}'");
+            _gameConsole.ExecuteLine(cmd, _clients[clientId].AccessLevel);
+        }
+
+        protected virtual void NetMsgInput(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            _clients[clientId].LastAckedSnapshot = unpacker.GetInt();
+            var intendedTick = (long) unpacker.GetInt();
+            var size = unpacker.GetInt();
+
+            if (unpacker.Error || size / 4 > Consts.MAX_INPUT_SIZE)
+                return;
+
+            if (_clients[clientId].LastAckedSnapshot > 0)
+                _clients[clientId].SnapRate = SnapRate.FULL;
+
+            var time = Base.TimeGet();
+            long tagTime;
+            Snapshot snapshot;
+
+            if (_clients[clientId].SnapshotStorage.Get(_clients[clientId].LastAckedSnapshot, out tagTime, out snapshot) >= 0) 
+                _clients[clientId].Latency = (int)(((time - tagTime) * 1000) / Base.TimeFreq());
+
+            if (intendedTick > _clients[clientId].LastInputTick)
+            {
+                var timeLeft = (int)(((TickStartTime(intendedTick) - time) * 1000) / Base.TimeFreq());
+                var msg = new MsgPacker(NetMessages.NETMSG_INPUTTIMING);
+                msg.AddInt((int) intendedTick);
+                msg.AddInt(timeLeft);
+                SendMsgEx(msg, 0, clientId, true);
+            }
+
+            _clients[clientId].LastInputTick = intendedTick;
+            var input = _clients[clientId].Inputs[_clients[clientId].CurrentInput];
+
+            if (intendedTick <= Tick)
+                intendedTick = Tick + 1;
+
+            input.GameTick = intendedTick;
+            input.Data = new int[size / 4];
+
+            for (var i = 0; i < input.Data.Length; i++)
+                input.Data[i] = unpacker.GetInt();
+
+            _clients[clientId].LatestInput.Data = input.Data;
+            _clients[clientId].CurrentInput++;
+            _clients[clientId].CurrentInput %= _clients[clientId].Inputs.Length;
+
+            if (_clients[clientId].ClientState == ServerClientState.INGAME)
+                _gameContext.OnClientDirectInput(clientId, _clients[clientId].LatestInput.Data);
+        }
+
+        protected virtual void NetMsgEnterGame(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            if (_clients[clientId].ClientState != ServerClientState.READY ||
+                !_gameContext.IsClientReady(clientId))
+                return;
+
+            _gameConsole.Print(ConsoleOutputLevel.STANDARD, "server", $"player has entered the game. ClientID={clientId} addr={_networkServer.ClientAddr(clientId)}");
+            _clients[clientId].ClientState = ServerClientState.INGAME;
+            _gameContext.OnClientEnter(clientId);
+        }
+
+        protected virtual void NetMsgReady(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            if (_clients[clientId].ClientState != ServerClientState.CONNECTING)
+                return;
+
+            _gameConsole.Print(ConsoleOutputLevel.ADDINFO, "server", $"player is ready. ClientID={clientId} addr={_networkServer.ClientAddr(clientId)}");
+            _clients[clientId].ClientState = ServerClientState.READY;
+            _gameContext.OnClientConnected(clientId);
+
+            var msg = new MsgPacker(NetMessages.NETMSG_CON_READY);
+            SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
+        }
+
+        protected virtual void NetMsgRequestMapData(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            if (_clients[clientId].ClientState < ServerClientState.CONNECTING)
+                return;
+
+            var chunk = unpacker.GetInt();
+            if (chunk != _clients[clientId].NextMapChunk || _config.GetInt("SvFastDownload") == 0)
+            {
+                SendMapData(clientId, chunk);
+                return;
+            }
+
+            var mapWindow = _config.GetInt("SvMapWindow");
+            if (chunk == 0)
+            {
+                for (var i = 0; i < mapWindow; i++)
+                {
+                    SendMapData(clientId, i);
+                }
+            }
+
+            SendMapData(clientId, mapWindow + _clients[clientId].NextMapChunk);
+            _clients[clientId].NextMapChunk++;
+        }
+
+        protected virtual void NetMsgInfo(NetChunk packet, Unpacker unpacker, int clientId)
+        {
+            if (_clients[clientId].ClientState != ServerClientState.AUTH)
+                return;
+
+            var version = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            if (!version.StartsWith(GameVersion.GAME_NETVERSION))
+            {
+                // wrong version
+                _networkServer.Drop(clientId, $"Wrong version. Server is running '{GameVersion.GAME_NETVERSION}' and client '{version}'");
+                return;
+            }
+
+            var password = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            if (!string.IsNullOrEmpty(_config.GetString("Password")) && password != _config.GetString("Password"))
+            {
+                // wrong password
+                _networkServer.Drop(clientId, "Wrong password");
+                return;
+            }
+
+            // reserved slot
+            if (clientId >= _config.GetInt("SvMaxClients") - _config.GetInt("SvReservedSlots") &&
+                !string.IsNullOrEmpty(_config.GetString("SvReservedSlotsPass")) && _config.GetString("SvReservedSlotsPass") != password)
+            {
+                _networkServer.Drop(clientId, "This server is full");
+                return;
+            }
+
+            _clients[clientId].ClientState = ServerClientState.CONNECTING;
+            SendMap(clientId);
+        }
+
+        protected virtual void SendMapData(int clientId, int chunk)
+        {
+            var chunkSize = 1024 - 128;
+            var offset = chunk * chunkSize;
+            var last = 0;
+
+            if (chunk < 0 || offset > _currentMapSize)
+                return;
+
+            if (offset + chunkSize >= _currentMapSize)
+            {
+                chunkSize = _currentMapSize - offset;
+                last = 1;
+            }
+
+            var msg = new MsgPacker(NetMessages.NETMSG_MAP_DATA);
+            msg.AddInt(last);
+            msg.AddInt(_currentMapCrc);
+            msg.AddInt(chunk);
+            msg.AddInt(chunkSize);
+            msg.AddRaw(_currentMapData, offset, chunkSize);
+            SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
+
+            if (_config.GetInt("Debug") != 0)
+                _gameConsole.Print(ConsoleOutputLevel.DEBUG, "server", $"sending chunk {chunk} with size {chunkSize}");
+        }
+
+        protected virtual void SendMap(int clientId)
+        {
+            var msg = new MsgPacker(NetMessages.NETMSG_MAP_CHANGE);
+            msg.AddString(GetMapName());
+            msg.AddInt(_currentMapCrc);
+            msg.AddInt(_currentMapSize);
+            SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
+        }
+
+        public bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId)
+        {
+            return SendMsgEx(msg, flags, clientId, false);
+        }
+
+        public bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)
+        {
+            if (msg == null)
+                return false;
+
+            var packet = new NetChunk()
+            {
+                ClientId = clientId,
+                DataSize = msg.Size(),
+                Data = msg.Data(),
+            };
+
+            packet.Data[0] <<= 1;
+            if (system)
+                packet.Data[0] |= 1;
+
+            if ((flags & MsgFlags.VITAL) != 0)
+                packet.Flags |= SendFlag.VITAL;
+            if ((flags & MsgFlags.FLUSH) != 0)
+                packet.Flags |= SendFlag.FLUSH;
+
+            if ((flags & MsgFlags.NOSEND) == 0)
+            {
+                if (clientId == -1)
+                {
+                    for (var i = 0; i < Consts.MAX_CLIENTS; i++)
+                    {
+                        if (_clients[i].ClientState == ServerClientState.INGAME)
+                        {
+                            packet.ClientId = i;
+                            _networkServer.Send(packet);
+                        }
+                    }
+                }
+                else
+                {
+                    _networkServer.Send(packet);
+                }
+            }
+
+            return true;
         }
 
         private void SendServerInfo(IPEndPoint addr, int token, bool showMore, int offset = 0)
@@ -449,19 +709,19 @@ namespace TeeSharp.Server
                     _currentGameTick++;
                     ticks++;
 
-                    for (var c = 0; c < Consts.MAX_CLIENTS; c++)
+                    for (var client = 0; client < Consts.MAX_CLIENTS; client++)
                     {
-                        if (_clients[c].ClientState != ServerClientState.INGAME)
+                        if (_clients[client].ClientState != ServerClientState.INGAME)
                             continue;
 
-                        /*for (var i = 0; i < 200; i++)
+                        for (var input = 0; input < _clients[client].Inputs.Length; input++)
                         {
-                            if (_clients[c].m_aInputs[i].m_GameTick == Tick)
+                            if (_clients[client].Inputs[input].GameTick == Tick)
                             {
-                                gameServer.OnClientPredictedInput(c, _clients[c].m_aInputs[i].m_aData);
+                                _gameContext.OnClientPredictedInput(client, _clients[client].Inputs[input].Data);
                                 break;
                             }
-                        }*/
+                        }
                     }
 
                     _gameContext.OnTick();
@@ -486,7 +746,7 @@ namespace TeeSharp.Server
             }
 
             _gameContext.OnShutdown();
-            
+            _map.
         }
 
         private void SendRconLineAuthed(string str, object data)
@@ -496,21 +756,11 @@ namespace TeeSharp.Server
 
         protected virtual void DoSnapshot()
         {
-            throw new NotImplementedException();
         }
 
         protected virtual void NewClientCallback(int clientId)
         {
             _clients[clientId].ClientState = ServerClientState.AUTH;
-            _clients[clientId].Name = "";
-            _clients[clientId].Clan = "";
-            _clients[clientId].Country = -1;
-            _clients[clientId].AccessLevel = 0;
-            _clients[clientId].AuthTries = 0;
-
-            _clients[clientId].Traffic = 0;
-            _clients[clientId].TrafficSince = 0;
-
             _clients[clientId].Reset();
         }
 
@@ -523,14 +773,7 @@ namespace TeeSharp.Server
                 _gameContext.OnClientDrop(clientId, reason);
 
             _clients[clientId].ClientState = ServerClientState.EMPTY;
-            _clients[clientId].Name = null;
-            _clients[clientId].Clan = null;
-            _clients[clientId].Country = -1;
-
-            _clients[clientId].AccessLevel = 0;
-            _clients[clientId].AuthTries = 0;
-
-            _clients[clientId].SnapshotStorage.PurgeAll();
+            _clients[clientId].Reset();
         }
     }
 }

@@ -18,11 +18,12 @@ namespace TeeSharp
         /* makes sure that the string only contains the characters between 32 and 255 */
         public static string SanitizeCC(this string str)
         {
-            var tmp = new StringBuilder(str);
-            for (int i = 0; i < tmp.Length; i++)
+            var tmp = new StringBuilder(str.Length);
+            for (var i = 0; i < str.Length; i++)
             {
-                if (tmp[i] < 32)
-                    tmp[i] = ' ';
+                if (str[i] < 32)
+                    continue;
+                tmp.Append(str[i]);
             }
 
             return tmp.ToString();
@@ -31,11 +32,12 @@ namespace TeeSharp
         /* makes sure that the string only contains the characters between 32 and 255 + \r\n\t */
         public static string Sanitize(this string str)
         {
-            var tmp = new StringBuilder(str);
-            for (int i = 0; i < tmp.Length; i++)
+            var tmp = new StringBuilder(str.Length);
+            for (var i = 0; i < str.Length; i++)
             {
-                if (tmp[i] < 32 && tmp[i] != '\r' && tmp[i] != '\n' && tmp[i] != '\t')
-                    tmp[i] = ' ';
+                if (str[i] < 32 && str[i] != '\r' && str[i] != '\n' && str[i] != '\t')
+                    continue;
+                tmp.Append(str[i]);
             }
 
             return tmp.ToString();

@@ -250,6 +250,16 @@ namespace TeeSharp
         CHAT_BLUE = 1
     }
 
+    [Flags]
+    public enum MsgFlags
+    {
+        VITAL = 1,
+        FLUSH = 2,
+        NORECORD = 4,
+        RECORD = 8,
+        NOSEND = 16,
+    }
+
     public partial class Consts
     {
         public const int
@@ -267,13 +277,6 @@ namespace TeeSharp
 
             MAX_NAME_LENGTH = 16,
             MAX_CLAN_LENGTH = 12,
-
-            // message packing
-            MSGFLAG_VITAL = 1,
-            MSGFLAG_FLUSH = 2,
-            MSGFLAG_NORECORD = 4,
-            MSGFLAG_RECORD = 8,
-            MSGFLAG_NOSEND = 16,
 
             VERSION_VANILLA = 0,
             VERSION_DDRACE = 1,

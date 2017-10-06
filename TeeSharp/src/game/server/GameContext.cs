@@ -21,6 +21,11 @@ namespace TeeSharp.Server
             return _players[ClientID] != null && _players[ClientID].Team != Teams.SPECTATORS;
         }
 
+        public bool IsClientReady(int ClientID)
+        {
+            return true;
+        }
+
         public string GameType()
         {
             return "test";
@@ -39,7 +44,23 @@ namespace TeeSharp.Server
         {
         }
 
+        public void OnClientEnter(int clientId)
+        {
+        }
+
+        public void OnClientConnected(int clientId)
+        {
+        }
+
         public void OnClientDrop(int clientId, string reason)
+        {
+        }
+
+        public void OnMessage(NetMessages msg, Unpacker unpacker, int clientId)
+        {
+        }
+
+        public void OnClientDirectInput(int clientId, int[] data)
         {
         }
 

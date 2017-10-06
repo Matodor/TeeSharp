@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace TeeSharp
@@ -111,7 +109,7 @@ namespace TeeSharp
                 if (NetworkBase.IsSeqInBackroom(resendChunk.Sequence, ack))
                 {
                     _resendBuffer.Dequeue();
-                    _bufferSize -= Marshal.SizeOf<NetworkChange>() + resendChunk.DataSize;
+                    _bufferSize -= 32 + resendChunk.DataSize;
                 }
                 else
                     return;
@@ -159,7 +157,7 @@ namespace TeeSharp
 
             if ((flags & ChunkFlags.VITAL) != 0 && (flags & ChunkFlags.RESEND) == 0)
             {
-                _bufferSize += Marshal.SizeOf<NetChunkResend>() + dataSize;
+                _bufferSize += 32 + dataSize;
                 if (_bufferSize >= Consts.NET_CONN_BUFFERSIZE)
                 {
                     Disconnect("too weak connection (out of buffer)");
