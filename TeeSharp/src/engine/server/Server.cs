@@ -547,7 +547,7 @@ namespace TeeSharp.Server
 
             // flags
             var pass = 0;
-            if (!string.IsNullOrEmpty(_config.GetString("Password"))) // password set
+            if (!string.IsNullOrEmpty(_config.GetString("Password")))
                 pass |= Consts.SERVER_FLAG_PASSWORD;
             p.AddString(pass.ToString(), 2);
 
@@ -746,7 +746,6 @@ namespace TeeSharp.Server
             }
 
             _gameContext.OnShutdown();
-            _map.
         }
 
         private void SendRconLineAuthed(string str, object data)

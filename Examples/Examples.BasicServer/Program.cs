@@ -1,5 +1,4 @@
-﻿using System;
-using TeeSharp;
+﻿using TeeSharp;
 using TeeSharp.Server;
 
 namespace Examples.BasicServer
