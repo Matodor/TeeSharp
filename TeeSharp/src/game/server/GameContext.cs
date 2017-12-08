@@ -60,6 +60,10 @@ namespace TeeSharp.Server
         {
         }
 
+        public void OnClientPredictedInput(int clientId, int[] data)
+        {
+        }
+
         public void OnClientDirectInput(int clientId, int[] data)
         {
         }

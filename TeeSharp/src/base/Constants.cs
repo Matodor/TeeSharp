@@ -253,21 +253,21 @@ namespace TeeSharp
     [Flags]
     public enum MsgFlags
     {
-        VITAL = 1,
-        FLUSH = 2,
-        NORECORD = 4,
-        RECORD = 8,
-        NOSEND = 16,
+        VITAL = 1 << 0,
+        FLUSH = 1 << 1,
+        NORECORD = 1 << 2,
+        RECORD = 1 << 3,
+        NOSEND = 1 << 4,
     }
 
     public partial class Consts
     {
         public const int
-            INPUT_STATE_MASK = 63,
+            INPUT_STATE_MASK = 0b0111111,
             SPEC_FREEVIEW = -1,
 
             SERVER_TICK_SPEED = 50,
-            SERVER_FLAG_PASSWORD = 1 << 0,
+            SERVER_FLAG_PASSWORD = 0b00000001,
 
             MAX_CLIENTS = 64,
             VANILLA_MAX_CLIENTS = 16,

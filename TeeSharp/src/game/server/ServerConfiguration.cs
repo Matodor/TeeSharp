@@ -18,7 +18,7 @@ namespace TeeSharp
             { "Logfile", new ConfigStr("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },
             { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Adjusts the amount of information in the console") },
 
-            { "SvName", new ConfigStr("SvName", "sv_name", 128, "TeeSharp server", ConfigFlags.SERVER, "Server name") },
+            { "SvName", new ConfigStr("SvName", "sv_name", 128, "TeeSharp server by Matodor", ConfigFlags.SERVER, "Server name") },
             { "Bindaddr", new ConfigStr("Bindaddr", "bindaddr", 128, "", ConfigFlags.CLIENT|ConfigFlags.SERVER|ConfigFlags.MASTER, "Address to bind the client/server to") },
             { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },
             { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
