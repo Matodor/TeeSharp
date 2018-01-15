@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TeeSharp\TeeSharp.csproj" />
+    <ProjectReference Include="..\..\TeeSharp.Common\TeeSharp.Common.csproj" />
+    <ProjectReference Include="..\..\TeeSharp.Server\TeeSharp.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

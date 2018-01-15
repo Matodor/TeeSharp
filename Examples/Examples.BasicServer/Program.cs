@@ -1,14 +1,14 @@
-﻿using TeeSharp;
+﻿using TeeSharp.Common;
 using TeeSharp.Server;
 
 namespace Examples.BasicServer
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        internal static void Main(string[] args)
         {
-            // register server singleton
-            var server = Kernel.BindGet<IServer, Server>(new Server());
+            var kernel = new Kernel(new DefaultServerKernel());
+            var server = kernel.Get<BaseServer>();
             server.Init(args);
             server.Run();
         }

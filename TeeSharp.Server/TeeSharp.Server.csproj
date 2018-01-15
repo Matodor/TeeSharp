@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TeeSharp.Common\TeeSharp.Common.csproj" />
+    <ProjectReference Include="..\TeeSharp.Map\TeeSharp.Map.csproj" />
+    <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,17 +3,33 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.10
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp", "TeeSharp\TeeSharp.csproj", "{43801A18-1091-407A-AF31-F8EE4B644D44}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.BasicServer", "Examples\Examples.BasicServer\Examples.BasicServer.csproj", "{47F43A0A-582F-4756-B022-7DF93897EF0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.BasicServer", "Examples\Examples.BasicServer\Examples.BasicServer.csproj", "{47F43A0A-582F-4756-B022-7DF93897EF0C}"
 	ProjectSection(ProjectDependencies) = postProject
-		{43801A18-1091-407A-AF31-F8EE4B644D44} = {43801A18-1091-407A-AF31-F8EE4B644D44}
+		{FB04F479-414B-4D41-9E49-5F89B69454BB} = {FB04F479-414B-4D41-9E49-5F89B69454BB}
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.OverrideServer", "Examples\Examples.OverrideServer\Examples.OverrideServer.csproj", "{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.OverrideServer", "Examples\Examples.OverrideServer\Examples.OverrideServer.csproj", "{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}"
 	ProjectSection(ProjectDependencies) = postProject
-		{43801A18-1091-407A-AF31-F8EE4B644D44} = {43801A18-1091-407A-AF31-F8EE4B644D44}
+		{FB04F479-414B-4D41-9E49-5F89B69454BB} = {FB04F479-414B-4D41-9E49-5F89B69454BB}
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Common", "TeeSharp.Common\TeeSharp.Common.csproj", "{A3E30B8C-3604-48D4-84A4-B5D778660BF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Server", "TeeSharp.Server\TeeSharp.Server.csproj", "{FB04F479-414B-4D41-9E49-5F89B69454BB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337} = {D655D9AE-26A0-4F52-84A0-C55D6D8BC337}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Network", "TeeSharp.Network\TeeSharp.Network.csproj", "{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Map", "TeeSharp.Map\TeeSharp.Map.csproj", "{02870652-7012-43E1-BCEC-B72E2139B8BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +37,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{43801A18-1091-407A-AF31-F8EE4B644D44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43801A18-1091-407A-AF31-F8EE4B644D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43801A18-1091-407A-AF31-F8EE4B644D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43801A18-1091-407A-AF31-F8EE4B644D44}.Release|Any CPU.Build.0 = Release|Any CPU
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47F43A0A-582F-4756-B022-7DF93897EF0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +45,22 @@ Global
 		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E129600-9A1A-4E41-9B8B-04F2FCAF1D75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3E30B8C-3604-48D4-84A4-B5D778660BF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB04F479-414B-4D41-9E49-5F89B69454BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB04F479-414B-4D41-9E49-5F89B69454BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB04F479-414B-4D41-9E49-5F89B69454BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB04F479-414B-4D41-9E49-5F89B69454BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02870652-7012-43E1-BCEC-B72E2139B8BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02870652-7012-43E1-BCEC-B72E2139B8BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02870652-7012-43E1-BCEC-B72E2139B8BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02870652-7012-43E1-BCEC-B72E2139B8BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
