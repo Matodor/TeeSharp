@@ -17,10 +17,10 @@
         public ConfigInt(string name, string cmd, int def, int min, int max,
             ConfigFlags flags, string desc) : base(name, cmd, flags, desc)
         {
-            Value = def;
-            DefaultValue = def;
             Min = min;
             Max = max;
+            Value = def;
+            DefaultValue = def;
         }
 
         public override string AsString()
@@ -36,6 +36,11 @@
         public override bool AsBoolean()
         {
             return Value != 0;
+        }
+
+        public override string ToString()
+        {
+            return Value.ToString();
         }
     }
 }

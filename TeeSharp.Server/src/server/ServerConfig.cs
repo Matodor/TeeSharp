@@ -11,17 +11,19 @@ namespace TeeSharp.Server
             {
                 { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 100, 5, 1000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout") },
                 { "ConnTimeoutProtection", new ConfigInt("ConnTimeoutProtection", "conn_timeout_protection", 1000, 5, 10000, ConfigFlags.SAVE | ConfigFlags.SERVER, "Network timeout protection") },
+
                 { "SvSpoofProtection", new ConfigInt("SvSpoofProtection", "sv_spoof_protection", 0, 0, 1, ConfigFlags.SERVER, "Enable spoof protection") },
                 { "SvMapWindow", new ConfigInt("SvMapWindow", "sv_map_window", 15, 0, 100, ConfigFlags.SERVER, "Map downloading send-ahead window") },
                 { "SvFastDownload", new ConfigInt("SvFastDownload", "sv_fast_download", 1, 0, 1, ConfigFlags.SERVER, "Enables fast download of maps") },
                 { "SvNetlimit", new ConfigInt("SvNetlimit", "sv_netlimit", 0, 0, 10000, ConfigFlags.SERVER, "Netlimit: Maximum amount of traffic a client is allowed to use (in kb/s)") },
                 { "SvNetlimitAlpha", new ConfigInt("SvNetlimitAlpha", "sv_netlimit_alpha", 50, 1, 100, ConfigFlags.SERVER, "Netlimit: Alpha of Exponention moving average") },
+                { "SvMapUpdateRate", new ConfigInt("SvMapUpdateRate", "sv_mapupdaterate", 5, 1, 100, ConfigFlags.SERVER, "(Tw32) real id <-> vanilla id players map update rate") },
 
                 { "Password", new ConfigString("Password", "password", 32, "", ConfigFlags.CLIENT|ConfigFlags.SERVER, "Password to the server") },
                 { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },
                 { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Adjusts the amount of information in the console") },
 
-                { "SvName", new ConfigString("SvName", "sv_name", 128, "TeeSharp server by Matodor", ConfigFlags.SERVER, "Server name") },
+                { "SvName", new ConfigString("SvName", "sv_name", 128, "TeeSharp server", ConfigFlags.SERVER, "Server name") },
                 { "Bindaddr", new ConfigString("Bindaddr", "bindaddr", 128, "", ConfigFlags.CLIENT|ConfigFlags.SERVER|ConfigFlags.MASTER, "Address to bind the client/server to") },
                 { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },
                 { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
@@ -72,9 +74,7 @@ namespace TeeSharp.Server
                 { "SvVoteKick", new ConfigInt("SvVoteKick", "sv_vote_kick", 1, 0, 1, ConfigFlags.SERVER, "Allow voting to kick players") },
                 { "SvVoteKickMin", new ConfigInt("SvVoteKickMin", "sv_vote_kick_min", 0, 0, BaseServer.MAX_CLIENTS, ConfigFlags.SERVER, "Minimum number of players required to start a kick vote") },
                 { "SvVoteKickBantime", new ConfigInt("SvVoteKickBantime", "sv_vote_kick_bantime", 5, 0, 1440, ConfigFlags.SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick") },
-
-                { "SvMapUpdateRate", new ConfigInt("SvMapUpdateRate", "sv_mapupdaterate", 5, 1, 100, ConfigFlags.SERVER, "(Tw32) real id <-> vanilla id players map update rate") },
-
+                
                 { "DbgFocus", new ConfigInt("DbgFocus", "dbg_focus", 0, 0, 1, ConfigFlags.CLIENT, "") },
                 { "DbgTuning", new ConfigInt("DbgTuning", "dbg_tuning", 0, 0, 1, ConfigFlags.CLIENT, "") },
             });

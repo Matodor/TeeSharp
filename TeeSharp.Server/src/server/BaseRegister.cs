@@ -1,9 +1,10 @@
-﻿using TeeSharp.Common;
+﻿using System.Net.Sockets;
+using TeeSharp.Common;
 
 namespace TeeSharp.Server
 {
-    public class BaseRegister : BaseInterface
+    public abstract class BaseRegister : BaseInterface
     {
-        
+        public abstract void RegisterUpdate(AddressFamily netType);
     }
 }

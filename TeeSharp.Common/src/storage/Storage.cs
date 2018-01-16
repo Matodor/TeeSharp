@@ -21,6 +21,9 @@ namespace TeeSharp.Common.Storage
                 appName
             );
 
+            if (!Directory.Exists(_appStoragePath))
+                Directory.CreateDirectory(_appStoragePath);
+
             LoadPaths();
 
             if (_paths.Count == 0)
@@ -89,7 +92,7 @@ namespace TeeSharp.Common.Storage
 
         protected override void LoadPaths()
         {
-            var cfgPath = Path.Combine(Environment.CurrentDirectory, "storage.cfg");
+            var cfgPath = Path.Combine(FS.WorkingDirectory(), "storage.cfg");
 
             if (!File.Exists(cfgPath))
             {
@@ -127,7 +130,7 @@ namespace TeeSharp.Common.Storage
                     break;
 
                 case "$DATADIR":
-                    var dataPath = Path.Combine(Environment.CurrentDirectory, "data");
+                    var dataPath = Path.Combine(FS.WorkingDirectory(), "data");
                     if (!Directory.Exists(dataPath))
                         return;
                     _paths.Add(dataPath);
@@ -135,8 +138,8 @@ namespace TeeSharp.Common.Storage
                     break;
 
                 case "$CURRENTDIR":
-                    _paths.Add(Environment.CurrentDirectory);
-                    Debug.Log("storage", $"added path '$CURRENTDIR' ('{Environment.CurrentDirectory}')");
+                    _paths.Add(FS.WorkingDirectory());
+                    Debug.Log("storage", $"added path '$CURRENTDIR' ('{FS.WorkingDirectory()}')");
                     break;
 
                 default:
