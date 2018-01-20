@@ -1,18 +1,9 @@
 ﻿using System.Net;
-using System.Net.Sockets;
-using TeeSharp.Common;
+using TeeSharp.Core;
+using TeeSharp.Network.Enums;
 
 namespace TeeSharp.Network
 {
-    public enum ConnectionState
-    {
-        OFFLINE = 0,
-        CONNECT,
-        PENDING,
-        ONLINE,
-        ERROR,
-    }
-
     public abstract class BaseNetworkConnection : BaseInterface
     {
         public abstract ConnectionState State { get; protected set; }
@@ -20,7 +11,14 @@ namespace TeeSharp.Network
         public abstract IPEndPoint EndPoint { get; protected set; }
         public abstract string Error { get; protected set; }
 
-        public abstract void Init(UdpClient client, bool closeMsg);
+        protected abstract BaseNetworkServer NetworkServer { get; set; } 
+        protected abstract long LastReceiveTime { get; set; }
+
+        public abstract void Init(BaseNetworkServer networkServer, bool closeMsg);
         public abstract void Update();
+        public abstract void Disconnect(string reason);
+        public abstract bool Feed(NetworkChunkConstruct packet, IPEndPoint remote);
+        public abstract void Flush();
+        public abstract bool QueueChunk(SendFlags flags, byte[] data, int dataSize);
     }
 }

@@ -5,6 +5,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Storage;
+using TeeSharp.Core;
 using TeeSharp.Network;
 using TeeSharp.Server.Game;
 
@@ -17,7 +18,7 @@ namespace TeeSharp.Server
             // singletons
             kernel.Bind<BaseServer>().To<Server>().AsSingleton();
             kernel.Bind<BaseConfig>().To<ServerConfig>().AsSingleton();
-            kernel.Bind<BaseServerBan>().To<ServerBan>().AsSingleton();
+            kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();
             kernel.Bind<BaseGameContext>().To<GameContext>().AsSingleton();
             kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
             kernel.Bind<BaseNetworkServer>().To<NetworkServer>().AsSingleton();
@@ -33,7 +34,7 @@ namespace TeeSharp.Server
     {
         public override long Tick { get; protected set; }
 
-        protected override BaseServerBan ServerBan { get; set; }
+        protected override BaseNetworkBan NetworkBan { get; set; }
         protected override BaseRegister Register { get; set; }
         protected override BaseGameContext GameContext { get; set; }
         protected override BaseConfig Config { get; set; }
@@ -63,7 +64,7 @@ namespace TeeSharp.Server
             NetworkServer = Kernel.Get<BaseNetworkServer>();
             Console = Kernel.Get<BaseGameConsole>();
             Register = Kernel.Get<BaseRegister>();
-            ServerBan = Kernel.Get<BaseServerBan>();
+            NetworkBan = Kernel.Get<BaseNetworkBan>();
 
             if (Config == null ||
                 GameContext == null ||
@@ -163,7 +164,7 @@ namespace TeeSharp.Server
             }
         }
 
-        protected override void ProcessClientPacket(NetChunk packet)
+        protected override void ProcessClientPacket(NetworkChunk packet)
         {
             throw new NotImplementedException();
         }
@@ -182,7 +183,7 @@ namespace TeeSharp.Server
                 ProcessClientPacket(packet);
             }
 
-            ServerBan.Update();
+            NetworkBan.Update();
         }
 
         protected override void DoSnapshot()

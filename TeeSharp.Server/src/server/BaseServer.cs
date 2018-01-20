@@ -1,7 +1,7 @@
-﻿using TeeSharp.Common;
-using TeeSharp.Common.Config;
+﻿using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Storage;
+using TeeSharp.Core;
 using TeeSharp.Network;
 using TeeSharp.Server.Game;
 
@@ -15,7 +15,7 @@ namespace TeeSharp.Server
 
         public abstract long Tick { get; protected set; }
 
-        protected abstract BaseServerBan ServerBan { get; set; }
+        protected abstract BaseNetworkBan NetworkBan { get; set; }
         protected abstract BaseRegister Register { get; set; }
         protected abstract BaseGameContext GameContext { get; set; }
         protected abstract BaseConfig Config { get; set; }
@@ -30,7 +30,7 @@ namespace TeeSharp.Server
         public abstract void Init(string[] args);
         public abstract void Run();
 
-        protected abstract void ProcessClientPacket(NetChunk packet);
+        protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(long tick);

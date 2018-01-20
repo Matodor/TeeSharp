@@ -1,17 +1,17 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using TeeSharp.Common;
+using TeeSharp.Core;
+using TeeSharp.Network.Enums;
 using Math = System.Math;
 
 namespace TeeSharp.Network
 {
     public class NetworkServer : BaseNetworkServer
     {
-        public override int MaxClientsPerIp { get; protected set; }
-        public override int MaxClients { get; protected set; }
+        public override NetworkServerConfig Config { get; protected set; }
 
-        protected BaseServerBan ServerBan { get; private set; }
+        protected override BaseChunkReceiver ChunkReceiver { get; set; }
+        protected BaseNetworkBan NetworkBan { get; private set; }
         
         protected override UdpClient UdpClient { get; set; }
         protected override NewClientCallback NewClientCallback { get; set; }
@@ -20,23 +20,23 @@ namespace TeeSharp.Network
 
         public override void Init()
         {
-            ServerBan = Kernel.Get<BaseServerBan>();
+            NetworkBan = Kernel.Get<BaseNetworkBan>();
+            ChunkReceiver = Kernel.Get<BaseChunkReceiver>();
         }
 
-        public override bool Open(IPEndPoint localEP, int maxClients, int maxClientsPerIp)
+        public override bool Open(NetworkServerConfig config)
         {
-            if (!NetworkHelper.CreateUdpClient(localEP, out var socket))
+            if (!NetworkCore.CreateUdpClient(config.LocalEndPoint, out var socket))
                 return false;
 
+            Config = CheckConfig(config);
             UdpClient = socket;
-            MaxClients = maxClients;
-            SetMaxClientsPerIp(maxClientsPerIp);
-            Connections = new BaseNetworkConnection[MaxClients];
+            Connections = new BaseNetworkConnection[Config.MaxClients];
 
             for (var i = 0; i < Connections.Length; i++)
             {
                 Connections[i] = Kernel.Get<BaseNetworkConnection>();
-                Connections[i].Init(UdpClient, true);
+                Connections[i].Init(this, true);
             }
 
             return true;
@@ -48,12 +48,7 @@ namespace TeeSharp.Network
             DelClientCallback = delClientCB;
         }
 
-        public override void SetMaxClientsPerIp(int maxClientsPerIp)
-        {
-            MaxClientsPerIp = Math.Clamp(maxClientsPerIp, 1, MaxClients);
-        }
-
-        public override IPEndPoint ClientAddr(int clientId)
+        public override IPEndPoint ClientEndPoint(int clientId)
         {
             return Connections[clientId].EndPoint;
         }
@@ -74,27 +69,137 @@ namespace TeeSharp.Network
                 if (Connections[clientId].State == ConnectionState.ERROR)
                 {
                     if (now - Connections[clientId].ConnectedAt < Time.Freq())
-                        ServerBan.BanAddr(ClientAddr(clientId), 60, "Stressing network");
+                        NetworkBan.BanAddr(ClientEndPoint(clientId), 60, "Stressing network");
                     else
                         Drop(clientId, Connections[clientId].Error);
                 }
             }
         }
 
-        public override bool Receive(out NetChunk packet)
+        public override bool Receive(out NetworkChunk packet)
         {
-            if (UdpClient.Available == 0)
+            while (UdpClient.Available > 0)
             {
-                packet = null;
-                return false;
+                if (ChunkReceiver.FetchChunk(out packet))
+                    return true;
+
+                var remote = (IPEndPoint) null;
+                var data = UdpClient.Receive(ref remote);
+
+                if (data.Length == 0)
+                    continue;
+
+                if (NetworkBan.IsBanned(remote, out var reason))
+                {
+                    NetworkCore.SendControlMsg(UdpClient, remote, 0,
+                        ConnectionMessages.CLOSE, reason);
+                    return false;
+                }
+
+                if (!NetworkCore.UnpackPacket(data, data.Length, ChunkReceiver.ChunkConstruct))
+                    return false;
+
+                if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONNLESS))
+                {
+                    packet = new NetworkChunk
+                    {
+                        ClientId = -1,
+                        Flags = SendFlags.CONNLESS,
+                        EndPoint = remote,
+                        DataSize = ChunkReceiver.ChunkConstruct.DataSize,
+                        Data = ChunkReceiver.ChunkConstruct.Data
+                    };
+
+                    return true;
+                }
+
+                if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
+                    ChunkReceiver.ChunkConstruct.DataSize == 0)
+                {
+                    continue;
+                }
+
+                var connectionId = FindSlot(remote, true);
+
+                if (connectionId < 0 &&
+                    ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
+                    ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
+                {
+
+                }
+                else
+                {
+                    if (!Connections[connectionId].Feed(ChunkReceiver.ChunkConstruct, remote))
+                        continue;
+
+                    if (ChunkReceiver.ChunkConstruct.DataSize > 0)
+                        ChunkReceiver.Start(remote, connectionId);
+                }
+
             }
 
+            packet = null;
             return false;
         }
 
         public override void Drop(int clientId, string reason)
         {
-            throw new NotImplementedException();
+            DelClientCallback?.Invoke(clientId, reason);
+            Connections[clientId].Disconnect(reason);
+        }
+
+        public override int FindSlot(IPEndPoint endPoint, bool comparePorts)
+        {
+            for (var i = 0; i < Connections.Length; i++)
+            {
+                if (Connections[i].State != ConnectionState.OFFLINE &&
+                    Connections[i].State != ConnectionState.ERROR &&
+                    NetworkCore.CompareEndPoints(Connections[i].EndPoint, endPoint, true))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public override void Send(NetworkChunk packet)
+        {
+            if (packet.DataSize > NetworkCore.MAX_PAYLOAD)
+            {
+                Debug.Warning("network", $"packet payload too big, length={packet.DataSize}");
+                return;
+            }
+
+            if (packet.Flags.HasFlag(PacketFlags.CONNLESS))
+            {
+                NetworkCore.SendPacketConnless(UdpClient, packet.EndPoint,
+                    packet.Data, packet.DataSize);
+                return;
+            }
+
+            Debug.Assert(packet.ClientId >= 0 || 
+                         packet.ClientId < Connections.Length, "wrong client id");
+
+            var flags = SendFlags.NONE;
+            if (packet.Flags.HasFlag(SendFlags.VITAL))
+                flags = SendFlags.VITAL;
+
+            if (Connections[packet.ClientId].QueueChunk(flags, packet.Data, packet.DataSize))
+            {
+                if (packet.Flags.HasFlag(SendFlags.FLUSH))
+                    Connections[packet.ClientId].Flush();
+            }
+            else
+            {
+                Drop(packet.ClientId, "Error sending data");
+            }
+        }
+
+        protected override NetworkServerConfig CheckConfig(NetworkServerConfig config)
+        {
+            config.MaxClientsPerIp = Math.Clamp(config.MaxClientsPerIp, 1, config.MaxClients);
+            return config;
         }
     }
 }

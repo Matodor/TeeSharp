@@ -1,4 +1,4 @@
-﻿namespace TeeSharp.Common
+﻿namespace TeeSharp.Core
 {
     public abstract class BaseInterface
     {

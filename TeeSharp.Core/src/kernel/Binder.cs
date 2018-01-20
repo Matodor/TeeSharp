@@ -2,15 +2,15 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Core
 {
     public abstract class Binder
     {
         public Type BindedType { get; }
         public Type InjectedType { get; protected set; } = null;
-        public Func<BaseInterface> Activator { get; protected set; }
+        public Func<object> Activator { get; protected set; }
 
-        protected BaseInterface Singleton { get; set; }
+        protected object Singleton { get; set; }
 
         protected Binder(Type bindedType)
         {
@@ -18,7 +18,7 @@ namespace TeeSharp.Common
         }
     }
 
-    public class Binder<TBinded> : Binder where TBinded : BaseInterface
+    public class Binder<TBinded> : Binder
     {
         public Binder() : base(typeof(TBinded))
         {
@@ -28,7 +28,7 @@ namespace TeeSharp.Common
         private void CheckInjectedType()
         {
             if (InjectedType == null)
-                throw new NullReferenceException($"");
+                throw new NullReferenceException("Bind type first");
             if (!InjectedType.IsClass)
                 throw new Exception($"Injected type ({InjectedType.Name}) must be a class with public constructor without parameters");
         }
@@ -40,33 +40,25 @@ namespace TeeSharp.Common
             Activator = () => Singleton;
         }
 
-        public Binder<TBinded> To<TInjected>() where TInjected : BaseInterface, new()
+        public Binder<TBinded> To<TInjected>() where TInjected : TBinded, new()
         {
             InjectedType = typeof(TInjected);
             CheckInjectedType();
             Activator = BindedActivator<TInjected>.Activator;
             return this;
         }
-
-        public Binder<TBinded> ToSelf()
-        {
-            InjectedType = typeof(TBinded);
-            CheckInjectedType();
-            Activator = BindedActivator<TBinded>.Activator;
-            return this;
-        }
     }
 
-    public static class BindedActivator<T> where T : BaseInterface
+    public static class BindedActivator<T> where T : new()
     {
-        public static readonly Func<BaseInterface> Activator;
+        public static readonly Func<object> Activator;
 
         static BindedActivator()
         {
             var constructor = typeof(T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null,
                 new Type[0], null);
             var e = Expression.New(constructor);
-            Activator = Expression.Lambda<Func<BaseInterface>>(e).Compile();
+            Activator = Expression.Lambda<Func<object>>(e).Compile();
         }
     }
 }

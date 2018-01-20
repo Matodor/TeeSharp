@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Core
 {
     public class Kernel : IKernel
     {
@@ -14,17 +14,20 @@ namespace TeeSharp.Common
             config.Load(this);
         }
 
-        public T Get<T>() where T : BaseInterface
+        public T Get<T>()
         {
             if (_binders.TryGetValue(typeof(T), out var binder))
                 return (T) binder.Activator();
             throw new Exception($"Type '{typeof(T).Name}' is not binded");
         }
 
-        public Binder<T> Bind<T>() where T : BaseInterface
+        public Binder<T> Bind<T>()
         {
             var binder = new Binder<T>();
-            _binders.Add(binder.BindedType, binder);
+            if (_binders.ContainsKey(binder.BindedType))
+                _binders[binder.BindedType] = binder;
+            else
+                _binders.Add(binder.BindedType, binder);
             return binder;
         }
     }

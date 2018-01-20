@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Core
 {
     public static class Time
     {
