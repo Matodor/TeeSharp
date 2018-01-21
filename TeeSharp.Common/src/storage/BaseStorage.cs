@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common.Storage
 {

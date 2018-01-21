@@ -36,7 +36,10 @@ namespace TeeSharp.Network
             for (var i = 0; i < Connections.Length; i++)
             {
                 Connections[i] = Kernel.Get<BaseNetworkConnection>();
-                Connections[i].Init(this, true);
+                Connections[i].Init(UdpClient, new NetworkConnectionConfig
+                {
+                    ConnectionTimeout = Config.ConnectionTimeout
+                });
             }
 
             return true;
@@ -119,21 +122,67 @@ namespace TeeSharp.Network
                     continue;
                 }
 
-                var connectionId = FindSlot(remote, true);
+                var clientId = FindSlot(remote, true);
 
-                if (connectionId < 0 &&
+                if (clientId < 0 &&
                     ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
                     ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
                 {
+                    var sameIps = 0;
+                    var freeSlotId = -1;
 
+                    for (var i = 0; i < Connections.Length; i++)
+                    {
+                        if (Connections[i].State == ConnectionState.OFFLINE)
+                        {
+                            if (freeSlotId < 0)
+                                freeSlotId = i;
+                            continue;
+                        }
+
+                        if (!NetworkCore.CompareEndPoints(Connections[i].EndPoint, remote, false))
+                            continue;
+
+                        sameIps++;
+                        if (sameIps >= Config.MaxClientsPerIp)
+                        {
+                            NetworkCore.SendControlMsg(UdpClient, remote, 0, ConnectionMessages.CLOSE,
+                                $"Only {Config.MaxClientsPerIp} players with the same IP are allowed");
+                            return false;
+                        }
+                    }
+
+                    if (freeSlotId < 0)
+                    {
+                        for (var i = 0; i < Connections.Length; i++)
+                        {
+                            if (Connections[i].State == ConnectionState.OFFLINE)
+                            {
+                                freeSlotId = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (freeSlotId < 0)
+                    {
+                        NetworkCore.SendControlMsg(UdpClient, remote, 0, ConnectionMessages.CLOSE,
+                            "This server is full");
+                    }
+                    else
+                    {
+                        Connections[freeSlotId].Feed(ChunkReceiver.ChunkConstruct, remote);
+                        NewClientCallback?.Invoke(freeSlotId);
+                        return false;
+                    }
                 }
                 else
                 {
-                    if (!Connections[connectionId].Feed(ChunkReceiver.ChunkConstruct, remote))
+                    if (!Connections[clientId].Feed(ChunkReceiver.ChunkConstruct, remote))
                         continue;
 
                     if (ChunkReceiver.ChunkConstruct.DataSize > 0)
-                        ChunkReceiver.Start(remote, connectionId);
+                        ChunkReceiver.Start(remote, Connections[clientId], clientId);
                 }
 
             }
@@ -181,9 +230,9 @@ namespace TeeSharp.Network
             Debug.Assert(packet.ClientId >= 0 || 
                          packet.ClientId < Connections.Length, "wrong client id");
 
-            var flags = SendFlags.NONE;
+            var flags = ChunkFlags.NONE;
             if (packet.Flags.HasFlag(SendFlags.VITAL))
-                flags = SendFlags.VITAL;
+                flags = ChunkFlags.VITAL;
 
             if (Connections[packet.ClientId].QueueChunk(flags, packet.Data, packet.DataSize))
             {

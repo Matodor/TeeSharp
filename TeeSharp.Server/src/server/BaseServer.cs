@@ -1,4 +1,6 @@
-﻿using TeeSharp.Common.Config;
+﻿using System.Net;
+using TeeSharp.Common;
+using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
@@ -40,6 +42,16 @@ namespace TeeSharp.Server
         protected abstract bool LoadMap(string mapName);
         protected abstract void RegisterCommands();
         protected abstract void SendRconLineAuthed(string message, object data);
+        protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
+
+        protected abstract void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgEnterGame(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgReady(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRequestMapData(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgInfo(NetworkChunk packet, Unpacker unpacker, int clientId);
 
         protected abstract void ConsoleReload(ConsoleResult result, object data);
         protected abstract void ConsoleLogout(ConsoleResult result, object data);

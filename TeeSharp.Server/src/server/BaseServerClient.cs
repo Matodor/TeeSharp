@@ -1,5 +1,5 @@
-﻿using TeeSharp.Common;
-using TeeSharp.Common.Snapshots;
+﻿using TeeSharp.Common.Snapshots;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server
 {
@@ -27,7 +27,14 @@ namespace TeeSharp.Server
         }
 
         public abstract ServerClientState State { get; set; }
+        public abstract string PlayerName { get; set; }
+        public abstract string PlayerClan { get; set; }
+        public abstract int PlayerCountry { get; set; }
+        public abstract long TrafficSince { get; set; }
+        public abstract long Traffic { get; set; }
+
         public abstract SnapshotStorage SnapshotStorage { get; protected set; }
         public abstract Input[] Inputs { get; protected set; }
+        public abstract void Reset();
     }
 }

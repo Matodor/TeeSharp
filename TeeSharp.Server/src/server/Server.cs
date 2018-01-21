@@ -4,8 +4,10 @@ using System.Threading;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
+using TeeSharp.Common.Enums;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
+using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Server.Game;
 
@@ -27,6 +29,7 @@ namespace TeeSharp.Server
 
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
+            kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
         }
     }
 
@@ -105,15 +108,21 @@ namespace TeeSharp.Server
             var bindAddr = IPAddress.Any;
             if (!string.IsNullOrWhiteSpace(Config["Bindaddr"].AsString()))
                 bindAddr = IPAddress.Parse(Config["Bindaddr"].AsString());
-            var localEP = new IPEndPoint(bindAddr, Config["SvPort"].AsInt());
 
-            if (!NetworkServer.Open(localEP, 
-                Config["SvMaxClients"].AsInt(), 
-                Config["SvMaxClientsPerIP"].AsInt()))
+            var networkConfig = new NetworkServerConfig
             {
-                Debug.Error("server", $"couldn't open socket. port {localEP.Port} might already be in use");
+                LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"].AsInt()),
+                ConnectionTimeout = Config["ConnTimeout"].AsInt(),
+                MaxClientsPerIp = Config["SvMaxClientsPerIP"].AsInt(),
+                MaxClients = Config["SvMaxClients"].AsInt()
+            };
+
+            if (!NetworkServer.Open(networkConfig))
+            {
+                Debug.Error("server", $"couldn't open socket. port {networkConfig.LocalEndPoint.Port} might already be in use");
                 return;
             }
+            Debug.Log("server", $"network server running at: {networkConfig.LocalEndPoint}");
 
             NetworkServer.SetCallbacks(NewClientCallback, DelClientCallback);
             Console.Print(OutputLevel.STANDARD, "server", $"server name is '{Config["SvName"]}'");
@@ -162,9 +171,129 @@ namespace TeeSharp.Server
 
                 Thread.Sleep(5);
             }
+
+            for (var i = 0; i < Clients.Length; i++)
+            {
+                if (Clients[i].State != ServerClientState.EMPTY)
+                    NetworkServer.Drop(i, "Server shutdown");
+            }
+
+            GameContext.OnShutdown();
         }
 
         protected override void ProcessClientPacket(NetworkChunk packet)
+        {
+            var clientId = packet.ClientId;
+            var unpacker = new Unpacker();
+            unpacker.Reset(packet.Data, packet.DataSize);
+
+            var msg = unpacker.GetInt();
+            var sys = msg & 1;
+            msg >>= 1;
+
+            if (unpacker.Error)
+                return;
+
+            var message = (NetworkMessages) msg;
+            if (Config["SvNetlimit"].AsBoolean() && message != NetworkMessages.REQUEST_MAP_DATA)
+            {
+                var now = Time.Get();
+                var diff = now - Clients[clientId].TrafficSince;
+                var alpha = Config["SvNetlimitAlpha"].AsInt() / 100f;
+                var limit = (float) Config["SvNetlimit"].AsInt() * 1024 / Time.Freq();
+
+                if (Clients[clientId].Traffic > limit)
+                {
+                    NetworkBan.BanAddr(packet.EndPoint, 600, "Stressing network");
+                    return;
+                }
+
+                if (diff > 100)
+                {
+                    Clients[clientId].Traffic = (long) (alpha * ((float) packet.DataSize / diff) +
+                                                       (1.0f - alpha) * Clients[clientId].Traffic);
+                    Clients[clientId].TrafficSince = now;
+                }
+            }
+
+            if (sys != 0)
+            {
+                switch (message)
+                {
+                    case NetworkMessages.INFO:
+                        NetMsgInfo(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.REQUEST_MAP_DATA:
+                        NetMsgRequestMapData(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.READY:
+                        NetMsgReady(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.ENTERGAME:
+                        NetMsgEnterGame(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.INPUT:
+                        NetMsgInput(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.RCON_CMD:
+                        NetMsgRconCmd(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.RCON_AUTH:
+                        NetMsgRconAuth(packet, unpacker, clientId);
+                        break;
+                    case NetworkMessages.PING:
+                        NetMsgPing(packet, unpacker, clientId);
+                        break;
+                    default:
+                        Console.Print(OutputLevel.DEBUG, "server", $"strange message clientId={clientId} msg={msg} data_size={packet.DataSize}");
+                        break;
+                }
+            }
+            else
+            {
+                if (Clients[clientId].State >= ServerClientState.READY)
+                {
+                    GameContext.OnMessage(message, unpacker, clientId);
+                }
+            }
+        }
+
+        protected override void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgEnterGame(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgReady(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgRequestMapData(NetworkChunk packet, Unpacker unpacker, int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void NetMsgInfo(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
             throw new NotImplementedException();
         }
@@ -177,6 +306,25 @@ namespace TeeSharp.Server
             {
                 if (packet.ClientId == -1)
                 {
+                    if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO.Length + 1 &&
+                        packet.Data.ArrayCompare(MasterServerPackets.SERVERBROWSE_GETINFO))
+                    {
+                        SendServerInfo(
+                            packet.EndPoint, 
+                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO.Length],
+                            false
+                        );
+                    }
+                    else if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO64.Length + 1 &&
+                             packet.Data.ArrayCompare(MasterServerPackets.SERVERBROWSE_GETINFO64))
+                    {
+                        SendServerInfo(
+                            packet.EndPoint,
+                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO64.Length],
+                            true
+                        );
+                    }
+
                     continue;
                 }
 
@@ -203,7 +351,12 @@ namespace TeeSharp.Server
 
         protected override void NewClientCallback(int clientid)
         {
-            throw new NotImplementedException();
+            Clients[clientid].State = ServerClientState.AUTH;
+            Clients[clientid].PlayerName = string.Empty;
+            Clients[clientid].PlayerClan = string.Empty;
+            Clients[clientid].PlayerCountry = -1;
+
+            Clients[clientid].Reset();
         }
 
         protected override bool LoadMap(string mapName)
@@ -239,6 +392,11 @@ namespace TeeSharp.Server
             */
 
             GameContext.RegisterCommands();
+        }
+
+        protected override void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void ConsoleReload(ConsoleResult result, object data)

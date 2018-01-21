@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common.Console
 {

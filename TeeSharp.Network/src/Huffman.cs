@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace TeeSharp.Network
+﻿namespace TeeSharp.Network
 {
     public class Huffman
     {

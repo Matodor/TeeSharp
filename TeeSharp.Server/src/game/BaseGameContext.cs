@@ -1,4 +1,6 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Enums;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game
 {
@@ -8,5 +10,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnInit();
         public abstract void OnTick();
         public abstract void OnClientPredictedInput(int clientId, int[] data);
+        public abstract void OnShutdown();
+        public abstract void OnMessage(NetworkMessages message, Unpacker unpacker, int clientId);
     }
 }

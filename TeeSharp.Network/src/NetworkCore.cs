@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using TeeSharp.Core;
@@ -11,8 +10,9 @@ namespace TeeSharp.Network
     {
         public const int
             MAX_PACKET_SIZE = 1400,
-            DATA_OFFSET = 6,
+            MAX_SEQUENCE = 1024,
             MAX_PAYLOAD = MAX_PACKET_SIZE - DATA_OFFSET,
+            DATA_OFFSET = 6,
             PACKET_HEADER_SIZE = 3;
 
         private static readonly int[] _freqTable = {
@@ -148,7 +148,7 @@ namespace TeeSharp.Network
                 else
                 {
                     packet.Data = new byte[packet.DataSize];
-                    Buffer.BlockCopy(data, DATA_OFFSET, packet.Data, 0, packet.DataSize);
+                    Buffer.BlockCopy(data, PACKET_HEADER_SIZE, packet.Data, 0, packet.DataSize);
                 }
             }
 
@@ -180,6 +180,22 @@ namespace TeeSharp.Network
 
             Buffer.BlockCopy(data, 0, buffer, DATA_OFFSET, dataSize);
             udpClient.Send(buffer, buffer.Length, endPoint);
+        }
+
+        public static bool IsSeqInBackroom(int seq, int ack)
+        {
+            var bottom = ack - MAX_SEQUENCE / 2;
+            if (bottom < 0)
+            {
+                if (seq <= ack)
+                    return true;
+                if (seq >= (bottom + MAX_SEQUENCE))
+                    return true;
+            }
+            else if (seq <= ack && seq >= bottom)
+                return true;
+
+            return false;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common.Config
 {

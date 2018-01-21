@@ -1,5 +1,5 @@
-﻿using System;
-using TeeSharp.Common.Config;
+﻿using TeeSharp.Common.Config;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common.Console
 {

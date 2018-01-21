@@ -15,7 +15,8 @@ namespace TeeSharp.Network
 
         public override bool IsBanned(IPEndPoint remote, out string reason)
         {
-            throw new System.NotImplementedException();
+            reason = null;
+            return false;
         }
     }
 }

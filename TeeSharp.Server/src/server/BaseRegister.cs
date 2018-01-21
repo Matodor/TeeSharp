@@ -1,5 +1,5 @@
 ﻿using System.Net.Sockets;
-using TeeSharp.Common;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server
 {
