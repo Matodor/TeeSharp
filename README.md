@@ -1,4 +1,4 @@
-![Logo of TeeSharp](https://github.com/Matodor/TeeSharp/master/res/TeeSharp.png) 
+![Logo of TeeSharp](https://github.com/Matodor/TeeSharp/raw/master/res/TeeSharp.png) 
 
 # TeeSharp
 TeeSharp is implementation of Teeworlds in .NET
