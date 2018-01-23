@@ -6,11 +6,13 @@
     <PackageVersion>1.0.0-alpha</PackageVersion>
     <Authors>Matodor</Authors>
     <Description>TeeSharp is implementation of Teeworlds in .NET</Description>
+    <Title>TeeSharp.Core</Title>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageReleaseNotes>First release</PackageReleaseNotes>
     <PackageTags>tee teeworlds teesharp</PackageTags>
-    <ProjectUrl>https://github.com/Matodor/TeeSharp</ProjectUrl> 
-    <Title>TeeSharp.Core</Title>
+    <PackageProjectUrl>https://github.com/Matodor/TeeSharp</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/Matodor/TeeSharp/raw/master/res/TeeSharp.png</PackageIconUrl>
+    <RepositoryUrl>https://github.com/Matodor/TeeSharp</RepositoryUrl>
   </PropertyGroup>
 
 </Project>

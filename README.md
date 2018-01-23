@@ -9,5 +9,10 @@ TeeSharp is implementation of Teeworlds in .NET
 # Documentation
 * TODO
 
-## Tutorials
+# Tutorials
 * TODO
+
+# Questions?
+Come talk to us here:
+
+[![Discord Server](https://discordapp.com/api/guilds/403578274284044299/embed.png?style=banner2)](https://discord.gg/nTk7HgF)

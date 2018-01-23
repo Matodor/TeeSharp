@@ -3,6 +3,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
 using TeeSharp.Network;
@@ -14,9 +15,12 @@ namespace TeeSharp.Server
     {
         public const int
             MAX_CLIENTS = 64,
+            MAX_SNAPSHOT_PACKSIZE = 900,
             SERVER_TICK_SPEED = 50;
 
         public abstract long Tick { get; protected set; }
+
+        protected abstract SnapshotBuilder SnapshotBuilder { get; set; }
 
         protected abstract BaseNetworkBan NetworkBan { get; set; }
         protected abstract BaseRegister Register { get; set; }

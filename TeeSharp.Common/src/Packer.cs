@@ -62,19 +62,19 @@ namespace TeeSharp.Common
             _buffer[_currentIndex++] = 0;
         }
 
-        public void AddRaw(byte[] data, int dataIndex, int size)
+        public void AddRaw(byte[] inputData, int inputOffset, int inputSize)
         {
-            if (size <= 0 || dataIndex < 0 || Error)
+            if (inputSize <= 0 || inputOffset < 0 || Error)
                 return;
 
-            if (_currentIndex + size >= MAX_PACKER_BUFFER_SIZE)
+            if (_currentIndex + inputSize >= MAX_PACKER_BUFFER_SIZE)
             {
                 Error = true;
                 return;
             }
 
-            Buffer.BlockCopy(data, dataIndex, _buffer, _currentIndex, size);
-            _currentIndex += size;
+            Buffer.BlockCopy(inputData, inputOffset, _buffer, _currentIndex, inputSize);
+            _currentIndex += inputSize;
         }
     }
 }

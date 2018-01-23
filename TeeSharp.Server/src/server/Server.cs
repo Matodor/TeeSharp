@@ -5,6 +5,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
 using TeeSharp.MasterServer;
@@ -38,6 +39,7 @@ namespace TeeSharp.Server
     {
         public override long Tick { get; protected set; }
 
+        protected override SnapshotBuilder SnapshotBuilder { get; set; }
         protected override BaseNetworkBan NetworkBan { get; set; }
         protected override BaseRegister Register { get; set; }
         protected override BaseGameContext GameContext { get; set; }
@@ -59,7 +61,6 @@ namespace TeeSharp.Server
             for (var i = 0; i < MAX_CLIENTS; i++)
             {
                 Clients[i] = Kernel.Get<BaseServerClient>();
-                Clients[i].SnapshotStorage.Init();
             }
 
             Config = Kernel.Get<BaseConfig>();
@@ -320,7 +321,18 @@ namespace TeeSharp.Server
 
         protected override void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            Clients[clientId].LastAckedSnapshot = (long) unpacker.GetInt();
+            var intendedTick = (long) unpacker.GetInt();
+            var size = unpacker.GetInt();
+
+            if (unpacker.Error || size / sizeof(int) > BaseServerClient.MAX_INPUT_SIZE)
+                return;
+
+            if (Clients[clientId].LastAckedSnapshot > 0)
+                Clients[clientId].SnapRate = SnapRate.FULL;
+
+            var now = Time.Get();
+            // TODO
         }
 
         protected override void NetMsgEnterGame(NetworkChunk packet, Unpacker unpacker, int clientId)
@@ -381,6 +393,87 @@ namespace TeeSharp.Server
 
         protected override void DoSnapshot()
         {
+            GameContext.OnBeforeSnapshot();
+
+            for (var i = 0; i < Clients.Length; i++)
+            {
+                if (Clients[i].State != ServerClientState.IN_GAME ||
+                    Clients[i].SnapRate == SnapRate.INIT && Tick % 10 != 0 ||
+                    Clients[i].SnapRate == SnapRate.RECOVER && Tick % SERVER_TICK_SPEED != 0)
+                {
+                    continue;
+                }
+
+                SnapshotBuilder.StartBuild();
+                GameContext.OnSnapshot(i);
+                var now = Time.Get();
+                var snapshot =  SnapshotBuilder.EndBuild();
+                var CRC = snapshot.Crc();
+                
+                Clients[i].SnapshotStorage.PurgeUntil(Tick - SERVER_TICK_SPEED * 3);
+                Clients[i].SnapshotStorage.Add(Tick, now, snapshot);
+
+                var deltaTick = -1L;
+
+                if (Clients[i].SnapshotStorage.Get(Clients[i].LastAckedSnapshot,
+                    out var _, out var deltaSnapshot))
+                {
+                    deltaTick = Clients[i].LastAckedSnapshot;
+                }
+                else
+                {
+                    deltaSnapshot = new Snapshot();
+                    if (Clients[i].SnapRate == SnapRate.FULL)
+                        Clients[i].SnapRate = SnapRate.RECOVER;
+                }
+
+                var deltaData = new int[SnapshotBuilder.MAX_SNAPSHOT_SIZE / sizeof(int)];
+                var deltaSize = SnapshotDelta.CreateDelta(deltaSnapshot, snapshot, deltaData);
+
+                if (deltaSize == 0)
+                {
+                    var msg = new MsgPacker(NetworkMessages.SNAPEMPTY);
+                    msg.AddInt((int) Tick);
+                    msg.AddInt((int) (Tick - deltaTick));
+                    SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                    continue;
+                }
+
+                var snapData = new byte[SnapshotBuilder.MAX_SNAPSHOT_SIZE];
+                var snapshotSize = IntCompression.Compress(deltaData, 0, deltaSize, snapData, 0);
+                var numPackets = (snapshotSize + MAX_SNAPSHOT_PACKSIZE - 1) / MAX_SNAPSHOT_PACKSIZE;
+
+                for (int n = 0, left = snapshotSize; left != 0; n++)
+                {
+                    var chunk = left < MAX_SNAPSHOT_PACKSIZE ? left : MAX_SNAPSHOT_PACKSIZE;
+                    left -= chunk;
+
+                    if (numPackets == 1)
+                    {
+                        var msg = new MsgPacker(NetworkMessages.SNAPSINGLE);
+                        msg.AddInt((int) Tick);
+                        msg.AddInt((int) (Tick - deltaTick));
+                        msg.AddInt(CRC);
+                        msg.AddInt(chunk);
+                        msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
+                        SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                    }
+                    else
+                    {
+                        var msg = new MsgPacker(NetworkMessages.SNAP);
+                        msg.AddInt((int) Tick);
+                        msg.AddInt((int)(Tick - deltaTick));
+                        msg.AddInt(numPackets);
+                        msg.AddInt(n);
+                        msg.AddInt(CRC);
+                        msg.AddInt(chunk);
+                        msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
+                        SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                    }
+                }
+            }
+
+            GameContext.OnAfterSnapshot();
         }
 
         protected override long TickStartTime(long tick)

@@ -30,5 +30,20 @@ namespace TeeSharp.Server.Game
         {
             throw new System.NotImplementedException();
         }
+
+        public override void OnBeforeSnapshot()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void OnAfterSnapshot()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void OnSnapshot(int clientId)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
