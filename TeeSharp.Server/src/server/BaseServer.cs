@@ -2,6 +2,7 @@
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
+using TeeSharp.Common.Enums;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
 using TeeSharp.Network;
@@ -31,6 +32,7 @@ namespace TeeSharp.Server
 
         public abstract void Init(string[] args);
         public abstract void Run();
+        public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
 
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();

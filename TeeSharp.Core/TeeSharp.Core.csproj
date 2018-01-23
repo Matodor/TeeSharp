@@ -1,7 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <PackageId>TeeSharp.Core</PackageId>
+    <PackageVersion>1.0.0-alpha</PackageVersion>
+    <Authors>Matodor</Authors>
+    <Description>TeeSharp is implementation of Teeworlds in .NET</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>First release</PackageReleaseNotes>
+    <PackageTags>tee teeworlds teesharp</PackageTags>
+    <ProjectUrl>https://github.com/Matodor/TeeSharp</ProjectUrl> 
+    <Title>TeeSharp.Core</Title>
   </PropertyGroup>
 
 </Project>

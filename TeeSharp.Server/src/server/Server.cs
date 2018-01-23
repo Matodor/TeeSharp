@@ -9,6 +9,7 @@ using TeeSharp.Common.Storage;
 using TeeSharp.Core;
 using TeeSharp.MasterServer;
 using TeeSharp.Network;
+using TeeSharp.Network.Enums;
 using TeeSharp.Server.Game;
 
 namespace TeeSharp.Server
@@ -181,6 +182,49 @@ namespace TeeSharp.Server
             GameContext.OnShutdown();
         }
 
+        public override bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)
+        {
+            if (msg == null)
+                return false;
+
+            var packet = new NetworkChunk()
+            {
+                ClientId = clientId,
+                DataSize = msg.Size(),
+                Data = msg.Data(),
+            };
+
+            packet.Data[0] <<= 1;
+            if (system)
+                packet.Data[0] |= 1;
+
+            if (flags.HasFlag(MsgFlags.VITAL))
+                packet.Flags |= SendFlags.VITAL;
+            if (flags.HasFlag(MsgFlags.FLUSH))
+                packet.Flags |= SendFlags.FLUSH;
+
+            if (flags.HasFlag(MsgFlags.NOSEND))
+            {
+                if (clientId == -1)
+                {
+                    for (var i = 0; i < Clients.Length; i++)
+                    {
+                        if (Clients[i].State == ServerClientState.IN_GAME)
+                        {
+                            packet.ClientId = i;
+                            NetworkServer.Send(packet);
+                        }
+                    }
+                }
+                else
+                {
+                    NetworkServer.Send(packet);
+                }
+            }
+
+            return true;
+        }
+
         protected override void ProcessClientPacket(NetworkChunk packet)
         {
             var clientId = packet.ClientId;
@@ -260,7 +304,8 @@ namespace TeeSharp.Server
 
         protected override void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            var msg = new MsgPacker(NetworkMessages.PING_REPLY);
+            SendMsgEx(msg, 0, clientId, true);
         }
 
         protected override void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId)
