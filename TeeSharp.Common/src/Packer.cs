@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common
 {
@@ -57,9 +58,14 @@ namespace TeeSharp.Common
                 return;
             }
 
-            Array.Copy(strBytes, 0, _buffer, _currentIndex, strBytes.Length);
+            Buffer.BlockCopy(strBytes, 0, _buffer, _currentIndex, strBytes.Length);
             _currentIndex += strBytes.Length;
             _buffer[_currentIndex++] = 0;
+        }
+
+        public void AddRaw(byte[] inputData)
+        {
+            AddRaw(inputData, 0, inputData.Length);
         }
 
         public void AddRaw(byte[] inputData, int inputOffset, int inputSize)

@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common
 {
     [Flags]
     public enum SanitizeType
     {
-        SANITIZE = 1,
-        SANITIZE_CC = 2,
-        SKIP_START_WHITESPACES = 4
+        SANITIZE = 1 << 0,
+        SANITIZE_CC = 1 << 1,
+        SKIP_START_WHITESPACES = 1 << 2
     }
 
     public class Unpacker
@@ -56,7 +56,7 @@ namespace TeeSharp.Common
                 return "";
 
             var startIndex = _currentIndex;
-            while (_buffer[_currentIndex] == 0)
+            while (_buffer[_currentIndex] != 0)
             {
                 _currentIndex++;
                 if (_currentIndex >= _endIndex)
@@ -70,12 +70,12 @@ namespace TeeSharp.Common
                 _buffer, startIndex, _currentIndex - startIndex);
             _currentIndex++;
 
-            if ((sanitizeType & SanitizeType.SANITIZE) != 0)
+            if (sanitizeType.HasFlag(SanitizeType.SANITIZE))
                 strUTF8 = strUTF8.Sanitize();
-            else if ((sanitizeType & SanitizeType.SANITIZE_CC) != 0)
+            else if (sanitizeType.HasFlag(SanitizeType.SANITIZE_CC))
                 strUTF8 = strUTF8.SanitizeCC();
 
-            return (sanitizeType & SanitizeType.SKIP_START_WHITESPACES) != 0
+            return sanitizeType.HasFlag(SanitizeType.SKIP_START_WHITESPACES)
                 ? strUTF8.TrimStart(' ', '\t', '\n', '\r')
                 : strUTF8;
         }

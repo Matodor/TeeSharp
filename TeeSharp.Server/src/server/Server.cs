@@ -9,6 +9,7 @@ using TeeSharp.Common.Enums;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
+using TeeSharp.Map;
 using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Enums;
@@ -40,6 +41,7 @@ namespace TeeSharp.Server
     {
         public override long Tick { get; protected set; }
 
+        protected override MapContainer CurrentMap { get; set; }
         protected override SnapshotBuilder SnapshotBuilder { get; set; }
         protected override BaseNetworkBan NetworkBan { get; set; }
         protected override BaseRegister Register { get; set; }
@@ -354,7 +356,34 @@ namespace TeeSharp.Server
 
         protected override void NetMsgInfo(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            if (Clients[clientId].State != ServerClientState.AUTH)
+                return;
+
+            var version = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            if (string.IsNullOrEmpty(version) || !version.StartsWith(GameContext.NetVersion))
+            {
+                NetworkServer.Drop(clientId, $"Wrong version. Server is running '{GameContext.NetVersion}' and client '{version}'");
+                return;
+            }
+
+            var password = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            if (!string.IsNullOrEmpty(Config["Password"].AsString()) &&
+                password != Config["Password"].AsString())
+            {
+                NetworkServer.Drop(clientId, "Wrong password");
+                return;
+            }
+
+            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"].AsInt() &&
+                !string.IsNullOrEmpty(Config["SvReservedSlotsPass"].AsString()) &&
+                password != Config["SvReservedSlotsPass"].AsString())
+            {
+                NetworkServer.Drop(clientId, "This server is full");
+                return;
+            }
+
+            Clients[clientId].State = ServerClientState.CONNECTING;
+            SendMap(clientId);
         }
 
         protected override void PumpNetwork()
@@ -376,14 +405,14 @@ namespace TeeSharp.Server
                             false
                         );
                     }
-                    else if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO64.Length + 1 &&
+                    else if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO_64_LEGACY.Length + 1 &&
                              packet.Data.ArrayCompare(
-                                 MasterServerPackets.SERVERBROWSE_GETINFO64,
-                                 MasterServerPackets.SERVERBROWSE_GETINFO64.Length))
+                                 MasterServerPackets.SERVERBROWSE_GETINFO_64_LEGACY,
+                                 MasterServerPackets.SERVERBROWSE_GETINFO_64_LEGACY.Length))
                     {
                         SendServerInfo(
                             packet.EndPoint,
-                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO64.Length],
+                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO.Length],
                             true
                         );
                     }
@@ -510,7 +539,34 @@ namespace TeeSharp.Server
 
         protected override bool LoadMap(string mapName)
         {
-            return true;
+            var path = $"maps/{mapName}.map";
+            Console.Print(OutputLevel.DEBUG, "map", $"loading map={path}");
+
+            using (var stream = Storage.OpenFile(path, FileAccess.Read))
+            {
+                if (stream == null)
+                {
+                    Console.Print(OutputLevel.DEBUG, "map", $"could not open '{path}'");
+                    return false;
+                }
+
+                CurrentMap = MapContainer.Load(stream, out var error);
+
+                if (CurrentMap == null)
+                {
+                    Console.Print(OutputLevel.DEBUG, "map", $"error with load map '{path}' ({error})");
+                    return false;
+                }
+
+
+            }
+
+            return false;
+        }
+
+        protected override void SendMap(int clientId)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void RegisterConsoleCommands()
@@ -560,14 +616,9 @@ namespace TeeSharp.Server
                     clientsCount++;
                 }
 
-                if (showMore)
-                {
-                    packer.AddRaw(MasterServerPackets.SERVERBROWSE_INFO64, 0, MasterServerPackets.SERVERBROWSE_INFO64.Length);
-                }
-                else
-                {
-                    packer.AddRaw(MasterServerPackets.SERVERBROWSE_INFO, 0, MasterServerPackets.SERVERBROWSE_INFO.Length);
-                }
+                packer.AddRaw(showMore
+                    ? MasterServerPackets.SERVERBROWSE_INFO_64_LEGACY
+                    : MasterServerPackets.SERVERBROWSE_INFO);
 
                 packer.AddString(token.ToString(), 6);
                 packer.AddString(GameContext.GameVersion, 32);
@@ -585,9 +636,9 @@ namespace TeeSharp.Server
 
                 packer.AddString(MapName(), 32);
                 packer.AddString(GameContext.GameController.GameType, 16);
-                packer.AddString(string.IsNullOrWhiteSpace(Config["Password"].AsString())
-                    ? "0"
-                    : "1", 2);
+                packer.AddInt(string.IsNullOrWhiteSpace(Config["Password"].AsString())
+                    ? 0
+                    : 1);
 
                 if (!showMore)
                 {

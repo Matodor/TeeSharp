@@ -35,6 +35,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Network", "TeeShar
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Map", "TeeSharp.Map\TeeSharp.Map.csproj", "{02870652-7012-43E1-BCEC-B72E2139B8BC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{F431EBE5-37E4-43CB-BF6B-E3970B077803}"
 EndProject

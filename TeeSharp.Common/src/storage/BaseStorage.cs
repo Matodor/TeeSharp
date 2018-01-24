@@ -19,7 +19,7 @@ namespace TeeSharp.Common.Storage
         protected abstract void LoadPaths();
         protected abstract void AddPath(string path);
 
-        protected void AddDefaultPaths()
+        protected virtual void AddDefaultPaths()
         {
             AddPath("$USERDIR");
             AddPath("$DATADIR");

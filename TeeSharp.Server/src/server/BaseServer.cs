@@ -6,6 +6,7 @@ using TeeSharp.Common.Enums;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
+using TeeSharp.Map;
 using TeeSharp.Network;
 using TeeSharp.Server.Game;
 
@@ -20,7 +21,8 @@ namespace TeeSharp.Server
             SERVER_TICK_SPEED = 50;
 
         public abstract long Tick { get; protected set; }
-
+        
+        protected abstract MapContainer CurrentMap { get; set; }
         protected abstract SnapshotBuilder SnapshotBuilder { get; set; }
 
         protected abstract BaseNetworkBan NetworkBan { get; set; }
@@ -48,6 +50,8 @@ namespace TeeSharp.Server
 
         protected abstract string MapName();
         protected abstract bool LoadMap(string mapName);
+        protected abstract void SendMap(int clientId);
+
         protected abstract void RegisterConsoleCommands();
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);

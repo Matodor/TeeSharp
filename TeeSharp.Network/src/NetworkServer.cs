@@ -96,11 +96,11 @@ namespace TeeSharp.Network
                 {
                     NetworkCore.SendControlMsg(UdpClient, remote, 0,
                         ConnectionMessages.CLOSE, reason);
-                    return false;
+                    continue;
                 }
 
                 if (!NetworkCore.UnpackPacket(data, data.Length, ChunkReceiver.ChunkConstruct))
-                    return false;
+                    continue;
 
                 if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONNLESS))
                 {
@@ -124,9 +124,16 @@ namespace TeeSharp.Network
 
                 var clientId = FindSlot(remote, true);
 
-                if (clientId < 0 &&
-                    ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
-                    ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
+                if (clientId != -1)
+                {
+                    if (!Connections[clientId].Feed(ChunkReceiver.ChunkConstruct, remote))
+                        continue;
+
+                    if (ChunkReceiver.ChunkConstruct.DataSize > 0)
+                        ChunkReceiver.Start(remote, Connections[clientId], clientId);
+                }
+                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&  
+                         ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
                 {
                     var sameIps = 0;
                     var freeSlotId = -1;
@@ -148,7 +155,7 @@ namespace TeeSharp.Network
                         {
                             NetworkCore.SendControlMsg(UdpClient, remote, 0, ConnectionMessages.CLOSE,
                                 $"Only {Config.MaxClientsPerIp} players with the same IP are allowed");
-                            return false;
+                            continue;
                         }
                     }
 
@@ -173,18 +180,9 @@ namespace TeeSharp.Network
                     {
                         Connections[freeSlotId].Feed(ChunkReceiver.ChunkConstruct, remote);
                         NewClientCallback?.Invoke(freeSlotId);
-                        return false;
+                        continue;
                     }
                 }
-                else
-                {
-                    if (!Connections[clientId].Feed(ChunkReceiver.ChunkConstruct, remote))
-                        continue;
-
-                    if (ChunkReceiver.ChunkConstruct.DataSize > 0)
-                        ChunkReceiver.Start(remote, Connections[clientId], clientId);
-                }
-
             }
 
             packet = null;

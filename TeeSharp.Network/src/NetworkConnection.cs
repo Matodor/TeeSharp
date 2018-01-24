@@ -31,6 +31,7 @@ namespace TeeSharp.Network
 
         public NetworkConnection()
         {
+            Error = string.Empty;
             ResendQueueConstruct = new NetworkChunkConstruct
             {
                 Data = new byte[NetworkCore.MAX_PAYLOAD]

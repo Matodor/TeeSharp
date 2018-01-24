@@ -2,8 +2,8 @@
 {
     public static class Math
     {
-        public const float Deg2Rad = 0.01745329F;
-        public const float Rad2Deg = 57.29578F;
+        public const float DEG2RAD = 0.01745329F;
+        public const float RAD2DEG = 57.29578F;
 
         public static int RoundToInt(float f)
         {

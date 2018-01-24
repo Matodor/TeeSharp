@@ -23,6 +23,9 @@ namespace TeeSharp.Server
                 { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },
                 { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Adjusts the amount of information in the console") },
 
+                { "SvReservedSlots", new ConfigInt("SvReservedSlots", "sv_reserved_slots", 0, 0, 16, ConfigFlags.SERVER, "The number of slots that are reserved for special players") },
+                { "SvReservedSlotsPass", new ConfigString("SvReservedSlotsPass", "sv_reserved_slots_pass", 32, "", ConfigFlags.SERVER, "The password that is required to use a reserved slot") },
+
                 { "SvName", new ConfigString("SvName", "sv_name", 128, "TeeSharp server", ConfigFlags.SERVER, "Server name") },
                 { "Bindaddr", new ConfigString("Bindaddr", "bindaddr", 128, "", ConfigFlags.CLIENT|ConfigFlags.SERVER|ConfigFlags.MASTER, "Address to bind the client/server to") },
                 { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },

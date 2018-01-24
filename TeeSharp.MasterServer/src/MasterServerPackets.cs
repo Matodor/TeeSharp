@@ -2,31 +2,31 @@
 {
     public static class MasterServerPackets
     {
-        public static readonly byte[] SERVERBROWSE_HEARTBEAT = { 255, 255, 255, 255, 98, 101, 97, 50 };
+        public static readonly byte[] SERVERBROWSE_HEARTBEAT = Packet('b', 'e', 'a', '2');
 
-        public static readonly byte[] SERVERBROWSE_GETLIST = { 255, 255, 255, 255, 114, 101, 113, 50 };
-        public static readonly byte[] SERVERBROWSE_LIST = { 255, 255, 255, 255, 108, 105, 115, 50 };
+        public static readonly byte[] SERVERBROWSE_GETLIST =   Packet('r', 'e', 'q', '2');
+        public static readonly byte[] SERVERBROWSE_LIST =      Packet('l', 'i', 's', '2');
 
-        public static readonly byte[] SERVERBROWSE_GETCOUNT = { 255, 255, 255, 255, 99, 111, 117, 50 };
-        public static readonly byte[] SERVERBROWSE_COUNT = { 255, 255, 255, 255, 115, 105, 122, 50 };
+        public static readonly byte[] SERVERBROWSE_GETCOUNT =  Packet('c', 'o', 'u', '2');
+        public static readonly byte[] SERVERBROWSE_COUNT =     Packet('s', 'i', 'z', '2');
 
-        public static readonly byte[] SERVERBROWSE_GETINFO = { 255, 255, 255, 255, 103, 105, 101, 51 };
-        public static readonly byte[] SERVERBROWSE_INFO = { 255, 255, 255, 255, 105, 110, 102, 51 };
+        public static readonly byte[] SERVERBROWSE_GETINFO =   Packet('g', 'i', 'e', '3');
+        public static readonly byte[] SERVERBROWSE_INFO =      Packet('i', 'n', 'f', '3');
 
-        public static readonly byte[] SERVERBROWSE_GETINFO64 = { 255, 255, 255, 255, 102, 115, 116, 100 };
-        public static readonly byte[] SERVERBROWSE_INFO64 = { 255, 255, 255, 255, 100, 116, 115, 102 };
+        public static readonly byte[] SERVERBROWSE_GETINFO_64_LEGACY = Packet('f', 's', 't', 'd');
+        public static readonly byte[] SERVERBROWSE_INFO_64_LEGACY =    Packet('d', 't', 's', 'f');
 
-        public static readonly byte[] SERVERBROWSE_FWCHECK = { 255, 255, 255, 255, 102, 119, 63, 63 };
-        public static readonly byte[] SERVERBROWSE_FWRESPONSE = { 255, 255, 255, 255, 102, 119, 33, 33 };
-        public static readonly byte[] SERVERBROWSE_FWOK = { 255, 255, 255, 255, 102, 119, 111, 107 };
-        public static readonly byte[] SERVERBROWSE_FWERROR = { 255, 255, 255, 255, 102, 119, 101, 114 };
+        //public static readonly byte[] SERVERBROWSE_INFO_EXTENDED =      Packet('i', 'e', 'x', 't');
+        //public static readonly byte[] SERVERBROWSE_INFO_EXTENDED_MORE = Packet('i', 'e', 'x', '+');
 
-        public static readonly byte[] SERVERBROWSE_HEARTBEAT_LEGACY = { 255, 255, 255, 255, 98, 101, 97, 116 };
+        public static readonly byte[] SERVERBROWSE_FWCHECK =    Packet('f', 'w', '?', '?');
+        public static readonly byte[] SERVERBROWSE_FWRESPONSE = Packet('f', 'w', '!', '!');
+        public static readonly byte[] SERVERBROWSE_FWOK =       Packet('f', 'w', 'o', 'k');
+        public static readonly byte[] SERVERBROWSE_FWERROR =    Packet('f', 'w', 'e', 'r');
 
-        public static readonly byte[] SERVERBROWSE_GETLIST_LEGACY = { 255, 255, 255, 255, 114, 101, 113, 116 };
-        public static readonly byte[] SERVERBROWSE_LIST_LEGACY = { 255, 255, 255, 255, 108, 105, 115, 116 };
-
-        public static readonly byte[] SERVERBROWSE_GETCOUNT_LEGACY = { 255, 255, 255, 255, 99, 111, 117, 110 };
-        public static readonly byte[] SERVERBROWSE_COUNT_LEGACY = { 255, 255, 255, 255, 115, 105, 122, 101 };
+        private static byte[] Packet(char b1, char b2, char b3, char b4)
+        {
+            return new byte[] {255, 255, 255, 255, (byte) b1, (byte) b2, (byte) b3, (byte) b4};
+        }
     }
 }
