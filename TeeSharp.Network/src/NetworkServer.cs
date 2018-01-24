@@ -220,7 +220,7 @@ namespace TeeSharp.Network
                 return;
             }
 
-            if (packet.Flags.HasFlag(PacketFlags.CONNLESS))
+            if (packet.Flags.HasFlag(SendFlags.CONNLESS))
             {
                 NetworkCore.SendPacketConnless(UdpClient, packet.EndPoint,
                     packet.Data, packet.DataSize);

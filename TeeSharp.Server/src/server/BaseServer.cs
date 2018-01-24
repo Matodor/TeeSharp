@@ -15,6 +15,7 @@ namespace TeeSharp.Server
     {
         public const int
             MAX_CLIENTS = 64,
+            VANILLA_MAX_CLIENTS = 16,
             MAX_SNAPSHOT_PACKSIZE = 900,
             SERVER_TICK_SPEED = 50;
 
@@ -45,8 +46,9 @@ namespace TeeSharp.Server
         protected abstract void DelClientCallback(int clientid, string reason);
         protected abstract void NewClientCallback(int clientid);
 
+        protected abstract string MapName();
         protected abstract bool LoadMap(string mapName);
-        protected abstract void RegisterCommands();
+        protected abstract void RegisterConsoleCommands();
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
 
@@ -64,5 +66,10 @@ namespace TeeSharp.Server
         protected abstract void ConsoleShutdown(ConsoleResult result, object data);
         protected abstract void ConsoleStatus(ConsoleResult result, object data);
         protected abstract void ConsoleKick(ConsoleResult result, object data);
+
+        protected abstract string GetClientName(int clientId);
+        protected abstract string GetClientClan(int clientId);
+        protected abstract int GetClientCountry(int clientId);
+        protected abstract int GetClientScore(int clientId);
     }
 }

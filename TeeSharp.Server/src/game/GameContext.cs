@@ -1,12 +1,28 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Enums;
+using TeeSharp.Server.Game.gamemodes;
 
 namespace TeeSharp.Server.Game
 {
     public class GameContext : BaseGameContext
     {
-        public override void RegisterCommands()
+        public override BaseGameController GameController { get; }
+        public override string GameVersion { get; } = "0.6";
+        public override string NetVersion { get; } = "0.6";
+        public override string ReleaseVersion { get; } = "0.63";
+
+        public GameContext()
         {
+            GameController = new GameControllerDM();
+        }
+
+        public override void RegisterConsoleCommands()
+        {
+        }
+
+        public override bool IsClientInGame(int clientId)
+        {
+            return false;
         }
 
         public override void OnInit()
@@ -33,12 +49,10 @@ namespace TeeSharp.Server.Game
 
         public override void OnBeforeSnapshot()
         {
-            throw new System.NotImplementedException();
         }
 
         public override void OnAfterSnapshot()
         {
-            throw new System.NotImplementedException();
         }
 
         public override void OnSnapshot(int clientId)

@@ -11,7 +11,7 @@
 
         public Snapshot EndBuild()
         {
-            throw new System.NotImplementedException();
+            return new Snapshot();
         }
     }
 }

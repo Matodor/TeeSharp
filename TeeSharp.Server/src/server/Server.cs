@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading;
 using TeeSharp.Common;
@@ -88,7 +89,8 @@ namespace TeeSharp.Server
 
             NetworkServer.Init();
 
-            RegisterCommands();
+            RegisterConsoleCommands();
+            GameContext.RegisterConsoleCommands();
 
             Console.ExecuteFile("autoexec.cfg");
             Console.ParseArguments(args);
@@ -364,7 +366,9 @@ namespace TeeSharp.Server
                 if (packet.ClientId == -1)
                 {
                     if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO.Length + 1 &&
-                        packet.Data.ArrayCompare(MasterServerPackets.SERVERBROWSE_GETINFO))
+                        packet.Data.ArrayCompare(
+                            MasterServerPackets.SERVERBROWSE_GETINFO,
+                            MasterServerPackets.SERVERBROWSE_GETINFO.Length))
                     {
                         SendServerInfo(
                             packet.EndPoint, 
@@ -373,7 +377,9 @@ namespace TeeSharp.Server
                         );
                     }
                     else if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO64.Length + 1 &&
-                             packet.Data.ArrayCompare(MasterServerPackets.SERVERBROWSE_GETINFO64))
+                             packet.Data.ArrayCompare(
+                                 MasterServerPackets.SERVERBROWSE_GETINFO64,
+                                 MasterServerPackets.SERVERBROWSE_GETINFO64.Length))
                     {
                         SendServerInfo(
                             packet.EndPoint,
@@ -497,12 +503,17 @@ namespace TeeSharp.Server
             Clients[clientid].Reset();
         }
 
+        protected override string MapName()
+        {
+            return Path.GetFileNameWithoutExtension(Config["SvMap"].AsString());
+        }
+
         protected override bool LoadMap(string mapName)
         {
             return true;
         }
 
-        protected override void RegisterCommands()
+        protected override void RegisterConsoleCommands()
         {
             Console.RegisterCommand("kick", "i?s", ConsoleKick, ConfigFlags.SERVER, "Kick player with specified id for any reason");
             Console.RegisterCommand("status", "", ConsoleStatus, ConfigFlags.SERVER, "List players");
@@ -528,13 +539,129 @@ namespace TeeSharp.Server
 	            Console()->Chain("mod_command", ConchainModCommandUpdate, this);
 	            Console()->Chain("console_output_level", ConchainConsoleOutputLevelUpdate, this);
             */
-
-            GameContext.RegisterCommands();
         }
 
         protected override void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0)
         {
-            throw new NotImplementedException();
+            while (true)
+            {
+                var packer = new Packer();
+                var playersCount = 0;
+                var clientsCount = 0;
+                var maxClients = NetworkServer.Config.MaxClients;
+
+                for (var i = 0; i < Clients.Length; i++)
+                {
+                    if (Clients[i].State == ServerClientState.EMPTY)
+                        continue;
+
+                    if (GameContext.IsClientInGame(i))
+                        playersCount++;
+                    clientsCount++;
+                }
+
+                if (showMore)
+                {
+                    packer.AddRaw(MasterServerPackets.SERVERBROWSE_INFO64, 0, MasterServerPackets.SERVERBROWSE_INFO64.Length);
+                }
+                else
+                {
+                    packer.AddRaw(MasterServerPackets.SERVERBROWSE_INFO, 0, MasterServerPackets.SERVERBROWSE_INFO.Length);
+                }
+
+                packer.AddString(token.ToString(), 6);
+                packer.AddString(GameContext.GameVersion, 32);
+
+                if (showMore)
+                {
+                    packer.AddString(Config["SvName"].AsString(), 256);
+                }
+                else
+                {
+                    packer.AddString(maxClients <= VANILLA_MAX_CLIENTS
+                        ? Config["SvName"].AsString()
+                        : $"{Config["SvName"].AsString()} [{clientsCount}/{maxClients}]", 64);
+                }
+
+                packer.AddString(MapName(), 32);
+                packer.AddString(GameContext.GameController.GameType, 16);
+                packer.AddString(string.IsNullOrWhiteSpace(Config["Password"].AsString())
+                    ? "0"
+                    : "1", 2);
+
+                if (!showMore)
+                {
+                    if (clientsCount >= VANILLA_MAX_CLIENTS)
+                    {
+                        if (clientsCount < maxClients)
+                            clientsCount = VANILLA_MAX_CLIENTS - 1;
+                        else
+                            clientsCount = VANILLA_MAX_CLIENTS;
+                    }
+
+                    if (maxClients > VANILLA_MAX_CLIENTS)
+                        maxClients = VANILLA_MAX_CLIENTS;
+                }
+
+                if (playersCount > clientsCount)
+                    playersCount = clientsCount;
+
+                // num players
+                packer.AddString(playersCount.ToString(), 3);
+                // max players
+                packer.AddString((maxClients - Config["SvSpectatorSlots"].AsInt()).ToString(), 3);
+                // num clients
+                packer.AddString(clientsCount.ToString(), 3);
+                // max clients
+                packer.AddString(maxClients.ToString(), 3);
+
+                if (showMore)
+                    packer.AddInt(offset);
+
+                var clientsPerPacket = showMore ? 24 : VANILLA_MAX_CLIENTS;
+                var skip = offset;
+                var take = clientsPerPacket;
+
+                for (var i = 0; i < Clients.Length; i++)
+                {
+                    if (Clients[i].State == ServerClientState.EMPTY)
+                        continue;
+
+                    if (skip-- > 0)
+                        continue;
+                    if (--take < 0)
+                        break;
+
+                    // client name
+                    packer.AddString(GetClientName(i), 16);
+                    // client clan
+                    packer.AddString(GetClientClan(i), 12);
+                    // client country
+                    packer.AddString(GetClientCountry(i).ToString(), 6);
+                    // client score
+                    packer.AddString(GetClientScore(i).ToString(), 6);
+                    // client state
+                    packer.AddString(GameContext.IsClientInGame(i)
+                        ? "1"
+                        : "0", 2);
+                }
+
+                NetworkServer.Send(new NetworkChunk
+                {
+                    ClientId = -1,
+                    EndPoint = endPoint,
+                    DataSize = packer.Size(),
+                    Data = packer.Data(),
+                    Flags = SendFlags.CONNLESS
+                });
+
+                if (showMore && take < 0)
+                {
+                    offset = offset + clientsPerPacket;
+                    continue;
+                }
+                break;
+            }
         }
 
         protected override void ConsoleReload(ConsoleResult result, object data)
@@ -558,6 +685,26 @@ namespace TeeSharp.Server
         }
 
         protected override void ConsoleKick(ConsoleResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override string GetClientName(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override string GetClientClan(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override int GetClientCountry(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override int GetClientScore(int clientId)
         {
             throw new NotImplementedException();
         }
