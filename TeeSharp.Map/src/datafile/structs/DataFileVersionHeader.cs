@@ -8,7 +8,7 @@ namespace TeeSharp.Map
     /// The version header consists of a magic byte sequence, identifying the file as a Teeworlds datafile and a version number.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public class DataFileVersionHeader
+    public struct DataFileVersionHeader
     {
         public string Magic => new string(MagicArray);
 

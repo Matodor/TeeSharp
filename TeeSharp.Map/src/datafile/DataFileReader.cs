@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using TeeSharp.Core;
 
 namespace TeeSharp.Map
@@ -17,13 +18,7 @@ namespace TeeSharp.Map
 
     public static class DataFileReader
     {
-        public enum Error
-        {
-            NONE = 0,
-            WRONG_SIGNATURE
-        }
-
-        public static DataFile Read(FileStream fs, out Error error)
+        public static DataFile Read(FileStream fs, out string error)
         {
             uint crc;
             {
@@ -36,11 +31,19 @@ namespace TeeSharp.Map
             var versionHeader = fs.ReadStruct<DataFileVersionHeader>();
             if (versionHeader.Magic != "DATA" && versionHeader.Magic != "ATAD")
             {
-                error = Error.WRONG_SIGNATURE;
+                error = $"wrong signature ({versionHeader.Magic})";
                 return null;
             }
 
-            error = Error.NONE;
+            if (versionHeader.Version != 3 && versionHeader.Version != 4)
+            {
+                error = $"wrong version ({versionHeader.Version})";
+                return null;
+            }
+
+            var header = fs.ReadStruct<DataFileHeader>();
+
+            error = string.Empty;
             return null;
         }
     }

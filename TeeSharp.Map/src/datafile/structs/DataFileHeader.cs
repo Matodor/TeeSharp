@@ -6,7 +6,7 @@ namespace TeeSharp.Map
     /// The header specific to version 3 and 4 consists of seven 32-bit signed integers.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public class DataFileHeader
+    public struct DataFileHeader
     {
         /// <summary>
         /// The size is a little-endian integer and must be the size of the complete datafile without the version_header and both size and swaplen.
