@@ -35,7 +35,7 @@ namespace TeeSharp.Map
                 return null;
             }
 
-            if (versionHeader.Version != 3 && versionHeader.Version != 4)
+            if (versionHeader.Version != 4)
             {
                 error = $"wrong version ({versionHeader.Version})";
                 return null;
@@ -43,8 +43,16 @@ namespace TeeSharp.Map
 
             var header = fs.ReadStruct<DataFileHeader>();
 
+            var itemTypes = new DataFileItemType[header.NumItemTypes];
+            for (var i = 0; i < itemTypes.Length; i++)
+                itemTypes[i] = fs.ReadStruct<DataFileItemType>();
+
+            var itemOffsets = new DataFileItemOffset[header.NumItems];
+            for (var i = 0; i < itemOffsets.Length; i++)
+                itemOffsets[i] = fs.ReadStruct<DataFileItemOffset>();
+
             error = string.Empty;
-            return null;
+            return new DataFile(crc, versionHeader, header, itemTypes, itemOffsets);
         }
     }
 }
