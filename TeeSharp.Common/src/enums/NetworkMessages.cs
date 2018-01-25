@@ -13,7 +13,7 @@
         SNAPEMPTY,       // empty snapshot
         SNAPSINGLE,      // ?
         SNAPSMALL,       //
-        INPUTTIMING,     // reports how off the input was
+        INPUT_TIMING,     // reports how off the input was
         RCON_AUTH_STATUS,// result of the authentication
         RCON_LINE,       // line that should be printed to the remote console
 

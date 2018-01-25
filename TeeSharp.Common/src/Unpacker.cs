@@ -41,7 +41,7 @@ namespace TeeSharp.Common
             }
 
             _currentIndex = IntCompression.Unpack(_buffer, _currentIndex, out var result);
-            if (_currentIndex >= _endIndex)
+            if (_currentIndex > _endIndex)
             {
                 Error = true;
                 return 0;
@@ -59,7 +59,7 @@ namespace TeeSharp.Common
             while (_buffer[_currentIndex] != 0)
             {
                 _currentIndex++;
-                if (_currentIndex >= _endIndex)
+                if (_currentIndex > _endIndex)
                 {
                     Error = true;
                     return string.Empty;

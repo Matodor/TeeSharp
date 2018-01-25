@@ -1,4 +1,5 @@
-﻿using TeeSharp.Common.Snapshots;
+﻿using TeeSharp.Common.NetObjects;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 
 namespace TeeSharp.Server
@@ -28,17 +29,13 @@ namespace TeeSharp.Server
         public class Input
         {
             public long Tick { get; set; }
-            public readonly int[] Data;
-
-            public Input(int[] data, long tick)
-            {
-                Data = data;
-                Tick = tick;
-            }
+            public NetObj_PlayerInput PlayerInput { get; set; }
         }
 
         public abstract SnapRate SnapRate { get; set; }
         public abstract ServerClientState State { get; set; }
+        public abstract int Latency { get; set; }
+
         public abstract string PlayerName { get; set; }
         public abstract string PlayerClan { get; set; }
         public abstract int PlayerCountry { get; set; }
@@ -47,9 +44,13 @@ namespace TeeSharp.Server
         public abstract long Traffic { get; set; }
 
         public abstract long LastAckedSnapshot { get; set; }
+        public abstract long LastInputTick { get; set; }
+        public abstract int CurrentInput { get; set; }
 
         public abstract SnapshotStorage SnapshotStorage { get; protected set; }
+        //public abstract Input LatestInput { get; protected set; }
         public abstract Input[] Inputs { get; protected set; }
+
         public abstract void Reset();
     }
 }

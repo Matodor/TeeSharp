@@ -21,12 +21,10 @@ namespace TeeSharp.Map
         public static DataFile Read(FileStream fs, out string error)
         {
             uint crc;
-            {
-                var buffer = new byte[fs.Length];
-                fs.Read(buffer, 0, buffer.Length);
-                fs.Seek(0, SeekOrigin.Begin);
-                crc = Crc32.ComputeChecksum(buffer);
-            }
+            var buffer = new byte[fs.Length];
+            fs.Read(buffer, 0, buffer.Length);
+            fs.Seek(0, SeekOrigin.Begin);
+            crc = Crc32.ComputeChecksum(buffer);
 
             var versionHeader = fs.ReadStruct<DataFileVersionHeader>();
             if (versionHeader.Magic != "DATA" && versionHeader.Magic != "ATAD")
@@ -47,12 +45,29 @@ namespace TeeSharp.Map
             for (var i = 0; i < itemTypes.Length; i++)
                 itemTypes[i] = fs.ReadStruct<DataFileItemType>();
 
-            var itemOffsets = new DataFileItemOffset[header.NumItems];
+            var itemOffsets = new int[header.NumItems];
             for (var i = 0; i < itemOffsets.Length; i++)
-                itemOffsets[i] = fs.ReadStruct<DataFileItemOffset>();
+                itemOffsets[i] = fs.ReadStruct<int>();
+
+            var dataOffsets = new int[header.NumData];
+            for (var i = 0; i < dataOffsets.Length; i++)
+                dataOffsets[i] = fs.ReadStruct<int>();
+
+            var dataSizes = new int[header.NumData];
+            for (var i = 0; i < dataSizes.Length; i++)
+                dataSizes[i] = fs.ReadStruct<int>();
 
             error = string.Empty;
-            return new DataFile(crc, versionHeader, header, itemTypes, itemOffsets);
+            return new DataFile(
+                buffer,
+                crc, 
+                versionHeader, 
+                header, 
+                itemTypes, 
+                itemOffsets,
+                dataOffsets,
+                dataSizes
+            );
         }
     }
 }

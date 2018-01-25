@@ -15,7 +15,6 @@ namespace TeeSharp.Server
     public abstract class BaseServer : BaseInterface
     {
         public const int
-            MAX_CLIENTS = 64,
             VANILLA_MAX_CLIENTS = 16,
             MAX_SNAPSHOT_PACKSIZE = 900,
             SERVER_TICK_SPEED = 50;
@@ -41,14 +40,14 @@ namespace TeeSharp.Server
         public abstract void Run();
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
 
+        protected abstract void StartNetworkServer();
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(long tick);
-        protected abstract void DelClientCallback(int clientid, string reason);
+        protected abstract void DelClientCallback(int clientId, string reason);
         protected abstract void NewClientCallback(int clientid);
 
-        protected abstract string MapName();
         protected abstract bool LoadMap(string mapName);
         protected abstract void SendMap(int clientId);
 
