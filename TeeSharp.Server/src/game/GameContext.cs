@@ -37,7 +37,8 @@ namespace TeeSharp.Server.Game
         public override void OnInit()
         {
             Server = Kernel.Get<BaseServer>();
-            Players = Server.
+            Players = new BasePlayer[Server.MaxClients];
+
         }
 
         public override void OnTick()
@@ -69,7 +70,7 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientConnected(int clientId)
         {
-            var team = 
+            //var team = 
         }
 
         public override void OnClientEnter(int clientId)

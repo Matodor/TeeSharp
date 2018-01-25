@@ -31,8 +31,8 @@ namespace TeeSharp.Server
                 { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },
                 { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
                 { "SvMap", new ConfigString("SvMap", "sv_map", 128, "dm1", ConfigFlags.SERVER, "Map to use on the server") },
-                { "SvMaxClients", new ConfigInt("SvMaxClients", "sv_max_clients", 64, 1, BaseServer.MAX_CLIENTS, ConfigFlags.SERVER, "Maximum number of clients that are allowed on a server") },
-                { "SvMaxClientsPerIP", new ConfigInt("SvMaxClientsPerIP", "sv_max_clients_per_ip", 2, 1, BaseServer.MAX_CLIENTS, ConfigFlags.SERVER, "Maximum number of clients with the same IP that can connect to the server") },
+                { "SvMaxClients", new ConfigInt("SvMaxClients", "sv_max_clients", 64, 1, 64, ConfigFlags.SERVER, "Maximum number of clients that are allowed on a server") },
+                { "SvMaxClientsPerIP", new ConfigInt("SvMaxClientsPerIP", "sv_max_clients_per_ip", 2, 1, 64, ConfigFlags.SERVER, "Maximum number of clients with the same IP that can connect to the server") },
                 { "SvHighBandwidth", new ConfigInt("SvHighBandwidth", "sv_high_bandwidth", 0, 0, 1, ConfigFlags.SERVER, "Use high bandwidth mode. Doubles the bandwidth required for the server. LAN use only") },
                 { "SvRegister", new ConfigInt("SvRegister", "sv_register", 1, 0, 1, ConfigFlags.SERVER, "Register server with master server for public listing") },
                 { "SvRconPassword", new ConfigString("SvRconPassword", "sv_rcon_password", 32, "", ConfigFlags.SERVER, "Remote console password (full access)") },
@@ -66,7 +66,7 @@ namespace TeeSharp.Server
 
                 { "SvRespawnDelayTDM", new ConfigInt("SvRespawnDelayTDM", "sv_respawn_delay_tdm", 3, 0, 10, ConfigFlags.SERVER, "Time needed to respawn after death in tdm gametype") },
 
-                { "SvSpectatorSlots", new ConfigInt("SvSpectatorSlots", "sv_spectator_slots", 0, 0, BaseServer.MAX_CLIENTS, ConfigFlags.SERVER, "Number of slots to reserve for spectators") },
+                { "SvSpectatorSlots", new ConfigInt("SvSpectatorSlots", "sv_spectator_slots", 0, 0, 64, ConfigFlags.SERVER, "Number of slots to reserve for spectators") },
                 { "SvTeambalanceTime", new ConfigInt("SvTeambalanceTime", "sv_teambalance_time", 1, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before autobalancing teams") },
                 { "SvInactiveKickTime", new ConfigInt("SvInactiveKickTime", "sv_inactivekick_time", 3, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before taking care of inactive players") },
                 { "SvInactiveKick", new ConfigInt("SvInactiveKick", "sv_inactivekick", 1, 0, 2, ConfigFlags.SERVER, "How to deal with inactive players (0=move to spectator, 1=move to free spectator slot/kick, 2=kick)") },
@@ -75,7 +75,7 @@ namespace TeeSharp.Server
                 { "SvVoteSpectate", new ConfigInt("SvVoteSpectate", "sv_vote_spectate", 1, 0, 1, ConfigFlags.SERVER, "Allow voting to move players to spectators") },
                 { "SvVoteSpectateRejoindelay", new ConfigInt("SvVoteSpectateRejoindelay", "sv_vote_spectate_rejoindelay", 3, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before a player can rejoin after being moved to spectators by vote") },
                 { "SvVoteKick", new ConfigInt("SvVoteKick", "sv_vote_kick", 1, 0, 1, ConfigFlags.SERVER, "Allow voting to kick players") },
-                { "SvVoteKickMin", new ConfigInt("SvVoteKickMin", "sv_vote_kick_min", 0, 0, BaseServer.MAX_CLIENTS, ConfigFlags.SERVER, "Minimum number of players required to start a kick vote") },
+                { "SvVoteKickMin", new ConfigInt("SvVoteKickMin", "sv_vote_kick_min", 0, 0, 64, ConfigFlags.SERVER, "Minimum number of players required to start a kick vote") },
                 { "SvVoteKickBantime", new ConfigInt("SvVoteKickBantime", "sv_vote_kick_bantime", 5, 0, 1440, ConfigFlags.SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick") },
                 
                 { "DbgFocus", new ConfigInt("DbgFocus", "dbg_focus", 0, 0, 1, ConfigFlags.CLIENT, "") },

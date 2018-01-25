@@ -19,9 +19,10 @@ namespace TeeSharp.Server
             MAX_SNAPSHOT_PACKSIZE = 900,
             SERVER_TICK_SPEED = 50;
 
+        public abstract int MaxClients { get; }
         public abstract long Tick { get; protected set; }
-        
-        protected abstract MapContainer CurrentMap { get; set; }
+        public abstract MapContainer CurrentMap { get; protected set; }
+
         protected abstract SnapshotBuilder SnapshotBuilder { get; set; }
 
         protected abstract BaseNetworkBan NetworkBan { get; set; }

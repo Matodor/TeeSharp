@@ -57,6 +57,8 @@ namespace TeeSharp.Map
             for (var i = 0; i < dataSizes.Length; i++)
                 dataSizes[i] = fs.ReadStruct<int>();
 
+            var itemStartIndex = fs.Position;
+
             error = string.Empty;
             return new DataFile(
                 buffer,
@@ -66,7 +68,8 @@ namespace TeeSharp.Map
                 itemTypes, 
                 itemOffsets,
                 dataOffsets,
-                dataSizes
+                dataSizes,
+                (int) itemStartIndex
             );
         }
     }

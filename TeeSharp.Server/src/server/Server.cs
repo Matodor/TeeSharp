@@ -40,9 +40,10 @@ namespace TeeSharp.Server
 
     public class Server : BaseServer
     {
+        public override int MaxClients => Clients.Length;
         public override long Tick { get; protected set; }
+        public override MapContainer CurrentMap { get; protected set; }
 
-        protected override MapContainer CurrentMap { get; set; }
         protected override SnapshotBuilder SnapshotBuilder { get; set; }
         protected override BaseNetworkBan NetworkBan { get; set; }
         protected override BaseRegister Register { get; set; }
@@ -566,7 +567,7 @@ namespace TeeSharp.Server
             msg.AddInt((int)CurrentMap.CRC);
             msg.AddInt(chunk);
             msg.AddInt(chunkSize);
-            msg.AddRaw(CurrentMap.Data, offset, chunkSize);
+            msg.AddRaw(CurrentMap.RawData, offset, chunkSize);
             SendMsgEx(msg, MsgFlags.FLUSH, clientId, true);
 
             Debug.Log("server", $"sending chunk {chunk} with size {chunkSize}");

@@ -19,6 +19,22 @@ namespace TeeSharp.Core
             return memcmp(b1, compareArray, limit) == 0;
         }
 
+        public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
+        {
+            if (typeof(T) == typeof(string))
+            {
+                return (T) (object) Encoding.Default
+                    .GetString(buffer, offset, buffer.Length - offset - 1);
+            }
+
+            var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+            var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, offset);
+            var value = Marshal.PtrToStructure<T>(ptr);
+
+            handle.Free();
+            return value;
+        }
+
         public static T ReadStruct<T>(this FileStream fs)
         {
             var buffer = new byte[Marshal.SizeOf<T>()];
@@ -26,9 +42,20 @@ namespace TeeSharp.Core
 
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             var value = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
-            handle.Free();
 
+            handle.Free();
             return value;
+        }
+
+        public static void CopyStream(this Stream input, Stream output)
+        {
+            var buffer = new byte[2000];
+            int len;
+            while ((len = input.Read(buffer, 0, 2000)) > 0)
+            {
+                output.Write(buffer, 0, len);
+            }
+            output.Flush();
         }
 
         public static string Limit(this string source, int maxLength)
@@ -57,9 +84,9 @@ namespace TeeSharp.Core
             for (var i = 0; i < input.Length; i++)
             {
                 if (input[i] < 32 ||
-                    input[i] != '\r' ||
-                    input[i] != '\n' ||
-                    input[i] != '\t')
+                    input[i] == '\r' ||
+                    input[i] == '\n' ||
+                    input[i] == '\t')
                 {
                     continue;
                 }
