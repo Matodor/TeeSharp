@@ -22,16 +22,23 @@ namespace TeeSharp.Map
             ENVPOINTS
         }
 
+        public uint CRC { get; }
+        public int Size { get; }
+        public byte[] RawData { get; }
         public string MapName { get; set; }
-        public uint CRC => _dataFile.Crc;
-        public int Size => _dataFile.Raw.Length;
-        public byte[] RawData => _dataFile.Raw;
+
+        public readonly MapInfo MapInfo;
 
         private readonly DataFile _dataFile;
 
-        private MapContainer(DataFile dataFile)
+        private MapContainer(DataFile dataFile, MapInfo mapInfo)
         {
             _dataFile = dataFile;
+            CRC = _dataFile.Crc;
+            Size = _dataFile.Raw.Length;
+            RawData = _dataFile.Raw;
+
+            MapInfo = mapInfo;
         }
 
         public static MapContainer Load(FileStream stream, out string error)
@@ -57,6 +64,7 @@ namespace TeeSharp.Map
                 License = string.Empty
             };
 
+            // load map info
             if (mapItemInfo.Version == 1)
             {
                 if (mapItemInfo.Author > -1)
@@ -69,7 +77,14 @@ namespace TeeSharp.Map
                     mapInfo.License = dataFile.GetData<string>(mapItemInfo.License);
             }
 
-            return new MapContainer(dataFile);
+            // load images
+
+            // load groups
+            
+            return new MapContainer(
+                dataFile,
+                mapInfo
+            );
         }
     }
 }

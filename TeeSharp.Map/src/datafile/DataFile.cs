@@ -46,6 +46,11 @@ namespace TeeSharp.Map
             _dataObjects = new object[Header.NumData];
         }
 
+        public void UnloadData(int index)
+        {
+            _dataObjects[index] = null;
+        }
+
         public int GetDataSize(int index)
         {
             if (index == Header.NumData - 1)
