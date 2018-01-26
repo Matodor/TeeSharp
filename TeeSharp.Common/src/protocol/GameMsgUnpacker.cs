@@ -5,12 +5,11 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsgUnpacker : BaseGameMsgUnpacker
     {
-        public override BaseNetObject Unpack(int msgId, Unpacker unpacker, 
-            out string error)
+        public override bool Unpack(int msgId, Unpacker unpacker, 
+            out BaseGameMessage msg, out string error)
         {
-            var msg = (GameMessages) msgId;
-
-            switch (msg)
+            var message = (GameMessages) msgId;
+            switch (message)
             {
                 case GameMessages.INVALID:
                     break;
@@ -73,7 +72,8 @@ namespace TeeSharp.Common.Protocol
             }
 
             error = null;
-            return null;
+            msg = null;
+            return false;
         }
 
         public virtual GameMsg_SvMotd UnpackSvMotd()

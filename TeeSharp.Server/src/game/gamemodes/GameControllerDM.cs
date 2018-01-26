@@ -1,6 +1,6 @@
 ﻿using TeeSharp.Common;
 
-namespace TeeSharp.Server.Game.gamemodes
+namespace TeeSharp.Server.Game
 {
     public class GameControllerDM : VanillaController
     {

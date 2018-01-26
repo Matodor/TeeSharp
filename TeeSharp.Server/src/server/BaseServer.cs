@@ -47,9 +47,9 @@ namespace TeeSharp.Server
         public abstract void Init(string[] args);
         public abstract void Run();
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
-        public abstract bool SendPackMsg<T>(T msg, int flags, int clientId) where T : BaseGameMessage;
+        public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
 
-        protected abstract bool SendPackMsgBody<T>(T msg, int flags, int clientId) where T : BaseGameMessage;
+        protected abstract bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
         protected abstract void StartNetworkServer();
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();

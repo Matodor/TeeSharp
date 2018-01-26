@@ -1,11 +1,9 @@
-﻿using System;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Map;
-using TeeSharp.Server.Game.gamemodes;
 
 namespace TeeSharp.Server.Game
 {
@@ -16,6 +14,8 @@ namespace TeeSharp.Server.Game
         public override string ReleaseVersion { get; } = "0.63";
         public override BasePlayer[] Players { get; protected set; }
         public override BaseGameController GameController { get; protected set; }
+        protected override BaseConfig Config { get; set; }
+        protected override BaseGameConsole Console { get; set; }
 
         protected override BaseServer Server { get; set; }
         protected override BaseLayers Layers { get; set; }
@@ -43,6 +43,7 @@ namespace TeeSharp.Server.Game
             GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
             Collision = Kernel.Get<BaseCollision>();
             Config = Kernel.Get<BaseConfig>();
+            Console = Kernel.Get<BaseGameConsole>();
 
             Layers.Init(Server.CurrentMap);
             Collision.Init(Layers);
@@ -86,6 +87,7 @@ namespace TeeSharp.Server.Game
             if (!Server.ClientInGame(clientId))
             {
                 if (msg.MsgId == GameMessages.CL_STARTINFO) 
+                    OnMsgStartInfo(player, (GameMsg_ClStartInfo) msg);
             }
             else
             {
@@ -93,7 +95,8 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        protected virtual void OnMsgStartInfo(BasePlayer player)
+        protected virtual void OnMsgStartInfo(BasePlayer player, 
+            GameMsg_ClStartInfo msg)
         {
             
         }
@@ -124,7 +127,8 @@ namespace TeeSharp.Server.Game
 
             // send vote
 
-            Server.SendMsgEx(new GameMsg_SvMotd { Message = Config["SvMotd"] })
+            Server.SendPackMsg(new GameMsg_SvMotd {Message = Config["SvMotd"]},
+                MsgFlags.VITAL | MsgFlags.FLUSH, clientId);
         }
 
         public override void OnClientEnter(int clientId)

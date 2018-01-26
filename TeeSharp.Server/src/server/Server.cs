@@ -250,7 +250,7 @@ namespace TeeSharp.Server
             return true;
         }
 
-        public override bool SendPackMsg<T>(T msg, int flags, int clientId)
+        public override bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
         {
             var result = false;
 
@@ -272,9 +272,9 @@ namespace TeeSharp.Server
             return result;
         }
 
-        protected override bool SendPackMsgBody<T>(T msg, int flags, int clientId)
+        protected override bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId)
         {
-            
+            return false;
         }
 
         protected override void StartNetworkServer()

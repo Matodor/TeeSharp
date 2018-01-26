@@ -1,4 +1,6 @@
-﻿namespace TeeSharp.Server.Game
+﻿using TeeSharp.Common.Enums;
+
+namespace TeeSharp.Server.Game
 {
     public class Player : BasePlayer
     {
@@ -6,7 +8,7 @@
 
         private int _clientId;
 
-        public override void Init(int clientId)
+        public override void Init(int clientId, Team team)
         {
             _clientId = clientId;
         }
