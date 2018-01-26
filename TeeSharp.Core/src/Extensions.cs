@@ -9,6 +9,34 @@ namespace TeeSharp.Core
         [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int memcmp(byte[] b1, byte[] b2, long count);
 
+        public static string IntsToStr(this int[] ints)
+        {
+            var builder = new StringBuilder();
+            for (var i = 0; i < ints.Length; i++)
+            {
+                do
+                {
+                    var c1 = (char) (((ints[i] >> 24) & 0b1111_1111) - 128);
+                    if (c1 < 32) return builder.ToString();
+                    builder.Append(c1);
+
+                    var c2 = (char)(((ints[i] >> 16) & 0b1111_1111) - 128);
+                    if (c2 < 32) return builder.ToString();
+                    builder.Append(c2);
+
+                    var c3 = (char)(((ints[i] >> 8) & 0b1111_1111) - 128);
+                    if (c3 < 32) return builder.ToString();
+                    builder.Append(c3);
+
+                    var c4 = (char)((ints[i] & 0b1111_1111) - 128);
+                    if (c4 < 32) return builder.ToString();
+                    builder.Append(c4);
+
+                } while (false);
+            }
+            return builder.ToString();
+        }
+
         public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit = 0)
         {
             // Validate buffers are the same length.
@@ -19,14 +47,24 @@ namespace TeeSharp.Core
             return memcmp(b1, compareArray, limit) == 0;
         }
 
-        public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
+        public static T[] ReadStructs<T>(this byte[] buffer)
         {
-            if (typeof(T) == typeof(string))
+            var size = Marshal.SizeOf<T>();
+            var array = new T[buffer.Length / size];
+            var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+            var ptr = handle.AddrOfPinnedObject();
+
+            for (var i = 0; i < array.Length; i++)
             {
-                return (T) (object) Encoding.Default
-                    .GetString(buffer, offset, buffer.Length - offset - 1);
+                array[i] = Marshal.PtrToStructure<T>(ptr + size * i);
             }
 
+            handle.Free();
+            return array;
+        }
+
+        public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
+        {
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, offset);
             var value = Marshal.PtrToStructure<T>(ptr);
@@ -56,6 +94,11 @@ namespace TeeSharp.Core
                 output.Write(buffer, 0, len);
             }
             output.Flush();
+        }
+
+        public static string ToString(this char[] chars)
+        {
+            return new string(chars);
         }
 
         public static string Limit(this string source, int maxLength)

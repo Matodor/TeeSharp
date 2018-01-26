@@ -3,21 +3,23 @@
 namespace TeeSharp.Map.MapItems
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public struct MapItemInfo
+    public struct MapItemLayerQuads
     {
+        public MapItemLayer Layer;
+
         [MarshalAs(UnmanagedType.I4)]
         public int Version;
 
         [MarshalAs(UnmanagedType.I4)]
-        public int Author;
+        public int NumQuads;
 
         [MarshalAs(UnmanagedType.I4)]
-        public int MapVersion;
+        public int Data;
 
         [MarshalAs(UnmanagedType.I4)]
-        public int Credits;
+        public int Image;
 
-        [MarshalAs(UnmanagedType.I4)]
-        public int License;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public int[] IntName;
     }
 }

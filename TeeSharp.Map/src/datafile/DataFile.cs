@@ -58,14 +58,14 @@ namespace TeeSharp.Map
             return DataOffsets[index + 1] - DataOffsets[index];
         }
 
-        public T GetData<T>(int index)
+        public T[] GetData<T>(int index)
         {
             if (_dataObjects[index] == null)
             {
                 var dataSize = GetDataSize(index);
                 var uncompressedSize = DataSizes[index];
 
-                Debug.Log("datafile", $"loading data index={index} size={dataSize} uncompressed={uncompressedSize}");
+                Debug.Log("datafile", $"loading data={typeof(T).Name} index={index} size={dataSize} uncompressed={uncompressedSize}");
                 using (var outMemoryStream = new MemoryStream())
                 using (var outZStream = new ZOutputStream(outMemoryStream))
                 using (var inMemoryStream = new MemoryStream(
@@ -76,11 +76,12 @@ namespace TeeSharp.Map
                 {
                     inMemoryStream.CopyStream(outZStream);
                     outZStream.finish();
-                    _dataObjects[index] = outMemoryStream.ToArray().ReadStruct<T>();
+
+                    _dataObjects[index] = outMemoryStream.ToArray().ReadStructs<T>();
                 }
             }
 
-            return (T) _dataObjects[index];
+            return (T[]) _dataObjects[index];
         }
 
         public void GetType(int typeId, out int start, out int num)
