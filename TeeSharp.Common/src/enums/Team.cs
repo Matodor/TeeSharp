@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Teams
+    public enum Team
     {
         SPECTATORS = -1,
         RED,

@@ -11,6 +11,21 @@
         public abstract int AsInt();
         public abstract bool AsBoolean();
 
+        public static implicit operator string(ConfigVariable v)
+        {
+            return v.AsString();
+        }
+
+        public static implicit operator int(ConfigVariable v)
+        {
+            return v.AsInt();
+        }
+
+        public static implicit operator bool(ConfigVariable v)
+        {
+            return v.AsBoolean();
+        }
+
         protected ConfigVariable(string name, string cmd, ConfigFlags flags, string desc)
         {
             Name = name;

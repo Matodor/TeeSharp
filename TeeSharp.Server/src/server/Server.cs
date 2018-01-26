@@ -6,6 +6,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
@@ -31,6 +32,9 @@ namespace TeeSharp.Server
             kernel.Bind<BaseGameConsole>().To<GameConsole>().AsSingleton();
             kernel.Bind<BaseRegister>().To<Register>().AsSingleton();
 
+            kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>();
+            kernel.Bind<BaseCollision>().To<Collision>();
+            kernel.Bind<BaseLayers>().To<Layers>();
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
             kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
@@ -86,7 +90,7 @@ namespace TeeSharp.Server
             Storage.Init("TeeSharp", StorageType.SERVER);
 
             Console.Init();
-            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(),
+            Console.RegisterPrintCallback((OutputLevel) (int) Config["ConsoleOutputLevel"],
                 SendRconLineAuthed);
 
             NetworkServer.Init();
@@ -105,7 +109,7 @@ namespace TeeSharp.Server
 
             Debug.Log("server", "starting...");
 
-            if (!LoadMap(Config["SvMap"].AsString()))
+            if (!LoadMap(Config["SvMap"]))
             {
                 Debug.Error("server", $"failed to load map. mapname='{Config["SvMap"]}'");
                 return;    
@@ -158,7 +162,7 @@ namespace TeeSharp.Server
 
                 if (ticks != 0)
                 {
-                    if (Tick % 2 == 0 || Config["SvHighBandwidth"].AsBoolean())
+                    if (Tick % 2 == 0 || Config["SvHighBandwidth"])
                         DoSnapshot();
                     // UpdateClientRconCommands()
                 }
@@ -176,6 +180,31 @@ namespace TeeSharp.Server
             }
 
             GameContext.OnShutdown();
+        }
+
+        public override string GetClientName(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string GetClientClan(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetClientCountry(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetClientScore(int clientId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool ClientInGame(int clientId)
+        {
+            return Clients[clientId].State == ServerClientState.IN_GAME;
         }
 
         public override bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)
@@ -221,18 +250,45 @@ namespace TeeSharp.Server
             return true;
         }
 
+        public override bool SendPackMsg<T>(T msg, int flags, int clientId)
+        {
+            var result = false;
+
+            if (clientId == -1)
+            {
+                for (var i = 0; i < Clients.Length; i++)
+                {
+                    if (ClientInGame(i))
+                    {
+                        result = SendPackMsgBody(msg, flags, i);
+                    }
+                }
+            }
+            else
+            {
+                return SendPackMsgBody(msg, flags, clientId);
+            }
+
+            return result;
+        }
+
+        protected override bool SendPackMsgBody<T>(T msg, int flags, int clientId)
+        {
+            
+        }
+
         protected override void StartNetworkServer()
         {
             var bindAddr = IPAddress.Any;
-            if (!string.IsNullOrWhiteSpace(Config["Bindaddr"].AsString()))
-                bindAddr = IPAddress.Parse(Config["Bindaddr"].AsString());
+            if (!string.IsNullOrWhiteSpace(Config["Bindaddr"]))
+                bindAddr = IPAddress.Parse(Config["Bindaddr"]);
 
             var networkConfig = new NetworkServerConfig
             {
-                LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"].AsInt()),
-                ConnectionTimeout = Config["ConnTimeout"].AsInt(),
-                MaxClientsPerIp = Config["SvMaxClientsPerIP"].AsInt(),
-                MaxClients = Config["SvMaxClients"].AsInt()
+                LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
+                ConnectionTimeout = Config["ConnTimeout"],
+                MaxClientsPerIp = Config["SvMaxClientsPerIP"],
+                MaxClients = Config["SvMaxClients"]
             };
 
             if (!NetworkServer.Open(networkConfig))
@@ -250,19 +306,19 @@ namespace TeeSharp.Server
             unpacker.Reset(packet.Data, packet.DataSize);
 
             var msg = unpacker.GetInt();
-            var sys = msg & 1;
+            var isSystemMsg = (msg & 1) != 0;
             msg >>= 1;
 
             if (unpacker.Error)
                 return;
 
-            var message = (NetworkMessages) msg;
-            if (Config["SvNetlimit"].AsBoolean() && message != NetworkMessages.REQUEST_MAP_DATA)
+            if (Config["SvNetlimit"] && 
+                !(isSystemMsg && msg == (int)NetworkMessages.REQUEST_MAP_DATA))
             {
                 var now = Time.Get();
                 var diff = now - Clients[clientId].TrafficSince;
-                var alpha = Config["SvNetlimitAlpha"].AsInt() / 100f;
-                var limit = (float) Config["SvNetlimit"].AsInt() * 1024 / Time.Freq();
+                var alpha = Config["SvNetlimitAlpha"] / 100f;
+                var limit = (float) Config["SvNetlimit"] * 1024 / Time.Freq();
 
                 if (Clients[clientId].Traffic > limit)
                 {
@@ -278,9 +334,9 @@ namespace TeeSharp.Server
                 }
             }
 
-            if (sys != 0)
+            if (isSystemMsg)
             {
-                switch (message)
+                switch ((NetworkMessages) msg)
                 {
                     case NetworkMessages.INFO:
                         NetMsgInfo(packet, unpacker, clientId);
@@ -315,14 +371,14 @@ namespace TeeSharp.Server
             {
                 if (Clients[clientId].State >= ServerClientState.READY)
                 {
-                    GameContext.OnMessage(message, unpacker, clientId);
+                    GameContext.OnMessage(msg, unpacker, clientId);
                 }
             }
         }
 
         protected override void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            var msg = new MsgPacker(NetworkMessages.PING_REPLY);
+            var msg = new MsgPacker((int) NetworkMessages.PING_REPLY);
             SendMsgEx(msg, 0, clientId, true);
         }
 
@@ -361,7 +417,7 @@ namespace TeeSharp.Server
             if (intendedTick > Clients[clientId].LastInputTick)
             {
                 var timeLeft = (TickStartTime(intendedTick) - now) * 1000 / Time.Freq();
-                var msg = new MsgPacker(NetworkMessages.INPUT_TIMING);
+                var msg = new MsgPacker((int)NetworkMessages.INPUT_TIMING);
                 msg.AddInt((int) intendedTick);
                 msg.AddInt((int) timeLeft);
                 SendMsgEx(msg, MsgFlags.NONE, clientId, true);
@@ -409,7 +465,7 @@ namespace TeeSharp.Server
             Clients[clientId].State = ServerClientState.READY;
             GameContext.OnClientConnected(clientId);
 
-            var msg = new MsgPacker(NetworkMessages.CON_READY);
+            var msg = new MsgPacker((int) NetworkMessages.CON_READY);
             SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
         }
 
@@ -441,8 +497,8 @@ namespace TeeSharp.Server
                     chunkSize = 0;
             }
 
-            if (_lastSent[clientId] < chunk + Config["SvMapWindow"].AsInt() &&
-                Config["SvFastDownload"].AsBoolean())
+            if (_lastSent[clientId] < chunk + Config["SvMapWindow"] &&
+                Config["SvFastDownload"])
             {
                 return;
             }
@@ -463,16 +519,15 @@ namespace TeeSharp.Server
             }
 
             var password = unpacker.GetString(SanitizeType.SANITIZE_CC);
-            if (!string.IsNullOrEmpty(Config["Password"].AsString()) &&
-                password != Config["Password"].AsString())
+            if (!string.IsNullOrEmpty(Config["Password"]) && password != Config["Password"])
             {
                 NetworkServer.Drop(clientId, "Wrong password");
                 return;
             }
 
-            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"].AsInt() &&
-                !string.IsNullOrEmpty(Config["SvReservedSlotsPass"].AsString()) &&
-                password != Config["SvReservedSlotsPass"].AsString())
+            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"] &&
+                !string.IsNullOrEmpty(Config["SvReservedSlotsPass"]) &&
+                password != Config["SvReservedSlotsPass"])
             {
                 NetworkServer.Drop(clientId, "This server is full");
                 return;
@@ -519,7 +574,7 @@ namespace TeeSharp.Server
                 ProcessClientPacket(packet);
             }
 
-            if (Config["SvFastDownload"].AsBoolean())
+            if (Config["SvFastDownload"])
             {
                 for (var i = 0; i < Clients.Length; i++)
                 {
@@ -532,7 +587,7 @@ namespace TeeSharp.Server
                         _lastAskTick[i] = Tick;
                     }
 
-                    if (_lastAsk[i] < _lastSent[i] - Config["SvMapWindow"].AsInt())
+                    if (_lastAsk[i] < _lastSent[i] - Config["SvMapWindow"])
                         continue;
 
                     var chunk = _lastSent[i]++;
@@ -562,7 +617,7 @@ namespace TeeSharp.Server
         private void SendMapData(int last, int chunk, int chunkSize, 
             int offset, int clientId)
         {
-            var msg = new MsgPacker(NetworkMessages.MAP_DATA);
+            var msg = new MsgPacker((int) NetworkMessages.MAP_DATA);
             msg.AddInt(last);
             msg.AddInt((int)CurrentMap.CRC);
             msg.AddInt(chunk);
@@ -614,7 +669,7 @@ namespace TeeSharp.Server
 
                 if (deltaSize == 0)
                 {
-                    var msg = new MsgPacker(NetworkMessages.SNAPEMPTY);
+                    var msg = new MsgPacker((int) NetworkMessages.SNAPEMPTY);
                     msg.AddInt((int) Tick);
                     msg.AddInt((int) (Tick - deltaTick));
                     SendMsgEx(msg, MsgFlags.FLUSH, i, true);
@@ -632,7 +687,7 @@ namespace TeeSharp.Server
 
                     if (numPackets == 1)
                     {
-                        var msg = new MsgPacker(NetworkMessages.SNAPSINGLE);
+                        var msg = new MsgPacker((int) NetworkMessages.SNAPSINGLE);
                         msg.AddInt((int) Tick);
                         msg.AddInt((int) (Tick - deltaTick));
                         msg.AddInt(CRC);
@@ -642,7 +697,7 @@ namespace TeeSharp.Server
                     }
                     else
                     {
-                        var msg = new MsgPacker(NetworkMessages.SNAP);
+                        var msg = new MsgPacker((int) NetworkMessages.SNAP);
                         msg.AddInt((int) Tick);
                         msg.AddInt((int)(Tick - deltaTick));
                         msg.AddInt(numPackets);
@@ -712,7 +767,7 @@ namespace TeeSharp.Server
             _lastAsk[clientId] = 0;
             _lastAskTick[clientId] = Tick;
 
-            var msg = new MsgPacker(NetworkMessages.MAP_CHANGE);
+            var msg = new MsgPacker((int) NetworkMessages.MAP_CHANGE);
             msg.AddString(CurrentMap.MapName);
             msg.AddInt((int) CurrentMap.CRC);
             msg.AddInt(CurrentMap.Size);
@@ -775,18 +830,18 @@ namespace TeeSharp.Server
 
                 if (showMore)
                 {
-                    packer.AddString(Config["SvName"].AsString(), 256);
+                    packer.AddString(Config["SvName"], 256);
                 }
                 else
                 {
                     packer.AddString(maxClients <= VANILLA_MAX_CLIENTS
-                        ? Config["SvName"].AsString()
-                        : $"{Config["SvName"].AsString()} [{clientsCount}/{maxClients}]", 64);
+                        ? Config["SvName"]
+                        : $"{Config["SvName"]} [{clientsCount}/{maxClients}]", 64);
                 }
 
                 packer.AddString(CurrentMap.MapName, 32);
                 packer.AddString(GameContext.GameController.GameType, 16);
-                packer.AddInt(string.IsNullOrWhiteSpace(Config["Password"].AsString())
+                packer.AddInt(string.IsNullOrWhiteSpace(Config["Password"])
                     ? 0
                     : 1);
 
@@ -810,7 +865,7 @@ namespace TeeSharp.Server
                 // num players
                 packer.AddString(playersCount.ToString(), 3);
                 // max players
-                packer.AddString((maxClients - Config["SvSpectatorSlots"].AsInt()).ToString(), 3);
+                packer.AddString((maxClients - Config["SvSpectatorSlots"]).ToString(), 3);
                 // num clients
                 packer.AddString(clientsCount.ToString(), 3);
                 // max clients
@@ -886,26 +941,6 @@ namespace TeeSharp.Server
         }
 
         protected override void ConsoleKick(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override string GetClientName(int clientId)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override string GetClientClan(int clientId)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int GetClientCountry(int clientId)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int GetClientScore(int clientId)
         {
             throw new NotImplementedException();
         }

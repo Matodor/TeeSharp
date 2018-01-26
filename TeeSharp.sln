@@ -17,6 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.OverrideServer", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Common", "TeeSharp.Common\TeeSharp.Common.csproj", "{A3E30B8C-3604-48D4-84A4-B5D778660BF6}"
 	ProjectSection(ProjectDependencies) = postProject
+		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 	EndProjectSection
 EndProject

@@ -4,6 +4,7 @@
     {
         public Layer[] Layers { get; set; }
 
+        public int Version { get; set; }
         public int OffsetX { get; set; }
         public int OffsetY { get; set; }
 

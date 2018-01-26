@@ -1,13 +1,11 @@
-﻿using TeeSharp.Common.Enums;
-
-namespace TeeSharp.Common
+﻿namespace TeeSharp.Common
 {
     public class MsgPacker : Packer
     {
-        public MsgPacker(NetworkMessages type)
+        public MsgPacker(int msgId)
         {
             Reset();
-            AddInt((int) type);
+            AddInt(msgId);
         }
     }
 }

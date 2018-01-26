@@ -1,24 +1,26 @@
-﻿using TeeSharp.Common;
+﻿using System;
+using TeeSharp.Common;
+using TeeSharp.Common.Config;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
-using TeeSharp.Common.NetObjects;
+using TeeSharp.Common.Protocol;
+using TeeSharp.Map;
 using TeeSharp.Server.Game.gamemodes;
 
 namespace TeeSharp.Server.Game
 {
     public class GameContext : BaseGameContext
     {
-        public override BaseGameController GameController { get; }
         public override string GameVersion { get; } = "0.6";
         public override string NetVersion { get; } = "0.6";
         public override string ReleaseVersion { get; } = "0.63";
         public override BasePlayer[] Players { get; protected set; }
+        public override BaseGameController GameController { get; protected set; }
 
         protected override BaseServer Server { get; set; }
-
-        public GameContext()
-        {
-            GameController = new GameControllerDM();
-        }
+        protected override BaseLayers Layers { get; set; }
+        protected override BaseCollision Collision { get; set; }
+        protected override BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
 
         public override void RegisterConsoleCommands()
         {
@@ -37,8 +39,29 @@ namespace TeeSharp.Server.Game
         public override void OnInit()
         {
             Server = Kernel.Get<BaseServer>();
-            Players = new BasePlayer[Server.MaxClients];
+            Layers = Kernel.Get<BaseLayers>();
+            GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
+            Collision = Kernel.Get<BaseCollision>();
+            Config = Kernel.Get<BaseConfig>();
 
+            Layers.Init(Server.CurrentMap);
+            Collision.Init(Layers);
+            Players = new BasePlayer[Server.MaxClients];
+            
+            // TODO
+            GameController = new GameControllerDM();
+
+            for (var y = 0; y < Layers.GameLayer.Height; y++)
+            {
+                for (var x = 0; x < Layers.GameLayer.Width; x++)
+                {
+                    var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
+                    var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+
+                    if (tile.Index >= MapContainer.ENTITY_OFFSET)
+                        GameController.OnEntity(tile.Index - MapContainer.ENTITY_OFFSET, pos);
+                }
+            }
         }
 
         public override void OnTick()
@@ -50,9 +73,29 @@ namespace TeeSharp.Server.Game
             throw new System.NotImplementedException();
         }
 
-        public override void OnMessage(NetworkMessages message, Unpacker unpacker, int clientId)
+        public override void OnMessage(int msgId, Unpacker unpacker, int clientId)
         {
-            throw new System.NotImplementedException();
+            if (!GameMsgUnpacker.Unpack(msgId, unpacker, out var msg, out var error))
+            {
+                Console.Print(OutputLevel.DEBUG, "server", $"dropped gamemessage='{(GameMessages) msgId}' ({msgId}), failed on '{error}'");
+                return;
+            }
+
+            var player = Players[clientId];
+            
+            if (!Server.ClientInGame(clientId))
+            {
+                if (msg.MsgId == GameMessages.CL_STARTINFO) 
+            }
+            else
+            {
+                
+            }
+        }
+
+        protected virtual void OnMsgStartInfo(BasePlayer player)
+        {
+            
         }
 
         public override void OnBeforeSnapshot()
@@ -70,7 +113,18 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientConnected(int clientId)
         {
-            //var team = 
+            var startTeam = Config["SvTournamentMode"]
+                ? Team.SPECTATORS
+                : GameController.GetAutoTeam(clientId);
+
+            Players[clientId] = Kernel.Get<BasePlayer>();
+            Players[clientId].Init(clientId, startTeam);
+
+            GameController.CheckTeamsBalance();
+
+            // send vote
+
+            Server.SendMsgEx(new GameMsg_SvMotd { Message = Config["SvMotd"] })
         }
 
         public override void OnClientEnter(int clientId)

@@ -3,6 +3,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
@@ -37,10 +38,18 @@ namespace TeeSharp.Server
         protected abstract long StartTime { get; set; }
         protected abstract bool IsRunning { get; set; }
 
+        public abstract string GetClientName(int clientId);
+        public abstract string GetClientClan(int clientId);
+        public abstract int GetClientCountry(int clientId);
+        public abstract int GetClientScore(int clientId);
+        public abstract bool ClientInGame(int clientId);
+
         public abstract void Init(string[] args);
         public abstract void Run();
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
+        public abstract bool SendPackMsg<T>(T msg, int flags, int clientId) where T : BaseGameMessage;
 
+        protected abstract bool SendPackMsgBody<T>(T msg, int flags, int clientId) where T : BaseGameMessage;
         protected abstract void StartNetworkServer();
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();
@@ -70,10 +79,5 @@ namespace TeeSharp.Server
         protected abstract void ConsoleShutdown(ConsoleResult result, object data);
         protected abstract void ConsoleStatus(ConsoleResult result, object data);
         protected abstract void ConsoleKick(ConsoleResult result, object data);
-
-        protected abstract string GetClientName(int clientId);
-        protected abstract string GetClientClan(int clientId);
-        protected abstract int GetClientCountry(int clientId);
-        protected abstract int GetClientScore(int clientId);
     }
 }

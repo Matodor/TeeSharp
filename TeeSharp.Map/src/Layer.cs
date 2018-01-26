@@ -4,7 +4,6 @@
     {
         public LayerType Type { get; set; }
         public string Name { get; set; }
-        public int Flags { get; set; }
 
         protected Layer()
         {

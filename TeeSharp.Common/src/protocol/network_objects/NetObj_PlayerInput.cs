@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace TeeSharp.Common.NetObjects
+namespace TeeSharp.Common.Protocol
 {
-    public class NetObj_PlayerInput : BaseNetObj<NetObj_PlayerInput>
+    public class NetObj_PlayerInput : BaseNetObject<NetObj_PlayerInput>
     {
         public int Direction;
         public int TargetX;

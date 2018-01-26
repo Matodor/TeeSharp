@@ -5,34 +5,10 @@ using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Map
 {
-    /*
-        map format:
-            [ 4] item 
-
-     
-    */
-    public enum MapItemTypes
-    {
-        VERSION = 0,
-        INFO,
-        IMAGE,
-        ENVELOPE,
-        GROUP,
-        LAYER,
-        ENVPOINTS
-    }
-
-    public enum LayerType
-    {
-        INVALID = 0,
-        GAME,
-        TILES,
-        QUADS
-    }
-
     public class MapContainer
     {
-        public const int 
+        public const int
+            ENTITY_COUNT = 255,
             ENTITY_OFFSET = 255 - 16 * 4,
             TILESLAYERFLAG_GAME = 1;
 
@@ -42,6 +18,7 @@ namespace TeeSharp.Map
         public string MapName { get; set; }
 
         public readonly MapInfo MapInfo;
+        public readonly LayerGroup[] MapGroups;
 
         private readonly DataFile _dataFile;
 
@@ -56,12 +33,13 @@ namespace TeeSharp.Map
             RawData = _dataFile.Raw;
 
             MapInfo = mapInfo;
+            MapGroups = mapGroups;
         }
 
         private static MapInfo LoadMapInfo(DataFile dataFile)
         {
             var mapItemInfo = dataFile.FindItem<MapItemInfo>(
-                (int)MapItemTypes.INFO, 0);
+                (int) MapItemTypes.INFO, 0);
 
             var mapInfo = new MapInfo
             {
@@ -112,7 +90,8 @@ namespace TeeSharp.Map
                     ParallaxY = itemGroup.ParallaxY,
                     OffsetX = itemGroup.OffsetX,
                     OffsetY = itemGroup.OffsetY,
-                    Layers = new Layer[itemGroup.NumLayers]
+                    Layers = new Layer[itemGroup.NumLayers],
+                    Version = itemGroup.Version
                 };
 
                 if (itemGroup.Version >= 2)
@@ -145,7 +124,7 @@ namespace TeeSharp.Map
                     out var _
                 );
 
-                if (layerItem.Type == (int)LayerType.TILES)
+                if (layerItem.Type == (int) LayerType.TILES)
                 {
                     var itemLayerTilemap = dataFile.GetItem<MapItemLayerTilemap>(
                         layersStart + itemGroup.StartLayer + l,
@@ -192,7 +171,7 @@ namespace TeeSharp.Map
                     dataFile.UnloadData(itemLayerTilemap.Data);
                     group.Layers[l] = layerTiles;
                 }
-                else if (layerItem.Type == (int)LayerType.QUADS)
+                else if (layerItem.Type == (int) LayerType.QUADS)
                 {
                     var quadsItem = dataFile.GetItem<MapItemLayerQuads>(
                         layersStart + itemGroup.StartLayer + l,
@@ -211,7 +190,6 @@ namespace TeeSharp.Map
                     group.Layers[l] = layerQuads;
                 }
 
-                group.Layers[l].Flags = layerItem.Flags;
                 group.Layers[l].Type = (LayerType) layerItem.Type;
             }
         }

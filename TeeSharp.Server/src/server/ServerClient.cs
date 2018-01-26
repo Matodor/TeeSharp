@@ -1,4 +1,4 @@
-﻿using TeeSharp.Common.NetObjects;
+﻿using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Server
