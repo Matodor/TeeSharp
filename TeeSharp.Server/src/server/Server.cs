@@ -39,6 +39,7 @@ namespace TeeSharp.Server
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
             kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
             kernel.Bind<BasePlayer>().To<Player>();
+            kernel.Bind<BaseTuningParams>().To<TuningParams>();
         }
     }
 
@@ -182,6 +183,21 @@ namespace TeeSharp.Server
             GameContext.OnShutdown();
         }
 
+        public override void SetClientName(int clientId, string name)
+        {
+            //throw new NotImplementedException();
+        }
+
+        public override void SetClientClan(int clientId, string clan)
+        {
+            //throw new NotImplementedException();
+        }
+
+        public override void SetClientCountry(int clientId, int country)
+        {
+            //throw new NotImplementedException();
+        }
+
         public override string GetClientName(int clientId)
         {
             throw new NotImplementedException();
@@ -205,6 +221,11 @@ namespace TeeSharp.Server
         public override bool ClientInGame(int clientId)
         {
             return Clients[clientId].State == ServerClientState.IN_GAME;
+        }
+
+        public override bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId)
+        {
+            return SendMsgEx(msg, flags, clientId, false);
         }
 
         public override bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)

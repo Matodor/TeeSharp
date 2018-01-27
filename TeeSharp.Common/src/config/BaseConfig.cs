@@ -1,39 +1,48 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using TeeSharp.Core;
 
 namespace TeeSharp.Common.Config
 {
-    public abstract class BaseConfig : BaseInterface
+    public abstract class BaseConfig : BaseInterface, IEnumerable<KeyValuePair<string, ConfigVariable>>
     {
-        public virtual ConfigVariable this[string key] => _variables[key];
-        public virtual Dictionary<string, ConfigVariable>.KeyCollection Keys => _variables.Keys;
-        public virtual IReadOnlyDictionary<string, ConfigVariable> Variables => _variables;
+        public virtual ConfigVariable this[string key] => Variables[key];
 
-        private readonly Dictionary<string, ConfigVariable> _variables;
+        protected virtual IDictionary<string, ConfigVariable> Variables { get; set; }
 
         protected BaseConfig()
         {
-            _variables = new Dictionary<string, ConfigVariable>();
+            Variables = new Dictionary<string, ConfigVariable>();
         }
 
         protected virtual void AppendVariables(IDictionary<string, ConfigVariable> variables)
         {
             foreach (var pair in variables)
             {
-                if (!_variables.TryAdd(pair.Key, pair.Value))
-                    Debug.Log("config", $"Variable '{pair.Key}' already ");
+                if (!Variables.TryAdd(pair.Key, pair.Value))
+                    Debug.Log("config", $"Variable '{pair.Key}' already added");
             }
         }
 
         protected virtual void Reset()
         {
-            foreach (var pair in _variables)
+            foreach (var pair in Variables)
             {
                 if (pair.Value is ConfigString strCfg)
                     strCfg.Value = strCfg.DefaultValue;
                 else if (pair.Value is ConfigInt intCfg)
                     intCfg.Value = intCfg.DefaultValue;
             }
+        }
+
+        public IEnumerator<KeyValuePair<string, ConfigVariable>> GetEnumerator()
+        {
+            return Variables.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

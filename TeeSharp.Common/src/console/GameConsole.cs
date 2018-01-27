@@ -27,7 +27,7 @@ namespace TeeSharp.Common.Console
             Storage = Kernel.Get<BaseStorage>();
             Config = Kernel.Get<BaseConfig>();
 
-            foreach (var pair in Config.Variables)
+            foreach (var pair in Config)
             {
                 if (pair.Value is ConfigInt intCfg)
                 {

@@ -5,11 +5,6 @@ namespace TeeSharp.Server.Game
 {
     public abstract class VanillaController : BaseGameController
     {
-        public override void OnEntity(int entityIndex, Vector2 pos)
-        {
-            var entity = (MapItems) entityIndex;
-        }
-
         public override Team GetAutoTeam(int clientId)
         {
             return Team.SPECTATORS;
@@ -18,6 +13,15 @@ namespace TeeSharp.Server.Game
         public override bool CheckTeamsBalance()
         {
             return true;
+        }
+
+        public override void OnEntity(int entityIndex, Vector2 pos)
+        {
+            var entity = (MapItems)entityIndex;
+        }
+
+        public override void OnPlayerInfoChange(BasePlayer player)
+        {
         }
     }
 }

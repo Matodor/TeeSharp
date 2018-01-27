@@ -14,6 +14,7 @@ namespace TeeSharp.Server.Game
         public abstract BasePlayer[] Players { get; protected set; }
         public abstract BaseGameController GameController { get; protected set; }
 
+        protected abstract BaseTuningParams Tuning { get; set; }
         protected abstract BaseConfig Config { get; set; }
         protected abstract BaseGameConsole Console { get; set; }
         protected abstract BaseServer Server { get; set; }
@@ -24,6 +25,9 @@ namespace TeeSharp.Server.Game
         public abstract void RegisterConsoleCommands();
         public abstract bool IsClientInGame(int clientId);
         public abstract bool IsClientReady(int clientId);
+
+        public abstract void CheckPureTuning();
+        public abstract void SendTuningParams(int clientId);
 
         public abstract void OnInit();
         public abstract void OnTick();

@@ -38,6 +38,10 @@ namespace TeeSharp.Server
         protected abstract long StartTime { get; set; }
         protected abstract bool IsRunning { get; set; }
 
+        public abstract void SetClientName(int clientId, string name);
+        public abstract void SetClientClan(int clientId, string clan);
+        public abstract void SetClientCountry(int clientId, int country);
+
         public abstract string GetClientName(int clientId);
         public abstract string GetClientClan(int clientId);
         public abstract int GetClientCountry(int clientId);
@@ -46,6 +50,7 @@ namespace TeeSharp.Server
 
         public abstract void Init(string[] args);
         public abstract void Run();
+        public abstract bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId);
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
         public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
 
