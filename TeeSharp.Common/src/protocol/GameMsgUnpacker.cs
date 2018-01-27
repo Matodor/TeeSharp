@@ -120,7 +120,7 @@ namespace TeeSharp.Common.Protocol
 
                 default:
                     msg = null;
-                    break;
+                    return false;
             }
 
             if (unpacker.Error)

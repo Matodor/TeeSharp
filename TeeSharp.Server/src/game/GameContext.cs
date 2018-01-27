@@ -244,12 +244,14 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input)
         {
-            throw new System.NotImplementedException();
+            if (!World.IsPaused)
+                Players[clientId].OnPredictedInput(input);
         }
 
         public override void OnClientDirectInput(int clientId, SnapObj_PlayerInput input)
         {
-            throw new System.NotImplementedException();
+            if (!World.IsPaused)
+                Players[clientId].OnDirectInput(input);
         }
     }
 }

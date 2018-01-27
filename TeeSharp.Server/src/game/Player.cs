@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Server.Game
 {
@@ -19,6 +20,14 @@ namespace TeeSharp.Server.Game
         }
 
         public override void Respawn()
+        {
+        }
+
+        public override void OnPredictedInput(SnapObj_PlayerInput input)
+        {
+        }
+
+        public override void OnDirectInput(SnapObj_PlayerInput input)
         {
         }
     }

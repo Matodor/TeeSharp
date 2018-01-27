@@ -118,7 +118,7 @@ namespace TeeSharp.Network
             if (size < PACKET_HEADER_SIZE ||
                 size > MAX_PACKET_SIZE)
             {
-                Debug.Warning("network", $"packet too small, length={size}");
+                Debug.Warning("network", $"packet too small, size={size}");
                 return false;
             }
 
@@ -131,7 +131,7 @@ namespace TeeSharp.Network
             {
                 if (size < DATA_OFFSET)
                 {
-                    Debug.Warning("network", $"connection less packet too small, length={size}");
+                    Debug.Warning("network", $"connection less packet too small, size={size}");
                     return false;
                 }
 
@@ -150,8 +150,9 @@ namespace TeeSharp.Network
                     if (packet.Flags.HasFlag(PacketFlags.CONTROL))
                         return false;
 
-                    packet.DataSize = _huffman.Decompress(data, DATA_OFFSET, packet.DataSize,
-                        packet.Data, 0, MAX_PAYLOAD);
+                    packet.Data = new byte[MAX_PAYLOAD];
+                    packet.DataSize = _huffman.Decompress(data, PACKET_HEADER_SIZE, 
+                        packet.DataSize, packet.Data, 0, MAX_PAYLOAD);
                 }
                 else
                 {

@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game
@@ -23,5 +24,7 @@ namespace TeeSharp.Server.Game
 
         public abstract void Init(int clientId, Team startTeam);
         public abstract void Respawn();
+        public abstract void OnPredictedInput(SnapObj_PlayerInput input);
+        public abstract void OnDirectInput(SnapObj_PlayerInput input);
     }
 }

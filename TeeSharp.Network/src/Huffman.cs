@@ -238,9 +238,10 @@
                 }
 
                 if (node == null)
-                {
+                    node = _decodeLut[bits & LUTMASK];
+
+                if (node == null)
                     return -1;
-                }
 
                 if (node.NumBits != 0)
                 {
