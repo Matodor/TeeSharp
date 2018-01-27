@@ -6,11 +6,11 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_SETTEAM;
 
-        public int Team { get; set; }
+        public Team Team { get; set; }
 
         public override bool Pack(MsgPacker packer)
         {
-            packer.AddInt(Team);
+            packer.AddInt((int) Team);
             return packer.Error;
         }
     }

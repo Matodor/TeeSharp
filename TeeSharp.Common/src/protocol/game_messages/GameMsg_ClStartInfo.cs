@@ -10,7 +10,7 @@ namespace TeeSharp.Common.Protocol
         public string Clan { get; set; }
         public int Country { get; set; }
         public string Skin { get; set; }
-        public int UseCustomColor { get; set; }
+        public bool UseCustomColor { get; set; }
         public int ColorBody { get; set; }
         public int ColorFeet { get; set; }
 
@@ -20,7 +20,7 @@ namespace TeeSharp.Common.Protocol
             packer.AddString(Clan);
             packer.AddInt(Country);
             packer.AddString(Skin);
-            packer.AddInt(UseCustomColor);
+            packer.AddInt(UseCustomColor ? 1 : 0);
             packer.AddInt(ColorBody);
             packer.AddInt(ColorFeet);
             return packer.Error;

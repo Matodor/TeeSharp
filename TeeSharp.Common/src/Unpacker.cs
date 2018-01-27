@@ -50,7 +50,7 @@ namespace TeeSharp.Common
             return result;
         }
 
-        public string GetString(SanitizeType sanitizeType = 0)
+        public string GetString(SanitizeType flags = 0)
         {
             if (Error || _currentIndex >= _endIndex)
                 return "";
@@ -70,12 +70,12 @@ namespace TeeSharp.Common
                 _buffer, startIndex, _currentIndex - startIndex);
             _currentIndex++;
 
-            if (sanitizeType.HasFlag(SanitizeType.SANITIZE))
+            if (flags.HasFlag(SanitizeType.SANITIZE))
                 strUTF8 = strUTF8.Sanitize();
-            else if (sanitizeType.HasFlag(SanitizeType.SANITIZE_CC))
+            else if (flags.HasFlag(SanitizeType.SANITIZE_CC))
                 strUTF8 = strUTF8.SanitizeCC();
 
-            return sanitizeType.HasFlag(SanitizeType.SKIP_START_WHITESPACES)
+            return flags.HasFlag(SanitizeType.SKIP_START_WHITESPACES)
                 ? strUTF8.TrimStart(' ', '\t', '\n', '\r')
                 : strUTF8;
         }

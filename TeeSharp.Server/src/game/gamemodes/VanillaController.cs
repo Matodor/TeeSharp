@@ -12,12 +12,12 @@ namespace TeeSharp.Server.Game
 
         public override Team GetAutoTeam(int clientId)
         {
-            throw new System.NotImplementedException();
+            return Team.SPECTATORS;
         }
 
         public override bool CheckTeamsBalance()
         {
-            throw new System.NotImplementedException();
+            return true;
         }
     }
 }

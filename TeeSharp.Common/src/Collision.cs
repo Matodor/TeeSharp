@@ -4,31 +4,36 @@ namespace TeeSharp.Common
 {
     public class Collision : BaseCollision
     {
+        public override int Width { get; protected set; }
+        public override int Height { get; protected set; }
+
         protected override BaseLayers Layers { get; set; }
+        protected override Tile[] GameLayerTiles { get; set; }
 
         public override void Init(BaseLayers layers)
         {
             Layers = layers;
+            Width = Layers.GameLayer.Width;
+            Height = Layers.GameLayer.Height;
+            GameLayerTiles = Layers.Map.GetData<Tile>(Layers.GameLayer.Data);
 
-            for (var i = 0; i < Layers.GameLayer.Width * Layers.GameLayer.Height; i++)
+            for (var i = 0; i < Width * Height; i++)
             {
-                var tile = Layers.GameLayer.Tiles[i];
-
-                if (tile.Index > 175)
+                if (GameLayerTiles[i].Index > 175)
                     continue;
 
-                switch ((MapItems) tile.Index)
+                switch ((MapItems)GameLayerTiles[i].Index)
                 {
                     case MapItems.TILE_DEATH:
-                        tile.Index = (byte) CollisionFlag.DEATH;
+                        GameLayerTiles[i].Index = (byte) CollisionFlags.DEATH;
                         break;
 
                     case MapItems.TILE_SOLID:
-                        tile.Index = (byte)CollisionFlag.SOLID;
+                        GameLayerTiles[i].Index = (byte)CollisionFlags.SOLID;
                         break;
 
                     case MapItems.TILE_NOHOOK:
-                        tile.Index = (byte) (CollisionFlag.SOLID | CollisionFlag.NOHOOK);
+                        GameLayerTiles[i].Index = (byte) (CollisionFlags.SOLID | CollisionFlags.NOHOOK);
                         break;
                 }
             }
@@ -36,7 +41,7 @@ namespace TeeSharp.Common
 
         public override Tile GetTileAtIndex(int index)
         {
-            return Layers.GameLayer.Tiles[index];
+            return GameLayerTiles[index];
         }
     }
 }

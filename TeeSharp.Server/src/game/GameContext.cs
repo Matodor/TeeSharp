@@ -138,7 +138,6 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientDrop(int clientId, string reason)
         {
-            throw new System.NotImplementedException();
         }
 
         public override void OnClientPredictedInput(int clientId, NetObj_PlayerInput input)

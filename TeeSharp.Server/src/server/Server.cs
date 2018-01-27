@@ -389,7 +389,7 @@ namespace TeeSharp.Server
 
         protected override void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            
         }
 
         protected override void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId)
@@ -739,23 +739,24 @@ namespace TeeSharp.Server
             mapName = Path.GetFileNameWithoutExtension(mapName);
             var path = $"maps/{mapName}.map";
 
-            Console.Print(OutputLevel.DEBUG, "map", $"loading map={path}");
+            Console.Print(OutputLevel.DEBUG, "map", $"loading map='{path}'");
 
             using (var stream = Storage.OpenFile(path, FileAccess.Read))
             {
                 if (stream == null)
                 {
-                    Console.Print(OutputLevel.DEBUG, "map", $"could not open '{path}'");
+                    Console.Print(OutputLevel.DEBUG, "map", $"could not open map='{path}'");
                     return false;
                 }
 
                 CurrentMap = MapContainer.Load(stream, out var error);
                 if (CurrentMap == null)
                 {
-                    Console.Print(OutputLevel.DEBUG, "map", $"error with load map '{path}' ({error})");
+                    Console.Print(OutputLevel.DEBUG, "map", $"error with load map='{path}' ({error})");
                     return false;
                 }
                 CurrentMap.MapName = mapName;
+                Console.Print(OutputLevel.DEBUG, "map", $"successful load map='{path}' ({error})");
 
                 return true;
             }

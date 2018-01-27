@@ -3,7 +3,7 @@
 namespace TeeSharp.Map.MapItems
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public struct MapItemLayer
+    public class MapItemLayer
     {
         [MarshalAs(UnmanagedType.I4)]
         public int Version;
