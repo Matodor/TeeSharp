@@ -46,21 +46,6 @@ namespace TeeSharp.Server
     public class Server : BaseServer
     {
         public override int MaxClients => Clients.Length;
-        public override long Tick { get; protected set; }
-        public override MapContainer CurrentMap { get; protected set; }
-
-        protected override SnapshotBuilder SnapshotBuilder { get; set; }
-        protected override BaseNetworkBan NetworkBan { get; set; }
-        protected override BaseRegister Register { get; set; }
-        protected override BaseGameContext GameContext { get; set; }
-        protected override BaseConfig Config { get; set; }
-        protected override BaseGameConsole Console { get; set; }
-        protected override BaseStorage Storage { get; set; }
-        protected override BaseNetworkServer NetworkServer { get; set; }
-
-        protected override BaseServerClient[] Clients { get; set; }
-        protected override long StartTime { get; set; }
-        protected override bool IsRunning { get; set; }
 
         private int[] _lastSent;
         private int[] _lastAsk;
@@ -71,6 +56,7 @@ namespace TeeSharp.Server
             Tick = 0;
             StartTime = 0;
 
+            SnapshotBuilder = new SnapshotBuilder();
             Config = Kernel.Get<BaseConfig>();
             GameContext = Kernel.Get<BaseGameContext>();
             Storage = Kernel.Get<BaseStorage>();
@@ -182,7 +168,7 @@ namespace TeeSharp.Server
 
             GameContext.OnShutdown();
         }
-
+        
         public override void SetClientName(int clientId, string name)
         {
             //throw new NotImplementedException();
@@ -293,6 +279,16 @@ namespace TeeSharp.Server
             return result;
         }
 
+        public override T SnapNetObj<T>(SnapObj objType, int id)
+        {
+            Debug.Assert(objType > SnapObj.INVALID  && objType < SnapObj.NUM, "incorrect type");
+            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
+
+            return id < 0
+                ? null
+                : SnapshotBuilder.NewObject<T>(objType, id);
+        }
+
         protected override bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId)
         {
             return false;
@@ -334,7 +330,7 @@ namespace TeeSharp.Server
                 return;
 
             if (Config["SvNetlimit"] && 
-                !(isSystemMsg && msg == (int)NetworkMessages.REQUEST_MAP_DATA))
+                !(isSystemMsg && msg == (int)NetworkMessages.CL_REQUEST_MAP_DATA))
             {
                 var now = Time.Get();
                 var diff = now - Clients[clientId].TrafficSince;
@@ -357,27 +353,28 @@ namespace TeeSharp.Server
 
             if (isSystemMsg)
             {
-                switch ((NetworkMessages) msg)
+                var networkMsg = (NetworkMessages) msg;
+                switch (networkMsg)
                 {
-                    case NetworkMessages.INFO:
+                    case NetworkMessages.CL_INFO:
                         NetMsgInfo(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.REQUEST_MAP_DATA:
+                    case NetworkMessages.CL_REQUEST_MAP_DATA:
                         NetMsgRequestMapData(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.READY:
+                    case NetworkMessages.CL_READY:
                         NetMsgReady(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.ENTERGAME:
+                    case NetworkMessages.CL_ENTERGAME:
                         NetMsgEnterGame(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.INPUT:
+                    case NetworkMessages.CL_INPUT:
                         NetMsgInput(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.RCON_CMD:
+                    case NetworkMessages.CL_RCON_CMD:
                         NetMsgRconCmd(packet, unpacker, clientId);
                         break;
-                    case NetworkMessages.RCON_AUTH:
+                    case NetworkMessages.CL_RCON_AUTH:
                         NetMsgRconAuth(packet, unpacker, clientId);
                         break;
                     case NetworkMessages.PING:
@@ -438,7 +435,7 @@ namespace TeeSharp.Server
             if (intendedTick > Clients[clientId].LastInputTick)
             {
                 var timeLeft = (TickStartTime(intendedTick) - now) * 1000 / Time.Freq();
-                var msg = new MsgPacker((int)NetworkMessages.INPUT_TIMING);
+                var msg = new MsgPacker((int)NetworkMessages.SV_INPUT_TIMING);
                 msg.AddInt((int) intendedTick);
                 msg.AddInt((int) timeLeft);
                 SendMsgEx(msg, MsgFlags.NONE, clientId, true);
@@ -486,7 +483,7 @@ namespace TeeSharp.Server
             Clients[clientId].State = ServerClientState.READY;
             GameContext.OnClientConnected(clientId);
 
-            var msg = new MsgPacker((int) NetworkMessages.CON_READY);
+            var msg = new MsgPacker((int) NetworkMessages.SV_CON_READY);
             SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
         }
 
@@ -638,7 +635,7 @@ namespace TeeSharp.Server
         private void SendMapData(int last, int chunk, int chunkSize, 
             int offset, int clientId)
         {
-            var msg = new MsgPacker((int) NetworkMessages.MAP_DATA);
+            var msg = new MsgPacker((int) NetworkMessages.SV_MAP_DATA);
             msg.AddInt(last);
             msg.AddInt((int)CurrentMap.CRC);
             msg.AddInt(chunk);
@@ -655,13 +652,18 @@ namespace TeeSharp.Server
 
             for (var i = 0; i < Clients.Length; i++)
             {
-                if (Clients[i].State != ServerClientState.IN_GAME ||
-                    Clients[i].SnapRate == SnapRate.INIT && Tick % 10 != 0 ||
-                    Clients[i].SnapRate == SnapRate.RECOVER && Tick % SERVER_TICK_SPEED != 0)
-                {
+                // client must be ingame to recive snapshots
+                if (Clients[i].State < ServerClientState.READY)
                     continue;
-                }
 
+                // this client is trying to recover, don't spam snapshots
+                if (Clients[i].SnapRate == SnapRate.RECOVER && Tick % SERVER_TICK_SPEED != 0)
+                    continue;
+                
+                // this client is trying to recover, don't spam snapshots
+                if (Clients[i].SnapRate == SnapRate.INIT && Tick % 10 != 0)
+                    continue;
+                
                 SnapshotBuilder.StartBuild();
                 GameContext.OnSnapshot(i);
                 var now = Time.Get();
@@ -680,7 +682,7 @@ namespace TeeSharp.Server
                 }
                 else
                 {
-                    deltaSnapshot = new Snapshot();
+                    deltaSnapshot = new Snapshot(new SnapshotItem[0], 0);
                     if (Clients[i].SnapRate == SnapRate.FULL)
                         Clients[i].SnapRate = SnapRate.RECOVER;
                 }
@@ -690,7 +692,7 @@ namespace TeeSharp.Server
 
                 if (deltaSize == 0)
                 {
-                    var msg = new MsgPacker((int) NetworkMessages.SNAPEMPTY);
+                    var msg = new MsgPacker((int) NetworkMessages.SV_SNAPEMPTY);
                     msg.AddInt((int) Tick);
                     msg.AddInt((int) (Tick - deltaTick));
                     SendMsgEx(msg, MsgFlags.FLUSH, i, true);
@@ -708,7 +710,7 @@ namespace TeeSharp.Server
 
                     if (numPackets == 1)
                     {
-                        var msg = new MsgPacker((int) NetworkMessages.SNAPSINGLE);
+                        var msg = new MsgPacker((int) NetworkMessages.SV_SNAPSINGLE);
                         msg.AddInt((int) Tick);
                         msg.AddInt((int) (Tick - deltaTick));
                         msg.AddInt(CRC);
@@ -718,7 +720,7 @@ namespace TeeSharp.Server
                     }
                     else
                     {
-                        var msg = new MsgPacker((int) NetworkMessages.SNAP);
+                        var msg = new MsgPacker((int) NetworkMessages.SV_SNAP);
                         msg.AddInt((int) Tick);
                         msg.AddInt((int)(Tick - deltaTick));
                         msg.AddInt(numPackets);
@@ -789,7 +791,7 @@ namespace TeeSharp.Server
             _lastAsk[clientId] = 0;
             _lastAskTick[clientId] = Tick;
 
-            var msg = new MsgPacker((int) NetworkMessages.MAP_CHANGE);
+            var msg = new MsgPacker((int) NetworkMessages.SV_MAP_CHANGE);
             msg.AddString(CurrentMap.MapName);
             msg.AddInt((int) CurrentMap.CRC);
             msg.AddInt(CurrentMap.Size);

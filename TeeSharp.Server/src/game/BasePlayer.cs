@@ -14,9 +14,9 @@ namespace TeeSharp.Server.Game
     public abstract class BasePlayer : BaseInterface
     {
         public abstract int ClientId { get; }
-        public abstract bool IsReady { get; set; }
-        public abstract long LastChangeInfo { get; set; }
-        public abstract TeeInfo TeeInfo { get; protected set; }
+        public virtual bool IsReady { get; set; }
+        public virtual long LastChangeInfo { get; set; }
+        public virtual TeeInfo TeeInfo { get; protected set; }
 
         public abstract void Init(int clientId, Team team);
     }

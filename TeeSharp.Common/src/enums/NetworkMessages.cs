@@ -3,33 +3,33 @@
     public enum NetworkMessages
     {
         NULL = 0,
-        INFO = 1,
+        CL_INFO = 1,
         
         // sent by server
-        MAP_CHANGE,      // sent when client should switch map
-        MAP_DATA,        // map transfer, contains a chunk of the map file
-        CON_READY,       // connection is ready, client should send start info
-        SNAP,            // normal snapshot, multiple parts
-        SNAPEMPTY,       // empty snapshot
-        SNAPSINGLE,      // ?
-        SNAPSMALL,       //
-        INPUT_TIMING,     // reports how off the input was
-        RCON_AUTH_STATUS,// result of the authentication
-        RCON_LINE,       // line that should be printed to the remote console
+        SV_MAP_CHANGE,      // sent when client should switch map
+        SV_MAP_DATA,        // map transfer, contains a chunk of the map file
+        SV_CON_READY,       // connection is ready, client should send start info
+        SV_SNAP,            // normal snapshot, multiple parts
+        SV_SNAPEMPTY,       // empty snapshot
+        SV_SNAPSINGLE,      // ?
+        SV_SNAPSMALL,       //
+        SV_INPUT_TIMING,    // reports how off the input was
+        SV_RCON_AUTH_STATUS,// result of the authentication
+        SV_RCON_LINE,       // line that should be printed to the remote console
 
         AUTH_CHALLANGE,  //
         AUTH_RESULT,     //
 
         // sent by client
-        READY,           //
-        ENTERGAME,
-        INPUT,           // contains the inputdata from the client
-        RCON_CMD,        //
-        RCON_AUTH,       //
-        REQUEST_MAP_DATA,//
+        CL_READY,           //
+        CL_ENTERGAME,
+        CL_INPUT,           // contains the inputdata from the client
+        CL_RCON_CMD,        //
+        CL_RCON_AUTH,       //
+        CL_REQUEST_MAP_DATA,//
 
-        AUTH_START,      //
-        AUTH_RESPONSE,   //
+        CL_AUTH_START,      //
+        CL_AUTH_RESPONSE,   //
 
         // sent by both
         PING,

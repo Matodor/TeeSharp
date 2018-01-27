@@ -61,7 +61,7 @@ namespace TeeSharp.Network
             LastReceiveTime = 0;
             LastSendTime = 0;
 
-            Error = null;
+            Error = string.Empty;
             EndPoint = null;
 
             ResetQueueConstruct();

@@ -1,9 +1,13 @@
 ﻿using System;
+using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class NetObj_PlayerInput : BaseNetObject<NetObj_PlayerInput>
+    public class SnapObj_PlayerInput : BaseSnapObject
     {
+        public override SnapObj Type { get; } = SnapObj.OBJ_PLAYERINPUT;
+        public override int FieldsCount { get; } = 10;
+
         public int Direction;
         public int TargetX;
         public int TargetY;
@@ -15,7 +19,7 @@ namespace TeeSharp.Common.Protocol
         public int NextWeapon;
         public int PrevWeapon;
 
-        public override bool Compare(NetObj_PlayerInput other)
+        public bool Compare(SnapObj_PlayerInput other)
         {
             return
                 Direction == other.Direction &&
@@ -30,6 +34,23 @@ namespace TeeSharp.Common.Protocol
                 PrevWeapon == other.PrevWeapon;
         }
 
+        public void Deserialize(int[] data)
+        {
+            if (data.Length < FieldsCount)
+                throw new Exception("Deserialize NetObj_PlayerInput error");
+
+            Direction = data[0];
+            TargetX = data[1];
+            TargetY = data[2];
+            Jump = data[3];
+            Fire = data[4];
+            Hook = data[5];
+            PlayerFlags = data[6];
+            WantedWeapon = data[7];
+            NextWeapon = data[8];
+            PrevWeapon = data[9];
+        }
+        
         public override int[] Serialize()
         {
             return new[]
@@ -45,23 +66,6 @@ namespace TeeSharp.Common.Protocol
                 NextWeapon,
                 PrevWeapon,
             };
-        }
-
-        public override void Deserialize(int[] data)
-        {
-            if (data.Length < 10)
-                throw new Exception("Deserialize NetObj_PlayerInput error");
-
-            Direction = data[0];
-            TargetX = data[1];
-            TargetY = data[2];
-            Jump = data[3];
-            Fire = data[4];
-            Hook = data[5];
-            PlayerFlags = data[6];
-            WantedWeapon = data[7];
-            NextWeapon = data[8];
-            PrevWeapon = data[9];
         }
     }
 }

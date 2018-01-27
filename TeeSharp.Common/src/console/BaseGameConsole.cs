@@ -22,8 +22,6 @@ namespace TeeSharp.Common.Console
 
     public abstract class BaseGameConsole : BaseInterface
     {
-
-
         public abstract void Init();
         public abstract void RegisterCommand(string cmd, string format, ConsoleCallback callback, ConfigFlags flags,
             string description, object data = null);

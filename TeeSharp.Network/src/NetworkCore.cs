@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
 
@@ -66,6 +67,13 @@ namespace TeeSharp.Network
             {
                 packet.DataSize = 1;
                 packet.Data = new byte[packet.DataSize];
+            }
+            else
+            {
+                var bytes = Encoding.UTF8.GetBytes(extra);
+                packet.DataSize = 1 + bytes.Length;
+                packet.Data = new byte[packet.DataSize];
+                Buffer.BlockCopy(bytes, 0, packet.Data, 1, bytes.Length);
             }
 
             packet.Data[0] = (byte) msg;

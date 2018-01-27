@@ -14,16 +14,6 @@ namespace TeeSharp.Server.Game
         public override string GameVersion { get; } = "0.6";
         public override string NetVersion { get; } = "0.6";
         public override string ReleaseVersion { get; } = "0.63";
-        public override BasePlayer[] Players { get; protected set; }
-        public override BaseGameController GameController { get; protected set; }
-
-        protected override BaseTuningParams Tuning { get; set; }
-        protected override BaseConfig Config { get; set; }
-        protected override BaseGameConsole Console { get; set; }
-        protected override BaseServer Server { get; set; }
-        protected override BaseLayers Layers { get; set; }
-        protected override BaseCollision Collision { get; set; }
-        protected override BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
 
         public override void OnInit()
         {
@@ -41,6 +31,7 @@ namespace TeeSharp.Server.Game
             
             // TODO
             GameController = new GameControllerDM();
+            GameController.Init();
 
             for (var y = 0; y < Layers.GameLayer.Height; y++)
             {
@@ -170,7 +161,6 @@ namespace TeeSharp.Server.Game
 
         public override void OnSnapshot(int clientId)
         {
-            throw new System.NotImplementedException();
         }
 
         public override void OnClientConnected(int clientId)
@@ -199,12 +189,12 @@ namespace TeeSharp.Server.Game
         {
         }
 
-        public override void OnClientPredictedInput(int clientId, NetObj_PlayerInput input)
+        public override void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input)
         {
             throw new System.NotImplementedException();
         }
 
-        public override void OnClientDirectInput(int clientId, NetObj_PlayerInput input)
+        public override void OnClientDirectInput(int clientId, SnapObj_PlayerInput input)
         {
             throw new System.NotImplementedException();
         }

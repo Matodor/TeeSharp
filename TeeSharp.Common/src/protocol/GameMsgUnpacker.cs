@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using TeeSharp.Common.Enums;
+﻿using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Common.Protocol
 {

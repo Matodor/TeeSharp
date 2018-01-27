@@ -11,16 +11,18 @@ namespace TeeSharp.Server.Game
         public abstract string GameVersion { get; }
         public abstract string NetVersion { get; }
         public abstract string ReleaseVersion { get; }
-        public abstract BasePlayer[] Players { get; protected set; }
-        public abstract BaseGameController GameController { get; protected set; }
 
-        protected abstract BaseTuningParams Tuning { get; set; }
-        protected abstract BaseConfig Config { get; set; }
-        protected abstract BaseGameConsole Console { get; set; }
-        protected abstract BaseServer Server { get; set; }
-        protected abstract BaseLayers Layers { get; set; }
-        protected abstract BaseCollision Collision { get; set; }
-        protected abstract BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
+        public virtual BasePlayer[] Players { get; protected set; }
+        public virtual BaseGameController GameController { get; protected set; }
+        public virtual BaseGameWorld World { get; protected set; }
+
+        protected virtual BaseTuningParams Tuning { get; set; }
+        protected virtual BaseConfig Config { get; set; }
+        protected virtual BaseGameConsole Console { get; set; }
+        protected virtual BaseServer Server { get; set; }
+        protected virtual BaseLayers Layers { get; set; }
+        protected virtual BaseCollision Collision { get; set; }
+        protected virtual BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
 
         public abstract void RegisterConsoleCommands();
         public abstract bool IsClientInGame(int clientId);
@@ -39,7 +41,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientConnected(int clientId);
         public abstract void OnClientEnter(int clientId);
         public abstract void OnClientDrop(int clientId, string reason);
-        public abstract void OnClientPredictedInput(int clientId, NetObj_PlayerInput input);
-        public abstract void OnClientDirectInput(int clientId, NetObj_PlayerInput input);
+        public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
+        public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
     }
 }

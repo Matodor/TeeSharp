@@ -1,10 +1,16 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Server.Game
 {
     public abstract class VanillaController : BaseGameController
     {
+        public override void Init()
+        {
+            base.Init();
+        }
+
         public override Team GetAutoTeam(int clientId)
         {
             return Team.SPECTATORS;
@@ -22,6 +28,37 @@ namespace TeeSharp.Server.Game
 
         public override void OnPlayerInfoChange(BasePlayer player)
         {
+
+        }
+
+        public override void OnSnapshot(int snappingClient)
+        {
+            var gameInfo = Server.SnapNetObj<SnapObj_GameInfo>(SnapObj.OBJ_GAMEINFO, 0);
+
+            if (gameInfo == null)
+                return;
+
+            gameInfo.GameFlags = GameFlags;
+            gameInfo.GameStateFlags = 0;
+
+            if (GameOverTick != -1)
+                gameInfo.GameStateFlags |= GameStateFlags.GAMEOVER;
+            if (SuddenDeath != 0)
+                gameInfo.GameStateFlags |= GameStateFlags.SUDDENDEATH;
+            if (GameContext.World.IsPaused)
+                gameInfo.GameStateFlags |= GameStateFlags.PAUSED;
+
+            gameInfo.RoundStartTick = (int)RoundStartTick;
+            gameInfo.WarmupTimer = Warmup;
+
+            gameInfo.ScoreLimit = Config["SvScorelimit"];
+            gameInfo.TimeLimit = Config["SvTimelimit"];
+
+            gameInfo.RoundNum = !string.IsNullOrEmpty(Config["SvMaprotation"]) &&
+                                Config["SvRoundsPerMap"] != 0
+                ? Config["SvRoundsPerMap"]
+                : 0;
+            gameInfo.RoundCurrent = RoundCount + 1;
         }
     }
 }
