@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_VOTEOPTIONADD;
 
-        public string Description { get; set; }
+        public string Description;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddString(Description);
             return packer.Error;

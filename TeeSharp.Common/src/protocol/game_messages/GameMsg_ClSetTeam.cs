@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_SETTEAM;
 
-        public Team Team { get; set; }
+        public Team Team;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt((int) Team);
             return packer.Error;

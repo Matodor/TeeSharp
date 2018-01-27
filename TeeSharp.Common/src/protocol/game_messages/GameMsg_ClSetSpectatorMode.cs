@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_SETSPECTATORMODE;
 
-        public int SpectatorId { get; set; }
+        public int SpectatorId;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(SpectatorId);
             return packer.Error;

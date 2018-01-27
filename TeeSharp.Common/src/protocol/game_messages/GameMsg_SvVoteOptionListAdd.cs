@@ -6,24 +6,24 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_VOTEOPTIONLISTADD;
 
-        public int NumOptions { get; set; }
-        public string Description0 { get; set; }
-        public string Description1 { get; set; }
-        public string Description2 { get; set; }
-        public string Description3 { get; set; }
-        public string Description4 { get; set; }
-        public string Description5 { get; set; }
-        public string Description6 { get; set; }
-        public string Description7 { get; set; }
-        public string Description8 { get; set; }
-        public string Description9 { get; set; }
-        public string Description10 { get; set; }
-        public string Description11 { get; set; }
-        public string Description12 { get; set; }
-        public string Description13 { get; set; }
-        public string Description14 { get; set; }
+        public int NumOptions;
+        public string Description0;
+        public string Description1;
+        public string Description2;
+        public string Description3;
+        public string Description4;
+        public string Description5;
+        public string Description6;
+        public string Description7;
+        public string Description8;
+        public string Description9;
+        public string Description10;
+        public string Description11;
+        public string Description12;
+        public string Description13;
+        public string Description14;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(NumOptions);
             packer.AddString(Description0);

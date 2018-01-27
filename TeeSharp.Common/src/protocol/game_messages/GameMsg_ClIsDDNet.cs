@@ -6,7 +6,7 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_ISDDNET;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             return packer.Error;
         }

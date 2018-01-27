@@ -20,8 +20,10 @@ namespace TeeSharp.Server.Game
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
 
+        public abstract string GetTeamName(Team team);
         public abstract Team GetAutoTeam(int clientId);
         public abstract bool CheckTeamsBalance();
+        public abstract bool IsTeamplay();
 
         public abstract void OnSnapshot(int snappingClient);
         public abstract void OnEntity(int tileIndex, Vector2 pos);

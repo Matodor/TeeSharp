@@ -51,14 +51,14 @@ namespace TeeSharp.Server.Game
         {
         }
 
-        public override bool IsClientInGame(int clientId)
+        public override bool IsClientSpectator(int clientId)
         {
-            return false;
+            return Players[clientId] != null && Players[clientId].Team == Team.SPECTATORS;
         }
 
         public override bool IsClientReady(int clientId)
         {
-            throw new System.NotImplementedException();
+            return Players[clientId] != null && Players[clientId].IsReady;
         }
 
         public override void CheckPureTuning()
@@ -92,6 +92,54 @@ namespace TeeSharp.Server.Game
             foreach (var pair in Tuning)
                 msg.AddInt(pair.Value.Value);
             Server.SendMsg(msg, MsgFlags.VITAL, clientId);
+        }
+
+        public override void SendChatTarget(int clientId, string msg)
+        {
+            Server.SendPackMsg(new GameMsg_SvChat
+            {
+                IsTeam = false,
+                ClientId = -1,
+                Message = msg
+            }, MsgFlags.VITAL, clientId);
+        }
+
+        public override void SendChat(int chatterClientId, bool isTeamChat, string msg)
+        {
+            string debug;
+            if (chatterClientId >= 0 && chatterClientId < Server.MaxClients)
+                debug = $"{chatterClientId}:{isTeamChat}:{Server.GetClientName(chatterClientId)} {msg}";
+            else
+                debug = $"*** {msg}";
+            Console.Print(OutputLevel.ADDINFO, isTeamChat ? "teamchat" : "chat", debug);
+
+            if (isTeamChat)
+            {
+                var p = new GameMsg_SvChat
+                {
+                    IsTeam = true,
+                    ClientId = chatterClientId,
+                    Message = msg
+                };
+
+                // pack one for the recording only
+                Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NOSEND, -1);
+
+                for (var i = 0; i < Players.Length; i++)
+                {
+                    if (Players[i] != null && Players[i].Team == Players[chatterClientId].Team)
+                        Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NORECORD, i);
+                }
+            }
+            else
+            {
+                Server.SendPackMsg(new GameMsg_SvChat
+                {
+                    ClientId = chatterClientId,
+                    Message = msg,
+                    IsTeam = false
+                }, MsgFlags.VITAL, -1);
+            }
         }
 
         public override void OnTick()
@@ -182,7 +230,12 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientEnter(int clientId)
         {
-            throw new System.NotImplementedException();
+            Players[clientId].Respawn();
+
+            SendChat(-1, false, $"'{Server.GetClientName(clientId)}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
+            Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Server.GetClientName(clientId)}' team={Players[clientId].Team}");
+            
+            // update vote
         }
 
         public override void OnClientDrop(int clientId, string reason)

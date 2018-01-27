@@ -7,9 +7,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_WEAPONPICKUP;
 
-        public Weapons Weapon { get; set; }
+        public Weapons Weapon;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt((int) Weapon);
             return packer.Error;

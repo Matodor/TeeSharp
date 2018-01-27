@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_VOTE;
 
-        public int Vote { get; set; }
+        public int Vote;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(Vote);
             return packer.Error;

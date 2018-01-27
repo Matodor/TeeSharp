@@ -1,4 +1,5 @@
-﻿using TeeSharp.Common;
+﻿using System.Runtime.Serialization.Formatters;
+using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 
@@ -9,6 +10,25 @@ namespace TeeSharp.Server.Game
         public override void Init()
         {
             base.Init();
+        }
+
+        public override bool IsTeamplay()
+        {
+            return GameFlags.HasFlag(GameFlags.TEAMS);
+        }
+
+        public override string GetTeamName(Team team)
+        {
+            if (IsTeamplay())
+            {
+                if (team == Team.RED)
+                    return "red team";
+                return "blue team";
+            }
+
+            if (team == Team.SPECTATORS)
+                return "spectators";
+            return "game";
         }
 
         public override Team GetAutoTeam(int clientId)

@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_SOUNDGLOBAL;
 
-        public Sounds Sound { get; set; }
+        public Sounds Sound;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt((int) Sound);
             return packer.Error;

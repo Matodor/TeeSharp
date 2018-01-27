@@ -8,13 +8,18 @@ namespace TeeSharp.Server.Game
 
         private int _clientId;
 
-        public override void Init(int clientId, Team team)
+        public override void Init(int clientId, Team startTeam)
         {
             _clientId = clientId;
 
+            Team = startTeam;
             TeeInfo = new TeeInfo();
             IsReady = false;
             LastChangeInfo = -1;
+        }
+
+        public override void Respawn()
+        {
         }
     }
 }

@@ -6,12 +6,12 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_KILLMSG;
 
-        public int Killer { get; set; }
-        public int Victim { get; set; }
-        public Weapons Weapon { get; set; }
-        public int ModeSpecial { get; set; }
+        public int Killer;
+        public int Victim;
+        public Weapons Weapon;
+        public int ModeSpecial;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(Killer);
             packer.AddInt(Victim);

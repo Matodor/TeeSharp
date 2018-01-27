@@ -6,11 +6,11 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_CALLVOTE;
 
-        public string Type { get; set; }
-        public string Value { get; set; }
-        public string Reason { get; set; }
+        public string Type;
+        public string Value;
+        public string Reason;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddString(Type);
             packer.AddString(Value);

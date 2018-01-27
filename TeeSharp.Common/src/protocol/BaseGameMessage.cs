@@ -6,6 +6,6 @@ namespace TeeSharp.Common.Protocol
     {
         public abstract GameMessages MsgId { get; }
 
-        public abstract bool Pack(MsgPacker packer);
+        public abstract bool PackError(MsgPacker packer);
     }
 }

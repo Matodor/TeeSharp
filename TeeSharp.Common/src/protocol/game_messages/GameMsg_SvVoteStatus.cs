@@ -6,12 +6,12 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_VOTESTATUS;
 
-        public int Yes { get; set; }
-        public int No { get; set; }
-        public int Pass { get; set; }
-        public int Total { get; set; }
+        public int Yes;
+        public int No;
+        public int Pass;
+        public int Total;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(Yes);
             packer.AddInt(No);

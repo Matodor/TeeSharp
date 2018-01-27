@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Server.Game
 {

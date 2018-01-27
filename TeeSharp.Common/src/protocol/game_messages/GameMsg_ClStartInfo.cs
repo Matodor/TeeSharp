@@ -6,15 +6,15 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_STARTINFO;
 
-        public string Name { get; set; }
-        public string Clan { get; set; }
-        public int Country { get; set; }
-        public string Skin { get; set; }
-        public bool UseCustomColor { get; set; }
-        public int ColorBody { get; set; }
-        public int ColorFeet { get; set; }
+        public string Name;
+        public string Clan;
+        public int Country;
+        public string Skin;
+        public bool UseCustomColor;
+        public int ColorBody;
+        public int ColorFeet;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddString(Name);
             packer.AddString(Clan);

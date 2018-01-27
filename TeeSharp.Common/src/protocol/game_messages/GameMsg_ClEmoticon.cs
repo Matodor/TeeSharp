@@ -6,9 +6,9 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.CL_EMOTICON;
 
-        public Emoticons Emoticon { get; set; }
+        public Emoticons Emoticon;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt((int) Emoticon);
             return packer.Error;

@@ -6,11 +6,11 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessages MsgId { get; } = GameMessages.SV_VOTESET;
 
-        public int Timeout { get; set; }
-        public string Description { get; set; }
-        public string Reason { get; set; }
+        public int Timeout;
+        public string Description;
+        public string Reason;
 
-        public override bool Pack(MsgPacker packer)
+        public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(Timeout);
             packer.AddString(Description);

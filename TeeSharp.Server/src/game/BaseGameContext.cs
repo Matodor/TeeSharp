@@ -25,11 +25,14 @@ namespace TeeSharp.Server.Game
         protected virtual BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
 
         public abstract void RegisterConsoleCommands();
-        public abstract bool IsClientInGame(int clientId);
+        public abstract bool IsClientSpectator(int clientId);
         public abstract bool IsClientReady(int clientId);
 
         public abstract void CheckPureTuning();
         public abstract void SendTuningParams(int clientId);
+
+        public abstract void SendChat(int chatterClientId, bool isTeamChat, string msg);
+        public abstract void SendChatTarget(int clientId, string msg);
 
         public abstract void OnInit();
         public abstract void OnTick();

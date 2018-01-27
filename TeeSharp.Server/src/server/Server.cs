@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Threading;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
@@ -46,6 +47,7 @@ namespace TeeSharp.Server
     public class Server : BaseServer
     {
         public override int MaxClients => Clients.Length;
+        public override int[] IdMap { get; protected set; }
 
         private int[] _lastSent;
         private int[] _lastAsk;
@@ -105,6 +107,8 @@ namespace TeeSharp.Server
             StartNetworkServer();
 
             Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
+            IdMap = new int[Clients.Length * VANILLA_MAX_CLIENTS];
+
             for (var i = 0; i < Clients.Length; i++)
                 Clients[i] = Kernel.Get<BaseServerClient>();
 
@@ -171,37 +175,121 @@ namespace TeeSharp.Server
         
         public override void SetClientName(int clientId, string name)
         {
-            //throw new NotImplementedException();
+            if (Clients[clientId].State < ServerClientState.READY || string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
+            name = name.Limit(16).Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+
+            {
+                var cleanName = new StringBuilder(name);
+                for (var i = 0; i < cleanName.Length; i++)
+                {
+                    if (cleanName[i] < 32)
+                        cleanName[i] = ' ';
+                }
+                name = cleanName.ToString();
+            }
+
+            if (GetClientName(clientId) == name)
+                return;
+
+            bool AlreadyUsed(string newName)
+            {
+                for (var i = 0; i < Clients.Length; i++)
+                {
+                    if (i != clientId && 
+                        Clients[i].State >= ServerClientState.READY &&
+                        GetClientName(i) == newName)
+                    {
+                        return true;
+                    }
+                }
+
+                Clients[clientId].PlayerName = newName;
+                return false;
+            }
+
+            if (AlreadyUsed(name))
+            {
+                for (var i = 0;; i++)
+                {
+                    var nameTry = $"({i}) {name}";
+                    if (!AlreadyUsed(nameTry))
+                        break;
+                }
+            }
         }
 
         public override void SetClientClan(int clientId, string clan)
         {
-            //throw new NotImplementedException();
+            if (Clients[clientId].State < ServerClientState.READY ||
+                string.IsNullOrEmpty(clan))
+            {
+                return;
+            }
+
+            Clients[clientId].PlayerClan = clan;
         }
 
         public override void SetClientCountry(int clientId, int country)
         {
-            //throw new NotImplementedException();
+            if (Clients[clientId].State < ServerClientState.READY)
+                return;
+            Clients[clientId].PlayerCountry = country;
+        }
+
+        public override bool GetClientInfo(int clientId, out ClientInfo info)
+        {
+            if (Clients[clientId].State != ServerClientState.IN_GAME)
+            {
+                info = null;
+                return false;
+            }
+
+            info = new ClientInfo
+            {
+                Name = GetClientName(clientId),
+                Latency = Clients[clientId].Latency,
+                ClientVersion = GameContext.Players[clientId].ClientVersion,
+            };
+
+            return true;
         }
 
         public override string GetClientName(int clientId)
         {
-            throw new NotImplementedException();
+            if (Clients[clientId].State == ServerClientState.EMPTY)
+                return "(invalid)";
+            if (Clients[clientId].State == ServerClientState.IN_GAME)
+                return Clients[clientId].PlayerName;
+            return "(connecting)";
         }
 
         public override string GetClientClan(int clientId)
         {
-            throw new NotImplementedException();
+            if (Clients[clientId].State == ServerClientState.EMPTY)
+                return "";
+            if (Clients[clientId].State == ServerClientState.IN_GAME)
+                return Clients[clientId].PlayerClan;
+            return "";
         }
 
         public override int GetClientCountry(int clientId)
         {
-            throw new NotImplementedException();
+            if (Clients[clientId].State == ServerClientState.EMPTY)
+                return -1;
+            if (Clients[clientId].State == ServerClientState.IN_GAME)
+                return Clients[clientId].PlayerCountry;
+            return -1;
         }
 
         public override int GetClientScore(int clientId)
         {
-            throw new NotImplementedException();
+            return 0;
         }
 
         public override bool ClientInGame(int clientId)
@@ -259,7 +347,7 @@ namespace TeeSharp.Server
 
         public override bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
         {
-            var result = false;
+            var result = true;
 
             if (clientId == -1)
             {
@@ -267,13 +355,13 @@ namespace TeeSharp.Server
                 {
                     if (ClientInGame(i))
                     {
-                        result = SendPackMsgBody(msg, flags, i);
+                        result &= SendPackMsgBody<T>(msg, flags, i);
                     }
                 }
             }
             else
             {
-                return SendPackMsgBody(msg, flags, clientId);
+                return SendPackMsgBody<T>(msg, flags, clientId);
             }
 
             return result;
@@ -291,9 +379,99 @@ namespace TeeSharp.Server
 
         protected override bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId)
         {
-            return false;
+            if (msg is GameMsg_SvEmoticon)
+                return SendPackMsgTranslate(msg as GameMsg_SvEmoticon, flags, clientId);
+            if (msg is GameMsg_SvChat)
+                return SendPackMsgTranslate(msg as GameMsg_SvChat, flags, clientId);
+            if (msg is GameMsg_SvKillMsg)
+                return SendPackMsgTranslate(msg as GameMsg_SvKillMsg, flags, clientId);
+            return SendPackMsgTranslate(msg, flags, clientId);
         }
 
+        protected override bool SendPackMsgTranslate(GameMsg_SvEmoticon msg, MsgFlags flags, int clientId)
+        {
+            var copy = new GameMsg_SvEmoticon
+            {
+                ClientId = msg.ClientId,
+                Emoticon = msg.Emoticon
+            };
+
+            return Translate(ref copy.ClientId, clientId) && 
+                   SendPackMsgOne(copy, flags, clientId);
+        }
+
+        protected override bool SendPackMsgTranslate(GameMsg_SvChat msg, MsgFlags flags, int clientId)
+        {
+            var copy = new GameMsg_SvChat
+            {
+                ClientId = msg.ClientId,
+                Message = msg.Message,
+                IsTeam = msg.IsTeam
+            };
+
+            if (copy.ClientId >= 0 && !Translate(ref copy.ClientId, clientId))
+            {
+                copy.Message = $"{GetClientName(copy.ClientId)}: {copy.Message}";
+                copy.ClientId = VANILLA_MAX_CLIENTS - 1;
+            }
+
+            return SendPackMsgOne(copy, flags, clientId);
+        }
+
+        protected override bool SendPackMsgTranslate(GameMsg_SvKillMsg msg, 
+            MsgFlags flags, int clientId)
+        {
+            var copy = new GameMsg_SvKillMsg
+            {
+                Weapon = msg.Weapon,
+                Killer = msg.Killer,
+                ModeSpecial = msg.ModeSpecial,
+                Victim = msg.Victim
+            };
+
+            if (!Translate(ref copy.Victim, clientId)) return false;
+            if (!Translate(ref copy.Killer, clientId)) copy.Killer = copy.Victim;
+
+            return SendPackMsgOne(copy, flags, clientId);
+        }
+
+        protected override bool SendPackMsgTranslate(BaseGameMessage msg, 
+            MsgFlags flags, int clientId)
+        {
+            return SendPackMsgOne(msg, flags, clientId);
+        }
+
+        protected override bool SendPackMsgOne(BaseGameMessage msg, 
+            MsgFlags flags, int clientId)
+        {
+            var packer = new MsgPacker((int) msg.MsgId);
+            if (msg.PackError(packer))
+                return false;
+            return SendMsg(packer, flags, clientId);
+        }
+
+        protected override bool Translate(ref int targetId, int clientId)
+        {
+            if (GetClientInfo(clientId, out var info))
+                return false;
+
+            if (info.ClientVersion >= ClientVersion.DDNET_OLD)
+                return true;
+
+            var map = GetIdMap(clientId);
+
+            for (var i = 0; i < VANILLA_MAX_CLIENTS; i++)
+            {
+                if (targetId == IdMap[map + i])
+                {
+                    targetId = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        
         protected override void StartNetworkServer()
         {
             var bindAddr = IPAddress.Any;
@@ -840,7 +1018,7 @@ namespace TeeSharp.Server
                     if (Clients[i].State == ServerClientState.EMPTY)
                         continue;
 
-                    if (GameContext.IsClientInGame(i))
+                    if (!GameContext.IsClientSpectator(i))
                         playersCount++;
                     clientsCount++;
                 }
@@ -921,9 +1099,9 @@ namespace TeeSharp.Server
                     // client score
                     packer.AddString(GetClientScore(i).ToString(), 6);
                     // client state
-                    packer.AddString(GameContext.IsClientInGame(i)
-                        ? "1"
-                        : "0", 2);
+                    packer.AddString(GameContext.IsClientSpectator(i)
+                        ? "0"
+                        : "1", 2);
                 }
 
                 NetworkServer.Send(new NetworkChunk
