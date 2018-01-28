@@ -66,13 +66,11 @@ namespace TeeSharp.Network
             if (string.IsNullOrWhiteSpace(extra))
             {
                 packet.DataSize = 1;
-                packet.Data = new byte[packet.DataSize];
             }
             else
             {
                 var bytes = Encoding.UTF8.GetBytes(extra);
                 packet.DataSize = 1 + bytes.Length;
-                packet.Data = new byte[packet.DataSize];
                 Buffer.BlockCopy(bytes, 0, packet.Data, 1, bytes.Length);
             }
 
@@ -139,7 +137,6 @@ namespace TeeSharp.Network
                 packet.Ack = 0;
                 packet.NumChunks = 0;
                 packet.DataSize = size - DATA_OFFSET;
-                packet.Data = new byte[packet.DataSize];
 
                 Buffer.BlockCopy(data, DATA_OFFSET, packet.Data, 0, packet.DataSize);
             }
@@ -150,13 +147,11 @@ namespace TeeSharp.Network
                     if (packet.Flags.HasFlag(PacketFlags.CONTROL))
                         return false;
 
-                    packet.Data = new byte[MAX_PAYLOAD];
                     packet.DataSize = _huffman.Decompress(data, PACKET_HEADER_SIZE, 
                         packet.DataSize, packet.Data, 0, MAX_PAYLOAD);
                 }
                 else
                 {
-                    packet.Data = new byte[packet.DataSize];
                     Buffer.BlockCopy(data, PACKET_HEADER_SIZE, packet.Data, 0, packet.DataSize);
                 }
             }

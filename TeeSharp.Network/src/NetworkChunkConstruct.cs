@@ -8,6 +8,6 @@ namespace TeeSharp.Network
         public int Ack;
         public int NumChunks;
         public int DataSize;
-        public byte[] Data;
+        public readonly byte[] Data = new byte[NetworkCore.MAX_PAYLOAD];
     }
 }

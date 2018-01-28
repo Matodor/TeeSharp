@@ -32,10 +32,7 @@ namespace TeeSharp.Network
         public NetworkConnection()
         {
             Error = string.Empty;
-            ResendQueueConstruct = new NetworkChunkConstruct
-            {
-                Data = new byte[NetworkCore.MAX_PAYLOAD]
-            };
+            ResendQueueConstruct = new NetworkChunkConstruct();
             ResendQueue = new Queue<NetworkChunkResend>();
         }
 
@@ -49,29 +46,30 @@ namespace TeeSharp.Network
 
         public override void Reset()
         {
-            State = ConnectionState.OFFLINE;
-            ConnectedAt = 0;
-
             Ack = 0;
             Sequence = 0;
             RemoteClosed = false;
-            ResendQueue.Clear();
-            BufferSize = 0;
 
+            State = ConnectionState.OFFLINE;
+            ConnectedAt = 0;
             LastReceiveTime = 0;
             LastSendTime = 0;
 
-            Error = string.Empty;
             EndPoint = null;
 
+            ResendQueue.Clear();
+            BufferSize = 0;
+            
+            Error = string.Empty;
             ResetQueueConstruct();
         }
 
         public override void Init(UdpClient udpClient, NetworkConnectionConfig config)
         {
+            Reset();
+
             Config = config;
             UdpClient = udpClient;
-            Reset();
         }
 
         public override void Update()

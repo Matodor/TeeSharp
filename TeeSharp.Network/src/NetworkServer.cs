@@ -116,14 +116,7 @@ namespace TeeSharp.Network
                     return true;
                 }
 
-                if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
-                    ChunkReceiver.ChunkConstruct.DataSize == 0)
-                {
-                    continue;
-                }
-
                 var clientId = FindSlot(remote, true);
-
                 if (clientId != -1)
                 {
                     if (!Connections[clientId].Feed(ChunkReceiver.ChunkConstruct, remote))
@@ -132,8 +125,7 @@ namespace TeeSharp.Network
                     if (ChunkReceiver.ChunkConstruct.DataSize > 0)
                         ChunkReceiver.Start(remote, Connections[clientId], clientId);
                 }
-                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&  
-                         ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
+                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) && ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
                 {
                     var sameIps = 0;
                     var freeSlotId = -1;
@@ -180,7 +172,6 @@ namespace TeeSharp.Network
                     {
                         Connections[freeSlotId].Feed(ChunkReceiver.ChunkConstruct, remote);
                         NewClientCallback?.Invoke(freeSlotId);
-                        continue;
                     }
                 }
             }
