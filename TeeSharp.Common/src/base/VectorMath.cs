@@ -9,7 +9,7 @@
 
         public static float Dot(Vector2 a, Vector2 b)
         {
-            return a.X * b.X + a.Y * b.Y;
+            return a.x * b.x + a.y * b.y;
         }
 
         public static Vector2 Mix(Vector2 a, Vector2 b, float amount)

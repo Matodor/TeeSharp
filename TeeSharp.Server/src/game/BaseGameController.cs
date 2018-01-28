@@ -20,11 +20,13 @@ namespace TeeSharp.Server.Game
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
 
+        public abstract int GetPlayerScore(int clientId);
         public abstract string GetTeamName(Team team);
         public abstract Team GetAutoTeam(int clientId);
         public abstract bool CheckTeamsBalance();
         public abstract bool IsTeamplay();
 
+        public abstract void Tick();
         public abstract void OnSnapshot(int snappingClient);
         public abstract void OnEntity(int tileIndex, Vector2 pos);
         public abstract void OnPlayerInfoChange(BasePlayer player);
@@ -33,6 +35,7 @@ namespace TeeSharp.Server.Game
         {
             Server = Kernel.Get<BaseServer>();
             GameContext = Kernel.Get<BaseGameContext>();
+            Config = Kernel.Get<BaseConfig>();
         }
     }
 }

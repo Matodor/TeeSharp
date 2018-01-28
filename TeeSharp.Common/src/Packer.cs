@@ -48,18 +48,21 @@ namespace TeeSharp.Common
 
         public void AddString(string value, int limit = 0)
         {
-            if (string.IsNullOrEmpty(value) || Error)
+            if (value == null || Error)
                 return;
 
             var strBytes = Encoding.UTF8.GetBytes(value.Limit(limit));
-            if (_currentIndex + strBytes.Length >= MAX_PACKER_BUFFER_SIZE)
+            if (strBytes.Length > 0)
             {
-                Error = true;
-                return;
-            }
+                if (_currentIndex + strBytes.Length >= MAX_PACKER_BUFFER_SIZE)
+                {
+                    Error = true;
+                    return;
+                }
 
-            Buffer.BlockCopy(strBytes, 0, _buffer, _currentIndex, strBytes.Length);
-            _currentIndex += strBytes.Length;
+                Buffer.BlockCopy(strBytes, 0, _buffer, _currentIndex, strBytes.Length);
+                _currentIndex += strBytes.Length;
+            }
             _buffer[_currentIndex++] = 0;
         }
 

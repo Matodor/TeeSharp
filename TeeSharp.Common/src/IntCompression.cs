@@ -93,11 +93,10 @@ namespace TeeSharp.Common
         {
             var startOutputOffset = outputOffset;
 
-            while (inputSize > 0)
+            for (var i = 0; i < inputSize; i++)
             {
                 outputOffset = Pack(outputData, outputOffset, inputData[inputOffset]);
                 inputOffset++;
-                inputSize--;
             }
 
             return outputOffset - startOutputOffset;

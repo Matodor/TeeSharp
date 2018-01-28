@@ -21,6 +21,7 @@ namespace TeeSharp.Server
             SERVER_TICK_SPEED = 50;
 
         public abstract int MaxClients { get; }
+        public abstract int TickSpeed { get; }
         public virtual long Tick { get; protected set; }
         public virtual MapContainer CurrentMap { get; protected set; }
         public abstract int[] IdMap { get; protected set; }
@@ -55,7 +56,7 @@ namespace TeeSharp.Server
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
         public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
 
-        public abstract T SnapNetObj<T>(SnapObj objType, int id) where T : BaseSnapObject, new();
+        public abstract T SnapObject<T>(int id) where T : BaseSnapObject, new();
 
         protected abstract bool SendPackMsgBody<T>(T msg, MsgFlags flags, 
             int clientId) where T : BaseGameMessage;
@@ -75,9 +76,9 @@ namespace TeeSharp.Server
         protected abstract bool SendPackMsgOne(BaseGameMessage msg,
             MsgFlags flags, int clientId);
 
-        protected abstract bool Translate(ref int targetId, int clientId);
+        public abstract bool Translate(ref int targetId, int clientId);
 
-        protected abstract void StartNetworkServer();
+        protected abstract bool StartNetworkServer();
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();

@@ -24,6 +24,7 @@ namespace TeeSharp.Server.Game
             Config = Kernel.Get<BaseConfig>();
             Console = Kernel.Get<BaseGameConsole>();
             Tuning = Kernel.Get<BaseTuningParams>();
+            World = Kernel.Get<BaseGameWorld>();
 
             Layers.Init(Server.CurrentMap);
             Collision.Init(Layers);
@@ -144,6 +145,19 @@ namespace TeeSharp.Server.Game
 
         public override void OnTick()
         {
+            //CheckPureTuning();
+
+            World.Tick();
+            GameController.Tick();
+
+            for (var i = 0; i < Players.Length; i++)
+            {
+                if (Players[i] == null)
+                    continue;
+                
+                Players[i].Tick();
+                Players[i].PostTick();
+            }
         }
 
         public override void OnShutdown()
@@ -209,6 +223,18 @@ namespace TeeSharp.Server.Game
 
         public override void OnSnapshot(int clientId)
         {
+            World.OnSnapshot(clientId);
+            GameController.OnSnapshot(clientId);
+            // events
+
+            for (var i = 0; i < Players.Length; i++)
+            {
+                if (Players[i] == null)
+                    continue;
+                Players[i].OnSnapshot(clientId);
+            }
+
+            Players[clientId].FakeSnapshot(clientId);
         }
 
         public override void OnClientConnected(int clientId)

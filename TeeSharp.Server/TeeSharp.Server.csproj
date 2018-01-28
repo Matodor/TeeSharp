@@ -12,4 +12,8 @@
     <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="src\game\entities\" />
+  </ItemGroup>
+
 </Project>

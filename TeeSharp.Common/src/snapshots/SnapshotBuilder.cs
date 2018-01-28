@@ -30,7 +30,7 @@ namespace TeeSharp.Common.Snapshots
             return new Snapshot(_snapshotItems.ToArray(), _currentSize);
         }
 
-        public T NewObject<T>(SnapObj objType, int id) where T : BaseSnapObject, new()
+        public T NewObject<T>(int id) where T : BaseSnapObject, new()
         {
             if (_snapshotItems.Count + 1 >= MAX_SNAPSHOT_ITEMS)
             {
@@ -38,7 +38,14 @@ namespace TeeSharp.Common.Snapshots
                 return null;
             }
 
-            var item = new SnapshotItem((int) objType << 16 | id, new T());
+            var obj = new T();
+            if (obj.Type <= SnapObj.INVALID || obj.Type >= SnapObj.NUM)
+            {
+                Debug.Warning("snapshots", "wrong object type");
+                return null;
+            }
+
+            var item = new SnapshotItem((int) obj.Type << 16 | id, obj);
             _currentSize += item.Object.FieldsCount * sizeof(int);
 
             if (_currentSize >= MAX_SNAPSHOT_SIZE)

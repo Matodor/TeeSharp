@@ -41,12 +41,14 @@ namespace TeeSharp.Server
             kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
             kernel.Bind<BasePlayer>().To<Player>();
             kernel.Bind<BaseTuningParams>().To<TuningParams>();
+            kernel.Bind<BaseGameWorld>().To<GameWorld>();
         }
     }
 
     public class Server : BaseServer
     {
         public override int MaxClients => Clients.Length;
+        public override int TickSpeed { get; } = SERVER_TICK_SPEED;
         public override int[] IdMap { get; protected set; }
 
         private int[] _lastSent;
@@ -104,7 +106,8 @@ namespace TeeSharp.Server
                 return;    
             }
 
-            StartNetworkServer();
+            if (!StartNetworkServer())
+                return;
 
             Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
             IdMap = new int[Clients.Length * VANILLA_MAX_CLIENTS];
@@ -289,7 +292,7 @@ namespace TeeSharp.Server
 
         public override int GetClientScore(int clientId)
         {
-            return 0;
+            return GameContext.GameController.GetPlayerScore(clientId);
         }
 
         public override bool ClientInGame(int clientId)
@@ -367,14 +370,13 @@ namespace TeeSharp.Server
             return result;
         }
 
-        public override T SnapNetObj<T>(SnapObj objType, int id)
+        public override T SnapObject<T>(int id)
         {
-            Debug.Assert(objType > SnapObj.INVALID  && objType < SnapObj.NUM, "incorrect type");
             Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
 
             return id < 0
                 ? null
-                : SnapshotBuilder.NewObject<T>(objType, id);
+                : SnapshotBuilder.NewObject<T>(id);
         }
 
         protected override bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId)
@@ -450,9 +452,9 @@ namespace TeeSharp.Server
             return SendMsg(packer, flags, clientId);
         }
 
-        protected override bool Translate(ref int targetId, int clientId)
+        public override bool Translate(ref int targetId, int clientId)
         {
-            if (GetClientInfo(clientId, out var info))
+            if (!GetClientInfo(clientId, out var info))
                 return false;
 
             if (info.ClientVersion >= ClientVersion.DDNET_OLD)
@@ -472,7 +474,7 @@ namespace TeeSharp.Server
             return false;
         }
         
-        protected override void StartNetworkServer()
+        protected override bool StartNetworkServer()
         {
             var bindAddr = IPAddress.Any;
             if (!string.IsNullOrWhiteSpace(Config["Bindaddr"]))
@@ -489,9 +491,11 @@ namespace TeeSharp.Server
             if (!NetworkServer.Open(networkConfig))
             {
                 Debug.Error("server", $"couldn't open socket. port {networkConfig.LocalEndPoint.Port} might already be in use");
-                return;
+                return false;
             }
+
             Debug.Log("server", $"network server running at: {networkConfig.LocalEndPoint}");
+            return true;
         }
 
         protected override void ProcessClientPacket(NetworkChunk packet)
@@ -777,7 +781,7 @@ namespace TeeSharp.Server
                     if (Clients[i].State != ServerClientState.CONNECTING)
                         continue;
 
-                    if (_lastAskTick[i] < Tick - SERVER_TICK_SPEED)
+                    if (_lastAskTick[i] < Tick - TickSpeed)
                     {
                         _lastSent[i] = _lastAsk[i];
                         _lastAskTick[i] = Tick;
@@ -831,11 +835,11 @@ namespace TeeSharp.Server
             for (var i = 0; i < Clients.Length; i++)
             {
                 // client must be ingame to recive snapshots
-                if (Clients[i].State < ServerClientState.READY)
+                if (Clients[i].State != ServerClientState.IN_GAME)
                     continue;
 
                 // this client is trying to recover, don't spam snapshots
-                if (Clients[i].SnapRate == SnapRate.RECOVER && Tick % SERVER_TICK_SPEED != 0)
+                if (Clients[i].SnapRate == SnapRate.RECOVER && Tick % TickSpeed != 0)
                     continue;
                 
                 // this client is trying to recover, don't spam snapshots
@@ -846,9 +850,10 @@ namespace TeeSharp.Server
                 GameContext.OnSnapshot(i);
                 var now = Time.Get();
                 var snapshot =  SnapshotBuilder.EndBuild();
-                var CRC = snapshot.Crc();
+                var crc = snapshot.Crc();
                 
-                Clients[i].SnapshotStorage.PurgeUntil(Tick - SERVER_TICK_SPEED * 3);
+                Debug.Error("snapshot", "snapcrc =" + crc);
+                Clients[i].SnapshotStorage.PurgeUntil(Tick - TickSpeed * 3);
                 Clients[i].SnapshotStorage.Add(Tick, now, snapshot);
 
                 var deltaTick = -1L;
@@ -891,7 +896,7 @@ namespace TeeSharp.Server
                         var msg = new MsgPacker((int) NetworkMessages.SV_SNAPSINGLE);
                         msg.AddInt((int) Tick);
                         msg.AddInt((int) (Tick - deltaTick));
-                        msg.AddInt(CRC);
+                        msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
                         SendMsgEx(msg, MsgFlags.FLUSH, i, true);
@@ -903,7 +908,7 @@ namespace TeeSharp.Server
                         msg.AddInt((int)(Tick - deltaTick));
                         msg.AddInt(numPackets);
                         msg.AddInt(n);
-                        msg.AddInt(CRC);
+                        msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
                         SendMsgEx(msg, MsgFlags.FLUSH, i, true);
@@ -916,7 +921,7 @@ namespace TeeSharp.Server
 
         protected override long TickStartTime(long tick)
         {
-            return StartTime + (Time.Freq() * tick) / SERVER_TICK_SPEED;
+            return StartTime + (Time.Freq() * tick) / TickSpeed;
 
         }
 

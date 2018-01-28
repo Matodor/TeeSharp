@@ -60,15 +60,13 @@ namespace TeeSharp.Common.Snapshots
                 
                 if (pastIndex != -1)
                 {
-                    var itemDataOffset = outputOffset + 3;
                     var pastItem = from[pastIndex];
 
                     if (DiffItem(pastItem.Object, currentItem.Object,
-                            outputData, outputOffset) != 0)
+                            outputData, outputOffset + 2) != 0)
                     {
                         outputData[outputOffset++] = currentItem.Type;
                         outputData[outputOffset++] = currentItem.Id;
-                        outputData[outputOffset++] = currentItem.Object.FieldsCount;
 
                         outputOffset += currentItem.Object.FieldsCount;
                         numUpdatedItems++;
@@ -79,18 +77,21 @@ namespace TeeSharp.Common.Snapshots
                 {
                     outputData[outputOffset++] = currentItem.Type;
                     outputData[outputOffset++] = currentItem.Id;
-                    outputData[outputOffset++] = currentItem.Object.FieldsCount;
 
-                    Array.Copy(currentItem.Object.Serialize(), 0, 
-                        outputData, outputOffset, currentItem.Object.FieldsCount);
+                    var data = currentItem.Object.Serialize();
+                    Array.Copy(data, 0, outputData, outputOffset, data.Length);
 
-                    outputOffset += currentItem.Object.FieldsCount;
+                    outputOffset += data.Length;
                     numUpdatedItems++;
                 }
             }
 
             if (numDeletedItems == 0 && numUpdatedItems == 0 && numTempItems == 0)
                 return 0;
+
+            outputData[0] = numDeletedItems;
+            outputData[1] = numUpdatedItems;
+            outputData[2] = numTempItems;
 
             return outputOffset;
         }

@@ -2,74 +2,74 @@
 {
     public struct Vector2
     {
-        public float Length => (float) System.Math.Sqrt(X * X + Y * Y);
+        public float Length => (float) System.Math.Sqrt(x * x + y * y);
 
         public Vector2 Normalized
         {
             get
             {
                 var l = 1f / Length;
-                return new Vector2(X * l, Y * l);
+                return new Vector2(x * l, y * l);
             }
         }
 
-        public float X;
-        public float Y;
+        public float x;
+        public float y;
 
         public Vector2(float x, float y)
         {
-            X = x;
-            Y = y;
+            this.x = x;
+            this.y = y;
         }
 
         public override string ToString()
         {
-            return X + " " + Y;
+            return x + " " + y;
         }
 
         public static Vector2 operator -(Vector2 v)
         {
-            return new Vector2(-v.X, -v.Y);
+            return new Vector2(-v.x, -v.y);
         }
 
         public static Vector2 operator -(Vector2 l, Vector2 r)
         {
-            return new Vector2(l.X - r.X, l.Y - r.Y);
+            return new Vector2(l.x - r.x, l.y - r.y);
         }
 
         public static Vector2 operator +(Vector2 l, Vector2 r)
         {
-            return new Vector2(l.X + r.X, l.Y + r.Y);
+            return new Vector2(l.x + r.x, l.y + r.y);
         }
 
         public static Vector2 operator *(float v, Vector2 r)
         {
-            return new Vector2(r.X * v, r.Y * v);
+            return new Vector2(r.x * v, r.y * v);
         }
 
         public static Vector2 operator *(Vector2 l, float v)
         {
-            return new Vector2(l.X * v, l.Y * v);
+            return new Vector2(l.x * v, l.y * v);
         }
 
         public static Vector2 operator *(Vector2 l, Vector2 r)
         {
-            return new Vector2(l.X * r.X, l.Y * r.Y);
+            return new Vector2(l.x * r.x, l.y * r.y);
         }
 
         public static Vector2 operator /(float v, Vector2 r)
         {
-            return new Vector2(r.X / v, r.Y / v);
+            return new Vector2(r.x / v, r.y / v);
         }
 
         public static Vector2 operator /(Vector2 l, float v)
         {
-            return new Vector2(l.X / v, l.Y / v);
+            return new Vector2(l.x / v, l.y / v);
         }
 
         public static Vector2 operator /(Vector2 l, Vector2 r)
         {
-            return new Vector2(l.X / r.X, l.Y / r.Y);
+            return new Vector2(l.x / r.x, l.y / r.y);
         }
     }
 }

@@ -12,6 +12,15 @@ namespace TeeSharp.Server.Game
             base.Init();
         }
 
+        public override void Tick()
+        {
+        }
+
+        public override int GetPlayerScore(int clientId)
+        {
+            return 5;
+        }
+
         public override bool IsTeamplay()
         {
             return GameFlags.HasFlag(GameFlags.TEAMS);
@@ -53,7 +62,7 @@ namespace TeeSharp.Server.Game
 
         public override void OnSnapshot(int snappingClient)
         {
-            var gameInfo = Server.SnapNetObj<SnapObj_GameInfo>(SnapObj.OBJ_GAMEINFO, 0);
+            var gameInfo = Server.SnapObject<SnapObj_GameInfo>(0);
 
             if (gameInfo == null)
                 return;
