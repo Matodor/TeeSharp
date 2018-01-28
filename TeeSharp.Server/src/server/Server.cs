@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using TeeSharp.Common;
@@ -476,7 +477,7 @@ namespace TeeSharp.Server
         
         protected override bool StartNetworkServer()
         {
-            var bindAddr = IPAddress.Any;
+            var bindAddr = NetworkCore.GetLocalIP(AddressFamily.InterNetwork);
             if (!string.IsNullOrWhiteSpace(Config["Bindaddr"]))
                 bindAddr = IPAddress.Parse(Config["Bindaddr"]);
 
@@ -852,7 +853,6 @@ namespace TeeSharp.Server
                 var snapshot =  SnapshotBuilder.EndBuild();
                 var crc = snapshot.Crc();
                 
-                Debug.Error("snapshot", "snapcrc =" + crc);
                 Clients[i].SnapshotStorage.PurgeUntil(Tick - TickSpeed * 3);
                 Clients[i].SnapshotStorage.Add(Tick, now, snapshot);
 

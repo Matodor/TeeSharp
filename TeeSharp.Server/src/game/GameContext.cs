@@ -1,11 +1,14 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Xml.XPath;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Core;
 using TeeSharp.Map;
+using TeeSharp.Network;
 
 namespace TeeSharp.Server.Game
 {
@@ -109,7 +112,7 @@ namespace TeeSharp.Server.Game
         {
             string debug;
             if (chatterClientId >= 0 && chatterClientId < Server.MaxClients)
-                debug = $"{chatterClientId}:{isTeamChat}:{Server.GetClientName(chatterClientId)} {msg}";
+                debug = $"{chatterClientId}:{Server.GetClientName(chatterClientId)} {msg}";
             else
                 debug = $"*** {msg}";
             Console.Print(OutputLevel.ADDINFO, isTeamChat ? "teamchat" : "chat", debug);
@@ -182,8 +185,43 @@ namespace TeeSharp.Server.Game
             }
             else
             {
-                
+                switch (msg.MsgId)
+                {
+                    case GameMessages.CL_SAY:
+                        OnMsgSay(player, (GameMsg_ClSay)msg);
+                        break;
+
+                    case GameMessages.CL_SETTEAM:
+                        break;
+                    case GameMessages.CL_SETSPECTATORMODE:
+                        break;
+                    case GameMessages.CL_CHANGEINFO:
+                        break;
+                    case GameMessages.CL_KILL:
+                        break;
+                    case GameMessages.CL_EMOTICON:
+                        break;
+                    case GameMessages.CL_VOTE:
+                        break;
+                    case GameMessages.CL_CALLVOTE:
+                        break;
+                    case GameMessages.CL_ISDDNET:
+                        break;
+                }
             }
+        }
+
+        protected virtual void OnMsgSay(BasePlayer player, GameMsg_ClSay msg)
+        {
+            if (string.IsNullOrEmpty(msg.Message) ||
+                Config["SvSpamprotection"] && player.LastChatMessage + Server.TickSpeed > Server.Tick)
+            {
+                return;
+            }
+
+            msg.Message = msg.Message.Limit(128);
+            player.LastChatMessage = Server.Tick;
+            SendChat(player.ClientId, msg.IsTeam, msg.Message);
         }
 
         protected virtual void OnMsgStartInfo(BasePlayer player, 

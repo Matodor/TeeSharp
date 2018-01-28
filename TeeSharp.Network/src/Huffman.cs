@@ -277,7 +277,7 @@
                 outputIndex += 1;
             }
 
-            return outputIndex - outputIndex;
+            return outputIndex - outputOffset;
         }
     }
 }

@@ -39,14 +39,34 @@ namespace TeeSharp.Network
             _huffman = new Huffman(_freqTable);
         }
 
+        public static IPAddress GetLocalIP(AddressFamily addressFamily)
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == addressFamily)
+                {
+                    return ip;
+                }
+            }
+
+            throw new Exception($"No network adapters with an {addressFamily} address family in the system!");
+        }
+
         public static bool CreateUdpClient(IPEndPoint endPoint, out UdpClient client)
         {
             try
             {
-                client = new UdpClient(endPoint) {Client = {Blocking = false}};
+                client = new UdpClient(endPoint)
+                {
+                    Client =
+                    {
+                        Blocking = false,
+                    }
+                };
                 return true;
             }
-            catch
+            catch (Exception e)
             {
                 client = null;
                 return false;

@@ -8,33 +8,36 @@ namespace TeeSharp.Network
         public int Size;
         public int Sequence;
 
-        public int Pack(byte[] data, int index)
+        public int Pack(byte[] inputData, int inputOffset)
         {
-            data[index + 0] = (byte)((((int)Flags & 3) << 6) | ((Size >> 4) & 0x3f));
-            data[index + 1] = (byte)(Size & 0xf);
+            inputData[inputOffset + 0] = (byte) ((((int) Flags & 0b11) << 6) | ((Size >> 4) & 0b111111));
+            inputData[inputOffset + 1] = (byte) (Size & 0xf);
 
-            if ((Flags & ChunkFlags.VITAL) != 0)
+            if (Flags.HasFlag(ChunkFlags.VITAL))
             {
-                data[index + 1] = (byte)(data[index + 1] | ((Sequence >> 2) & 0xf0));
-                data[index + 2] = (byte)(Sequence & 0xff);
-
-                return index + 3;
+                inputData[inputOffset + 1] |= (byte) ((Sequence >> 2) & 0b1111_0000);
+                inputData[inputOffset + 2] = (byte) (Sequence & 0b1111_1111);
+                return inputOffset + 3;
             }
-            return index + 2;
+
+            return inputOffset + 2;
         }
 
-        public int Unpack(byte[] data, int index)
+        public int Unpack(byte[] inputData, int inputOffset)
         {
-            Flags = (ChunkFlags)((data[index + 0] >> 6) & 3);
-            Size = ((data[index + 0] & 0x3f) << 4) | (data[index + 1] & 0xf);
+            Flags = (ChunkFlags) ((inputData[inputOffset + 0] >> 6) & 0b11);
+            Size = ((inputData[inputOffset + 0] & 0b111111) << 4) | 
+                   ((inputData[inputOffset + 1] & 0b1111));
             Sequence = -1;
 
-            if ((Flags & ChunkFlags.VITAL) != 0)
+            if (Flags.HasFlag(ChunkFlags.VITAL))
             {
-                Sequence = ((data[index + 1] & 0xf0) << 2) | data[index + 2];
-                return index + 3;
+                Sequence = ((inputData[inputOffset + 1] & 0b1111_0000) << 2) |
+                           ((inputData[inputOffset + 2]));
+                return inputOffset + 3;
             }
-            return index + 2;
+
+            return inputOffset + 2;
         }
     }
 }

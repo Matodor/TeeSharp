@@ -55,8 +55,7 @@ namespace TeeSharp.Network
                     dataOffset = header.Unpack(ChunkConstruct.Data, dataOffset);
                     dataOffset += header.Size;
                 }
-
-
+                
                 dataOffset = header.Unpack(ChunkConstruct.Data, dataOffset);
                 CurrentChunk++;
 

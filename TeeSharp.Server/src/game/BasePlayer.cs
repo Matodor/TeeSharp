@@ -28,12 +28,15 @@ namespace TeeSharp.Server.Game
     {
         public virtual int ClientId { get; protected set; }
 
-        public virtual PlayerFlags PlayerFlags { get; protected set; }
         public virtual ClientVersion ClientVersion { get; set; }
+        public virtual PlayerFlags PlayerFlags { get; protected set; }
+        public virtual Team Team { get; protected set; }
+
         public virtual bool IsReady { get; set; }
         public virtual long LastChangeInfo { get; set; }
+        public virtual long LastChatMessage { get; set; }
+
         public virtual TeeInfo TeeInfo { get; protected set; }
-        public virtual Team Team { get; protected set; }
         public virtual Latency Latency { get; protected set; }
         public virtual int SpectatorId { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }

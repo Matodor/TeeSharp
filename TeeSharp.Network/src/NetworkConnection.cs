@@ -186,8 +186,7 @@ namespace TeeSharp.Network
                     SendControlMsg(ConnectionMessages.CONNECTACCEPT, "");
                     Debug.Log("connection", "got connection, sending connect+accept");
                 }
-                else if (State == ConnectionState.CONNECT &&
-                    msg == ConnectionMessages.CONNECTACCEPT)
+                else if (State == ConnectionState.CONNECT && msg == ConnectionMessages.CONNECTACCEPT)
                 {
                     LastReceiveTime = now;
                     State = ConnectionState.ONLINE;

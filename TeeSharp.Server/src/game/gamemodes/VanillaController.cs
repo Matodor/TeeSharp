@@ -10,6 +10,12 @@ namespace TeeSharp.Server.Game
         public override void Init()
         {
             base.Init();
+
+            GameOverTick = -1;
+            SuddenDeath = 0;
+            RoundStartTick = Server.Tick;
+            RoundCount = 0;
+            GameFlags = GameFlags.NONE;
         }
 
         public override void Tick()

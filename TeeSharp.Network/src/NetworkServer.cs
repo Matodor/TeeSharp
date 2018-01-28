@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
@@ -87,8 +88,17 @@ namespace TeeSharp.Network
                     return true;
 
                 var remote = (IPEndPoint) null;
-                var data = UdpClient.Receive(ref remote);
+                byte[] data;
 
+                try
+                {
+                    data = UdpClient.Receive(ref remote);
+                }
+                catch
+                {
+                    continue;
+                }
+                
                 if (data.Length == 0)
                     continue;
 
@@ -122,10 +132,11 @@ namespace TeeSharp.Network
                     if (!Connections[clientId].Feed(ChunkReceiver.ChunkConstruct, remote))
                         continue;
 
-                    if (ChunkReceiver.ChunkConstruct.DataSize > 0)
+                    if (ChunkReceiver.ChunkConstruct.DataSize != 0)
                         ChunkReceiver.Start(remote, Connections[clientId], clientId);
                 }
-                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) && ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
+                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) && 
+                         ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
                 {
                     var sameIps = 0;
                     var freeSlotId = -1;
