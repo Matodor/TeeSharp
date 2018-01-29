@@ -2,17 +2,17 @@
 {
     public static class VectorMath
     {
-        public static float Distance(vec2 a, vec2 b)
+        public static float Distance(Vec2 a, Vec2 b)
         {
             return (a - b).Length;
         }
 
-        public static float Dot(vec2 a, vec2 b)
+        public static float Dot(Vec2 a, Vec2 b)
         {
             return a.x * b.x + a.y * b.y;
         }
 
-        public static vec2 Mix(vec2 a, vec2 b, float amount)
+        public static Vec2 Mix(Vec2 a, Vec2 b, float amount)
         {
             return a + (b - a) * amount;
         }

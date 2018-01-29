@@ -41,7 +41,7 @@ namespace TeeSharp.Server.Game
                 for (var x = 0; x < Layers.GameLayer.Width; x++)
                 {
                     var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
-                    var pos = new vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+                    var pos = new Vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 
                     if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
                         GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
@@ -64,7 +64,7 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
-        public override void CreatePlayerSpawn(vec2 spawnPos)
+        public override void CreatePlayerSpawn(Vec2 spawnPos)
         {
         }
 

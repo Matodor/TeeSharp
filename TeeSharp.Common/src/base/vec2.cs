@@ -1,25 +1,25 @@
 ﻿namespace TeeSharp.Common
 {
-    public struct vec2
+    public struct Vec2
     {
-        public static vec2 zero = new vec2(0, 0);
-        public static vec2 one = new vec2(1, 1);
+        public static Vec2 zero = new Vec2(0, 0);
+        public static Vec2 one = new Vec2(1, 1);
 
         public float Length => (float) System.Math.Sqrt(x * x + y * y);
 
-        public vec2 Normalized
+        public Vec2 Normalized
         {
             get
             {
                 var l = 1f / Length;
-                return new vec2(x * l, y * l);
+                return new Vec2(x * l, y * l);
             }
         }
 
         public float x;
         public float y;
 
-        public vec2(float x, float y)
+        public Vec2(float x, float y)
         {
             this.x = x;
             this.y = y;
@@ -30,49 +30,49 @@
             return x + " " + y;
         }
 
-        public static vec2 operator -(vec2 v)
+        public static Vec2 operator -(Vec2 v)
         {
-            return new vec2(-v.x, -v.y);
+            return new Vec2(-v.x, -v.y);
         }
 
-        public static vec2 operator -(vec2 l, vec2 r)
+        public static Vec2 operator -(Vec2 l, Vec2 r)
         {
-            return new vec2(l.x - r.x, l.y - r.y);
+            return new Vec2(l.x - r.x, l.y - r.y);
         }
 
-        public static vec2 operator +(vec2 l, vec2 r)
+        public static Vec2 operator +(Vec2 l, Vec2 r)
         {
-            return new vec2(l.x + r.x, l.y + r.y);
+            return new Vec2(l.x + r.x, l.y + r.y);
         }
 
-        public static vec2 operator *(float v, vec2 r)
+        public static Vec2 operator *(float v, Vec2 r)
         {
-            return new vec2(r.x * v, r.y * v);
+            return new Vec2(r.x * v, r.y * v);
         }
 
-        public static vec2 operator *(vec2 l, float v)
+        public static Vec2 operator *(Vec2 l, float v)
         {
-            return new vec2(l.x * v, l.y * v);
+            return new Vec2(l.x * v, l.y * v);
         }
 
-        public static vec2 operator *(vec2 l, vec2 r)
+        public static Vec2 operator *(Vec2 l, Vec2 r)
         {
-            return new vec2(l.x * r.x, l.y * r.y);
+            return new Vec2(l.x * r.x, l.y * r.y);
         }
 
-        public static vec2 operator /(float v, vec2 r)
+        public static Vec2 operator /(float v, Vec2 r)
         {
-            return new vec2(r.x / v, r.y / v);
+            return new Vec2(r.x / v, r.y / v);
         }
 
-        public static vec2 operator /(vec2 l, float v)
+        public static Vec2 operator /(Vec2 l, float v)
         {
-            return new vec2(l.x / v, l.y / v);
+            return new Vec2(l.x / v, l.y / v);
         }
 
-        public static vec2 operator /(vec2 l, vec2 r)
+        public static Vec2 operator /(Vec2 l, Vec2 r)
         {
-            return new vec2(l.x / r.x, l.y / r.y);
+            return new Vec2(l.x / r.x, l.y / r.y);
         }
     }
 }

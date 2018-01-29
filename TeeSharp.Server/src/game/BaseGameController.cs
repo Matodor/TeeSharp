@@ -9,7 +9,7 @@ namespace TeeSharp.Server.Game
 {
     public class SpawnEval
     {
-        public vec2 Pos;
+        public Vec2 Pos;
         public bool Got;
         public Team FriendlyTeam;
         public float Score;
@@ -18,7 +18,7 @@ namespace TeeSharp.Server.Game
         {
             Got = false;
             FriendlyTeam = Team.SPECTATORS;
-            Pos = new vec2(100, 100);
+            Pos = new Vec2(100, 100);
         }
     }
 
@@ -41,7 +41,7 @@ namespace TeeSharp.Server.Game
         public abstract string GetTeamName(Team team);
         public abstract Team GetAutoTeam(int clientId);
         public abstract bool CheckTeamsBalance();
-        public abstract bool CanSpawn(Team team, int clientId, out vec2 spawnPos);
+        public abstract bool CanSpawn(Team team, int clientId, out Vec2 spawnPos);
         public abstract bool CanJoinTeam(int clientId, Team team);
         public abstract bool CanChangeTeam(BasePlayer player, Team joinTeam);
         public abstract bool IsTeamplay();
@@ -50,11 +50,11 @@ namespace TeeSharp.Server.Game
 
         public abstract void OnCharacterSpawn(Character character);
         public abstract void OnSnapshot(int snappingClient);
-        public abstract void OnEntity(int tileIndex, vec2 pos);
+        public abstract void OnEntity(int tileIndex, Vec2 pos);
         public abstract void OnPlayerInfoChange(BasePlayer player);
 
-        protected abstract float EvaluateSpawnPos(SpawnEval eval, vec2 pos);
-        protected abstract void EvaluateSpawnType(SpawnEval eval, IList<vec2> spawnPos);
+        protected abstract float EvaluateSpawnPos(SpawnEval eval, Vec2 pos);
+        protected abstract void EvaluateSpawnType(SpawnEval eval, IList<Vec2> spawnPos);
 
         protected BaseGameController()
         {

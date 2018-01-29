@@ -8,15 +8,15 @@ namespace TeeSharp.Common.Protocol
         public override int SerializeLength { get; } = 3;
 
         public int SpectatorId;
-        public vec2 ViewPos;
+        public Vec2 ViewPos;
 
         public override int[] Serialize()
         {
             return new[]
             {
                 SpectatorId,
-                (int) ViewPos.x,
-                (int) ViewPos.y,
+                Math.RoundToInt(ViewPos.x),
+                Math.RoundToInt(ViewPos.y),
             };
         }
     }

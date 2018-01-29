@@ -7,8 +7,8 @@ namespace TeeSharp.Common.Protocol
         public override SnapObj Type { get; } = SnapObj.OBJ_GAMEINFO;
         public override int SerializeLength { get; } = 8;
 
-        public GameFlags GameFlags;
-        public GameStateFlags GameStateFlags;
+        public GameFlags GameFlags = GameFlags.NONE;
+        public GameStateFlags GameStateFlags = GameStateFlags.NONE;
         public int RoundStartTick;
         public int WarmupTimer;
         public int ScoreLimit;

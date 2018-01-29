@@ -38,7 +38,7 @@ namespace TeeSharp.Server.Game
         public abstract void SendChatTarget(int clientId, string msg);
         public abstract void SendBroadcast(int clientId, string msg);
 
-        public abstract void CreatePlayerSpawn(vec2 spawnPos);
+        public abstract void CreatePlayerSpawn(Vec2 spawnPos);
 
         public abstract void OnInit();
         public abstract void OnTick();

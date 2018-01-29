@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Config;
 using TeeSharp.Core;
 using Math = System.Math;
 
@@ -7,12 +8,13 @@ namespace TeeSharp.Server.Game
     public abstract class Entity : BaseInterface
     {
         public abstract float ProximityRadius { get; protected set; }
-        public virtual vec2 Position { get; set; }
+        public virtual Vec2 Position { get; set; }
         public virtual bool MarkedForDestroy { get; protected set; }
 
         protected virtual BaseGameWorld GameWorld { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
+        protected virtual BaseConfig Config { get; set; }
         protected virtual int[] IDs { get; set; }
 
         public abstract void OnSnapshot(int snappingClient);
@@ -22,16 +24,18 @@ namespace TeeSharp.Server.Game
             GameContext = Kernel.Get<BaseGameContext>();
             Server = Kernel.Get<BaseServer>();
             GameWorld = Kernel.Get<BaseGameWorld>();
+            Config = Kernel.Get<BaseConfig>();
 
             IDs = new int[idsCount];
             for (var i = 0; i < IDs.Length; i++)
                 IDs[i] = Server.SnapshotNewId();
 
-            Position = vec2.zero;
+            Position = Vec2.zero;
         }
 
         public virtual void Tick() { }
         public virtual void TickDefered() { }
+        public virtual void TickPaused() { }
         public virtual void OnDestroy() { }
 
         public virtual void Destroy()
@@ -51,7 +55,7 @@ namespace TeeSharp.Server.Game
             return NetworkClipped(snappingClient, Position);
         }
 
-        public virtual bool NetworkClipped(int snappingClient, vec2 checkPos)
+        public virtual bool NetworkClipped(int snappingClient, Vec2 checkPos)
         {
             if (snappingClient == -1)
                 return false;
@@ -68,7 +72,7 @@ namespace TeeSharp.Server.Game
             return VectorMath.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
         }
 
-        public bool GameLayerClipped(vec2 checkPos)
+        public bool GameLayerClipped(Vec2 checkPos)
         {
             return Common.Math.RoundToInt(checkPos.x) / 32 < -200 ||
                    Common.Math.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||

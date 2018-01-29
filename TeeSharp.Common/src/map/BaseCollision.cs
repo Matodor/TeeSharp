@@ -22,10 +22,25 @@ namespace TeeSharp.Common
         protected abstract Tile[] GameLayerTiles { get; set; }
 
         public abstract void Init(BaseLayers layers);
-
-        public abstract TileFlags GetTileFlags(int x, int y);
-        public abstract bool IsTileSolid(float x, float y);
-        public abstract bool IsTileSolid(vec2 pos);
         public abstract Tile GetTileAtIndex(int index);
+        public abstract TileFlags GetTileFlags(int x, int y);
+
+        public virtual TileFlags GetTileFlags(float x, float y)
+        {
+            return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));
+        }
+
+        public virtual bool IsTileSolid(float x, float y)
+        {
+            return GetTileFlags(
+                Math.RoundToInt(x), 
+                Math.RoundToInt(y)
+            ).HasFlag(TileFlags.SOLID);
+        }
+
+        public virtual bool IsTileSolid(Vec2 pos)
+        {
+            return IsTileSolid(pos.x, pos.y);
+        }
     }
 }

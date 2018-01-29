@@ -7,16 +7,16 @@ namespace TeeSharp.Common.Protocol
         public override SnapObj Type { get; } = SnapObj.OBJ_PICKUP;
         public override int SerializeLength { get; } = 4;
 
-        public vec2 Position;
-        public Powerup Powerup;
-        public Weapon Weapon;
+        public Vec2 Position;
+        public Powerup Powerup = Powerup.WEAPON;
+        public Weapon Weapon = Weapon.HAMMER;
 
         public override int[] Serialize()
         {
             return new []
             {
-                (int) Position.x,
-                (int) Position.y,
+                Math.RoundToInt(Position.x),
+                Math.RoundToInt(Position.y),
                 (int) Powerup,
                 (int) Weapon
             };

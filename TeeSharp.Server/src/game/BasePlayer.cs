@@ -51,7 +51,7 @@ namespace TeeSharp.Server.Game
 
         public virtual TeeInfo TeeInfo { get; protected set; }
         public virtual Latency Latency { get; protected set; }
-        public virtual vec2 ViewPos { get; protected set; }
+        public virtual Vec2 ViewPos { get; protected set; }
         public virtual int[] ActLatency { get; protected set; }
 
         protected virtual Activity LatestActivity { get; set; }

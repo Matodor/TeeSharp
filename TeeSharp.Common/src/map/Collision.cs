@@ -55,18 +55,6 @@ namespace TeeSharp.Common
             return TileFlags.NONE;
         }
 
-        public override bool IsTileSolid(float x, float y)
-        {
-            return GetTileFlags(
-                Math.RoundToInt(x),
-                Math.RoundToInt(y)).HasFlag(TileFlags.SOLID);
-        }
-
-        public override bool IsTileSolid(vec2 pos)
-        {
-            return IsTileSolid(pos.x, pos.y);
-        }
-
         public override Tile GetTileAtIndex(int index)
         {
             return GameLayerTiles[index];

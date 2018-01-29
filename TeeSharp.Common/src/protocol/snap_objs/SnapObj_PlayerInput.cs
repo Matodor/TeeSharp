@@ -5,6 +5,8 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_PlayerInput : BaseSnapObject
     {
+        public const int INPUT_STATE_MASK = 0b11_1111;
+
         public override SnapObj Type { get; } = SnapObj.OBJ_PLAYERINPUT;
         public override int SerializeLength { get; } = 10;
 
@@ -14,7 +16,7 @@ namespace TeeSharp.Common.Protocol
         public int Jump;
         public int Fire;
         public int Hook;
-        public PlayerFlags PlayerFlags;
+        public PlayerFlags PlayerFlags = PlayerFlags.NONE;
         public int WantedWeapon;
         public int NextWeapon;
         public int PrevWeapon;
@@ -32,6 +34,20 @@ namespace TeeSharp.Common.Protocol
                 WantedWeapon == other.WantedWeapon &&
                 NextWeapon == other.NextWeapon &&
                 PrevWeapon == other.PrevWeapon;
+        }
+
+        public void FillFrom(SnapObj_PlayerInput other)
+        {
+            Direction = other.Direction;
+            TargetX = other.TargetX;
+            TargetY = other.TargetY;
+            Jump = other.Jump;
+            Fire = other.Fire;
+            Hook = other.Hook;
+            PlayerFlags = other.PlayerFlags;
+            WantedWeapon = other.WantedWeapon;
+            NextWeapon = other.NextWeapon;
+            PrevWeapon = other.PrevWeapon;
         }
 
         public void Deserialize(int[] data)

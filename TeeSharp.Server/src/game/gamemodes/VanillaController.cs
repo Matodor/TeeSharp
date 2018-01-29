@@ -11,15 +11,15 @@ namespace TeeSharp.Server.Game
 {
     public abstract class VanillaController : BaseGameController
     {
-        protected virtual IList<vec2>[] SpawnPos { get; set; }
+        protected virtual IList<Vec2>[] SpawnPos { get; set; }
 
         protected VanillaController()
         {
-            SpawnPos = new IList<vec2>[]
+            SpawnPos = new IList<Vec2>[]
             {
-                new List<vec2>(), // default spawn pos
-                new List<vec2>(), // red team spawn pos
-                new List<vec2>()  // blue team spawn pos
+                new List<Vec2>(), // default spawn pos
+                new List<Vec2>(), // red team spawn pos
+                new List<Vec2>()  // blue team spawn pos
             };
 
             GameOverTick = -1;
@@ -38,7 +38,7 @@ namespace TeeSharp.Server.Game
             return 5;
         }
 
-        protected override float EvaluateSpawnPos(SpawnEval eval, vec2 pos)
+        protected override float EvaluateSpawnPos(SpawnEval eval, Vec2 pos)
         {
             var score = 0f;
 
@@ -55,17 +55,17 @@ namespace TeeSharp.Server.Game
             return score;
         }
 
-        protected override void EvaluateSpawnType(SpawnEval eval, IList<vec2> spawnPos)
+        protected override void EvaluateSpawnType(SpawnEval eval, IList<Vec2> spawnPos)
         {
             for (var i = 0; i < spawnPos.Count; i++)
             {
                 var positions = new[]
                 {
-                    new vec2(0.0f, 0.0f),
-                    new vec2(-32.0f, 0.0f),
-                    new vec2(0.0f, -32.0f),
-                    new vec2(32.0f, 0.0f),
-                    new vec2(0.0f, 32.0f)
+                    new Vec2(0.0f, 0.0f),
+                    new Vec2(-32.0f, 0.0f),
+                    new Vec2(0.0f, -32.0f),
+                    new Vec2(32.0f, 0.0f),
+                    new Vec2(0.0f, 32.0f)
                 };  // start, left, up, right, down
 
                 var result = -1;
@@ -104,11 +104,11 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override bool CanSpawn(Team team, int clientId, out vec2 spawnPos)
+        public override bool CanSpawn(Team team, int clientId, out Vec2 spawnPos)
         {
             if (team == Team.SPECTATORS)
             {
-                spawnPos = vec2.zero;
+                spawnPos = Vec2.zero;
                 return false;
             }
 
@@ -256,7 +256,7 @@ namespace TeeSharp.Server.Game
         {
         }
 
-        public override void OnEntity(int entityIndex, vec2 pos)
+        public override void OnEntity(int entityIndex, Vec2 pos)
         {
             var item = (MapItems) entityIndex;
             var powerup = Powerup.NONE;

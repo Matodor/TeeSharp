@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Emotes
+    public enum Emote
     {
         NORMAL = 0,
         PAIN,

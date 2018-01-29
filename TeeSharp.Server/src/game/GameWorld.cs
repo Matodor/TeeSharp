@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TeeSharp.Common;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Game;
 
 namespace TeeSharp.Server.Game
 {
@@ -11,7 +12,10 @@ namespace TeeSharp.Server.Game
 
         public GameWorld()
         {
+            Entities = new List<Entity>();
+            WorldCore = new WorldCore(Server.MaxClients, Tuning);
             PlayersDistances = new List<Pair<float, int>>(Server.MaxClients);
+
             for (var i = 0; i < PlayersDistances.Count; i++)
                 PlayersDistances.Add(new Pair<float, int>(0, 0));
         }
@@ -39,7 +43,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override IEnumerable<T> FindEntities<T>(vec2 pos, float radius)
+        public override IEnumerable<T> FindEntities<T>(Vec2 pos, float radius)
         {
             var current = Entity<T>.FirstTypeEntity;
             while (current != null)
@@ -99,17 +103,24 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
-            if (IsPaused)
-                return;
-
-            for (var i = 0; i < Entities.Count; i++)
+            if (!IsPaused)
             {
-                Entities[i].Tick();
+                for (var i = 0; i < Entities.Count; i++)
+                {
+                    Entities[i].Tick();
+                }
+
+                for (var i = 0; i < Entities.Count; i++)
+                {
+                    Entities[i].TickDefered();
+                }
             }
-
-            for (var i = 0; i < Entities.Count; i++)
+            else
             {
-                Entities[i].TickDefered();
+                for (var i = 0; i < Entities.Count; i++)
+                {
+                    Entities[i].TickPaused();
+                }
             }
 
             UpdatePlayerMaps();
