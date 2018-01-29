@@ -6,7 +6,7 @@ namespace TeeSharp.Common.Snapshots
     public class SnapshotInfo
     {
         public long TagTime;
-        public long Tick;
+        public int Tick;
         public Snapshot Snapshot;
     }
 
@@ -19,7 +19,7 @@ namespace TeeSharp.Common.Snapshots
             _snapshots = new List<SnapshotInfo>();
         }
 
-        public void PurgeUntil(long tick)
+        public void PurgeUntil(int tick)
         {
             for (var i = 0; i < _snapshots.Count; i++)
             {
@@ -32,7 +32,7 @@ namespace TeeSharp.Common.Snapshots
             _snapshots.Clear();
         }
 
-        public void Add(long tick, long tagTime, Snapshot snapshot)
+        public void Add(int tick, long tagTime, Snapshot snapshot)
         {
             _snapshots.Add(new SnapshotInfo
             {
@@ -42,7 +42,7 @@ namespace TeeSharp.Common.Snapshots
             });
         }
 
-        public bool Get(long tick, out long tagTime, out Snapshot snapshot)
+        public bool Get(int tick, out long tagTime, out Snapshot snapshot)
         {
             for (var i = 0; i < _snapshots.Count; i++)
             {

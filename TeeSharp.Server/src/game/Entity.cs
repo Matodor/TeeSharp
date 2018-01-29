@@ -6,6 +6,7 @@ namespace TeeSharp.Server.Game
 {
     public abstract class Entity : BaseInterface
     {
+        public abstract float ProximityRadius { get; protected set; }
         public virtual vec2 Position { get; set; }
         public virtual bool MarkedForDestroy { get; protected set; }
 

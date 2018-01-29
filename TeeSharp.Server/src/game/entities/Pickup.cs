@@ -5,6 +5,8 @@ namespace TeeSharp.Server.Game.Entities
 {
     public class Pickup : Entity<Pickup>
     {
+        public override float ProximityRadius { get; protected set; } = 14f;
+
         private readonly Powerup _powerup;
         private readonly Weapon _weapon;
 
@@ -13,7 +15,7 @@ namespace TeeSharp.Server.Game.Entities
             _powerup = powerup;
             _weapon = weapon;
         }
-
+        
         public override void OnSnapshot(int snappingClient)
         {
             if (NetworkClipped(snappingClient))

@@ -28,7 +28,7 @@ namespace TeeSharp.Server
             
         public class Input
         {
-            public long Tick { get; set; }
+            public int Tick { get; set; }
             public SnapObj_PlayerInput PlayerInput { get; set; }
         }
 
@@ -41,10 +41,10 @@ namespace TeeSharp.Server
         public virtual int PlayerCountry { get; set; }
 
         public virtual long TrafficSince { get; set; }
-        public virtual long Traffic { get; set; }
+        public virtual int Traffic { get; set; }
 
-        public virtual long LastAckedSnapshot { get; set; }
-        public virtual long LastInputTick { get; set; }
+        public virtual int LastAckedSnapshot { get; set; }
+        public virtual int LastInputTick { get; set; }
         public virtual int CurrentInput { get; set; }
 
         public virtual SnapshotStorage SnapshotStorage { get; protected set; }

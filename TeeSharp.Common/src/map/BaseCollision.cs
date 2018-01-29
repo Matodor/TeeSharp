@@ -5,7 +5,7 @@ using TeeSharp.Map.MapItems;
 namespace TeeSharp.Common
 {
     [Flags]
-    public enum CollisionFlags
+    public enum TileFlags
     {
         NONE = 0,
         SOLID = 1 << 0,
@@ -22,6 +22,10 @@ namespace TeeSharp.Common
         protected abstract Tile[] GameLayerTiles { get; set; }
 
         public abstract void Init(BaseLayers layers);
+
+        public abstract TileFlags GetTileFlags(int x, int y);
+        public abstract bool IsTileSolid(float x, float y);
+        public abstract bool IsTileSolid(vec2 pos);
         public abstract Tile GetTileAtIndex(int index);
     }
 }

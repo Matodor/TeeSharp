@@ -22,7 +22,7 @@ namespace TeeSharp.Server
 
         public abstract int MaxClients { get; }
         public abstract int TickSpeed { get; }
-        public virtual long Tick { get; protected set; }
+        public virtual int Tick { get; protected set; }
         public virtual MapContainer CurrentMap { get; protected set; }
         public abstract int[] IdMap { get; protected set; }
 
@@ -87,7 +87,7 @@ namespace TeeSharp.Server
         protected abstract void ProcessClientPacket(NetworkChunk packet);
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();
-        protected abstract long TickStartTime(long tick);
+        protected abstract long TickStartTime(int tick);
         protected abstract void DelClientCallback(int clientId, string reason);
         protected abstract void NewClientCallback(int clientid);
 

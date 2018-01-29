@@ -17,7 +17,7 @@ namespace TeeSharp.Server.Game
         public override string GameVersion { get; } = "0.6";
         public override string NetVersion { get; } = "0.6";
         public override string ReleaseVersion { get; } = "0.63";
-
+        
         public override void OnInit()
         {
             Server = Kernel.Get<BaseServer>();
@@ -64,6 +64,10 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
+        public override void CreatePlayerSpawn(vec2 spawnPos)
+        {
+        }
+
         public override void CheckPureTuning()
         {
             if (GameController == null)
@@ -95,6 +99,14 @@ namespace TeeSharp.Server.Game
             foreach (var pair in Tuning)
                 msg.AddInt(pair.Value.Value);
             Server.SendMsg(msg, MsgFlags.VITAL, clientId);
+        }
+
+        public override void SendBroadcast(int clientId, string msg)
+        {
+            Server.SendPackMsg(new GameMsg_SvBroadcast
+            {
+                Message = msg
+            }, MsgFlags.VITAL, clientId);
         }
 
         public override void SendChatTarget(int clientId, string msg)
@@ -191,7 +203,9 @@ namespace TeeSharp.Server.Game
                         break;
 
                     case GameMessages.CL_SETTEAM:
+                        OnMsgSetTeam(player, (GameMsg_ClSetTeam) msg);
                         break;
+
                     case GameMessages.CL_SETSPECTATORMODE:
                         break;
                     case GameMessages.CL_CHANGEINFO:
@@ -208,6 +222,52 @@ namespace TeeSharp.Server.Game
                         OnMsgIsDDNet(unpacker, player, (GameMsg_ClIsDDNet) msg);
                         break;
                 }
+            }
+        }
+
+        protected virtual void OnMsgSetTeam(BasePlayer player, GameMsg_ClSetTeam msg)
+        {
+            if (World.IsPaused || player.Team == msg.Team || 
+                Config["SvSpamprotection"] &&
+                player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
+            {
+                return;
+            }
+
+            if (msg.Team != Team.SPECTATORS && LockTeams)
+            {
+                player.LastSetTeam = Server.Tick;
+                SendBroadcast(player.ClientId, "Teams are locked");
+                return;
+            }
+
+            if (player.TeamChangeTick > Server.Tick)
+            {
+                player.LastSetTeam = Server.Tick;
+                var timeLeft = (player.TeamChangeTick - Server.Tick) / Server.TickSpeed;
+                SendBroadcast(player.ClientId, $"Time to wait before changing team: {timeLeft/60}:{timeLeft%60}");
+                return;
+            }
+
+            if (GameController.CanJoinTeam(player.ClientId, msg.Team))
+            {
+                if (GameController.CanChangeTeam(player, msg.Team))
+                {
+                    player.LastSetTeam = Server.Tick;
+                    player.TeamChangeTick = Server.Tick;
+                    
+                    player.SetTeam(msg.Team);
+                    GameController.CheckTeamsBalance();
+
+                    if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
+                    {
+                        // vote update
+                    }
+                }
+            }
+            else
+            {
+                SendBroadcast(player.ClientId, $"Only {Server.MaxClients - Config["SvSpectatorSlots"]}active players are allowed");
             }
         }
 

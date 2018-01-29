@@ -18,17 +18,47 @@ namespace TeeSharp.Server.Game
 
         public override T FindEntity<T>(Predicate<Entity<T>> predicate)
         {
-            throw new NotImplementedException();
+            var current = Entity<T>.FirstTypeEntity;
+            while (current != null)
+            {
+                if (predicate(current))
+                    return (T)current;
+                current = current.NextTypeEntity;
+            }
+
+            return null; 
         }
 
         public override IEnumerable<T> GetEntities<T>()
         {
-            throw new NotImplementedException();
+            var current = Entity<T>.FirstTypeEntity;
+            while (current != null)
+            {
+                yield return (T) current;
+                current = current.NextTypeEntity;
+            }
+        }
+
+        public override IEnumerable<T> FindEntities<T>(vec2 pos, float radius)
+        {
+            var current = Entity<T>.FirstTypeEntity;
+            while (current != null)
+            {
+                if (VectorMath.Distance(current.Position, pos) < radius + current.ProximityRadius)
+                    yield return (T)current;
+                current = current.NextTypeEntity;
+            }
         }
 
         public override IEnumerable<T> FindEntities<T>(Predicate<Entity<T>> predicate)
         {
-            throw new NotImplementedException();
+            var current = Entity<T>.FirstTypeEntity;
+            while (current != null)
+            {
+                if (predicate(current))
+                    yield return (T)current;
+                current = current.NextTypeEntity;
+            }
         }
 
         public override void AddEntity<T>(Entity<T> entity)

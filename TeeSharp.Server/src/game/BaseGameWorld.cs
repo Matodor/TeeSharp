@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Core;
 
@@ -26,6 +27,7 @@ namespace TeeSharp.Server.Game
         public abstract T FindEntity<T>(Predicate<Entity<T>> predicate) where T : Entity<T>;
 
         public abstract IEnumerable<T> GetEntities<T>() where T : Entity<T>; 
+        public abstract IEnumerable<T> FindEntities<T>(vec2 pos, float radius) where T : Entity<T>; 
         public abstract IEnumerable<T> FindEntities<T>(Predicate<Entity<T>> predicate) where T : Entity<T>; 
         
         public abstract void AddEntity<T>(Entity<T> entity) where T : Entity<T>;

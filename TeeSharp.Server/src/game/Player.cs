@@ -1,7 +1,10 @@
 ﻿using System;
+using TeeSharp.Common;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Server.Game.Entities;
+using Math = System.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -15,7 +18,9 @@ namespace TeeSharp.Server.Game
             ActLatency = new int[Server.MaxClients];
             Latency = new Latency();
             TeeInfo = new TeeInfo();
+            LatestActivity = new Activity();
             IsReady = false;
+            LastSetTeam = Server.Tick;
             LastChangeInfo = -1;
             SpectatorId = -1;
         }
@@ -51,11 +56,33 @@ namespace TeeSharp.Server.Game
 
             if (GameContext.World.IsPaused)
             {
-
+                RespawnTick++;
+                LastActionTick++;
+                TeamChangeTick++;
+                DieTick++;
             }
             else
             {
-                
+                if (Character == null && Team == Team.SPECTATORS && SpectatorId == -1)
+                {
+                    ViewPos -= new vec2(
+                        Math.Clamp(ViewPos.x - LatestActivity.TargetX, -500f, 500f),
+                        Math.Clamp(ViewPos.y - LatestActivity.TargetY, -400f, 400f)
+                    );
+                }
+
+                if (Character == null && DieTick + Server.TickSpeed * 3 <= Server.Tick)
+                    Spawning = true;
+
+                if (Character != null)
+                {
+                    if (Character.IsAlive)
+                        ViewPos = Character.Position;
+                    else
+                        Character = null;
+                }
+                else if (Spawning && RespawnTick <= Server.Tick)
+                    TryRespawn();
             }
         }
 
@@ -79,8 +106,66 @@ namespace TeeSharp.Server.Game
                 ViewPos = GameContext.Players[SpectatorId].ViewPos;
         }
 
+        public override void SetTeam(Team team)
+        {
+            team = GameContext.GameController.ClampTeam(team);
+            if (team == Team)
+                return;
+
+            GameContext.SendChat(-1, false, $"'{Server.GetClientName(ClientId)}' joined the {GameContext.GameController.GetTeamName(team)}");
+            KillCharacter();
+
+            Team = team;
+            LastActionTick = Server.Tick;
+            SpectatorId = -1;
+            RespawnTick = Server.Tick + Server.TickSpeed / 2;
+            GameContext.Console.Print(OutputLevel.DEBUG, "game",
+                $"team_join player='{ClientId}:{Server.GetClientName(ClientId)}' team={Team}");
+            GameContext.GameController.OnPlayerInfoChange(this);
+
+            if (Team == Team.SPECTATORS)
+            {
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null ||
+                        GameContext.Players[i].SpectatorId != ClientId)
+                    {
+                        continue;
+                    }
+
+                    GameContext.Players[i].SpectatorId = -1;
+                }
+            }
+        }
+
+        public override void KillCharacter(Weapon weapon = Weapon.GAME)
+        {
+            if (Character == null)
+                return;
+
+            Character.Die(ClientId, weapon);
+            Character = null;
+        }
+
         public override void Respawn()
         {
+            if (Team != Team.SPECTATORS)
+                Spawning = true;
+        }
+
+        public override void OnDisconnect(string reason)
+        {
+            KillCharacter();
+
+            if (!Server.ClientInGame(ClientId))
+                return;
+
+            GameContext.SendChat(-1, false,
+                string.IsNullOrWhiteSpace(reason)
+                    ? $"'{Server.GetClientName(ClientId)}' has left the game"
+                    : $"'{Server.GetClientName(ClientId)}' has left the game ({reason})");
+
+            GameContext.Console.Print(OutputLevel.STANDARD, "game", $"leave_player='{ClientId}:{Server.GetClientName(ClientId)}'");
         }
 
         public override void OnSnapshot(int snappingClient)
@@ -151,10 +236,55 @@ namespace TeeSharp.Server.Game
 
         public override void OnPredictedInput(SnapObj_PlayerInput input)
         {
+            // ignore input when player chat open
+            if (PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING) &&
+                input.PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+            {
+                return;
+            }
+
+            Character?.OnPredictedInput(input);
         }
 
         public override void OnDirectInput(SnapObj_PlayerInput input)
         {
+            if (input.PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+            {
+                if (PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+                    return;
+
+                Character?.ResetInput();
+                PlayerFlags = input.PlayerFlags;
+                return;
+            }
+
+            PlayerFlags = input.PlayerFlags;
+            Character?.OnDirectInput(input);
+
+            if (Character == null && Team != Team.SPECTATORS && (input.Fire & 1) != 0)
+                Spawning = true;
+
+            if (input.Direction != 0 ||
+                LatestActivity.TargetX != input.TargetX ||
+                LatestActivity.TargetY != input.TargetY ||
+                input.Jump != 0 ||
+                (input.Fire & 1) != 0 ||
+                input.Hook != 0)
+            {
+                LatestActivity.TargetX = input.TargetX;
+                LatestActivity.TargetY = input.TargetY;
+                LastActionTick = Server.Tick;
+            }
+        }
+
+        protected override void TryRespawn()
+        {
+            if (!GameContext.GameController.CanSpawn(Team, ClientId, out var spawnPos))
+                return;
+
+            Spawning = false;
+            Character = new Character(this, spawnPos);
+            GameContext.CreatePlayerSpawn(spawnPos);
         }
     }
 }

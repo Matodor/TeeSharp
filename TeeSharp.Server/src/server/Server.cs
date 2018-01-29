@@ -56,7 +56,7 @@ namespace TeeSharp.Server
 
         private int[] _lastSent;
         private int[] _lastAsk;
-        private long[] _lastAskTick;
+        private int[] _lastAskTick;
 
         public override void Init(string[] args)
         {
@@ -129,7 +129,7 @@ namespace TeeSharp.Server
 
             _lastSent = new int[NetworkServer.Config.MaxClients];
             _lastAsk = new int[NetworkServer.Config.MaxClients];
-            _lastAskTick = new long[NetworkServer.Config.MaxClients];
+            _lastAskTick = new int[NetworkServer.Config.MaxClients];
 
             while (IsRunning)
             {
@@ -542,7 +542,7 @@ namespace TeeSharp.Server
 
                 if (diff > 100)
                 {
-                    Clients[clientId].Traffic = (long) (alpha * ((float) packet.DataSize / diff) +
+                    Clients[clientId].Traffic = (int) (alpha * ((float) packet.DataSize / diff) +
                                                        (1.0f - alpha) * Clients[clientId].Traffic);
                     Clients[clientId].TrafficSince = now;
                 }
@@ -609,8 +609,8 @@ namespace TeeSharp.Server
 
         protected override void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            Clients[clientId].LastAckedSnapshot = (long) unpacker.GetInt();
-            var intendedTick = (long) unpacker.GetInt();
+            Clients[clientId].LastAckedSnapshot = unpacker.GetInt();
+            var intendedTick = unpacker.GetInt();
             var size = unpacker.GetInt();
 
             if (unpacker.Error || size / sizeof(int) > BaseServerClient.MAX_INPUT_SIZE)
@@ -870,7 +870,7 @@ namespace TeeSharp.Server
                 Clients[i].SnapshotStorage.PurgeUntil(Tick - TickSpeed * 3);
                 Clients[i].SnapshotStorage.Add(Tick, now, snapshot);
 
-                var deltaTick = -1L;
+                var deltaTick = -1;
 
                 if (Clients[i].SnapshotStorage.Get(Clients[i].LastAckedSnapshot,
                     out var _, out var deltaSnapshot))
@@ -890,8 +890,8 @@ namespace TeeSharp.Server
                 if (deltaSize == 0)
                 {
                     var msg = new MsgPacker((int) NetworkMessages.SV_SNAPEMPTY);
-                    msg.AddInt((int) Tick);
-                    msg.AddInt((int) (Tick - deltaTick));
+                    msg.AddInt(Tick);
+                    msg.AddInt(Tick - deltaTick);
                     SendMsgEx(msg, MsgFlags.FLUSH, i, true);
                     continue;
                 }
@@ -933,7 +933,7 @@ namespace TeeSharp.Server
             GameContext.OnAfterSnapshot();
         }
 
-        protected override long TickStartTime(long tick)
+        protected override long TickStartTime(int tick)
         {
             return StartTime + (Time.Freq() * tick) / TickSpeed;
 
