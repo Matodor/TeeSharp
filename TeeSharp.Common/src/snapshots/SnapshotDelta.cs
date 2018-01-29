@@ -68,7 +68,7 @@ namespace TeeSharp.Common.Snapshots
                         outputData[outputOffset++] = currentItem.Type;
                         outputData[outputOffset++] = currentItem.Id;
 
-                        outputOffset += currentItem.Object.FieldsCount;
+                        outputOffset += currentItem.Object.SerializeLength;
                         numUpdatedItems++;
                     }
 
@@ -103,7 +103,7 @@ namespace TeeSharp.Common.Snapshots
             var pastData = past.Serialize();
             var currentdata = current.Serialize();
 
-            for (int i = 0; i < current.FieldsCount; i++)
+            for (int i = 0; i < current.SerializeLength; i++)
             {
                 var @out = currentdata[i] - pastData[i];
                 needed |= @out;

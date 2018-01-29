@@ -7,13 +7,14 @@ namespace TeeSharp.Core
     public abstract class Binder
     {
         public Type BindedType { get; }
-        public Type InjectedType { get; protected set; } = null;
+        public Type InjectedType { get; protected set; }
         public Func<object> Activator { get; protected set; }
 
         protected object Singleton { get; set; }
 
         protected Binder(Type bindedType)
         {
+            Singleton = null;
             BindedType = bindedType;
         }
     }
@@ -36,8 +37,18 @@ namespace TeeSharp.Core
         public void AsSingleton()
         {
             CheckInjectedType();
-            Singleton = Activator();
-            Activator = () => Singleton;
+            var activator = Activator;
+
+            Activator = () =>
+            {
+                if (Singleton == null)
+                {
+                    Singleton = activator();
+                    Activator = () => Singleton;
+                }
+
+                return Singleton;
+            };
         }
 
         public Binder<TBinded> To<TInjected>() where TInjected : TBinded, new()

@@ -8,7 +8,7 @@ namespace TeeSharp.Common.Protocol
 
         public int Killer;
         public int Victim;
-        public Weapons Weapon;
+        public Weapon Weapon;
         public int ModeSpecial;
 
         public override bool PackError(MsgPacker packer)

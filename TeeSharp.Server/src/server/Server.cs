@@ -33,16 +33,17 @@ namespace TeeSharp.Server
             kernel.Bind<BaseNetworkServer>().To<NetworkServer>().AsSingleton();
             kernel.Bind<BaseGameConsole>().To<GameConsole>().AsSingleton();
             kernel.Bind<BaseRegister>().To<Register>().AsSingleton();
+            kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
+            kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
+            kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>().AsSingleton();
 
-            kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>();
-            kernel.Bind<BaseCollision>().To<Collision>();
-            kernel.Bind<BaseLayers>().To<Layers>();
+            kernel.Bind<BaseCollision>().To<Collision>().AsSingleton();
+            kernel.Bind<BaseLayers>().To<Layers>().AsSingleton();
+
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
             kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
             kernel.Bind<BasePlayer>().To<Player>();
-            kernel.Bind<BaseTuningParams>().To<TuningParams>();
-            kernel.Bind<BaseGameWorld>().To<GameWorld>();
         }
     }
 
@@ -51,6 +52,7 @@ namespace TeeSharp.Server
         public override int MaxClients => Clients.Length;
         public override int TickSpeed { get; } = SERVER_TICK_SPEED;
         public override int[] IdMap { get; protected set; }
+        protected override SnapshotIdPool SnapshotIdPool { get; set; }
 
         private int[] _lastSent;
         private int[] _lastAsk;
@@ -61,7 +63,9 @@ namespace TeeSharp.Server
             Tick = 0;
             StartTime = 0;
 
+            SnapshotIdPool = new SnapshotIdPool();
             SnapshotBuilder = new SnapshotBuilder();
+
             Config = Kernel.Get<BaseConfig>();
             GameContext = Kernel.Get<BaseGameContext>();
             Storage = Kernel.Get<BaseStorage>();
@@ -474,7 +478,17 @@ namespace TeeSharp.Server
 
             return false;
         }
-        
+
+        public override int SnapshotNewId()
+        {
+            return SnapshotIdPool.NewId();
+        }
+
+        public override void SnapshotFreeId(int id)
+        {
+            SnapshotIdPool.FreeId(id);
+        }
+
         protected override bool StartNetworkServer()
         {
             var bindAddr = NetworkCore.GetLocalIP(AddressFamily.InterNetwork);

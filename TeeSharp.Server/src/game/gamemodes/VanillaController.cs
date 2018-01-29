@@ -1,16 +1,14 @@
-﻿using System.Runtime.Serialization.Formatters;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
     public abstract class VanillaController : BaseGameController
     {
-        public override void Init()
+        protected VanillaController()
         {
-            base.Init();
-
             GameOverTick = -1;
             SuddenDeath = 0;
             RoundStartTick = Server.Tick;
@@ -56,9 +54,50 @@ namespace TeeSharp.Server.Game
             return true;
         }
 
-        public override void OnEntity(int entityIndex, Vector2 pos)
+        public override void OnEntity(int entityIndex, vec2 pos)
         {
-            var entity = (MapItems)entityIndex;
+            var item = (MapItems) entityIndex;
+            var powerup = Powerup.NONE;
+            var weapon = Weapon.HAMMER;
+
+            switch (item)
+            {
+                case MapItems.ENTITY_ARMOR_1:
+                    powerup = Powerup.ARMOR;
+                    break;
+
+                case MapItems.ENTITY_HEALTH_1:
+                    powerup = Powerup.HEALTH;
+                    break;
+
+                case MapItems.ENTITY_WEAPON_SHOTGUN:
+                    powerup = Powerup.WEAPON;
+                    weapon = Weapon.SHOTGUN;
+                    break;
+
+                case MapItems.ENTITY_WEAPON_GRENADE:
+                    powerup = Powerup.WEAPON;
+                    weapon = Weapon.GRENADE;
+                    break;
+
+                case MapItems.ENTITY_POWERUP_NINJA:
+                    powerup = Powerup.NINJA;
+                    weapon = Weapon.NINJA;
+                    break;
+
+                case MapItems.ENTITY_WEAPON_RIFLE:
+                    powerup = Powerup.WEAPON;
+                    weapon = Weapon.RIFLE;
+                    break;
+            }
+
+            if (powerup != Powerup.NONE)
+            {
+                var pickup = new Pickup(powerup, weapon)
+                {
+                    Position = pos
+                };
+            }
         }
 
         public override void OnPlayerInfoChange(BasePlayer player)

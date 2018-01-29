@@ -46,7 +46,7 @@ namespace TeeSharp.Common.Snapshots
             }
 
             var item = new SnapshotItem((int) obj.Type << 16 | id, obj);
-            _currentSize += item.Object.FieldsCount * sizeof(int);
+            _currentSize += item.Object.SerializeLength * sizeof(int);
 
             if (_currentSize >= MAX_SNAPSHOT_SIZE)
             {

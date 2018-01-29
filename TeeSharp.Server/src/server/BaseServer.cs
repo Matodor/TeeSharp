@@ -26,6 +26,8 @@ namespace TeeSharp.Server
         public virtual MapContainer CurrentMap { get; protected set; }
         public abstract int[] IdMap { get; protected set; }
 
+        protected abstract SnapshotIdPool SnapshotIdPool { get; set; }
+
         protected virtual SnapshotBuilder SnapshotBuilder { get; set; }
         protected virtual BaseNetworkBan NetworkBan { get; set; }
         protected virtual BaseRegister Register { get; set; }
@@ -77,6 +79,9 @@ namespace TeeSharp.Server
             MsgFlags flags, int clientId);
 
         public abstract bool Translate(ref int targetId, int clientId);
+
+        public abstract int SnapshotNewId();
+        public abstract void SnapshotFreeId(int id);
 
         protected abstract bool StartNetworkServer();
         protected abstract void ProcessClientPacket(NetworkChunk packet);

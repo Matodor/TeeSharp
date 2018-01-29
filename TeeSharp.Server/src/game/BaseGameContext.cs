@@ -16,12 +16,13 @@ namespace TeeSharp.Server.Game
         public virtual BaseGameController GameController { get; protected set; }
         public virtual BaseGameWorld World { get; protected set; }
 
+        public virtual BaseLayers Layers { get; set; }
+        public virtual BaseCollision Collision { get; set; }
+
         protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseConfig Config { get; set; }
         protected virtual BaseGameConsole Console { get; set; }
         protected virtual BaseServer Server { get; set; }
-        protected virtual BaseLayers Layers { get; set; }
-        protected virtual BaseCollision Collision { get; set; }
         protected virtual BaseGameMsgUnpacker GameMsgUnpacker { get; set; }
 
         public abstract void RegisterConsoleCommands();

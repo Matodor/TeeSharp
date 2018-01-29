@@ -1,6 +1,7 @@
 ﻿using System;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -17,6 +18,13 @@ namespace TeeSharp.Server.Game
             IsReady = false;
             LastChangeInfo = -1;
             SpectatorId = -1;
+        }
+
+        public override Character GetCharacter()
+        {
+            if (Character != null && Character.IsAlive)
+                return Character;
+            return null;
         }
 
         public override void Tick()

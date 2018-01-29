@@ -8,8 +8,6 @@ namespace TeeSharp.Map
     public class MapContainer
     {
         public const int
-            ENTITY_COUNT = 255,
-            ENTITY_OFFSET = 255 - 16 * 4,
             TILESLAYERFLAG_GAME = 1;
 
         public uint CRC { get; }

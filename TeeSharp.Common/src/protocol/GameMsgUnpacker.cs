@@ -180,7 +180,7 @@ namespace TeeSharp.Common.Protocol
             {
                 Killer = unpacker.GetInt(),
                 Victim = unpacker.GetInt(),
-                Weapon = (Weapons) unpacker.GetInt(),
+                Weapon = (Weapon) unpacker.GetInt(),
                 ModeSpecial = unpacker.GetInt()
             };
 
@@ -188,7 +188,7 @@ namespace TeeSharp.Common.Protocol
                 failedOn = "Killer";
             if (msg.Victim < 0)
                 failedOn = "Victim";
-            if (msg.Weapon < Weapons.GAME)
+            if (msg.Weapon < Weapon.GAME)
                 failedOn = "Weapon";
 
             return msg;
@@ -231,10 +231,10 @@ namespace TeeSharp.Common.Protocol
         {
             var msg = new GameMsg_SvWeaponPickup
             {
-                Weapon = (Weapons) unpacker.GetInt()
+                Weapon = (Weapon) unpacker.GetInt()
             };
 
-            if (msg.Weapon < 0 || msg.Weapon >= Weapons.NUM_WEAPONS)
+            if (msg.Weapon < 0 || msg.Weapon >= Weapon.NUM_WEAPONS)
                 failedOn = "Weapon";
 
             return msg;

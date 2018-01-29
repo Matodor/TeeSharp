@@ -28,10 +28,10 @@ namespace TeeSharp.Server.Game
 
         public abstract void Tick();
         public abstract void OnSnapshot(int snappingClient);
-        public abstract void OnEntity(int tileIndex, Vector2 pos);
+        public abstract void OnEntity(int tileIndex, vec2 pos);
         public abstract void OnPlayerInfoChange(BasePlayer player);
 
-        public virtual void Init()
+        protected BaseGameController()
         {
             Server = Kernel.Get<BaseServer>();
             GameContext = Kernel.Get<BaseGameContext>();

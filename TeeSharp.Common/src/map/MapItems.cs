@@ -2,7 +2,13 @@
 {
     public enum MapItems
     {
-        // game layer tiles
+        // GAME TILES
+        TILE_AIR = 0,
+        TILE_SOLID,
+        TILE_DEATH,
+        TILE_NOHOOK,
+
+        // GAME ENTITIES
         ENTITY_NULL = 0,
         ENTITY_SPAWN,
         ENTITY_SPAWN_RED,
@@ -16,12 +22,6 @@
         ENTITY_POWERUP_NINJA,
         ENTITY_WEAPON_RIFLE,
         NUM_ENTITIES,
-
-        // GAME TILES
-        TILE_AIR = 0,
-        TILE_SOLID,
-        TILE_DEATH,
-        TILE_NOHOOK,
 
         ENTITY_COUNT = 255,
         ENTITY_OFFSET = 255 - 16 * 4,

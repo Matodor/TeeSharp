@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Weapons
+    public enum Weapon
     {
         //
         GAME = -3,  // team switching etc

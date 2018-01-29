@@ -3,6 +3,7 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -39,13 +40,15 @@ namespace TeeSharp.Server.Game
         public virtual TeeInfo TeeInfo { get; protected set; }
         public virtual Latency Latency { get; protected set; }
         public virtual int SpectatorId { get; protected set; }
-        public virtual Vector2 ViewPos { get; protected set; }
+        public virtual vec2 ViewPos { get; protected set; }
         public virtual int[] ActLatency { get; protected set; }
 
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
+        protected virtual Character Character { get; set; }
 
+        public abstract Character GetCharacter();
         public abstract void Tick();
         public abstract void PostTick();
         public abstract void Respawn();

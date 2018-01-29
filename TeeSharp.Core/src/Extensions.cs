@@ -9,20 +9,26 @@ namespace TeeSharp.Core
         [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int memcmp(byte[] b1, byte[] b2, long count);
 
-        public static int[] StrToInts(this string str, int num)
+        public static int[] StrToInts(this string input, int num)
         {
             var ints = new int[num];
 
-            if (string.IsNullOrEmpty(str))
+            if (string.IsNullOrEmpty(input))
                 return ints;
 
+            var bytes = Encoding.UTF8.GetBytes(input);
             var index = 0;
+
             for (var i = 0; i < ints.Length; i++)
             {
-                var buf = new[] { '\0', '\0', '\0', '\0' };
-                for (var c = 0; c < buf.Length && index < str.Length; c++, index++)
-                    buf[c] = str[index];
-                
+                var buf = new int[] { 0, 0, 0, 0 };
+                for (var c = 0; c < buf.Length && index < bytes.Length; c++, index++)
+                {
+                    buf[c] = bytes[index] >= 128
+                        ? bytes[index] - 256
+                        : bytes[index];
+                }
+
                 ints[i] = ((buf[0] + 128) << 24) | 
                           ((buf[1] + 128) << 16) | 
                           ((buf[2] + 128) << 08) | 

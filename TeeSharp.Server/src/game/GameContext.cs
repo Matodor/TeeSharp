@@ -35,17 +35,16 @@ namespace TeeSharp.Server.Game
             
             // TODO
             GameController = new GameControllerDM();
-            GameController.Init();
 
             for (var y = 0; y < Layers.GameLayer.Height; y++)
             {
                 for (var x = 0; x < Layers.GameLayer.Width; x++)
                 {
                     var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
-                    var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+                    var pos = new vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 
-                    if (tile.Index >= MapContainer.ENTITY_OFFSET)
-                        GameController.OnEntity(tile.Index - MapContainer.ENTITY_OFFSET, pos);
+                    if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
+                        GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
                 }
             }
         }
@@ -206,9 +205,23 @@ namespace TeeSharp.Server.Game
                     case GameMessages.CL_CALLVOTE:
                         break;
                     case GameMessages.CL_ISDDNET:
+                        OnMsgIsDDNet(unpacker, player, (GameMsg_ClIsDDNet) msg);
                         break;
                 }
             }
+        }
+
+        protected virtual void OnMsgIsDDNet(Unpacker unpacker, BasePlayer player, GameMsg_ClIsDDNet msg)
+        {
+            var version = unpacker.GetInt();
+            if (unpacker.Error)
+            {
+                if (player.ClientVersion < ClientVersion.DDRACE)
+                    player.ClientVersion = ClientVersion.DDRACE;
+            }
+            else player.ClientVersion = (ClientVersion) version;
+
+            Debug.Warning("ddnet", $"{player.ClientId} using ddnet client ({player.ClientVersion})");
         }
 
         protected virtual void OnMsgSay(BasePlayer player, GameMsg_ClSay msg)

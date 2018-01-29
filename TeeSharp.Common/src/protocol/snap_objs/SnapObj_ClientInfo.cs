@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     public class SnapObj_ClientInfo : BaseSnapObject
     {
         public override SnapObj Type { get; } = SnapObj.OBJ_CLIENTINFO;
-        public override int FieldsCount { get; } = 17;
+        public override int SerializeLength { get; } = 17;
 
         public string Name;
         public string Clan;

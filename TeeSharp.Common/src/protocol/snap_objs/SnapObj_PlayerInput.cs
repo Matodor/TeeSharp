@@ -6,7 +6,7 @@ namespace TeeSharp.Common.Protocol
     public class SnapObj_PlayerInput : BaseSnapObject
     {
         public override SnapObj Type { get; } = SnapObj.OBJ_PLAYERINPUT;
-        public override int FieldsCount { get; } = 10;
+        public override int SerializeLength { get; } = 10;
 
         public int Direction;
         public int TargetX;
@@ -36,7 +36,7 @@ namespace TeeSharp.Common.Protocol
 
         public void Deserialize(int[] data)
         {
-            if (data.Length < FieldsCount)
+            if (data.Length < SerializeLength)
                 throw new Exception("Deserialize NetObj_PlayerInput error");
 
             Direction = data[0];
