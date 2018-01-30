@@ -64,7 +64,15 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
-        public override void CreatePlayerSpawn(Vec2 spawnPos)
+        public override void CreatePlayerSpawn(Vec2 pos)
+        {
+        }
+
+        public override void CreateDeath(Vec2 pos, int clientId)
+        {
+        }
+
+        public override void CreateSound(Vec2 pos, Sounds sound)
         {
         }
 
@@ -377,6 +385,22 @@ namespace TeeSharp.Server.Game
 
         public override void OnClientDrop(int clientId, string reason)
         {
+            Players[clientId].OnDisconnect(reason);
+            Players[clientId] = null;
+
+            GameController.CheckTeamsBalance();
+            // update vote
+
+            for (var i = 0; i < Players.Length; i++)
+            {
+                if (Players[i] == null ||
+                    Players[i].SpectatorId != clientId)
+                {
+                    continue;
+                }
+
+                Players[i].SpectatorId = -1;
+            }
         }
 
         public override void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input)

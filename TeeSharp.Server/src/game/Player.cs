@@ -23,6 +23,12 @@ namespace TeeSharp.Server.Game
             LastSetTeam = Server.Tick;
             LastChangeInfo = -1;
             SpectatorId = -1;
+            Spawning = false;
+
+            var idMap = BaseServer.GetIdMap(clientId);
+            for (var i = 1; i < BaseServer.VANILLA_MAX_CLIENTS; i++)
+                Server.IdMap[idMap + 1] = -1;
+            Server.IdMap[idMap] = clientId;
         }
 
         public override Character GetCharacter()
@@ -92,13 +98,11 @@ namespace TeeSharp.Server.Game
             {
                 for (var i = 0; i < GameContext.Players.Length; i++)
                 {
-                    if (GameContext.Players[i] == null ||
-                        GameContext.Players[i].Team == Team.SPECTATORS)
+                    if (GameContext.Players[i] != null &&
+                        GameContext.Players[i].Team != Team.SPECTATORS)
                     {
-                        continue;
+                        ActLatency[i] = GameContext.Players[i].Latency.Min;
                     }
-
-                    ActLatency[i] = GameContext.Players[i].Latency.Min;
                 }
             }
 

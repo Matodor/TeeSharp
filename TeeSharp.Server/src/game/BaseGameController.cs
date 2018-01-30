@@ -52,6 +52,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnSnapshot(int snappingClient);
         public abstract void OnEntity(int tileIndex, Vec2 pos);
         public abstract void OnPlayerInfoChange(BasePlayer player);
+        public abstract int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon);
 
         protected abstract float EvaluateSpawnPos(SpawnEval eval, Vec2 pos);
         protected abstract void EvaluateSpawnType(SpawnEval eval, IList<Vec2> spawnPos);

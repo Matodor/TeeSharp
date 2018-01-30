@@ -90,7 +90,6 @@ namespace TeeSharp.Server.Game
         {
             NextTypeEntity = null;
             PrevTypeEntity = null;
-
             GameWorld.AddEntity(this);
         }
 

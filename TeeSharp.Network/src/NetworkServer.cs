@@ -64,15 +64,13 @@ namespace TeeSharp.Network
 
         public override void Update()
         {
-            var now = Time.Get();
-
             for (var clientId = 0; clientId < Connections.Length; clientId++)
             {
                 Connections[clientId].Update();
 
                 if (Connections[clientId].State == ConnectionState.ERROR)
                 {
-                    if (now - Connections[clientId].ConnectedAt < Time.Freq())
+                    if (Time.Get() - Connections[clientId].ConnectedAt < Time.Freq())
                         NetworkBan.BanAddr(ClientEndPoint(clientId), 60, "Stressing network");
                     else
                         Drop(clientId, Connections[clientId].Error);
@@ -203,7 +201,7 @@ namespace TeeSharp.Network
             {
                 if (Connections[i].State != ConnectionState.OFFLINE &&
                     Connections[i].State != ConnectionState.ERROR &&
-                    NetworkCore.CompareEndPoints(Connections[i].EndPoint, endPoint, true))
+                    NetworkCore.CompareEndPoints(Connections[i].EndPoint, endPoint, comparePorts))
                 {
                     return i;
                 }

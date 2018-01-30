@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -17,6 +18,7 @@ using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Enums;
 using TeeSharp.Server.Game;
+using Debug = TeeSharp.Core.Debug;
 
 namespace TeeSharp.Server
 {
@@ -339,11 +341,11 @@ namespace TeeSharp.Server
                 {
                     for (var i = 0; i < Clients.Length; i++)
                     {
-                        if (Clients[i].State == ServerClientState.IN_GAME)
-                        {
-                            packet.ClientId = i;
-                            NetworkServer.Send(packet);
-                        }
+                        if (Clients[i].State != ServerClientState.IN_GAME)
+                            continue;
+
+                        packet.ClientId = i;
+                        NetworkServer.Send(packet);
                     }
                 }
                 else
@@ -621,19 +623,18 @@ namespace TeeSharp.Server
             if (Clients[clientId].LastAckedSnapshot > 0)
                 Clients[clientId].SnapRate = SnapRate.FULL;
 
-            var now = Time.Get();
-
             if (Clients[clientId].SnapshotStorage.Get(
                 Clients[clientId].LastAckedSnapshot,
                 out var tagTime,
-                out var snapshot))
+                out var _))
             {
-                Clients[clientId].Latency = (int) ((now - tagTime) * 1000 / Time.Freq());
+                Clients[clientId].Latency =
+                    (int)(((Time.Get() - tagTime) * 1000) / Time.Freq());
             }
 
             if (intendedTick > Clients[clientId].LastInputTick)
             {
-                var timeLeft = (TickStartTime(intendedTick) - now) * 1000 / Time.Freq();
+                var timeLeft = (TickStartTime(intendedTick) - Time.Get()) * 1000 / Time.Freq();
                 var msg = new MsgPacker((int)NetworkMessages.SV_INPUT_TIMING);
                 msg.AddInt((int) intendedTick);
                 msg.AddInt((int) timeLeft);
@@ -943,6 +944,11 @@ namespace TeeSharp.Server
 
         protected override void DelClientCallback(int clientId, string reason)
         {
+            if (!string.IsNullOrWhiteSpace(reason))
+            {
+                
+            }
+
             Debug.Log("clients", $"client dropped. cid={clientId} addr={NetworkServer.ClientEndPoint(clientId)} reason='{reason}'");
             if (Clients[clientId].State >= ServerClientState.READY)
                 GameContext.OnClientDrop(clientId, reason);

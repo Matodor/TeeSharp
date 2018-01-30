@@ -1,6 +1,7 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
+using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 
@@ -38,7 +39,7 @@ namespace TeeSharp.Server.Game
         public abstract void SendChatTarget(int clientId, string msg);
         public abstract void SendBroadcast(int clientId, string msg);
 
-        public abstract void CreatePlayerSpawn(Vec2 spawnPos);
+        public abstract void CreatePlayerSpawn(Vec2 pos);
 
         public abstract void OnInit();
         public abstract void OnTick();
@@ -52,5 +53,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientDrop(int clientId, string reason);
         public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
         public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
+        public abstract void CreateDeath(Vec2 pos, int clientId);
+        public abstract void CreateSound(Vec2 pos, Sounds sound);
     }
 }

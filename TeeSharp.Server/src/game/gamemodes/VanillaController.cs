@@ -255,6 +255,11 @@ namespace TeeSharp.Server.Game
         {
         }
 
+        public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)
+        {
+            return 0;
+        }
+
         public override void OnEntity(int entityIndex, Vec2 pos)
         {
             var item = (MapItems) entityIndex;

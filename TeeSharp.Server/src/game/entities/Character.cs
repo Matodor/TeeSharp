@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
 using TeeSharp.Common.Protocol;
@@ -75,8 +76,28 @@ namespace TeeSharp.Server.Game.Entities
             EmoteStopTick = stopTick;
         }
 
-        public virtual void Die(int clientId, Weapon weapon)
+        public virtual void Die(int killer, Weapon weapon)
         {
+            Player.RespawnTick = Server.Tick + Server.TickSpeed / 2;
+            var modeSpecial = GameContext.GameController.OnCharacterDeath(this,
+                GameContext.Players[killer], weapon);
+
+            GameContext.Console.Print(OutputLevel.DEBUG, "game",
+                $"kill killer='{killer}:{Server.GetClientName(killer)}' victim='{Player.ClientId}:{Server.GetClientName(Player.ClientId)}' weapon={weapon} special={modeSpecial}");
+
+            Server.SendPackMsg(new GameMsg_SvKillMsg
+            {
+                Killer = killer,
+                Victim = Player.ClientId,
+                Weapon = weapon,
+                ModeSpecial = modeSpecial
+            }, MsgFlags.VITAL, -1);
+
+            GameContext.CreateSound(Position, Sounds.PLAYER_DIE);
+            Player.DieTick = Server.Tick;
+            IsAlive = false;
+            GameContext.CreateDeath(Position, Player.ClientId);
+            Destroy();
         }
 
         public virtual  void OnPredictedInput(SnapObj_PlayerInput newInput)

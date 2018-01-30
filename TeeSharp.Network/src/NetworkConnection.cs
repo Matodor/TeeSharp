@@ -74,8 +74,6 @@ namespace TeeSharp.Network
 
         public override void Update()
         {
-            var now = Time.Get();
-
             if (State == ConnectionState.OFFLINE ||
                 State == ConnectionState.ERROR)
             {
@@ -84,7 +82,7 @@ namespace TeeSharp.Network
 
             if (State != ConnectionState.OFFLINE &&
                 State != ConnectionState.CONNECT &&
-                (now - LastReceiveTime) > Time.Freq() * Config.ConnectionTimeout)
+                (Time.Get() - LastReceiveTime) > Time.Freq() * Config.ConnectionTimeout)
             {
                 State = ConnectionState.ERROR;
                 Error = "Timeout";
@@ -94,12 +92,12 @@ namespace TeeSharp.Network
             if (ResendQueue.Count > 0)
             {
                 var resend = ResendQueue.Peek();
-                if (now - resend.FirstSendTime > Time.Freq() * Config.ConnectionTimeout)
+                if (Time.Get() - resend.FirstSendTime > Time.Freq() * Config.ConnectionTimeout)
                 {
                     State = ConnectionState.ERROR;
                     Error = $"Too weak connection (not acked for {Config.ConnectionTimeout} seconds)";
                 }
-                else if (now - resend.LastSendTime > Time.Freq())
+                else if (Time.Get() - resend.LastSendTime > Time.Freq())
                 {
                     ResendChunk(resend);
                 }
@@ -107,24 +105,24 @@ namespace TeeSharp.Network
 
             if (State == ConnectionState.ONLINE)
             {
-                if (now - LastSendTime > Time.Freq() / 2)
+                if (Time.Get() - LastSendTime > Time.Freq() / 2)
                 {
                     var flushedChunks = Flush();
                     if (flushedChunks != 0)
                         Debug.Log("connection", $"flushed connection due to timeout. {flushedChunks} chunks.");
                 }
 
-                if (now - LastSendTime > Time.Freq())
+                if (Time.Get() - LastSendTime > Time.Freq())
                     SendControlMsg(ConnectionMessages.KEEPALIVE, "");
             }
             else if (State == ConnectionState.CONNECT)
             {
-                if (now - LastSendTime > Time.Freq() / 2)
+                if (Time.Get() - LastSendTime > Time.Freq() / 2)
                     SendControlMsg(ConnectionMessages.CONNECT, "");
             }
             else if (State == ConnectionState.PENDING)
             {
-                if (now - LastSendTime > Time.Freq() / 2)
+                if (Time.Get() - LastSendTime > Time.Freq() / 2)
                     SendControlMsg(ConnectionMessages.CONNECTACCEPT, "");
             }
         }
@@ -147,8 +145,6 @@ namespace TeeSharp.Network
 
         public override bool Feed(NetworkChunkConstruct packet, IPEndPoint remote)
         {
-            var now = Time.Get();
-
             if (packet.Flags.HasFlag(PacketFlags.RESEND))
                 Resend();
 
@@ -179,16 +175,16 @@ namespace TeeSharp.Network
 
                     State = ConnectionState.PENDING;
                     EndPoint = remote;
-                    LastSendTime = now;
-                    LastReceiveTime = now;
-                    ConnectedAt = now;
+                    LastSendTime = Time.Get();
+                    LastReceiveTime = Time.Get();
+                    ConnectedAt = Time.Get();
 
                     SendControlMsg(ConnectionMessages.CONNECTACCEPT, "");
                     Debug.Log("connection", "got connection, sending connect+accept");
                 }
                 else if (State == ConnectionState.CONNECT && msg == ConnectionMessages.CONNECTACCEPT)
                 {
-                    LastReceiveTime = now;
+                    LastReceiveTime = Time.Get();
                     State = ConnectionState.ONLINE;
                     SendControlMsg(ConnectionMessages.ACCEPT, "");
                     Debug.Log("connection", "got connect+accept, sending accept. connection online");
@@ -202,7 +198,7 @@ namespace TeeSharp.Network
 
             if (State == ConnectionState.ONLINE)
             {
-                LastReceiveTime = now;
+                LastReceiveTime = Time.Get();
                 AckChunks(packet.Ack);
             }
 

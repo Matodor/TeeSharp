@@ -106,21 +106,27 @@ namespace TeeSharp.Server.Game
         {
             if (!IsPaused)
             {
-                for (var i = 0; i < Entities.Count; i++)
+                for (var i = Entities.Count - 1; i >= 0; i--)
                 {
                     Entities[i].Tick();
                 }
 
-                for (var i = 0; i < Entities.Count; i++)
+                for (var i = Entities.Count - 1; i >= 0; i--)
                 {
                     Entities[i].TickDefered();
+
+                    if (Entities[i].MarkedForDestroy)
+                        Entities.RemoveAt(i);
                 }
             }
             else
             {
-                for (var i = 0; i < Entities.Count; i++)
+                for (var i = Entities.Count - 1; i >= 0; i--)
                 {
                     Entities[i].TickPaused();
+
+                    if (Entities[i].MarkedForDestroy)
+                        Entities.RemoveAt(i);
                 }
             }
 
@@ -143,6 +149,9 @@ namespace TeeSharp.Server.Game
 
             for (var i = 0; i < PlayersDistances.Count; i++)
             {
+                PlayersDistances[i].First = 0;
+                PlayersDistances[i].Second = 0;
+
                 if (!Server.ClientInGame(i))
                     continue;
 
@@ -176,7 +185,7 @@ namespace TeeSharp.Server.Game
                         PlayersDistances[j].First = (float) 1e8;
                     }
 
-                    PlayersDistances[j].First = Math.Distance(
+                    PlayersDistances[j].First += Math.Distance(
                         GameContext.Players[i].ViewPos,
                         character.Position
                     );
@@ -187,7 +196,6 @@ namespace TeeSharp.Server.Game
                 var rMap = new int[PlayersDistances.Count];
                 for (var j = 0; j < rMap.Length; j++)
                     rMap[j] = -1;
-
 
                 for (var j = 0; j < BaseServer.VANILLA_MAX_CLIENTS; j++)
                 {
@@ -205,7 +213,7 @@ namespace TeeSharp.Server.Game
                 var mapc = 0;
                 var demand = 0;
 
-                for (var j = 0; j < BaseServer.VANILLA_MAX_CLIENTS; j++)
+                for (var j = 0; j < BaseServer.VANILLA_MAX_CLIENTS - 1; j++)
                 {
                     var k = PlayersDistances[j].Second;
                     if (rMap[k] != -1 || PlayersDistances[j].First > 5e9)
