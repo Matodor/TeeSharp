@@ -13,9 +13,9 @@ namespace TeeSharp.Common.Protocol
         public int Direction;
         public int TargetX;
         public int TargetY;
-        public int Jump;
+        public bool Jump;
         public int Fire;
-        public int Hook;
+        public bool Hook;
         public PlayerFlags PlayerFlags = PlayerFlags.NONE;
         public int WantedWeapon;
         public int NextWeapon;
@@ -58,9 +58,9 @@ namespace TeeSharp.Common.Protocol
             Direction = data[0];
             TargetX = data[1];
             TargetY = data[2];
-            Jump = data[3];
+            Jump = data[3] != 0;
             Fire = data[4];
-            Hook = data[5];
+            Hook = data[5] != 0;
             PlayerFlags = (PlayerFlags) data[6];
             WantedWeapon = data[7];
             NextWeapon = data[8];
@@ -74,9 +74,9 @@ namespace TeeSharp.Common.Protocol
                 Direction,
                 TargetX,
                 TargetY,
-                Jump,
+                Jump ? 1 : 0,
                 Fire,
-                Hook,
+                Hook ? 1 : 0,
                 (int) PlayerFlags,
                 WantedWeapon,
                 NextWeapon,

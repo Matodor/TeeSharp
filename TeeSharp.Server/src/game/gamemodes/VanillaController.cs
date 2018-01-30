@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Server.Game.Entities;
-using Math = System.Math;
+using Math = TeeSharp.Common.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -48,8 +47,8 @@ namespace TeeSharp.Server.Game
                 if (eval.FriendlyTeam != Team.SPECTATORS && character.Player.Team == eval.FriendlyTeam)
                     scoremod = 0.5f;
 
-                var d = VectorMath.Distance(pos, character.Position);
-                score += scoremod * (Math.Abs(d) < 0.00001 ? 1000000000.0f : 1.0f / d);
+                var d = Math.Distance(pos, character.Position);
+                score += scoremod * (System.Math.Abs(d) < 0.00001 ? 1000000000.0f : 1.0f / d);
             }
 
             return score;
@@ -80,7 +79,7 @@ namespace TeeSharp.Server.Game
                     for (var c = 0; c < characters.Length; c++)
                     {
                         if (GameContext.Collision.IsTileSolid(spawnPos[i] + positions[index]) ||
-                            VectorMath.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
+                            Math.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
                             characters[c].ProximityRadius)
                         {
                             result = -1;
@@ -158,7 +157,7 @@ namespace TeeSharp.Server.Game
             if (player.Team != Team.SPECTATORS)
                 aT[(int) joinTeam ^ 1]--;
 
-            if (Math.Abs(aT[0] - aT[1]) >= 2)
+            if (System.Math.Abs(aT[0] - aT[1]) >= 2)
             {
                 return aT[0] < aT[1] && joinTeam == Team.RED ||
                        aT[0] > aT[1] && joinTeam == Team.BLUE;

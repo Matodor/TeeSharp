@@ -25,6 +25,13 @@ namespace TeeSharp.Common
         public abstract Tile GetTileAtIndex(int index);
         public abstract TileFlags GetTileFlags(int x, int y);
 
+        public abstract TileFlags IntersectLine(Vec2 pos0, Vec2 pos1, out Vec2 outCollision,
+            out Vec2 outBeforeCollision);
+
+        public abstract bool TestBox(Vec2 pos, Vec2 size);
+        public abstract void MoveBox(ref Vec2 vec2, ref Vec2 vel1, Vec2 boxSize,
+            float elasticity);
+
         public virtual TileFlags GetTileFlags(float x, float y)
         {
             return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));

@@ -35,7 +35,7 @@ namespace TeeSharp.Core
                           ((buf[3] + 128) << 00);  
             }
 
-            ints[ints.Length - 1] &= 0x7FFFFF00;
+            //ints[ints.Length - 1] &= 0x7FFFFF00;
             return ints;
         }
 

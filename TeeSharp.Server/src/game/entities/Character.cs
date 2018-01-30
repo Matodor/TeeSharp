@@ -50,9 +50,13 @@ namespace TeeSharp.Server.Game.Entities
             SendCore = new CharacterCore();
             ReckoningCore = new CharacterCore();
 
-            Core.Init(GameWorld.WorldCore);
+            Core.Init(GameWorld.WorldCore, GameContext.Collision);
             Core.Position = Position;
-            Core.Input = Input;
+
+            var worldCore = new WorldCore(
+                GameWorld.WorldCore.CharacterCores.Length,
+                GameWorld.WorldCore.Tuning);
+            ReckoningCore.Init(worldCore, GameContext.Collision);
 
             GameWorld.WorldCore.CharacterCores[player.ClientId] = Core;
             GameContext.GameController.OnCharacterSpawn(this);
@@ -122,13 +126,13 @@ namespace TeeSharp.Server.Game.Entities
         public virtual void ResetInput()
         {
             Input.Direction = 0;
-            Input.Hook = 0;
+            Input.Hook = false;
 
             if ((Input.Fire & 1) != 0)
                 Input.Fire++;
 
             Input.Fire &= SnapObj_PlayerInput.INPUT_STATE_MASK;
-            Input.Jump = 0;
+            Input.Jump = false;
             
             LatestInput.FillFrom(Input);
             LatestPrevInput.FillFrom(Input);
@@ -136,6 +140,7 @@ namespace TeeSharp.Server.Game.Entities
 
         public override void Tick()
         {
+            Core.Input.FillFrom(Input);
             Core.Tick(true);
 
             var rDiv3 = ProximityRadius / 3.0f;
@@ -154,16 +159,9 @@ namespace TeeSharp.Server.Game.Entities
 
         public override void TickDefered()
         {
-            {
-                var worldCore = new WorldCore(
-                    GameWorld.WorldCore.CharacterCores.Length,
-                    GameWorld.WorldCore.Tuning);
-
-                ReckoningCore.Init(worldCore);
-                ReckoningCore.Tick(false);
-                ReckoningCore.Move();
-                ReckoningCore.Quantize();
-            }
+            ReckoningCore.Tick(false);
+            ReckoningCore.Move();
+            ReckoningCore.Quantize();
 
             Core.Move();
             Core.Quantize();

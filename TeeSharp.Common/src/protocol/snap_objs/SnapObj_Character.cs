@@ -8,16 +8,20 @@ namespace TeeSharp.Common.Protocol
         public override int SerializeLength { get; } = 22;
 
         public int Tick;
-        public Vec2 Position;
-        public Vec2 Velocity;
+        public int PosX;
+        public int PosY;
+        public int VelX;
+        public int VelY;
         public int Angle;
         public int Direction;
         public int Jumped;
         public int HookedPlayer;
-        public int HookState;
+        public HookState HookState = HookState.IDLE;
         public int HookTick;
-        public Vec2 HookPosition;
-        public Vec2 HookDirection;
+        public int HookX;
+        public int HookY;
+        public int HookDx;
+        public int HookDy;
         public PlayerFlags PlayerFlags = PlayerFlags.NONE;
         public int Health;
         public int Armor;
@@ -30,22 +34,20 @@ namespace TeeSharp.Common.Protocol
         {
             return
                 Tick == other.Tick &&
-                Math.RoundToInt(Position.x) == Math.RoundToInt(other.Position.x) &&
-                Math.RoundToInt(Position.y) == Math.RoundToInt(other.Position.y) &&
-                Math.RoundToInt(Velocity.x) == Math.RoundToInt(other.Velocity.x) &&
-                Math.RoundToInt(Velocity.y) == Math.RoundToInt(other.Velocity.y) &&
-
+                PosX == other.PosX &&
+                PosY == other.PosY &&
+                VelX == other.VelX &&
+                VelY == other.VelY &&
                 Angle == other.Angle &&
                 Direction == other.Direction &&
                 Jumped == other.Jumped &&
                 HookedPlayer == other.HookedPlayer &&
                 HookState == other.HookState &&
                 HookTick == other.HookTick &&
-
-                Math.RoundToInt(HookPosition.x) == Math.RoundToInt(other.HookPosition.x) &&
-                Math.RoundToInt(HookPosition.y) == Math.RoundToInt(other.HookPosition.y) &&
-                Math.RoundToInt(HookDirection.x) == Math.RoundToInt(other.HookDirection.x) &&
-                Math.RoundToInt(HookDirection.y) == Math.RoundToInt(other.HookDirection.y) &&
+                HookX == other.HookX &&
+                HookY == other.HookY &&
+                HookDx == other.HookDx &&
+                HookDy == other.HookDy &&
 
                 PlayerFlags == other.PlayerFlags &&
                 Health == other.Health &&
@@ -61,20 +63,21 @@ namespace TeeSharp.Common.Protocol
             return new[]
             {
                 Tick,
-                Math.RoundToInt(Position.x),
-                Math.RoundToInt(Position.y),
-                Math.RoundToInt(Velocity.x),
-                Math.RoundToInt(Velocity.y),
+                PosX,
+                PosY,
+                VelX,
+                VelY,
                 Angle,
                 Direction,
                 Jumped,
                 HookedPlayer,
-                HookState,
+                (int) HookState,
                 HookTick,
-                Math.RoundToInt(HookPosition.x),
-                Math.RoundToInt(HookPosition.y),
-                Math.RoundToInt(HookDirection.x),
-                Math.RoundToInt(HookDirection.y),
+                HookX,
+                HookY,
+                HookDx,
+                HookDy,
+
                 (int) PlayerFlags,
                 Health,
                 Armor,

@@ -55,9 +55,91 @@ namespace TeeSharp.Common
             return TileFlags.NONE;
         }
 
+        public override TileFlags IntersectLine(Vec2 pos0, Vec2 pos1, out Vec2 outCollision, out Vec2 outBeforeCollision)
+        {
+            var distance = Math.Distance(pos0, pos1);
+            var end = (int) (distance + 1);
+            var last = pos0;
+
+            for (var i = 0; i < end; i++)
+            {
+                var amount = i / distance;
+                var pos = Math.Mix(pos0, pos1, amount);
+
+                if (IsTileSolid(pos.x, pos.y))
+                {
+                    outCollision = pos;
+                    outBeforeCollision = last;
+                    return GetTileFlags(pos.x, pos.y);
+                }
+
+                last = pos;
+            }
+
+
+            outCollision = pos1;
+            outBeforeCollision = pos1;
+            return TileFlags.NONE;
+        }
+
         public override Tile GetTileAtIndex(int index)
         {
             return GameLayerTiles[index];
+        }
+
+        public override bool TestBox(Vec2 pos, Vec2 size)
+        {
+            size *= 0.5f;
+            if (IsTileSolid(pos.x - size.x, pos.y - size.y))
+                return true;
+            if (IsTileSolid(pos.x + size.x, pos.y - size.y))
+                return true;
+            if (IsTileSolid(pos.x - size.x, pos.y + size.y))
+                return true;
+            if (IsTileSolid(pos.x + size.x, pos.y + size.y))
+                return true;
+            return false;
+        }
+
+        public override void MoveBox(ref Vec2 pos, ref Vec2 vel, Vec2 boxSize, float elasticity)
+        {
+            elasticity = System.Math.Clamp(elasticity, 0f, 1f);
+            var distance = vel.Length;
+            if (distance <= 0.00001f)
+                return;
+
+            var max = (int)distance;
+            var fraction = 1.0f / (max + 1);
+
+            for (var i = 0; i <= max; i++)
+            {
+                var newPos = pos + vel * fraction;
+                if (TestBox(newPos, boxSize))
+                {
+                    var hits = 0;
+                    if (TestBox(new Vec2(pos.x, newPos.y), boxSize))
+                    {
+                        newPos.y = pos.y;
+                        vel.y *= -elasticity;
+                        hits++;
+                    }
+
+                    if (TestBox(new Vec2(newPos.x, pos.y), boxSize))
+                    {
+                        newPos.x = pos.x;
+                        vel.x *= -elasticity;
+                        hits++;
+                    }
+
+                    if (hits == 0)
+                    {
+                        newPos = pos;
+                        vel *= -elasticity;
+                    }
+                }
+
+                pos = newPos;
+            }
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Core;
-using Math = System.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -63,21 +62,21 @@ namespace TeeSharp.Server.Game
             var dx = GameContext.Players[snappingClient].ViewPos.x - checkPos.x;
             var dy = GameContext.Players[snappingClient].ViewPos.y - checkPos.y;
 
-            if (Math.Abs(dx) > 900.0f ||
-                Math.Abs(dy) > 700.0f)
+            if (System.Math.Abs(dx) > 900.0f ||
+                System.Math.Abs(dy) > 700.0f)
             {
                 return true;
             }
 
-            return VectorMath.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
+            return Common.Math.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
         }
 
         public bool GameLayerClipped(Vec2 checkPos)
         {
-            return Common.Math.RoundToInt(checkPos.x) / 32 < -200 ||
-                   Common.Math.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||
-                   Common.Math.RoundToInt(checkPos.y) / 32 < -200 ||
-                   Common.Math.RoundToInt(checkPos.y) / 32 > GameContext.Collision.Height + 200;
+            return Math.RoundToInt(checkPos.x) / 32 < -200 ||
+                   Math.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||
+                   Math.RoundToInt(checkPos.y) / 32 < -200 ||
+                   Math.RoundToInt(checkPos.y) / 32 > GameContext.Collision.Height + 200;
         }
     }
 

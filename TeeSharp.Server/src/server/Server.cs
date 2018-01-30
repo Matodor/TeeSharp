@@ -100,6 +100,7 @@ namespace TeeSharp.Server
 
         public override void Run()
         {
+           
             if (IsRunning)
                 return;
 
@@ -152,6 +153,7 @@ namespace TeeSharp.Server
                             {
                                 GameContext.OnClientPredictedInput(i,
                                     Clients[i].Inputs[inputIndex].PlayerInput);
+                                break;
                             }
                         }
                     }

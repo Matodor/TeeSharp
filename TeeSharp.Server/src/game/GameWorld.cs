@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
+using Math = TeeSharp.Common.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -48,7 +49,7 @@ namespace TeeSharp.Server.Game
             var current = Entity<T>.FirstTypeEntity;
             while (current != null)
             {
-                if (VectorMath.Distance(current.Position, pos) < radius + current.ProximityRadius)
+                if (Math.Distance(current.Position, pos) < radius + current.ProximityRadius)
                     yield return (T)current;
                 current = current.NextTypeEntity;
             }
@@ -175,7 +176,7 @@ namespace TeeSharp.Server.Game
                         PlayersDistances[j].First = (float) 1e8;
                     }
 
-                    PlayersDistances[j].First = VectorMath.Distance(
+                    PlayersDistances[j].First = Math.Distance(
                         GameContext.Players[i].ViewPos,
                         character.Position
                     );

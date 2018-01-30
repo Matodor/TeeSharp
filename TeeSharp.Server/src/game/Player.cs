@@ -265,11 +265,11 @@ namespace TeeSharp.Server.Game
                 Spawning = true;
 
             if (input.Direction != 0 ||
+                input.Jump ||
+                input.Hook ||
                 LatestActivity.TargetX != input.TargetX ||
                 LatestActivity.TargetY != input.TargetY ||
-                input.Jump != 0 ||
-                (input.Fire & 1) != 0 ||
-                input.Hook != 0)
+                (input.Fire & 1) != 0)
             {
                 LatestActivity.TargetX = input.TargetX;
                 LatestActivity.TargetY = input.TargetY;
