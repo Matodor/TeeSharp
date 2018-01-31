@@ -275,6 +275,13 @@ namespace TeeSharp.Server.Game.Entities
                     character.Emote = Emote.BLINK;
             }
 
+
+            if (character.HookedPlayer != -1)
+            {
+                if (!Server.Translate(ref character.HookedPlayer, snappingClient))
+                    character.HookedPlayer = -1;
+            }
+
             character.PlayerFlags = Player.PlayerFlags;
         }
     }

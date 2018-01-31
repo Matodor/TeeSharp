@@ -27,7 +27,7 @@ namespace TeeSharp.Server.Game
 
             var idMap = BaseServer.GetIdMap(clientId);
             for (var i = 1; i < BaseServer.VANILLA_MAX_CLIENTS; i++)
-                Server.IdMap[idMap + 1] = -1;
+                Server.IdMap[idMap + i] = -1;
             Server.IdMap[idMap] = clientId;
         }
 

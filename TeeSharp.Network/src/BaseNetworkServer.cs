@@ -20,6 +20,8 @@ namespace TeeSharp.Network
         public abstract NetworkServerConfig Config { get; protected set; }
 
         protected abstract BaseChunkReceiver ChunkReceiver { get; set; }
+        protected abstract BaseNetworkBan NetworkBan { get; set; }
+
         protected abstract BaseNetworkConnection[] Connections { get; set; }
         protected abstract UdpClient UdpClient { get; set; }
         protected abstract NewClientCallback NewClientCallback { get; set; }

@@ -12,7 +12,7 @@ namespace TeeSharp.Network
         public override NetworkServerConfig Config { get; protected set; }
 
         protected override BaseChunkReceiver ChunkReceiver { get; set; }
-        protected BaseNetworkBan NetworkBan { get; private set; }
+        protected override BaseNetworkBan NetworkBan { get; set; }
         
         protected override UdpClient UdpClient { get; set; }
         protected override NewClientCallback NewClientCallback { get; set; }
@@ -80,11 +80,11 @@ namespace TeeSharp.Network
 
         public override bool Receive(out NetworkChunk packet)
         {
+            if (ChunkReceiver.FetchChunk(out packet))
+                return true;
+
             while (UdpClient.Available > 0)
             {
-                if (ChunkReceiver.FetchChunk(out packet))
-                    return true;
-
                 var remote = (IPEndPoint) null;
                 byte[] data;
 
@@ -133,7 +133,7 @@ namespace TeeSharp.Network
                     if (ChunkReceiver.ChunkConstruct.DataSize != 0)
                         ChunkReceiver.Start(remote, Connections[clientId], clientId);
                 }
-                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) && 
+                else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONTROL) &&
                          ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.CONNECT)
                 {
                     var sameIps = 0;

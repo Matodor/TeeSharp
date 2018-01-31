@@ -14,7 +14,10 @@ namespace TeeSharp.Core
             var ints = new int[num];
 
             if (string.IsNullOrEmpty(input))
+            {
+                ints[ints.Length - 1] &= 0x7FFFFF00;
                 return ints;
+            }
 
             var bytes = Encoding.UTF8.GetBytes(input);
             var index = 0;

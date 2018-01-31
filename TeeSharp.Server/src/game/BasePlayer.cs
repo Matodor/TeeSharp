@@ -33,7 +33,7 @@ namespace TeeSharp.Server.Game
 
     public abstract class BasePlayer : BaseInterface
     {
-        public virtual int ClientId { get; protected set; }
+        public virtual int ClientId { get; private set; }
 
         public virtual ClientVersion ClientVersion { get; set; }
         public virtual PlayerFlags PlayerFlags { get; protected set; }

@@ -142,13 +142,12 @@
         }
 
         public int Compress(byte[] source, int sourceOffset, int sourceSize,
-            byte[] output, int outputOffset, int outputSize)
+            byte[] output, int outputOffset, int maxOutputSize)
         {
             var sourceIndex = sourceOffset;
             var sourceEnd = sourceIndex + sourceSize;
             var outputIndex = outputOffset;
-            var outputEnd = outputIndex + outputSize;
-            
+
             var bits = 0;
             var bitCount = 0;
 
@@ -167,10 +166,14 @@
 
                     while (bitCount >= 8)
                     {
-                        output[outputIndex] = (byte)(bits & 0xff);
-                        outputIndex += 1;
-                        if (outputIndex == outputEnd)
+                        output[outputIndex++] = (byte)(bits & 0b1111_1111);
+
+                        if (outputIndex >= output.Length ||
+                            outputIndex >= outputOffset + maxOutputSize)
+                        {
                             return -1;
+                        }
+
                         bits >>= 8;
                         bitCount -= 8;
                     }
@@ -180,11 +183,13 @@
                 bitCount += (int)_nodes[symbol].NumBits;
                 while (bitCount >= 8)
                 {
-                    output[outputIndex] = (byte)(bits & 0xff);
-                    outputIndex += 1;
+                    output[outputIndex++] = (byte)(bits & 0b1111_1111);
 
-                    if (outputIndex == outputEnd)
+                    if (outputIndex >= output.Length ||
+                        outputIndex >= outputOffset + maxOutputSize)
+                    {
                         return -1;
+                    }
 
                     bits >>= 8;
                     bitCount -= 8;
@@ -197,29 +202,28 @@
 
             while (bitCount >= 8)
             {
-                output[outputIndex] = (byte)(bits & 0b11111111);
-                outputIndex += 1;
+                output[outputIndex++] = (byte)(bits & 0b1111_1111);
 
-                if (outputIndex == outputEnd)
+                if (outputIndex >= output.Length ||
+                    outputIndex >= outputOffset + maxOutputSize)
+                {
                     return -1;
+                }
 
                 bits >>= 8;
                 bitCount -= 8;
             }
 
-            output[outputIndex] = (byte)bits;
-            outputIndex += 1;
-
+            output[outputIndex++] = (byte) bits;
             return outputIndex - outputOffset;
         }
 
         public int Decompress(byte[] source, int sourceOffset, int sourceSize, 
-            byte[] output, int outputOffset, int outputSize)
+            byte[] output, int outputOffset, int maxOutputSize)
         {
             var sourceIndex = sourceOffset;
             var sourceEnd = sourceIndex + sourceSize;
             var outputIndex = outputOffset;
-            var outputEnd = outputIndex + outputSize;
 
             var bits = 0;
             var bitCount = 0;
@@ -270,11 +274,13 @@
                 if (node == _nodes[EOF_SYMBOL])
                     break;
 
-                if (outputIndex == outputEnd)
+                if (outputIndex >= output.Length ||
+                    outputIndex >= outputOffset + maxOutputSize)
+                {
                     return -1;
+                }
 
-                output[outputIndex] = node.Symbol;
-                outputIndex += 1;
+                output[outputIndex++] = node.Symbol;
             }
 
             return outputIndex - outputOffset;

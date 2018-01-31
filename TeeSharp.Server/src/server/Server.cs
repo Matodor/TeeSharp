@@ -144,17 +144,17 @@ namespace TeeSharp.Server
                     Tick++;
                     ticks++;
 
-                    for (var i = 0; i < Clients.Length; i++)
+                    for (var clientId = 0; clientId < Clients.Length; clientId++)
                     {
-                        if (Clients[i].State != ServerClientState.IN_GAME)
+                        if (Clients[clientId].State != ServerClientState.IN_GAME)
                             continue;
 
-                        for (var inputIndex = 0; inputIndex < Clients[i].Inputs.Length; inputIndex++)
+                        for (var inputIndex = 0; inputIndex < Clients[clientId].Inputs.Length; inputIndex++)
                         {
-                            if (Clients[i].Inputs[inputIndex].Tick == Tick)
+                            if (Clients[clientId].Inputs[inputIndex].Tick == Tick)
                             {
-                                GameContext.OnClientPredictedInput(i,
-                                    Clients[i].Inputs[inputIndex].PlayerInput);
+                                GameContext.OnClientPredictedInput(clientId,
+                                    Clients[clientId].Inputs[inputIndex].PlayerInput);
                                 break;
                             }
                         }
@@ -636,7 +636,7 @@ namespace TeeSharp.Server
             {
                 var timeLeft = (TickStartTime(intendedTick) - Time.Get()) * 1000 / Time.Freq();
                 var msg = new MsgPacker((int)NetworkMessages.SV_INPUT_TIMING);
-                msg.AddInt((int) intendedTick);
+                msg.AddInt(intendedTick);
                 msg.AddInt((int) timeLeft);
                 SendMsgEx(msg, MsgFlags.NONE, clientId, true);
             }
@@ -708,7 +708,7 @@ namespace TeeSharp.Server
 
             if (offset + chunkSize >= CurrentMap.Size)
             {
-                chunkSize = (int)(CurrentMap.Size - offset);
+                chunkSize = CurrentMap.Size - offset;
                 last = 1;
 
                 if (chunkSize < 0)
@@ -819,7 +819,7 @@ namespace TeeSharp.Server
 
                     if (offset + chunkSize >= CurrentMap.Size)
                     {
-                        chunkSize = (int) (CurrentMap.Size - offset);
+                        chunkSize = CurrentMap.Size - offset;
                         if (chunkSize < 0)
                             chunkSize = 0;
                         last = 1;
@@ -911,8 +911,8 @@ namespace TeeSharp.Server
                     if (numPackets == 1)
                     {
                         var msg = new MsgPacker((int) NetworkMessages.SV_SNAPSINGLE);
-                        msg.AddInt((int) Tick);
-                        msg.AddInt((int) (Tick - deltaTick));
+                        msg.AddInt(Tick);
+                        msg.AddInt(Tick - deltaTick);
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
@@ -921,8 +921,8 @@ namespace TeeSharp.Server
                     else
                     {
                         var msg = new MsgPacker((int) NetworkMessages.SV_SNAP);
-                        msg.AddInt((int) Tick);
-                        msg.AddInt((int)(Tick - deltaTick));
+                        msg.AddInt(Tick);
+                        msg.AddInt(Tick - deltaTick);
                         msg.AddInt(numPackets);
                         msg.AddInt(n);
                         msg.AddInt(crc);

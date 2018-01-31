@@ -32,7 +32,7 @@ namespace TeeSharp.Server
                 { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
                 { "SvMap", new ConfigString("SvMap", "sv_map", 128, "dm1", ConfigFlags.SERVER, "Map to use on the server") },
                 { "SvMaxClients", new ConfigInt("SvMaxClients", "sv_max_clients", 64, 1, 64, ConfigFlags.SERVER, "Maximum number of clients that are allowed on a server") },
-                { "SvMaxClientsPerIP", new ConfigInt("SvMaxClientsPerIP", "sv_max_clients_per_ip", 6, 1, 64, ConfigFlags.SERVER, "Maximum number of clients with the same IP that can connect to the server") },
+                { "SvMaxClientsPerIP", new ConfigInt("SvMaxClientsPerIP", "sv_max_clients_per_ip", 64, 1, 64, ConfigFlags.SERVER, "Maximum number of clients with the same IP that can connect to the server") },
                 { "SvHighBandwidth", new ConfigInt("SvHighBandwidth", "sv_high_bandwidth", 0, 0, 1, ConfigFlags.SERVER, "Use high bandwidth mode. Doubles the bandwidth required for the server. LAN use only") },
                 { "SvRegister", new ConfigInt("SvRegister", "sv_register", 1, 0, 1, ConfigFlags.SERVER, "Register server with master server for public listing") },
                 { "SvRconPassword", new ConfigString("SvRconPassword", "sv_rcon_password", 32, "", ConfigFlags.SERVER, "Remote console password (full access)") },
