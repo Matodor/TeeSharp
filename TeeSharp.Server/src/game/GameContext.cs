@@ -72,8 +72,21 @@ namespace TeeSharp.Server.Game
         {
         }
 
+        public override void CreateDamageInd(Vec2 pos, float a, int damage)
+        {
+        }
+
+        public override void CreateHammerHit(Vec2 pos)
+        {
+        }
+
         public override void CreateSound(Vec2 pos, Sounds sound)
         {
+        }
+
+        public override void CreateSound(Vec2 pos, Sounds sound, int mask)
+        {
+            
         }
 
         public override void CheckPureTuning()

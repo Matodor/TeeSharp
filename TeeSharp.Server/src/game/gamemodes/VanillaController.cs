@@ -217,7 +217,27 @@ namespace TeeSharp.Server.Game
 
             return numPlayers[0] + numPlayers[1] < Server.MaxClients - Config["SvSpectatorSlots"];
         }
-        
+
+        public override bool IsFriendlyFire(int cliendId1, int clientId2)
+        {
+            if (cliendId1 == clientId2)
+                return false;
+
+            if (IsTeamplay())
+            {
+                if (GameContext.Players[cliendId1] == null ||
+                    GameContext.Players[clientId2] == null)
+                {
+                    return false;
+                }
+
+                if (GameContext.Players[cliendId1].Team == GameContext.Players[clientId2].Team)
+                    return true;
+            }
+
+            return false;
+        }
+
         public override bool IsTeamplay()
         {
             return GameFlags.HasFlag(GameFlags.TEAMS);
@@ -253,6 +273,9 @@ namespace TeeSharp.Server.Game
 
         public override void OnCharacterSpawn(Character character)
         {
+            character.IncreaseHealth(10);
+            character.GiveWeapon(Weapon.HAMMER, -1);
+            character.GiveWeapon(Weapon.GUN, 10);
         }
 
         public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)

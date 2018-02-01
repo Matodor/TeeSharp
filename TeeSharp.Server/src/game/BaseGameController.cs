@@ -45,6 +45,7 @@ namespace TeeSharp.Server.Game
         public abstract bool CanJoinTeam(int clientId, Team team);
         public abstract bool CanChangeTeam(BasePlayer player, Team joinTeam);
         public abstract bool IsTeamplay();
+        public abstract bool IsFriendlyFire(int cliendId1, int clientId2);
         public abstract Team ClampTeam(Team team);
         public abstract void Tick();
 

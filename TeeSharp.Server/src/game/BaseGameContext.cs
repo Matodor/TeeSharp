@@ -54,6 +54,29 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
         public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
         public abstract void CreateDeath(Vec2 pos, int clientId);
+        public abstract void CreateDamageInd(Vec2 pos, float a, int damage);
+        public abstract void CreateHammerHit(Vec2 pos);
         public abstract void CreateSound(Vec2 pos, Sounds sound);
+        public abstract void CreateSound(Vec2 pos, Sounds sound, int mask);
+
+        public virtual int MaskAll()
+        {
+            return -1;
+        }
+
+        public virtual int MaskOne(int clientID)
+        {
+            return 1 << clientID;
+        }
+
+        public virtual int MaskAllExceptOne(int clientId)
+        {
+            return 0b1111111_11111111_11111111_11111111 ^ MaskOne(clientId);
+        }
+
+        public virtual bool MaskIsSet(int mask, int clientID)
+        {
+            return (mask & MaskOne(clientID)) != 0;
+        }
     }
 }
