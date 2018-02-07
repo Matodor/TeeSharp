@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using System.Security.Cryptography.X509Certificates;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
@@ -165,7 +163,7 @@ namespace TeeSharp.Server.Game.Entities
                 GameContext.Players[killer], weapon);
 
             GameContext.Console.Print(OutputLevel.DEBUG, "game",
-                $"kill killer='{killer}:{Server.GetClientName(killer)}' victim='{Player.ClientId}:{Server.GetClientName(Player.ClientId)}' weapon={weapon} special={modeSpecial}");
+                $"kill killer='{killer}:{GameContext.Players[killer].Name}' victim='{Player.ClientId}:{Player.Name}' weapon={weapon} special={modeSpecial}");
 
             Server.SendPackMsg(new GameMsg_SvKillMsg
             {

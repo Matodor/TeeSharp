@@ -116,7 +116,7 @@ namespace TeeSharp.Server.Game
             if (team == Team)
                 return;
 
-            GameContext.SendChat(-1, false, $"'{Server.GetClientName(ClientId)}' joined the {GameContext.GameController.GetTeamName(team)}");
+            GameContext.SendChat(-1, false, $"'{Name}' joined the {GameContext.GameController.GetTeamName(team)}");
             KillCharacter();
 
             Team = team;
@@ -124,7 +124,7 @@ namespace TeeSharp.Server.Game
             SpectatorId = -1;
             RespawnTick = Server.Tick + Server.TickSpeed / 2;
             GameContext.Console.Print(OutputLevel.DEBUG, "game",
-                $"team_join player='{ClientId}:{Server.GetClientName(ClientId)}' team={Team}");
+                $"team_join player='{ClientId}:{Name}' team={Team}");
             GameContext.GameController.OnPlayerInfoChange(this);
 
             if (Team == Team.SPECTATORS)
@@ -166,10 +166,10 @@ namespace TeeSharp.Server.Game
 
             GameContext.SendChat(-1, false,
                 string.IsNullOrWhiteSpace(reason)
-                    ? $"'{Server.GetClientName(ClientId)}' has left the game"
-                    : $"'{Server.GetClientName(ClientId)}' has left the game ({reason})");
+                    ? $"'{Name}' has left the game"
+                    : $"'{Name}' has left the game ({reason})");
 
-            GameContext.Console.Print(OutputLevel.STANDARD, "game", $"leave_player='{ClientId}:{Server.GetClientName(ClientId)}'");
+            GameContext.Console.Print(OutputLevel.STANDARD, "game", $"leave_player='{ClientId}:{Name}'");
         }
 
         public override void OnSnapshot(int snappingClient)
@@ -185,9 +185,9 @@ namespace TeeSharp.Server.Game
             if (clientInfo == null)
                 return;
 
-            clientInfo.Name = Server.GetClientName(ClientId);
-            clientInfo.Clan = Server.GetClientClan(ClientId);
-            clientInfo.Country = Server.GetClientCountry(ClientId);
+            clientInfo.Name = Name;
+            clientInfo.Clan = Clan;
+            clientInfo.Country = Country;
             clientInfo.Skin = TeeInfo.SkinName;
             clientInfo.UseCustomColor = TeeInfo.UseCustomColor;
             clientInfo.ColorBody = TeeInfo.ColorBody;

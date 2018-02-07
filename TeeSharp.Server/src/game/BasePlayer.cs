@@ -39,8 +39,13 @@ namespace TeeSharp.Server.Game
         public virtual PlayerFlags PlayerFlags { get; protected set; }
         public virtual Team Team { get; protected set; }
 
+        public string Name => Server.GetClientName(ClientId);
+        public string Clan => Server.GetClientClan(ClientId);
+        public int Country => Server.GetClientCountry(ClientId);
+        
         public virtual bool IsReady { get; set; }
         public virtual int LastSetTeam { get; set; }
+        public virtual int LastSetSpectatorMode { get; set; }
         public virtual int LastChangeInfo { get; set; }
         public virtual int LastChatMessage { get; set; }
         public virtual int LastActionTick { get; set; }

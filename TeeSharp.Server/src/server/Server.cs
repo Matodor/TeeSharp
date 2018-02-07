@@ -28,6 +28,7 @@ namespace TeeSharp.Server
         public void Load(IKernel kernel)
         {
             // singletons
+            kernel.Bind<BaseVotes>().To<Votes>();
             kernel.Bind<BaseServer>().To<Server>().AsSingleton();
             kernel.Bind<BaseConfig>().To<ServerConfig>().AsSingleton();
             kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();
@@ -40,7 +41,6 @@ namespace TeeSharp.Server
             kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
             kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
             kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>().AsSingleton();
-
             kernel.Bind<BaseCollision>().To<Collision>().AsSingleton();
             kernel.Bind<BaseLayers>().To<Layers>().AsSingleton();
 

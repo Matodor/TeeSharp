@@ -13,6 +13,7 @@ namespace TeeSharp.Server.Game
         public abstract string NetVersion { get; }
         public abstract string ReleaseVersion { get; }
 
+        public virtual BaseVotes Votes { get; protected set; }
         public virtual BaseEvents Events { get; protected set; }
         public virtual BasePlayer[] Players { get; protected set; }
         public virtual BaseGameController GameController { get; protected set; }

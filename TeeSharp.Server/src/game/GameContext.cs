@@ -21,6 +21,7 @@ namespace TeeSharp.Server.Game
         
         public override void OnInit()
         {
+            Votes = Kernel.Get<BaseVotes>();
             Events = Kernel.Get<BaseEvents>();
             Server = Kernel.Get<BaseServer>();
             Layers = Kernel.Get<BaseLayers>();
@@ -49,6 +50,8 @@ namespace TeeSharp.Server.Game
                         GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
                 }
             }
+
+            CheckPureTuning();
         }
 
 
@@ -229,8 +232,8 @@ namespace TeeSharp.Server.Game
         public override void SendChat(int chatterClientId, bool isTeamChat, string msg)
         {
             string debug;
-            if (chatterClientId >= 0 && chatterClientId < Server.MaxClients)
-                debug = $"{chatterClientId}:{Server.GetClientName(chatterClientId)} {msg}";
+            if (chatterClientId >= 0 && chatterClientId < Players.Length)
+                debug = $"{chatterClientId}:{Players[chatterClientId].Name} {msg}";
             else
                 debug = $"*** {msg}";
             Console.Print(OutputLevel.ADDINFO, isTeamChat ? "teamchat" : "chat", debug);
@@ -266,8 +269,6 @@ namespace TeeSharp.Server.Game
 
         public override void OnTick()
         {
-            //CheckPureTuning();
-
             World.Tick();
             GameController.Tick();
 
@@ -279,6 +280,8 @@ namespace TeeSharp.Server.Game
                 Players[i].Tick();
                 Players[i].PostTick();
             }
+
+            Votes.Tick();
         }
 
         public override void OnShutdown()
@@ -314,7 +317,9 @@ namespace TeeSharp.Server.Game
                         break;
 
                     case GameMessages.CL_SETSPECTATORMODE:
+                        OnMsgSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) msg);
                         break;
+
                     case GameMessages.CL_CHANGEINFO:
                         break;
                     case GameMessages.CL_KILL:
@@ -332,8 +337,36 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        protected virtual void OnMsgSetSpectatorMode(BasePlayer player,
+            GameMsg_ClSetSpectatorMode msg)
+        {
+            if (player.Team != Team.SPECTATORS ||
+                player.SpectatorId == msg.SpectatorId ||
+                player.ClientId == msg.SpectatorId ||
+                Config["SvSpamprotection"] && 
+                    player.LastSetSpectatorMode + Server.TickSpeed * 3 > Server.Tick)
+            {
+                return;
+            }
+
+            player.LastSetSpectatorMode = Server.Tick;
+            if (msg.SpectatorId != -1 &&
+                (msg.SpectatorId < -1 || msg.SpectatorId >= Players.Length ||
+                 Players[msg.SpectatorId] == null ||
+                 Players[msg.SpectatorId].Team == Team.SPECTATORS))
+            {
+                SendChatTarget(player.ClientId, "Invalid spectator id");
+                return;
+            }
+
+            player.SpectatorId = msg.SpectatorId;
+        }
+
         protected virtual void OnMsgSetTeam(BasePlayer player, GameMsg_ClSetTeam msg)
         {
+            if (msg.Team < Team.SPECTATORS || msg.Team > Team.BLUE) 
+                return;
+
             if (World.IsPaused || player.Team == msg.Team || 
                 Config["SvSpamprotection"] &&
                 player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
@@ -358,23 +391,23 @@ namespace TeeSharp.Server.Game
 
             if (GameController.CanJoinTeam(player.ClientId, msg.Team))
             {
-                if (GameController.CanChangeTeam(player, msg.Team))
-                {
-                    player.LastSetTeam = Server.Tick;
-                    player.TeamChangeTick = Server.Tick;
-                    
-                    player.SetTeam(msg.Team);
-                    GameController.CheckTeamsBalance();
+                if (!GameController.CanChangeTeam(player, msg.Team))
+                    return;
 
-                    if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
-                    {
-                        // vote update
-                    }
+                player.LastSetTeam = Server.Tick;
+                player.TeamChangeTick = Server.Tick;
+                    
+                player.SetTeam(msg.Team);
+                GameController.CheckTeamsBalance();
+
+                if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
+                {
+                    // vote update
                 }
             }
             else
             {
-                SendBroadcast(player.ClientId, $"Only {Server.MaxClients - Config["SvSpectatorSlots"]}active players are allowed");
+                SendBroadcast(player.ClientId, $"Only {Players.Length - Config["SvSpectatorSlots"]}active players are allowed");
             }
         }
 
@@ -477,8 +510,8 @@ namespace TeeSharp.Server.Game
         {
             Players[clientId].Respawn();
 
-            SendChat(-1, false, $"'{Server.GetClientName(clientId)}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
-            Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Server.GetClientName(clientId)}' team={Players[clientId].Team}");
+            SendChat(-1, false, $"'{Players[clientId].Name}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
+            Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Players[clientId].Name}' team={Players[clientId].Team}");
             
             // update vote
         }
