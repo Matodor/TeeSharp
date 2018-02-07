@@ -9,6 +9,7 @@ using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Map;
 using TeeSharp.Network;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -65,21 +66,70 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
-        public override void CreateExplosion(Vec2 pos, int owner, int weapon, bool noDamage)
+        public override void CreateExplosion(Vec2 pos, int owner, Weapon weapon, bool noDamage)
         {
-            
+            var e = Events.Create<SnapEvent_Explosion>();
+            if (e != null)
+                e.Position = pos;
+
+            if (noDamage)
+                return;
+
+            const float radius = 135.0f;
+            const float innerRadius = 48.0f;
+
+            var characters = World.FindEntities<Character>(pos, radius);
+            foreach (var character in characters)
+            {
+                var diff = character.Position - pos;
+                var forceDir = new Vec2(0, 1);
+                var l = diff.Length;
+
+                if (l > 0)
+                    forceDir = diff.Normalized;
+                l = 1 - System.Math.Clamp((l - innerRadius) / (radius - innerRadius), 0f, 1f);
+                var dmg = (int) (6 * l);
+
+                if (dmg != 0)
+                    character.TakeDamage(forceDir * dmg * 2, dmg, owner, weapon);
+            }
         }
 
         public override void CreatePlayerSpawn(Vec2 pos)
         {
+            var e = Events.Create<SnapEvent_Spawn>();
+            if (e == null)
+                return;
+
+            e.Position = pos;
         }
 
         public override void CreateDeath(Vec2 pos, int clientId)
         {
+            var e = Events.Create<SnapEvent_Death>();
+            if (e == null)
+                return;
+
+            e.ClientId = clientId;
+            e.Position = pos;
         }
 
-        public override void CreateDamageInd(Vec2 pos, float a, int damage)
+        public override void CreateDamageInd(Vec2 pos, float a, int amount)
         {
+            a = 3 * 3.14159f / 2 + a;
+            var s = a - System.Math.PI / 3;
+            var e = a + System.Math.PI / 3;
+
+            for (var i = 0; i < amount; i++)
+            {
+                var f = Common.Math.Mix(s, e, (float) (i + 1) / (amount + 2));
+                var @event = Events.Create<SnapEvent_DamageInd>();
+                if (@event == null)
+                    continue;
+
+                @event.Position = pos;
+                @event.Angle = (int)(f * 256.0f);
+            }
         }
 
         public override void CreateHammerHit(Vec2 pos)
@@ -91,13 +141,38 @@ namespace TeeSharp.Server.Game
             e.Position = pos;
         }
 
-        public override void CreateSound(Vec2 pos, Sounds sound)
+        public override void CreateSound(Vec2 pos, Sounds sound, int mask = -1)
         {
+            if (sound < 0 || sound >= Sounds.NUM_SOUNDS)
+                return;
+
+            var e = Events.Create<SnapEvent_SoundWorld>();
+            if (e == null)
+                return;
+
+            e.Position = pos;
+            e.Sound = sound;
         }
 
-        public override void CreateSound(Vec2 pos, Sounds sound, int mask)
+        public override void CreaetSoundGlobal(Sounds sound, int targetId = -1)
         {
-            
+            if (sound < 0 || sound >= Sounds.NUM_SOUNDS)
+                return;
+
+            var msg = new GameMsg_SvSoundGlobal
+            {
+                Sound = sound
+            };
+
+            if (targetId == -2)
+                Server.SendPackMsg(msg, MsgFlags.NOSEND, -1);
+            else
+            {
+                var flags = MsgFlags.VITAL;
+                if (targetId != -1)
+                    flags |= MsgFlags.NORECORD;
+                Server.SendPackMsg(msg, flags, targetId);
+            }
         }
 
         public override void CheckPureTuning()
@@ -362,22 +437,23 @@ namespace TeeSharp.Server.Game
 
         public override void OnAfterSnapshots()
         {
+            Events.Clear();
         }
 
-        public override void OnSnapshot(int clientId)
+        public override void OnSnapshot(int snappingId)
         {
-            World.OnSnapshot(clientId);
-            GameController.OnSnapshot(clientId);
-            // events
+            World.OnSnapshot(snappingId);
+            GameController.OnSnapshot(snappingId);
+            Events.OnSnapshot(snappingId);
 
             for (var i = 0; i < Players.Length; i++)
             {
                 if (Players[i] == null)
                     continue;
-                Players[i].OnSnapshot(clientId);
+                Players[i].OnSnapshot(snappingId);
             }
 
-            Players[clientId].FakeSnapshot(clientId);
+            Players[snappingId].FakeSnapshot(snappingId);
         }
 
         public override void OnClientConnected(int clientId)

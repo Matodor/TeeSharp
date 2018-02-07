@@ -32,6 +32,7 @@ namespace TeeSharp.Server
             kernel.Bind<BaseConfig>().To<ServerConfig>().AsSingleton();
             kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();
             kernel.Bind<BaseGameContext>().To<GameContext>().AsSingleton();
+            kernel.Bind<BaseEvents>().To<Events>().AsSingleton();
             kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
             kernel.Bind<BaseNetworkServer>().To<NetworkServer>().AsSingleton();
             kernel.Bind<BaseGameConsole>().To<GameConsole>().AsSingleton();

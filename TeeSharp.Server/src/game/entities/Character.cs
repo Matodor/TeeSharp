@@ -352,7 +352,7 @@ namespace TeeSharp.Server.Game.Entities
             }
         }
 
-        protected virtual bool TakeDamage(Vec2 force, int damage, int from, Weapon weapon)
+        public virtual bool TakeDamage(Vec2 force, int damage, int from, Weapon weapon)
         {
             Core.Velocity += force;
 

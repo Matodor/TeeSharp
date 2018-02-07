@@ -2,6 +2,7 @@
 
 namespace TeeSharp.Common.Protocol
 {
+    // not used
     public class SnapEvent_SoundGlobal : BaseSnapEvent
     {
         public override SnapshotItem Type { get; } = SnapshotItem.EVENT_SOUNDGLOBAL;
