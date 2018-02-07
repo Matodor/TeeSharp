@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_SpectatorInfo : BaseSnapObject
     {
-        public override SnapObj Type { get; } = SnapObj.OBJ_SPECTATORINFO;
+        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_SPECTATORINFO;
         public override int SerializeLength { get; } = 3;
 
         public int SpectatorId;

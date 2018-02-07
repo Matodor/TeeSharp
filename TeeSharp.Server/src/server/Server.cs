@@ -19,6 +19,7 @@ using TeeSharp.Network;
 using TeeSharp.Network.Enums;
 using TeeSharp.Server.Game;
 using Debug = TeeSharp.Core.Debug;
+using SnapshotItem = TeeSharp.Common.Snapshots.SnapshotItem;
 
 namespace TeeSharp.Server
 {
@@ -377,6 +378,12 @@ namespace TeeSharp.Server
             }
 
             return result;
+        }
+
+        public override bool AddSnapItem<T>(T item, int id)
+        {
+            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
+            return id >= 0 && SnapshotBuilder.AddItem(item, id);
         }
 
         public override T SnapObject<T>(int id)
@@ -848,7 +855,7 @@ namespace TeeSharp.Server
 
         protected override void DoSnapshot()
         {
-            GameContext.OnBeforeSnapshot();
+            GameContext.OnBeforeSnapshots();
 
             for (var i = 0; i < Clients.Length; i++)
             {
@@ -933,7 +940,7 @@ namespace TeeSharp.Server
                 }
             }
 
-            GameContext.OnAfterSnapshot();
+            GameContext.OnAfterSnapshots();
         }
 
         protected override long TickStartTime(int tick)

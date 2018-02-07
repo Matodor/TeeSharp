@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     {
         public const int INPUT_STATE_MASK = 0b11_1111;
 
-        public override SnapObj Type { get; } = SnapObj.OBJ_PLAYERINPUT;
+        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_PLAYERINPUT;
         public override int SerializeLength { get; } = 10;
 
         public int Direction;

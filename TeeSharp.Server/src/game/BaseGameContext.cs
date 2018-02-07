@@ -13,6 +13,7 @@ namespace TeeSharp.Server.Game
         public abstract string NetVersion { get; }
         public abstract string ReleaseVersion { get; }
 
+        public virtual BaseEvents Events { get; protected set; }
         public virtual BasePlayer[] Players { get; protected set; }
         public virtual BaseGameController GameController { get; protected set; }
         public virtual BaseGameWorld World { get; protected set; }
@@ -39,20 +40,22 @@ namespace TeeSharp.Server.Game
         public abstract void SendChatTarget(int clientId, string msg);
         public abstract void SendBroadcast(int clientId, string msg);
 
-        public abstract void CreatePlayerSpawn(Vec2 pos);
-
         public abstract void OnInit();
         public abstract void OnTick();
         public abstract void OnShutdown();
         public abstract void OnMessage(int msgId, Unpacker unpacker, int clientId);
-        public abstract void OnBeforeSnapshot();
-        public abstract void OnAfterSnapshot();
+        public abstract void OnBeforeSnapshots();
+        public abstract void OnAfterSnapshots();
         public abstract void OnSnapshot(int clientId);
         public abstract void OnClientConnected(int clientId);
         public abstract void OnClientEnter(int clientId);
         public abstract void OnClientDrop(int clientId, string reason);
         public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
         public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
+
+        public abstract void CreateExplosion(Vec2 pos, int owner,
+            int weapon, bool noDamage);
+        public abstract void CreatePlayerSpawn(Vec2 pos);
         public abstract void CreateDeath(Vec2 pos, int clientId);
         public abstract void CreateDamageInd(Vec2 pos, float a, int damage);
         public abstract void CreateHammerHit(Vec2 pos);

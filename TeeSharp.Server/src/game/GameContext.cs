@@ -20,6 +20,7 @@ namespace TeeSharp.Server.Game
         
         public override void OnInit()
         {
+            Events = Kernel.Get<BaseEvents>();
             Server = Kernel.Get<BaseServer>();
             Layers = Kernel.Get<BaseLayers>();
             GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
@@ -64,6 +65,11 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
+        public override void CreateExplosion(Vec2 pos, int owner, int weapon, bool noDamage)
+        {
+            
+        }
+
         public override void CreatePlayerSpawn(Vec2 pos)
         {
         }
@@ -78,6 +84,11 @@ namespace TeeSharp.Server.Game
 
         public override void CreateHammerHit(Vec2 pos)
         {
+            var e = Events.Create<SnapEvent_HammerHit>();
+            if (e == null)
+                return;
+
+            e.Position = pos;
         }
 
         public override void CreateSound(Vec2 pos, Sounds sound)
@@ -345,11 +356,11 @@ namespace TeeSharp.Server.Game
                 MsgFlags.VITAL | MsgFlags.FLUSH, player.ClientId);
         }
 
-        public override void OnBeforeSnapshot()
+        public override void OnBeforeSnapshots()
         {
         }
 
-        public override void OnAfterSnapshot()
+        public override void OnAfterSnapshots()
         {
         }
 

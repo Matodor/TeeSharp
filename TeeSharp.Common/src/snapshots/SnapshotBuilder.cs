@@ -30,6 +30,34 @@ namespace TeeSharp.Common.Snapshots
             return new Snapshot(_snapshotItems.ToArray(), _currentSize);
         }
 
+        public bool AddItem<T>(T obj, int id) where T : BaseSnapObject
+        {
+            if (_snapshotItems.Count + 1 >= MAX_SNAPSHOT_ITEMS)
+            {
+                Debug.Warning("snapshots", "too many items");
+                return false;
+            }
+
+            if (obj.Type <= Enums.SnapshotItem.INVALID || 
+                obj.Type >= Enums.SnapshotItem.NUM)
+            {
+                Debug.Warning("snapshots", "wrong object type");
+                return false;
+            }
+
+            var item = new SnapshotItem((int)obj.Type << 16 | id, obj);
+            _currentSize += item.Object.SerializeLength * sizeof(int);
+
+            if (_currentSize >= MAX_SNAPSHOT_SIZE)
+            {
+                Debug.Warning("snapshots", "too much data");
+                return false;
+            }
+
+            _snapshotItems.Add(item);
+            return true;
+        }
+
         public T NewObject<T>(int id) where T : BaseSnapObject, new()
         {
             if (_snapshotItems.Count + 1 >= MAX_SNAPSHOT_ITEMS)
@@ -39,7 +67,8 @@ namespace TeeSharp.Common.Snapshots
             }
 
             var obj = new T();
-            if (obj.Type <= SnapObj.INVALID || obj.Type >= SnapObj.NUM)
+            if (obj.Type <= Enums.SnapshotItem.INVALID || 
+                obj.Type >= Enums.SnapshotItem.NUM)
             {
                 Debug.Warning("snapshots", "wrong object type");
                 return null;

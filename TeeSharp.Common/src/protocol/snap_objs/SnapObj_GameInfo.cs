@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_GameInfo : BaseSnapObject
     {
-        public override SnapObj Type { get; } = SnapObj.OBJ_GAMEINFO;
+        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_GAMEINFO;
         public override int SerializeLength { get; } = 8;
 
         public GameFlags GameFlags = GameFlags.NONE;

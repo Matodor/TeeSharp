@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Pickup : BaseSnapObject
     {
-        public override SnapObj Type { get; } = SnapObj.OBJ_PICKUP;
+        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_PICKUP;
         public override int SerializeLength { get; } = 4;
 
         public Vec2 Position;

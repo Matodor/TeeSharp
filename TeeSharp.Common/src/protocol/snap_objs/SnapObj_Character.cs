@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Character : BaseSnapObject
     {
-        public override SnapObj Type { get; } = SnapObj.OBJ_CHARACTER;
+        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_CHARACTER;
         public override int SerializeLength { get; } = 22;
 
         public int Tick;

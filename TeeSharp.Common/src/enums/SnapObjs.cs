@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum SnapObj
+    public enum SnapshotItem
     {
         INVALID = 0,
 
