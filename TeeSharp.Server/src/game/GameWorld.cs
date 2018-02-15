@@ -93,6 +93,30 @@ namespace TeeSharp.Server.Game
             entity.PrevTypeEntity = null;
         }
 
+        public override Character ClosestCharacter(Vec2 pos, float radius, Character notThis)
+        {
+            var closestRange = radius * 2f;
+            Character closest = null;
+
+            foreach (var character in GetEntities<Character>())
+            {
+                if (character == notThis)
+                    continue;
+
+                var len = Math.Distance(pos, character.Position);
+                if (len < character.ProximityRadius + radius)
+                {
+                    if (len < closestRange)
+                    {
+                        closestRange = len;
+                        closest = character;
+                    }
+                }
+            }
+
+            return closest;
+        }
+
         public override void Reset()
         {
             throw new NotImplementedException();

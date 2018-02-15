@@ -9,10 +9,10 @@
     {
         public readonly DataPickupInfo[] Pickups = new []
         {
-            new DataPickupInfo {Name = "health", RespawnTime = 15, Spawndelay = 0},
-            new DataPickupInfo {Name = "armor", RespawnTime = 15, Spawndelay = 0},
-            new DataPickupInfo {Name = "weapon", RespawnTime = 15, Spawndelay = 0},
-            new DataPickupInfo {Name = "ninja", RespawnTime = 90, Spawndelay = 90},
+            new DataPickupInfo {Name = "health", RespawnTime = 15, SpawnDelay = 0},
+            new DataPickupInfo {Name = "armor", RespawnTime = 15, SpawnDelay = 0},
+            new DataPickupInfo {Name = "weapon", RespawnTime = 15, SpawnDelay = 0},
+            new DataPickupInfo {Name = "ninja", RespawnTime = 90, SpawnDelay = 90},
         };
 
         public readonly DataWeaponsContainer Weapons = new DataWeaponsContainer();
@@ -153,6 +153,6 @@
     {
         public string Name { get; set; }
         public int RespawnTime { get; set; }
-        public int Spawndelay { get; set; }
+        public int SpawnDelay { get; set; }
     }
 }

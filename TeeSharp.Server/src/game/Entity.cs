@@ -36,6 +36,7 @@ namespace TeeSharp.Server.Game
         public virtual void TickDefered() { }
         public virtual void TickPaused() { }
         public virtual void OnDestroy() { }
+        public virtual void Reset() { }
 
         public virtual void Destroy()
         {

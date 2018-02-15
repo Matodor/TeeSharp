@@ -4,6 +4,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Game;
 using TeeSharp.Core;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -35,6 +36,7 @@ namespace TeeSharp.Server.Game
         public abstract void AddEntity<T>(Entity<T> entity) where T : Entity<T>;
         public abstract void RemoveEntity<T>(Entity<T> entity) where T : Entity<T>;
 
+        public abstract Character ClosestCharacter(Vec2 pos, float radius, Character notThis);
         public abstract void Reset();
         public abstract void RemoteEntities();
 

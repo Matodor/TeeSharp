@@ -1,14 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Xml.XPath;
+﻿using System.Linq;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
-using TeeSharp.Map;
-using TeeSharp.Network;
 using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
@@ -18,7 +14,7 @@ namespace TeeSharp.Server.Game
         public override string GameVersion { get; } = "0.6";
         public override string NetVersion { get; } = "0.6";
         public override string ReleaseVersion { get; } = "0.63";
-        
+
         public override void OnInit()
         {
             Votes = Kernel.Get<BaseVotes>();
@@ -216,6 +212,14 @@ namespace TeeSharp.Server.Game
             Server.SendPackMsg(new GameMsg_SvBroadcast
             {
                 Message = msg
+            }, MsgFlags.VITAL, clientId);
+        }
+
+        public override void SendWeaponPickup(int clientId, Weapon weapon)
+        {
+            Server.SendPackMsg(new GameMsg_SvWeaponPickup
+            {
+                Weapon = weapon
             }, MsgFlags.VITAL, clientId);
         }
 

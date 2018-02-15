@@ -480,6 +480,10 @@ namespace TeeSharp.Server.Game.Entities
 
         }
 
+        public void GiveNinja()
+        {
+        }
+
         public virtual bool GiveWeapon(Weapon weapon, int ammo)
         {
             if (Weapons[(int) weapon].Ammo < ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo ||
@@ -650,7 +654,8 @@ namespace TeeSharp.Server.Game.Entities
                 character.Health = Health;
                 character.Armor = Armor;
 
-
+                if (Weapons[(int) ActiveWeapon].Ammo > 0)
+                    character.AmmoCount = Weapons[(int) ActiveWeapon].Ammo;
             }
 
             if (character.Emote == Emote.NORMAL)
