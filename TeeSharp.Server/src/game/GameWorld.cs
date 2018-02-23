@@ -147,16 +147,32 @@ namespace TeeSharp.Server.Game
 
         public override void Reset()
         {
-            throw new NotImplementedException();
+            for (var i = Entities.Count - 1; i >= 0; i--)
+            {
+                Entities[i].Reset();
+            }
+
+            RemoveEntities();
+            GameContext.GameController.PostReset();
+            RemoveEntities();
+
+            ResetRequested = false;
         }
 
-        public override void RemoteEntities()
+        public override void RemoveEntities()
         {
-            throw new NotImplementedException();
+            for (var i = Entities.Count - 1; i >= 0; i--)
+            {
+                if (Entities[i].MarkedForDestroy)
+                    Entities.RemoveAt(i);
+            }
         }
 
         public override void Tick()
         {
+            if (ResetRequested)
+                Reset();
+
             if (!IsPaused)
             {
                 for (var i = Entities.Count - 1; i >= 0; i--)

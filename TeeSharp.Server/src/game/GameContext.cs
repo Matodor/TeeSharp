@@ -402,7 +402,7 @@ namespace TeeSharp.Server.Game
                 player.TeamChangeTick = Server.Tick;
                     
                 player.SetTeam(msg.Team);
-                GameController.CheckTeamsBalance();
+                GameController.CheckTeamBalance();
 
                 if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
                 {
@@ -502,8 +502,8 @@ namespace TeeSharp.Server.Game
             Players[clientId] = Kernel.Get<BasePlayer>();
             Players[clientId].Init(clientId, startTeam);
 
-            GameController.CheckTeamsBalance();
-
+            GameController.CheckTeamBalance();
+            GameController.OnClientConnected(clientId);
             // send active vote
 
             Server.SendPackMsg(new GameMsg_SvMotd {Message = Config["SvMotd"]},
@@ -516,7 +516,7 @@ namespace TeeSharp.Server.Game
 
             SendChat(-1, false, $"'{Players[clientId].Name}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
             Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Players[clientId].Name}' team={Players[clientId].Team}");
-            
+            GameController.OnClientEnter(clientId);
             // update vote
         }
 
@@ -525,7 +525,7 @@ namespace TeeSharp.Server.Game
             Players[clientId].OnDisconnect(reason);
             Players[clientId] = null;
 
-            GameController.CheckTeamsBalance();
+            GameController.CheckTeamBalance();
             // update vote
 
             for (var i = 0; i < Players.Length; i++)

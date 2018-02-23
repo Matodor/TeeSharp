@@ -10,6 +10,7 @@ namespace TeeSharp.Server.Game
 {
     public abstract class BaseGameWorld : BaseInterface
     {
+        public virtual bool ResetRequested { get; set; }
         public virtual bool IsPaused { get; set; }
         public virtual WorldCore WorldCore { get; set; }
 
@@ -39,7 +40,7 @@ namespace TeeSharp.Server.Game
         public abstract Character IntersectCharacter(Vec2 pos1, Vec2 pos2, float radius, ref Vec2 newPos, Character notThis);
         public abstract Character ClosestCharacter(Vec2 pos, float radius, Character notThis);
         public abstract void Reset();
-        public abstract void RemoteEntities();
+        public abstract void RemoveEntities();
 
         public abstract void Tick();
         public abstract void OnSnapshot(int snappingClient);

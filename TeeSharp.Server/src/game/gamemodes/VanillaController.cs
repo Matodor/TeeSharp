@@ -1,16 +1,28 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using TeeSharp.Common;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Server.Game.Entities;
-using Math = TeeSharp.Common.Math;
+using Math = System.Math;
 
 namespace TeeSharp.Server.Game
 {
     public abstract class VanillaController : BaseGameController
     {
-        protected virtual IList<Vec2>[] SpawnPos { get; set; }
+        protected virtual GameFlags GameFlags { get; set; }
+        protected virtual int RoundStartTick { get; set; }
+        protected virtual int GameOverTick { get; set; }
+        protected virtual int SuddenDeath { get; set; }
+        protected virtual int Warmup { get; set; }
+        protected virtual int RoundCount { get; set; }
+        protected virtual int UnbalancedTick { get; set; }
+        
+        protected virtual bool ForceBalanced { get; set; }
+        protected virtual int[] TeamScores { get; set; }
+
+        protected virtual int[] Scores { get; set; }
+        protected virtual float[] ScoresStartTick { get; set; }
 
         protected VanillaController()
         {
@@ -21,119 +33,235 @@ namespace TeeSharp.Server.Game
                 new List<Vec2>()  // blue team spawn pos
             };
 
+            Scores = new int[GameContext.Players.Length];
+            ScoresStartTick = new float[GameContext.Players.Length];
+
+            DoWarmup(Config["SvWarmup"]);
+
+            TeamScores = new int[2];
+            TeamScores[(int) Team.RED] = 0;
+            TeamScores[(int) Team.BLUE] = 0;
+
             GameOverTick = -1;
             SuddenDeath = 0;
             RoundStartTick = Server.Tick;
             RoundCount = 0;
             GameFlags = GameFlags.NONE;
+
+            UnbalancedTick = -1;
+            ForceBalanced = false;
+        }
+
+        public override void OnClientEnter(int clientId)
+        {
+        }
+
+        public override void OnClientConnected(int clientId)
+        {
+            Scores[clientId] = 0;
+            ScoresStartTick[clientId] = Server.Tick;
+        }
+
+        protected virtual void DoWarmup(int seconds)
+        {
+            if (seconds < 0)
+                Warmup = 0;
+            else
+                Warmup = seconds * Server.TickSpeed;
         }
 
         public override void Tick()
         {
-        }
-
-        public override int GetPlayerScore(int clientId)
-        {
-            return 5;
-        }
-
-        protected override float EvaluateSpawnPos(SpawnEval eval, Vec2 pos)
-        {
-            var score = 0f;
-
-            foreach (var character in GameContext.World.GetEntities<Character>())
+            if (Warmup > 0)
             {
-                var scoremod = 1f;
-                if (eval.FriendlyTeam != Team.SPECTATORS && character.Player.Team == eval.FriendlyTeam)
-                    scoremod = 0.5f;
-
-                var d = Math.Distance(pos, character.Position);
-                score += scoremod * (System.Math.Abs(d) < 0.00001 ? 1000000000.0f : 1.0f / d);
+                Warmup--;
+                if (Warmup == 0)
+                    StartRound();
             }
 
-            return score;
-        }
-
-        protected override void EvaluateSpawnType(SpawnEval eval, IList<Vec2> spawnPos)
-        {
-            for (var i = 0; i < spawnPos.Count; i++)
+            if (GameOverTick != -1)
             {
-                var positions = new[]
+                if (Server.Tick < GameOverTick + Server.TickSpeed * 10)
                 {
-                    new Vec2(0.0f, 0.0f),
-                    new Vec2(-32.0f, 0.0f),
-                    new Vec2(0.0f, -32.0f),
-                    new Vec2(32.0f, 0.0f),
-                    new Vec2(0.0f, 32.0f)
-                };  // start, left, up, right, down
-
-                var result = -1;
-                var characters = GameContext.World
-                    .FindEntities<Character>(spawnPos[i], 64f)
-                    .ToArray();
-
-                for (var index = 0; index < 5 && result == -1; ++index)
-                {
-                    result = index;
-
-                    for (var c = 0; c < characters.Length; c++)
-                    {
-                        if (GameContext.Collision.IsTileSolid(spawnPos[i] + positions[index]) ||
-                            Math.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
-                            characters[c].ProximityRadius)
-                        {
-                            result = -1;
-                            break;
-                        }
-                    }
-
-                    if (result == -1)
-                        continue;
-
-                    var p = spawnPos[i] + positions[index];
-                    var s = EvaluateSpawnPos(eval, p);
-
-                    if (!eval.Got || eval.Score > s)
-                    {
-                        eval.Got = true;
-                        eval.Score = s;
-                        eval.Pos = p;
-                    }
+                    CycleMap();
+                    StartRound();
+                    RoundCount++;
                 }
             }
-        }
 
-        public override bool CanSpawn(Team team, int clientId, out Vec2 spawnPos)
-        {
-            if (team == Team.SPECTATORS)
+            if (GameWorld.IsPaused)
             {
-                spawnPos = Vec2.zero;
-                return false;
+                RoundStartTick++;
+                for (var i = 0; i < ScoresStartTick.Length; i++)
+                    ScoresStartTick[i]++;
             }
 
-            var eval = new SpawnEval();
+            if (IsTeamplay() && UnbalancedTick != -1 &&
+                Server.Tick > UnbalancedTick + Config["SvTeambalanceTime"] * Server.TickSpeed * 60)
+            {
+                GameContext.Console.Print(OutputLevel.DEBUG, "game", "Balancing teams");
+
+                var teamPlayers = new int[] {0, 0};
+                var teamScores = new float[] {0, 0};
+                var playersScores = new float[GameContext.Players.Length];
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null ||
+                        GameContext.Players[i].Team == Team.SPECTATORS)
+                    {
+                        continue;
+                    }
+
+                    teamPlayers[(int) GameContext.Players[i].Team]++;
+                    playersScores[i] = GetPlayerScore(i) * Server.TickSpeed * 60f /
+                                       (Server.Tick - ScoresStartTick[i]);
+                    teamScores[(int) GameContext.Players[i].Team] += playersScores[i];
+                }
+
+                if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
+                {
+                    var m = teamPlayers[0] > teamPlayers[1] ? Team.RED : Team.BLUE;
+                    var numBalance = Math.Abs(teamPlayers[0] - teamPlayers[1]) / 2;
+
+                    do
+                    {
+                        BasePlayer p = null;
+                        var pd = teamScores[(int) m];
+
+                        for (var i = 0; i < GameContext.Players.Length; i++)
+                        {
+                            if (GameContext.Players[i] == null || !CanBeMovedOnBalance(i))
+                                continue;
+
+                            if (GameContext.Players[i].Team == m &&
+                                    (p == null || Math.Abs(
+                                         (teamScores[(int) m ^ 1] + playersScores[i]) -
+                                         (teamScores[(int) m] - playersScores[i])
+                                    ) < pd))
+                            {
+                                p = GameContext.Players[i];
+                                pd = Math.Abs((teamScores[(int) m ^ 1] + playersScores[i]) -
+                                              (teamScores[(int) m] - playersScores[i]));
+                            }
+                        }
+
+                        var tmp = p.LastActionTick;
+                        p.SetTeam((Team) ((int) m ^ 1));
+                        p.LastActionTick = tmp;
+                        p.Respawn();
+                    } while (--numBalance != 0);
+
+                    ForceBalanced = true;
+                }
+
+                UnbalancedTick = -1;
+            }
+
+            // check for inactive
+
+            DoWincheck();
+        }
+
+        protected virtual void CycleMap()
+        {
+            
+        }
+
+        protected virtual void DoWincheck()
+        {
+            if (GameOverTick != -1 || Warmup != 0 || GameWorld.ResetRequested)
+                return;
 
             if (IsTeamplay())
             {
-                eval.FriendlyTeam = team;
-
-                EvaluateSpawnType(eval, SpawnPos[1 + ((int) team & 1)]);
-                if (!eval.Got)
+                if (Config["SvScorelimit"] > 0 &&
+                    (TeamScores[(int) Team.RED] >= Config["SvScorelimit"] ||
+                     TeamScores[(int) Team.BLUE] >= Config["SvScorelimit"]) ||
+                    Config["SvTimelimit"] > 0 && Server.Tick - RoundStartTick >=
+                    Config["SvTimelimit"] * Server.TickSpeed * 60)
                 {
-                    EvaluateSpawnType(eval, SpawnPos[0]);
-                    if (!eval.Got)
-                        EvaluateSpawnType(eval, SpawnPos[1 + (((int) team + 1) & 1)]);
+                    if (TeamScores[(int) Team.RED] != TeamScores[(int) Team.BLUE])
+                        EndRound();
+                    else
+                        SuddenDeath = 1;
                 }
             }
             else
             {
-                EvaluateSpawnType(eval, SpawnPos[0]);
-                EvaluateSpawnType(eval, SpawnPos[1]);
-                EvaluateSpawnType(eval, SpawnPos[2]);
-            }
+                var topScore = 0;
+                var topScoreCount = 0;
 
-            spawnPos = eval.Pos;
-            return eval.Got;
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null)
+                        continue;
+
+                    if (GetPlayerScore(i) > topScore)
+                    {
+                        topScore = GetPlayerScore(i);
+                        topScoreCount = 1;
+                    }
+                    else if (GetPlayerScore(i) == topScore)
+                        topScore++;
+                }
+
+                if (Config["SvScorelimit"] > 0 && topScore >= Config["SvScorelimit"] ||
+                    Config["SvTimelimit"] > 0 && Server.Tick - RoundStartTick >=
+                    Config["SvTimelimit"] * Server.TickSpeed * 60)
+                {
+                    if (topScoreCount == 1)
+                        EndRound();
+                    else
+                        SuddenDeath = 1;
+                }
+            }
+        }
+
+        protected virtual void EndRound()
+        {
+            if (Warmup > 0)
+                return;
+
+            GameWorld.IsPaused = true;
+            GameOverTick = Server.Tick;
+            SuddenDeath = 0;
+        }
+
+        protected virtual void ResetGame()
+        {
+            GameWorld.ResetRequested = true;
+        }
+
+        protected virtual void StartRound()
+        {
+            ResetGame();
+
+            RoundStartTick = Server.Tick;
+            SuddenDeath = 0;
+            GameOverTick = -1;
+            GameWorld.IsPaused = false;
+            TeamScores[(int) Team.RED] = 0;
+            TeamScores[(int) Team.BLUE] = 0;
+            ForceBalanced = false;
+            GameContext.Console.Print(OutputLevel.DEBUG, "game", $"start round type='{GameType}' teamplay='{GameFlags.HasFlag(GameFlags.TEAMS)}'");
+        }
+
+        public override int GetPlayerScore(int clientId)
+        {
+            return Scores[clientId];
+        }
+
+        public override void PostReset()
+        {
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null)
+                    continue;
+
+                GameContext.Players[i].Respawn();
+                GameContext.Players[i].RespawnTick = Server.Tick + Server.TickSpeed / 2;
+            }
         }
         
         public override bool CanChangeTeam(BasePlayer player, Team joinTeam)
@@ -141,7 +269,7 @@ namespace TeeSharp.Server.Game
             if (!IsTeamplay() || joinTeam == Team.SPECTATORS || Config["SvTeambalanceTime"])
                 return true;
 
-            var aT = new int[] {0, 0};
+            var teamPlayers = new int[] {0, 0};
 
             for (var i = 0; i < GameContext.Players.Length; i++)
             {
@@ -149,18 +277,18 @@ namespace TeeSharp.Server.Game
                     continue;
 
                 if (GameContext.Players[i].Team != Team.SPECTATORS)
-                    aT[(int) GameContext.Players[i].Team]++;
+                    teamPlayers[(int) GameContext.Players[i].Team]++;
             }
 
-            aT[(int) joinTeam]++;
+            teamPlayers[(int) joinTeam]++;
 
             if (player.Team != Team.SPECTATORS)
-                aT[(int) joinTeam ^ 1]--;
+                teamPlayers[(int) joinTeam ^ 1]--;
 
-            if (System.Math.Abs(aT[0] - aT[1]) >= 2)
+            if (System.Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
             {
-                return aT[0] < aT[1] && joinTeam == Team.RED ||
-                       aT[0] > aT[1] && joinTeam == Team.BLUE;
+                return teamPlayers[0] < teamPlayers[1] && joinTeam == Team.RED ||
+                       teamPlayers[0] > teamPlayers[1] && joinTeam == Team.BLUE;
             }
             return true;
         }
@@ -218,6 +346,20 @@ namespace TeeSharp.Server.Game
             return numPlayers[0] + numPlayers[1] < Server.MaxClients - Config["SvSpectatorSlots"];
         }
 
+        public override bool CanBeMovedOnBalance(int clientId)
+        {
+            return true;
+        }
+
+        public override bool IsForceBalanced()
+        {
+            if (!ForceBalanced)
+                return false;
+
+            ForceBalanced = false;
+            return true;
+        }
+
         public override bool IsFriendlyFire(int cliendId1, int clientId2)
         {
             if (cliendId1 == clientId2)
@@ -266,8 +408,33 @@ namespace TeeSharp.Server.Game
             return "game";
         }
 
-        public override bool CheckTeamsBalance()
+        public override bool CheckTeamBalance()
         {
+            if (!IsTeamplay() || Config["SvTeambalanceTime"] == 0)
+                return true;
+
+            var teamPlayers = new int[] {0, 0};
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null ||
+                    GameContext.Players[i].Team == Team.SPECTATORS)
+                {
+                    continue;
+                }
+
+                teamPlayers[(int) GameContext.Players[i].Team]++;
+            }
+
+            if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
+            {
+                GameContext.Console.Print(OutputLevel.DEBUG, "game", $"Teams are not balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
+                if (UnbalancedTick == -1)
+                    UnbalancedTick = Server.Tick;
+                return false;
+            }
+
+            GameContext.Console.Print(OutputLevel.DEBUG, "game", $"Team are balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
+            UnbalancedTick = -1;
             return true;
         }
 
@@ -280,6 +447,28 @@ namespace TeeSharp.Server.Game
 
         public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)
         {
+            if (killer == null || weapon == Weapon.GAME)
+                return 0;
+
+            if (killer == victim.Player)
+            {
+                Scores[victim.Player.ClientId]--;
+            }
+            else
+            {
+                if (IsTeamplay() && victim.Player.Team == killer.Team)
+                {
+                    Scores[killer.ClientId]--;
+                }
+                else
+                {
+                    Scores[killer.ClientId]++;
+                }
+            }
+
+            if (weapon == Weapon.SELF)
+                victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
+
             return 0;
         }
 
@@ -343,7 +532,22 @@ namespace TeeSharp.Server.Game
 
         public override void OnPlayerInfoChange(BasePlayer player)
         {
+            var teamColors = new int[] {65387, 10223467};
+            if (!IsTeamplay())
+                return;
 
+            player.TeeInfo.UseCustomColor = true;
+
+            if (player.Team >= Team.RED && player.Team <= Team.BLUE)
+            {
+                player.TeeInfo.ColorBody = teamColors[(int) player.Team];
+                player.TeeInfo.ColorFeet = teamColors[(int) player.Team];
+            }
+            else
+            {
+                player.TeeInfo.ColorBody = 12895054;
+                player.TeeInfo.ColorFeet = 12895054;
+            }
         }
 
         public override void OnSnapshot(int snappingClient)
