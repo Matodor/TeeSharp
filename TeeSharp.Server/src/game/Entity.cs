@@ -10,6 +10,7 @@ namespace TeeSharp.Server.Game
         public virtual Vec2 Position { get; set; }
         public virtual bool MarkedForDestroy { get; protected set; }
 
+        protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseGameWorld GameWorld { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
@@ -24,6 +25,7 @@ namespace TeeSharp.Server.Game
             Server = Kernel.Get<BaseServer>();
             GameWorld = Kernel.Get<BaseGameWorld>();
             Config = Kernel.Get<BaseConfig>();
+            Tuning = Kernel.Get<BaseTuningParams>();
 
             IDs = new int[idsCount];
             for (var i = 0; i < IDs.Length; i++)

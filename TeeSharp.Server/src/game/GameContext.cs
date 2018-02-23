@@ -140,9 +140,9 @@ namespace TeeSharp.Server.Game
             e.Position = pos;
         }
 
-        public override void CreateSound(Vec2 pos, Sounds sound, int mask = -1)
+        public override void CreateSound(Vec2 pos, Sound sound, int mask = -1)
         {
-            if (sound < 0 || sound >= Sounds.NUM_SOUNDS)
+            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
                 return;
 
             var e = Events.Create<SnapEvent_SoundWorld>();
@@ -153,9 +153,9 @@ namespace TeeSharp.Server.Game
             e.Sound = sound;
         }
 
-        public override void CreaetSoundGlobal(Sounds sound, int targetId = -1)
+        public override void CreaetSoundGlobal(Sound sound, int targetId = -1)
         {
-            if (sound < 0 || sound >= Sounds.NUM_SOUNDS)
+            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
                 return;
 
             var msg = new GameMsg_SvSoundGlobal

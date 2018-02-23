@@ -38,7 +38,7 @@ namespace TeeSharp.Server.Game.Entities
                     _spawnTick = -1;
 
                     if (_powerup == Powerup.WEAPON)
-                        GameContext.CreateSound(Position, Sounds.WEAPON_SPAWN);
+                        GameContext.CreateSound(Position, Sound.WEAPON_SPAWN);
                 }
                 else return;
             }
@@ -53,7 +53,7 @@ namespace TeeSharp.Server.Game.Entities
                 case Powerup.HEALTH:
                     if (character.IncreaseHealth(1))
                     {
-                        GameContext.CreateSound(Position, Sounds.PICKUP_HEALTH);
+                        GameContext.CreateSound(Position, Sound.PICKUP_HEALTH);
                         respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
                     }
                     break;
@@ -61,7 +61,7 @@ namespace TeeSharp.Server.Game.Entities
                 case Powerup.ARMOR:
                     if (character.IncreaseArmor(1))
                     {
-                        GameContext.CreateSound(Position, Sounds.PICKUP_ARMOR);
+                        GameContext.CreateSound(Position, Sound.PICKUP_ARMOR);
                         respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
                     }
                     break;
@@ -74,11 +74,11 @@ namespace TeeSharp.Server.Game.Entities
                             respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
 
                             if (_weapon == Weapon.GRENADE)
-                                GameContext.CreateSound(Position, Sounds.PICKUP_GRENADE);
+                                GameContext.CreateSound(Position, Sound.PICKUP_GRENADE);
                             else if (_weapon == Weapon.SHOTGUN)
-                                GameContext.CreateSound(Position, Sounds.PICKUP_SHOTGUN);
+                                GameContext.CreateSound(Position, Sound.PICKUP_SHOTGUN);
                             else if (_weapon == Weapon.RIFLE)
-                                GameContext.CreateSound(Position, Sounds.PICKUP_SHOTGUN);
+                                GameContext.CreateSound(Position, Sound.PICKUP_SHOTGUN);
 
                             GameContext.SendWeaponPickup(character.Player.ClientId, _weapon);
                         }

@@ -93,6 +93,34 @@ namespace TeeSharp.Server.Game
             entity.PrevTypeEntity = null;
         }
 
+        public override Character IntersectCharacter(Vec2 pos1, Vec2 pos2, 
+            float radius, ref Vec2 newPos, Character notThis)
+        {
+            var closestLength = Math.Distance(pos1, pos2) * 100f;
+            Character closest = null;
+
+            foreach (var character in GetEntities<Character>())
+            {
+                if (character == notThis)
+                    continue;
+
+                var intersectPos = Math.ClosestPointOnLine(pos1, pos2, character.Position);
+                var length = Math.Distance(character.Position, intersectPos);
+                if (length < character.ProximityRadius + radius)
+                {
+                    length = Math.Distance(pos1, intersectPos);
+                    if (length < closestLength)
+                    {
+                        newPos = intersectPos;
+                        closestLength = length;
+                        closest = character;
+                    }
+                }
+            }
+
+            return closest;
+        }
+
         public override Character ClosestCharacter(Vec2 pos, float radius, Character notThis)
         {
             var closestRange = radius * 2f;

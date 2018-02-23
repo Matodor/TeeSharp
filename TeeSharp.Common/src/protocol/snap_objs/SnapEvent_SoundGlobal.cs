@@ -8,7 +8,7 @@ namespace TeeSharp.Common.Protocol
         public override SnapshotItem Type { get; } = SnapshotItem.EVENT_SOUNDGLOBAL;
         public override int SerializeLength { get; } = 3;
 
-        public Sounds Sound;
+        public Sound Sound;
 
         public override int[] Serialize()
         {

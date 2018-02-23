@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Sounds
+    public enum Sound
     {
         GUN_FIRE = 0,
         SHOTGUN_FIRE,

@@ -36,6 +36,7 @@ namespace TeeSharp.Server.Game
         public abstract void AddEntity<T>(Entity<T> entity) where T : Entity<T>;
         public abstract void RemoveEntity<T>(Entity<T> entity) where T : Entity<T>;
 
+        public abstract Character IntersectCharacter(Vec2 pos1, Vec2 pos2, float radius, ref Vec2 newPos, Character notThis);
         public abstract Character ClosestCharacter(Vec2 pos, float radius, Character notThis);
         public abstract void Reset();
         public abstract void RemoteEntities();

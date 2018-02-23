@@ -199,10 +199,10 @@ namespace TeeSharp.Common.Protocol
         {
             var msg = new GameMsg_SvSoundGlobal
             {
-                Sound = (Sounds) unpacker.GetInt()
+                Sound = (Sound) unpacker.GetInt()
             };
 
-            if (msg.Sound < 0 || msg.Sound >= Sounds.NUM_SOUNDS)
+            if (msg.Sound < 0 || msg.Sound >= Sound.NUM_SOUNDS)
                 failedOn = "Sound";
 
             return msg;

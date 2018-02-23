@@ -132,5 +132,15 @@
                 return 1.0f;
             return (float)(1.0f / System.Math.Pow(curvature, (value - start) / range));
         }
+
+        public static float GetAngle(Vec2 Dir)
+        {
+            if (Dir.x == 0 && Dir.y == 0)
+                return 0.0f;
+            float a = (float)System.Math.Atan(Dir.y / Dir.x);
+            if (Dir.x < 0)
+                a = (float) (a + System.Math.PI);
+            return a;
+        }
     }
 }
