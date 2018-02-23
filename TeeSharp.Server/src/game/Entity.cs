@@ -8,7 +8,7 @@ namespace TeeSharp.Server.Game
     {
         public abstract float ProximityRadius { get; protected set; }
         public virtual Vec2 Position { get; set; }
-        public virtual bool MarkedForDestroy { get; protected set; }
+        public virtual bool MarkedForDestroy { get; private set; }
 
         protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseGameWorld GameWorld { get; set; }

@@ -23,19 +23,22 @@ namespace TeeSharp.Common
 
         public abstract void Init(BaseLayers layers);
         public abstract Tile GetTileAtIndex(int index);
+
         public abstract TileFlags GetTileFlags(int x, int y);
+        public virtual TileFlags GetTileFlags(float x, float y)
+        {
+            return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));
+        }
 
         public abstract TileFlags IntersectLine(Vec2 pos0, Vec2 pos1, out Vec2 outCollision,
             out Vec2 outBeforeCollision);
 
         public abstract bool TestBox(Vec2 pos, Vec2 size);
+
+        public abstract void MovePoint(ref Vec2 inOutPos, ref Vec2 inOutVel,
+            float elasticity, out int bounces);
         public abstract void MoveBox(ref Vec2 vec2, ref Vec2 vel1, Vec2 boxSize,
             float elasticity);
-
-        public virtual TileFlags GetTileFlags(float x, float y)
-        {
-            return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));
-        }
 
         public virtual bool IsTileSolid(float x, float y)
         {

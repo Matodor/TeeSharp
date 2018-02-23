@@ -4,9 +4,9 @@
     {
         // GAME TILES
         TILE_AIR = 0,
-        TILE_SOLID = 1 << 0 ,
-        TILE_DEATH = 1 << 1,
-        TILE_NOHOOK = 1 << 2,
+        TILE_SOLID = 1,
+        TILE_DEATH = 2,
+        TILE_NOHOOK = 3,
 
         // GAME ENTITIES
         ENTITY_NULL = 0,

@@ -301,6 +301,12 @@ namespace TeeSharp.Server.Game.Entities
             return true;
         }
 
+        protected virtual void DoWeaponFireRifle(Vec2 direction)
+        {
+            var laser = new Laser(Position, direction, Tuning["LaserReach"], Player.ClientId);
+            GameContext.CreateSound(Position, Sound.RIFLE_FIRE);
+        }
+
         protected virtual void DoWeaponFireNinja(Vec2 projStartPos, Vec2 direction)
         {
             HitObjects.Clear();
@@ -433,6 +439,10 @@ namespace TeeSharp.Server.Game.Entities
 
                 case Weapon.NINJA:
                     DoWeaponFireNinja(projStartPos, direction);
+                    break;
+
+                case Weapon.RIFLE:
+                    DoWeaponFireRifle(direction);
                     break;
             }
         }

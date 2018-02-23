@@ -46,7 +46,7 @@ namespace TeeSharp.Common
 
             var flags = (TileFlags) GameLayerTiles[ny * Width + nx].Index;
             if (flags == TileFlags.SOLID ||
-                flags == (TileFlags.SOLID | TileFlags.NOHOOK) ||
+                flags == (TileFlags.NOHOOK | TileFlags.NONE | TileFlags.SOLID) ||
                 flags == TileFlags.DEATH)
             {
                 return flags;
@@ -101,7 +101,46 @@ namespace TeeSharp.Common
             return false;
         }
 
-        public override void MoveBox(ref Vec2 pos, ref Vec2 vel, Vec2 boxSize, float elasticity)
+        public override void MovePoint(ref Vec2 inOutPos, ref Vec2 inOutVel, 
+            float elasticity, out int bounces)
+        {
+            bounces = 0;
+
+            var pos = inOutPos;
+            var vel = inOutVel;
+
+            if (IsTileSolid(pos + vel))
+            {
+                var affected = 0;
+
+                if (IsTileSolid(pos.x + vel.x, pos.y))
+                {
+                    inOutVel.x *= -elasticity;
+                    bounces++;
+                    affected++;
+                }
+
+                if (IsTileSolid(pos.x, pos.y + vel.y))
+                {
+                    inOutVel.y *= -elasticity;
+                    bounces++;
+                    affected++;
+                }
+
+                if (affected == 0)
+                {
+                    inOutVel.x *= -elasticity;
+                    inOutVel.y *= -elasticity;
+                }
+            }
+            else
+            {
+                inOutPos = pos + vel;
+            }
+        }
+
+        public override void MoveBox(ref Vec2 pos, ref Vec2 vel, Vec2 boxSize, 
+            float elasticity)
         {
             elasticity = System.Math.Clamp(elasticity, 0f, 1f);
             var distance = vel.Length;
