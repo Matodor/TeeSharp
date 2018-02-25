@@ -908,11 +908,11 @@ namespace TeeSharp.Server
 
                 var snapData = new byte[SnapshotBuilder.MAX_SNAPSHOT_SIZE];
                 var snapshotSize = IntCompression.Compress(deltaData, 0, deltaSize, snapData, 0);
-                var numPackets = (snapshotSize + MAX_SNAPSHOT_PACKSIZE - 1) / MAX_SNAPSHOT_PACKSIZE;
+                var numPackets = (snapshotSize + Snapshot.MAX_SNAPSHOT_PACKSIZE - 1) / Snapshot.MAX_SNAPSHOT_PACKSIZE;
 
                 for (int n = 0, left = snapshotSize; left != 0; n++)
                 {
-                    var chunk = left < MAX_SNAPSHOT_PACKSIZE ? left : MAX_SNAPSHOT_PACKSIZE;
+                    var chunk = left < Snapshot.MAX_SNAPSHOT_PACKSIZE ? left : Snapshot.MAX_SNAPSHOT_PACKSIZE;
                     left -= chunk;
 
                     if (numPackets == 1)
@@ -922,7 +922,7 @@ namespace TeeSharp.Server
                         msg.AddInt(Tick - deltaTick);
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
-                        msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
+                        msg.AddRaw(snapData, n * Snapshot.MAX_SNAPSHOT_PACKSIZE, chunk);
                         SendMsgEx(msg, MsgFlags.FLUSH, i, true);
                     }
                     else
@@ -934,7 +934,7 @@ namespace TeeSharp.Server
                         msg.AddInt(n);
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
-                        msg.AddRaw(snapData, n * MAX_SNAPSHOT_PACKSIZE, chunk);
+                        msg.AddRaw(snapData, n * Snapshot.MAX_SNAPSHOT_PACKSIZE, chunk);
                         SendMsgEx(msg, MsgFlags.FLUSH, i, true);
                     }
                 }

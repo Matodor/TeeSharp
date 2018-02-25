@@ -4,6 +4,8 @@ namespace TeeSharp.Common.Snapshots
 {
     public class Snapshot
     {
+        public const int MAX_SNAPSHOT_PACKSIZE = 900;
+
         public SnapshotItem this[int index] => _items[index];
 
         public readonly int ItemsCount;

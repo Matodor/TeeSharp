@@ -17,7 +17,6 @@ namespace TeeSharp.Server
     {
         public const int
             VANILLA_MAX_CLIENTS = 16,
-            MAX_SNAPSHOT_PACKSIZE = 900,
             SERVER_TICK_SPEED = 50;
 
         public abstract int MaxClients { get; }
