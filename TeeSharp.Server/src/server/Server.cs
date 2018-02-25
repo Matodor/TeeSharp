@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -28,7 +27,7 @@ namespace TeeSharp.Server
         public void Load(IKernel kernel)
         {
             // singletons
-            kernel.Bind<BaseVotes>().To<Votes>();
+            kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
             kernel.Bind<BaseServer>().To<Server>().AsSingleton();
             kernel.Bind<BaseConfig>().To<ServerConfig>().AsSingleton();
             kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();

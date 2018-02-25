@@ -14,8 +14,8 @@ namespace TeeSharp.Network
     public abstract class BaseNetworkClient : BaseInterface
     {
         public abstract BaseNetworkConnection Connection { get; protected set; }
+        public abstract UdpClient UdpClient { get; protected set; }
 
-        protected abstract UdpClient UdpClient { get; set; }
         protected abstract BaseChunkReceiver ChunkReceiver { get; set; }
 
         public abstract void Init();

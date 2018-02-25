@@ -79,5 +79,22 @@ namespace TeeSharp.Common
                 ? strUTF8.TrimStart(' ', '\t', '\n', '\r')
                 : strUTF8;
         }
+
+        public byte[] GetRaw(int size)
+        {
+            if (Error)
+                return null;
+
+            if (size < 0 || _currentIndex + size > _endIndex)
+            {
+                Error = true;
+                return null;
+            }
+
+            var data = new byte[size];
+            Buffer.BlockCopy(_buffer, _currentIndex, data, 0, size);
+            _currentIndex += size;
+            return data;
+        }
     }
 }

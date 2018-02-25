@@ -8,8 +8,8 @@ namespace TeeSharp.Network
     public class NetworkClient : BaseNetworkClient
     {
         public override BaseNetworkConnection Connection { get; protected set; }
+        public override UdpClient UdpClient { get; protected set; }
 
-        protected override UdpClient UdpClient { get; set; }
         protected override BaseChunkReceiver ChunkReceiver { get; set; }
 
         public override void Init()
