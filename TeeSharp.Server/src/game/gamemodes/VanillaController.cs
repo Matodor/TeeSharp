@@ -70,6 +70,82 @@ namespace TeeSharp.Server.Game
                 Warmup = seconds * Server.TickSpeed;
         }
 
+        protected virtual void DoTeamBalance()
+        {
+            if (IsTeamplay() && UnbalancedTick != -1 &&
+                Server.Tick > UnbalancedTick + Config["SvTeambalanceTime"] * Server.TickSpeed * 60)
+            {
+                GameContext.Console.Print(OutputLevel.DEBUG, "game", "Balancing teams");
+
+                var teamPlayers = new int[] { 0, 0 };
+                var teamScores = new float[] { 0, 0 };
+                var playersScores = new float[GameContext.Players.Length];
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null ||
+                        GameContext.Players[i].Team == Team.SPECTATORS)
+                    {
+                        continue;
+                    }
+
+                    teamPlayers[(int)GameContext.Players[i].Team]++;
+                    playersScores[i] = GetPlayerScore(i) * Server.TickSpeed * 60f /
+                                       (Server.Tick - ScoresStartTick[i]);
+                    teamScores[(int)GameContext.Players[i].Team] += playersScores[i];
+                }
+
+                if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
+                {
+                    var m = teamPlayers[0] > teamPlayers[1] ? Team.RED : Team.BLUE;
+                    var numBalance = Math.Abs(teamPlayers[0] - teamPlayers[1]) / 2;
+
+                    do
+                    {
+                        BasePlayer p = null;
+                        var pd = teamScores[(int)m];
+
+                        for (var i = 0; i < GameContext.Players.Length; i++)
+                        {
+                            if (GameContext.Players[i] == null || !CanBeMovedOnBalance(i))
+                                continue;
+
+                            if (GameContext.Players[i].Team == m &&
+                                (p == null || Math.Abs(
+                                     (teamScores[(int)m ^ 1] + playersScores[i]) -
+                                     (teamScores[(int)m] - playersScores[i])
+                                 ) < pd))
+                            {
+                                p = GameContext.Players[i];
+                                pd = Math.Abs((teamScores[(int)m ^ 1] + playersScores[i]) -
+                                              (teamScores[(int)m] - playersScores[i]));
+                            }
+                        }
+
+                        var tmp = p.LastActionTick;
+                        p.SetTeam((Team)((int)m ^ 1));
+                        p.LastActionTick = tmp;
+                        p.Respawn();
+                    } while (--numBalance != 0);
+
+                    ForceBalanced = true;
+                }
+
+                UnbalancedTick = -1;
+            }
+        }
+
+        protected virtual void CheckInactivePlayers()
+        {
+            if (Config["SvInactiveKickTime"] <= 0)
+                return;
+
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                
+            }
+        }
+
         public override void Tick()
         {
             if (Warmup > 0)
@@ -96,70 +172,8 @@ namespace TeeSharp.Server.Game
                     ScoresStartTick[i]++;
             }
 
-            if (IsTeamplay() && UnbalancedTick != -1 &&
-                Server.Tick > UnbalancedTick + Config["SvTeambalanceTime"] * Server.TickSpeed * 60)
-            {
-                GameContext.Console.Print(OutputLevel.DEBUG, "game", "Balancing teams");
-
-                var teamPlayers = new int[] {0, 0};
-                var teamScores = new float[] {0, 0};
-                var playersScores = new float[GameContext.Players.Length];
-
-                for (var i = 0; i < GameContext.Players.Length; i++)
-                {
-                    if (GameContext.Players[i] == null ||
-                        GameContext.Players[i].Team == Team.SPECTATORS)
-                    {
-                        continue;
-                    }
-
-                    teamPlayers[(int) GameContext.Players[i].Team]++;
-                    playersScores[i] = GetPlayerScore(i) * Server.TickSpeed * 60f /
-                                       (Server.Tick - ScoresStartTick[i]);
-                    teamScores[(int) GameContext.Players[i].Team] += playersScores[i];
-                }
-
-                if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
-                {
-                    var m = teamPlayers[0] > teamPlayers[1] ? Team.RED : Team.BLUE;
-                    var numBalance = Math.Abs(teamPlayers[0] - teamPlayers[1]) / 2;
-
-                    do
-                    {
-                        BasePlayer p = null;
-                        var pd = teamScores[(int) m];
-
-                        for (var i = 0; i < GameContext.Players.Length; i++)
-                        {
-                            if (GameContext.Players[i] == null || !CanBeMovedOnBalance(i))
-                                continue;
-
-                            if (GameContext.Players[i].Team == m &&
-                                    (p == null || Math.Abs(
-                                         (teamScores[(int) m ^ 1] + playersScores[i]) -
-                                         (teamScores[(int) m] - playersScores[i])
-                                    ) < pd))
-                            {
-                                p = GameContext.Players[i];
-                                pd = Math.Abs((teamScores[(int) m ^ 1] + playersScores[i]) -
-                                              (teamScores[(int) m] - playersScores[i]));
-                            }
-                        }
-
-                        var tmp = p.LastActionTick;
-                        p.SetTeam((Team) ((int) m ^ 1));
-                        p.LastActionTick = tmp;
-                        p.Respawn();
-                    } while (--numBalance != 0);
-
-                    ForceBalanced = true;
-                }
-
-                UnbalancedTick = -1;
-            }
-
-            // check for inactive
-
+            DoTeamBalance();
+            CheckInactivePlayers();
             DoWincheck();
         }
 

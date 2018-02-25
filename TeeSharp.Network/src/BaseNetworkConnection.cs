@@ -22,21 +22,24 @@ namespace TeeSharp.Network
         public abstract string Error { get; protected set; }
 
         public abstract int Sequence { get; set; }
-        public abstract int Ack { get; set; } 
+        public abstract int Ack { get; set; }
+
+        public abstract long LastReceiveTime { get; protected set; }
+        public abstract long LastSendTime { get; protected set; }
 
         protected abstract UdpClient UdpClient { get; set; } 
-        protected abstract long LastReceiveTime { get; set; }
-        protected abstract long LastSendTime { get; set; }
         protected abstract int BufferSize { get; set; }
         protected abstract bool RemoteClosed { get; set; }
         protected abstract Queue<NetworkChunkResend> ResendQueue { get; set; }
         protected abstract NetworkChunkConstruct ResendQueueConstruct { get; set; }
 
+        public abstract void Disconnect(string reason);
+        public abstract bool Connect(IPEndPoint endPoint);
+
         public abstract void ResetQueueConstruct();
         public abstract void Reset();
         public abstract void Init(UdpClient udpClient, NetworkConnectionConfig config);
         public abstract void Update();
-        public abstract void Disconnect(string reason);
         public abstract bool Feed(NetworkChunkConstruct packet, IPEndPoint remote);
         public abstract void SignalResend();
         public abstract int Flush();

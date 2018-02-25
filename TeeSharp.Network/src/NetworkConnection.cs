@@ -18,10 +18,10 @@ namespace TeeSharp.Network
 
         public override int Sequence { get; set; }
         public override int Ack { get; set; }
+        public override long LastReceiveTime { get; protected set; }
+        public override long LastSendTime { get; protected set; }
 
         protected override UdpClient UdpClient { get; set; }
-        protected override long LastReceiveTime { get; set; }
-        protected override long LastSendTime { get; set; }
         protected override int BufferSize { get; set; }
         protected override bool RemoteClosed { get; set; }
         protected override Queue<NetworkChunkResend> ResendQueue { get; set; }
@@ -34,6 +34,18 @@ namespace TeeSharp.Network
             Error = string.Empty;
             ResendQueueConstruct = new NetworkChunkConstruct();
             ResendQueue = new Queue<NetworkChunkResend>();
+        }
+
+        public override bool Connect(IPEndPoint endPoint)
+        {
+            if (State != ConnectionState.OFFLINE)
+                return false;
+
+            Reset();
+            EndPoint = endPoint;
+            State = ConnectionState.CONNECT;
+            SendControlMsg(ConnectionMessages.CONNECT, "");
+            return true;
         }
 
         public override void ResetQueueConstruct()
