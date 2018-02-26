@@ -1,4 +1,4 @@
-﻿namespace TeeSharp.Common.Protocol
+﻿namespace TeeSharp.Common.Snapshots
 {
     public abstract class BaseSnapEvent : BaseSnapObject
     {

@@ -1,10 +1,11 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Character : BaseSnapObject
     {
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_CHARACTER;
+        public override SnapObject Type { get; } = SnapObject.OBJ_CHARACTER;
         public override int SerializeLength { get; } = 22;
 
         public int Tick;
@@ -58,6 +59,37 @@ namespace TeeSharp.Common.Protocol
                 AttackTick == other.AttackTick;
         }
 
+        public override void Deserialize(int[] data, int dataOffset)
+        {
+            if (!RangeCheck(data, dataOffset))
+                return;
+
+            Tick = data[dataOffset + 0];
+            PosX = data[dataOffset + 1];
+            PosY = data[dataOffset + 2];
+            VelX = data[dataOffset + 3];
+            VelY = data[dataOffset + 4];
+
+            Angle = data[dataOffset + 5];
+            Direction = data[dataOffset + 6];
+            Jumped = data[dataOffset + 7];
+            HookedPlayer = data[dataOffset + 8];
+            HookState = (HookState) data[dataOffset + 9];
+            HookTick = data[dataOffset + 10];
+            HookX = data[dataOffset + 11];
+            HookY = data[dataOffset + 12];
+            HookDx = data[dataOffset + 13];
+            HookDy = data[dataOffset + 14];
+
+            PlayerFlags = (PlayerFlags) data[dataOffset + 15];
+            Health = data[dataOffset + 16];
+            Armor = data[dataOffset + 17];
+            AmmoCount = data[dataOffset + 18];
+            Weapon = (Weapon) data[dataOffset + 19];
+            Emote = (Emote) data[dataOffset + 20];
+            AttackTick = data[dataOffset + 21];
+        }
+
         public override int[] Serialize()
         {
             return new[]
@@ -67,6 +99,7 @@ namespace TeeSharp.Common.Protocol
                 PosY,
                 VelX,
                 VelY,
+
                 Angle,
                 Direction,
                 Jumped,

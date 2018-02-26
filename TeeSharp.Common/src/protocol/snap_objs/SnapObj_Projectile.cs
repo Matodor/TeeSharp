@@ -1,10 +1,11 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Projectile : BaseSnapObject
     {
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_PROJECTILE;
+        public override SnapObject Type { get; } = SnapObject.OBJ_PROJECTILE;
         public override int SerializeLength { get; } = 6;
 
         public Vec2 Position;
@@ -20,6 +21,25 @@ namespace TeeSharp.Common.Protocol
             msg.AddInt((int) Velocity.y);
             msg.AddInt((int) Weapon);
             msg.AddInt(StartTick);
+        }
+
+        public override void Deserialize(int[] data, int dataOffset)
+        {
+            if (!RangeCheck(data, dataOffset))
+                return;
+
+            Position = new Vec2(
+                data[dataOffset + 0],
+                data[dataOffset + 1]
+            );
+
+            Velocity = new Vec2(
+                data[dataOffset + 2],
+                data[dataOffset + 3]
+            );
+
+            Weapon = (Weapon) data[dataOffset + 4];
+            StartTick = data[dataOffset + 5];
         }
 
         public override int[] Serialize()

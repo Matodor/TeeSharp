@@ -5,19 +5,34 @@ namespace TeeSharp.Common.Snapshots
     public class Snapshot
     {
         public const int MAX_SNAPSHOT_PACKSIZE = 900;
-
         public SnapshotItem this[int index] => _items[index];
 
-        public readonly int ItemsCount;
-        public readonly int Size;
-        
-        private readonly SnapshotItem[] _items;
+        public int ItemsCount => _items.Length;
+        public int Size { get; private set; }
+
+        private SnapshotItem[] _items;
 
         public Snapshot(SnapshotItem[] items, int size)
         {
             _items = items;
-            ItemsCount = _items.Length;
             Size = size;
+        }
+
+        public void Clear()
+        {
+            _items = new SnapshotItem[0];
+            Size = 0;
+        }
+
+        public SnapshotItem FindItem(int key)
+        {
+            for (var i = 0; i < _items.Length; i++)
+            {
+                if (_items[i].Key == key)
+                    return _items[i];
+            }
+
+            return null;
         }
 
         public int Crc()

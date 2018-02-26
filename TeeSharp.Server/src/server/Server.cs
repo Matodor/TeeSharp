@@ -659,7 +659,7 @@ namespace TeeSharp.Server
                 data[i] = unpacker.GetInt();
 
             input.Tick = intendedTick;
-            input.PlayerInput.Deserialize(data);
+            input.PlayerInput.Deserialize(data, 0);
 
             Clients[clientId].CurrentInput++;
             Clients[clientId].CurrentInput %= Clients[clientId].Inputs.Length;

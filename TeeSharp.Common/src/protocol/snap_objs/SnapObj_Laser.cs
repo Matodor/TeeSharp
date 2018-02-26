@@ -1,15 +1,34 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Laser : BaseSnapObject
     {
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_LASER;
+        public override SnapObject Type { get; } = SnapObject.OBJ_LASER;
         public override int SerializeLength { get; } = 5;
 
         public Vec2 Position;
         public Vec2 From;
         public int StartTick;
+
+        public override void Deserialize(int[] data, int dataOffset)
+        {
+            if (!RangeCheck(data, dataOffset))
+                return;
+
+            Position = new Vec2(
+                data[dataOffset + 0],
+                data[dataOffset + 1]
+            );
+
+            From = new Vec2(
+                data[dataOffset + 2],
+                data[dataOffset + 3]
+            );
+
+            StartTick = data[dataOffset + 4];
+        }
 
         public override int[] Serialize()
         {

@@ -1,15 +1,30 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_Pickup : BaseSnapObject
     {
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_PICKUP;
+        public override SnapObject Type { get; } = SnapObject.OBJ_PICKUP;
         public override int SerializeLength { get; } = 4;
 
         public Vec2 Position;
         public Powerup Powerup = Powerup.WEAPON;
         public Weapon Weapon = Weapon.HAMMER;
+
+        public override void Deserialize(int[] data, int dataOffset)
+        {
+            if (!RangeCheck(data, dataOffset))
+                return;
+
+            Position = new Vec2(
+                data[dataOffset + 0],
+                data[dataOffset + 1]
+            );
+
+            Powerup = (Powerup) data[dataOffset + 2];
+            Weapon = (Weapon) data[dataOffset + 3];
+        }
 
         public override int[] Serialize()
         {

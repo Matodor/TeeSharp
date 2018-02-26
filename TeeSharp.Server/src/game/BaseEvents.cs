@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using TeeSharp.Common.Protocol;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game

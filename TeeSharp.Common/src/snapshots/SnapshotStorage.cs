@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace TeeSharp.Common.Snapshots
 {
@@ -12,6 +11,8 @@ namespace TeeSharp.Common.Snapshots
 
     public class SnapshotStorage
     {
+        public SnapshotInfo this[int index] => _snapshots[index];
+
         private readonly IList<SnapshotInfo> _snapshots;
 
         public SnapshotStorage()

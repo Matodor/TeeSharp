@@ -1,10 +1,11 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
     public class SnapObj_GameInfo : BaseSnapObject
     {
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_GAMEINFO;
+        public override SnapObject Type { get; } = SnapObject.OBJ_GAMEINFO;
         public override int SerializeLength { get; } = 8;
 
         public GameFlags GameFlags = GameFlags.NONE;
@@ -15,7 +16,22 @@ namespace TeeSharp.Common.Protocol
         public int TimeLimit;
         public int RoundNum;
         public int RoundCurrent;
-        
+
+        public override void Deserialize(int[] data, int dataOffset)
+        {
+            if (!RangeCheck(data, dataOffset))
+                return;
+
+            GameFlags = (GameFlags) data[dataOffset + 0];
+            GameStateFlags = (GameStateFlags) data[dataOffset + 1];
+            RoundStartTick = data[dataOffset + 2];
+            WarmupTimer = data[dataOffset + 3];
+            ScoreLimit = data[dataOffset + 4];
+            TimeLimit = data[dataOffset + 5];
+            RoundNum = data[dataOffset + 6];
+            RoundCurrent = data[dataOffset + 7];
+        }
+
         public override int[] Serialize()
         {
             return new[]

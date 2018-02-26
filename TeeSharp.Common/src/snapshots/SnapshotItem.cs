@@ -1,19 +1,21 @@
-﻿using TeeSharp.Common.Protocol;
+﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotItem
     {
-        public int Type => TypeAndID >> 16;
-        public int Id => TypeAndID & 0xffff;
-        public int Key => TypeAndID;
+        public SnapObject Type => (SnapObject) (Key >> 16);
+        public int Id => Key & 0xffff;
+        public readonly int Size;
 
-        public readonly int TypeAndID;
+        public readonly int Key;
         public readonly BaseSnapObject Object;
 
-        public SnapshotItem(int typeAndId, BaseSnapObject obj)
+        public SnapshotItem(int key, int size, BaseSnapObject obj)
         {
-            TypeAndID = typeAndId;
+            Size = size;
+            Key = key;
             Object = obj;
         }
     }

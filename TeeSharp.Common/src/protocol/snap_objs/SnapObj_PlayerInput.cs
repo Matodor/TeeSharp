@@ -1,5 +1,6 @@
 ﻿using System;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
@@ -7,7 +8,7 @@ namespace TeeSharp.Common.Protocol
     {
         public const int INPUT_STATE_MASK = 0b11_1111;
 
-        public override SnapshotItem Type { get; } = SnapshotItem.OBJ_PLAYERINPUT;
+        public override SnapObject Type { get; } = SnapObject.OBJ_PLAYERINPUT;
         public override int SerializeLength { get; } = 10;
 
         public int Direction;
@@ -50,21 +51,21 @@ namespace TeeSharp.Common.Protocol
             PrevWeapon = other.PrevWeapon;
         }
 
-        public void Deserialize(int[] data)
+        public override void Deserialize(int[] data, int dataOffset)
         {
-            if (data.Length < SerializeLength)
-                throw new Exception("Deserialize NetObj_PlayerInput error");
+            if (!RangeCheck(data, dataOffset))
+                return;
 
-            Direction = data[0];
-            TargetX = data[1];
-            TargetY = data[2];
-            Jump = data[3] != 0;
-            Fire = data[4];
-            Hook = data[5] != 0;
-            PlayerFlags = (PlayerFlags) data[6];
-            WantedWeapon = data[7];
-            NextWeapon = data[8];
-            PrevWeapon = data[9];
+            Direction = data[dataOffset + 0];
+            TargetX = data[dataOffset + 1];
+            TargetY = data[dataOffset + 2];
+            Jump = data[dataOffset + 3] != 0;
+            Fire = data[dataOffset + 4];
+            Hook = data[dataOffset + 5] != 0;
+            PlayerFlags = (PlayerFlags) data[dataOffset + 6];
+            WantedWeapon = data[dataOffset + 7];
+            NextWeapon = data[dataOffset + 8];
+            PrevWeapon = data[dataOffset + 9];
         }
         
         public override int[] Serialize()
