@@ -12,20 +12,16 @@ namespace TeeSharp.Core
         public static int[] StrToInts(this string input, int num)
         {
             var ints = new int[num];
-
-            if (string.IsNullOrEmpty(input))
-            {
-                ints[ints.Length - 1] &= 0x7FFFFF00;
-                return ints;
-            }
-
-            var bytes = Encoding.UTF8.GetBytes(input);
+            var bytes = new byte[0];
             var index = 0;
+
+            if (!string.IsNullOrEmpty(input))
+                bytes = Encoding.UTF8.GetBytes(input);
 
             for (var i = 0; i < ints.Length; i++)
             {
                 var buf = new int[] { 0, 0, 0, 0 };
-                for (var c = 0; c < buf.Length && index < bytes.Length; c++, index++)
+                for (int c = 0; c < buf.Length && index < bytes.Length; c++, index++)
                 {
                     buf[c] = bytes[index] >= 128
                         ? bytes[index] - 256
@@ -38,36 +34,40 @@ namespace TeeSharp.Core
                           ((buf[3] + 128) << 00);  
             }
 
-            //ints[ints.Length - 1] &= 0x7FFFFF00;
+            ints[ints.Length - 1] &= 0x7FFFFF00;
             return ints;
         }
 
         public static string IntsToStr(this int[] ints)
         {
-            var builder = new StringBuilder();
+            var bytes = new byte[ints.Length * 4];
+            var count = 0;
+
+            string GetString()
+            {
+                return Encoding.UTF8.GetString(bytes, 0, count);
+            }
+
             for (var i = 0; i < ints.Length; i++)
             {
-                do
-                {
-                    var c1 = (char) (((ints[i] >> 24) & 0b1111_1111) - 128);
-                    if (c1 < 32) return builder.ToString();
-                    builder.Append(c1);
+                bytes[i * 4 + 0] = (byte) (((ints[i] >> 24) & 0b1111_1111) - 128);
+                if (bytes[i * 4 + 0] < 32) return GetString();
+                count++;
 
-                    var c2 = (char)(((ints[i] >> 16) & 0b1111_1111) - 128);
-                    if (c2 < 32) return builder.ToString();
-                    builder.Append(c2);
+                bytes[i * 4 + 1] = (byte) (((ints[i] >> 16) & 0b1111_1111) - 128);
+                if (bytes[i * 4 + 1] < 32) return GetString();
+                count++;
 
-                    var c3 = (char)(((ints[i] >> 8) & 0b1111_1111) - 128);
-                    if (c3 < 32) return builder.ToString();
-                    builder.Append(c3);
+                bytes[i * 4 + 2] = (byte) (((ints[i] >> 8) & 0b1111_1111) - 128);
+                if (bytes[i * 4 + 2] < 32) return GetString();
+                count++;
 
-                    var c4 = (char)((ints[i] & 0b1111_1111) - 128);
-                    if (c4 < 32) return builder.ToString();
-                    builder.Append(c4);
-
-                } while (false);
+                bytes[i * 4 + 3] = (byte) ((ints[i] & 0b1111_1111) - 128);
+                if (bytes[i * 4 + 3] < 32) return GetString();
+                count++;
             }
-            return builder.ToString();
+
+            return GetString();
         }
 
         public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit = 0)

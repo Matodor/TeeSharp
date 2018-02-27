@@ -32,5 +32,10 @@ namespace TeeSharp.Common.Protocol
                 (int) Sound
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapEvent_SoundWorld pos={Position} sound={Sound}";
+        }
     }
 }

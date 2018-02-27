@@ -41,5 +41,10 @@ namespace TeeSharp.Common.Protocol
                 StartTick   
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapObj_Laser pos={Position} from={From} startTick={StartTick}";
+        }
     }
 }

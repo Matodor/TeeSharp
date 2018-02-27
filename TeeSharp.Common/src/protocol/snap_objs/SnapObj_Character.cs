@@ -120,5 +120,14 @@ namespace TeeSharp.Common.Protocol
                 AttackTick,
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapObj_Character tick={Tick} pos={PosX}:{PosY} vel={VelX}:{VelY}" +
+                   $" angle={Angle} dir={Direction} jumped={Jumped} hookedPlayer={HookedPlayer}" +
+                   $" hookState={HookState} hootTick={HookTick} hook={HookX}:{HookY}" +
+                   $" hookDelta={HookDx}:{HookDy} playerFlags={PlayerFlags} health={Health}" +
+                   $" armor={Armor} ammoCount={AmmoCount} weapon={Weapon} emote={Emote} attackTick={AttackTick}";
+        }
     }
 }

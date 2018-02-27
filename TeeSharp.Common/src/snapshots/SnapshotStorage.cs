@@ -12,6 +12,7 @@ namespace TeeSharp.Common.Snapshots
     public class SnapshotStorage
     {
         public SnapshotInfo this[int index] => _snapshots[index];
+        public int Count => _snapshots.Count;
 
         private readonly IList<SnapshotInfo> _snapshots;
 

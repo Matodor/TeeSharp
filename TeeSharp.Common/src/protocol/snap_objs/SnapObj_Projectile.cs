@@ -54,5 +54,11 @@ namespace TeeSharp.Common.Protocol
                 StartTick
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapObj_Projectile pos={Position} vel={Velocity}" +
+                   $" weapon={Weapon} startTick={StartTick}";
+        }
     }
 }

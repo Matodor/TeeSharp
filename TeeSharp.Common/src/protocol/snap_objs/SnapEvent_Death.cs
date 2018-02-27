@@ -32,5 +32,10 @@ namespace TeeSharp.Common.Protocol
                 ClientId
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapEvent_Death pos={Position} clientId={ClientId}";
+        }
     }
 }

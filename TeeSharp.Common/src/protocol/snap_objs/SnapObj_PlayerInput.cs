@@ -1,5 +1,4 @@
-﻿using System;
-using TeeSharp.Common.Enums;
+﻿using TeeSharp.Common.Enums;
 using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
@@ -83,6 +82,13 @@ namespace TeeSharp.Common.Protocol
                 NextWeapon,
                 PrevWeapon,
             };
+        }
+
+        public override string ToString()
+        {
+            return $"SnapObj_PlayerInput dir={Direction} target={TargetX}:{TargetY}" +
+                   $" jump={Jump} fire={Fire} hook={Hook} playerFlags={PlayerFlags}" +
+                   $" wantedWeapon={WantedWeapon} nextWeapon={NextWeapon} prevWeapon={PrevWeapon}";
         }
     }
 }

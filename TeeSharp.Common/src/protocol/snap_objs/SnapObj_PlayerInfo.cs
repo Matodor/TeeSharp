@@ -8,7 +8,7 @@ namespace TeeSharp.Common.Protocol
         public override SnapObject Type { get; } = SnapObject.OBJ_PLAYERINFO;
         public override int SerializeLength { get; } = 5;
 
-        public int Local;
+        public bool Local;
         public int ClientId;
         public Team Team;
         public int Score;
@@ -19,7 +19,7 @@ namespace TeeSharp.Common.Protocol
             if (!RangeCheck(data, dataOffset))
                 return;
 
-            Local = data[dataOffset + 0];
+            Local = data[dataOffset + 0] != 0;
             ClientId = data[dataOffset + 1];
             Team = (Team) data[dataOffset + 2];
             Score = data[dataOffset + 3];
@@ -30,12 +30,18 @@ namespace TeeSharp.Common.Protocol
         {
             return new[]
             {
-                Local,
+                Local ? 1 : 0,
                 ClientId,
                 (int) Team,
                 Score,
                 Latency,
             };
+        }
+
+        public override string ToString()
+        {
+            return $"SnapObj_PlayerInfo local={Local} clientId={ClientId} " +
+                   $" team={Team} score={Score} latency={Latency}";
         }
     }
 }

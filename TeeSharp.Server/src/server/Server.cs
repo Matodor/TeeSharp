@@ -636,7 +636,7 @@ namespace TeeSharp.Server
                 out var _))
             {
                 Clients[clientId].Latency =
-                    (int)(((Time.Get() - tagTime) * 1000) / Time.Freq());
+                    (int) (((Time.Get() - tagTime) * 1000) / Time.Freq());
             }
 
             if (intendedTick > Clients[clientId].LastInputTick)
@@ -876,7 +876,7 @@ namespace TeeSharp.Server
                 var now = Time.Get();
                 var snapshot =  SnapshotBuilder.EndBuild();
                 var crc = snapshot.Crc();
-                
+
                 Clients[i].SnapshotStorage.PurgeUntil(Tick - TickSpeed * 3);
                 Clients[i].SnapshotStorage.Add(Tick, now, snapshot);
 
@@ -907,7 +907,8 @@ namespace TeeSharp.Server
                 }
 
                 var snapData = new byte[SnapshotBuilder.MAX_SNAPSHOT_SIZE];
-                var snapshotSize = IntCompression.Compress(deltaData, 0, deltaSize, snapData, 0);
+                var snapshotSize = IntCompression.Compress(deltaData, 0, 
+                    deltaSize, snapData, 0); // Compress size in bytes
                 var numPackets = (snapshotSize + Snapshot.MAX_SNAPSHOT_PACKSIZE - 1) / Snapshot.MAX_SNAPSHOT_PACKSIZE;
 
                 for (int n = 0, left = snapshotSize; left != 0; n++)

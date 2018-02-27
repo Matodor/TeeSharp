@@ -27,5 +27,10 @@ namespace TeeSharp.Common.Protocol
                 Math.RoundToInt(Position.y),
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapEvent_Explosion pos={Position}";
+        }
     }
 }

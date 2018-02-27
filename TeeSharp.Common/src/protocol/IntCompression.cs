@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TeeSharp.Common
+﻿namespace TeeSharp.Common
 {
     public static class IntCompression
     {
@@ -36,25 +34,25 @@ namespace TeeSharp.Common
         public static int Unpack(byte[] inputData, int inputOffset, out int value)
         {
             var sign = (inputData[inputOffset] >> 6) & 1;
-            value = inputData[inputOffset] & 63;
+            value = inputData[inputOffset] & 0b0011_1111;
 
             do
             {
-                if ((inputData[inputOffset] & 128) == 0) break;
+                if ((inputData[inputOffset] & 0b1000_0000) == 0) break;
                 inputOffset++;
-                value |= (inputData[inputOffset] & 127) << (6);
+                value |= (inputData[inputOffset] & 0b0111_1111) << 6;
 
-                if ((inputData[inputOffset] & 128) == 0) break;
+                if ((inputData[inputOffset] & 0b1000_0000) == 0) break;
                 inputOffset++;
-                value |= (inputData[inputOffset] & 127) << (6 + 7);
+                value |= (inputData[inputOffset] & 0b0111_1111) << (6 + 7);
 
-                if ((inputData[inputOffset] & 128) == 0) break;
+                if ((inputData[inputOffset] & 0b1000_0000) == 0) break;
                 inputOffset++;
-                value |= (inputData[inputOffset] & 127) << (6 + 7 + 7);
+                value |= (inputData[inputOffset] & 0b0111_1111) << (6 + 7 + 7);
 
-                if ((inputData[inputOffset] & 128) == 0) break;
+                if ((inputData[inputOffset] & 0b1000_0000) == 0) break;
                 inputOffset++;
-                value |= (inputData[inputOffset] & 127) << (6 + 7 + 7 + 7);
+                value |= (inputData[inputOffset] & 0b0111_1111) << (6 + 7 + 7 + 7);
 
             } while (false);
 
@@ -81,11 +79,10 @@ namespace TeeSharp.Common
             while (inputOffset < end)
             {
                 inputOffset = Unpack(inputData, inputOffset, out var value);
-                outputData[outputOffset] = value;
-                outputOffset++;
+                outputData[outputOffset++] = value;
             }
 
-            return outputOffset - startOutputOffset;
+            return outputOffset - startOutputOffset; // Decompress size = count integer fields of snapshot items
         }
 
         public static int Compress(int[] inputData, int inputOffset, 
@@ -99,7 +96,7 @@ namespace TeeSharp.Common
                 inputOffset++;
             }
 
-            return outputOffset - startOutputOffset;
+            return outputOffset - startOutputOffset; // Compress size in bytes
         }
     }
 }

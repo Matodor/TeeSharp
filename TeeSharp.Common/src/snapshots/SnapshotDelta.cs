@@ -25,8 +25,9 @@ namespace TeeSharp.Common.Snapshots
         public static Snapshot UnpackDelta(Snapshot from, int[] inputData, 
             int inputOffset, int inputSize)
         {
-            var endIndex = inputOffset + inputSize;
             var snapshotBuilder = new SnapshotBuilder();
+            var endIndex = inputOffset + inputSize;
+
             var numDeletedItems = inputData[inputOffset++];
             var numUpdatedItems = inputData[inputOffset++];
             var numTempItems = inputData[inputOffset++];
@@ -84,7 +85,7 @@ namespace TeeSharp.Common.Snapshots
 
                 if (newItem == null)
                 {
-                    var item = SnapObjectsInfo.GetInstanceByType((SnapObject) type);
+                    var item = SnapObjectsInfo.GetInstanceByType(type);
                     if (snapshotBuilder.AddItem(item, id))
                         newItem = item;
                 }

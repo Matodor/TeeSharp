@@ -32,5 +32,10 @@ namespace TeeSharp.Common.Protocol
                 Angle
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapEvent_DamageInd pos={Position} angle={Angle}";
+        }
     }
 }

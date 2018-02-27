@@ -46,5 +46,12 @@ namespace TeeSharp.Common.Protocol
                 RoundCurrent,
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapObj_GameInfo gameFlags={GameFlags} gameStateFlags={GameStateFlags}" +
+                   $" roundStartTick={RoundStartTick} warmupTimer={WarmupTimer} scoreLimit={ScoreLimit}" +
+                   $" timeLimit={TimeLimit} roundNum={RoundNum} roundCurrent={RoundCurrent}";
+        }
     }
 }

@@ -36,7 +36,7 @@ namespace TeeSharp.Common.Protocol
                 data[dataOffset + 5],
                 data[dataOffset + 6],
             }.IntsToStr();
-
+            
             Country = data[dataOffset + 7];
 
             Skin = new[]
@@ -59,7 +59,7 @@ namespace TeeSharp.Common.Protocol
             var name = Name.StrToInts(4);
             var clan = Clan.StrToInts(3);
             var skin = Skin.StrToInts(6);
-            
+
             return new []
             {
                 name[0],
@@ -84,6 +84,12 @@ namespace TeeSharp.Common.Protocol
                 ColorBody,
                 ColorFeet
             };
+        }
+
+        public override string ToString()
+        {
+            return $"SnapObj_ClientInfo name={Name} clan={Clan} country={Country}" +
+                   $" skin={Skin} useCustomColor={UseCustomColor} colorBody={ColorBody} colorFeet={ColorFeet}";
         }
     }
 }

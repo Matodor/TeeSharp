@@ -36,5 +36,10 @@ namespace TeeSharp.Common.Protocol
                 (int) Weapon
             };
         }
+
+        public override string ToString()
+        {
+            return $"SnapObj_Pickup pos={Position} powerup={Powerup} weapon={Weapon}";
+        }
     }
 }

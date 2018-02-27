@@ -200,7 +200,7 @@ namespace TeeSharp.Server.Game
             playerInfo.Team = Team;
             playerInfo.Score = Server.GetClientScore(ClientId);
             playerInfo.ClientId = id;
-            playerInfo.Local = ClientId == snappingClient ? 1 : 0;
+            playerInfo.Local = ClientId == snappingClient;
             playerInfo.Latency = snappingClient == -1
                 ? Latency.Min
                 : GameContext.Players[snappingClient].ActLatency[ClientId];

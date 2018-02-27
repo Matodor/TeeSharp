@@ -16,7 +16,7 @@ namespace TeeSharp.Common.Snapshots
         {
             var types = new Dictionary<SnapObject, Type>()
             {
-                {SnapObject.EVENT_COMMON, typeof(SnapEvent_DamageInd)},
+                {SnapObject.EVENT_DAMAGEIND, typeof(SnapEvent_DamageInd)},
                 {SnapObject.EVENT_DEATH, typeof(SnapEvent_Death)},
                 {SnapObject.EVENT_EXPLOSION, typeof(SnapEvent_Explosion)},
                 {SnapObject.EVENT_HAMMERHIT, typeof(SnapEvent_HammerHit)},
