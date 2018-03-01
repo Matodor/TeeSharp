@@ -40,7 +40,6 @@ namespace TeeSharp.Core
 
         public static string IntsToStr(this int[] ints)
         {
-            return "test";
             var bytes = new byte[ints.Length * 4];
             var count = 0;
 
