@@ -23,7 +23,7 @@ namespace TeeSharp.Common.Protocol
         public int HookY;
         public int HookDx;
         public int HookDy;
-        public PlayerFlags PlayerFlags = PlayerFlags.NONE;
+        public PlayerFlags PlayerFlags = 0;
         public int Health;
         public int Armor;
         public int AmmoCount;

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using TeeSharp.Core;
 
 namespace TeeSharp.Common.Snapshots
 {
@@ -7,53 +7,82 @@ namespace TeeSharp.Common.Snapshots
         public long TagTime;
         public int Tick;
         public Snapshot Snapshot;
+        public SnapshotInfo Previous;
+        public SnapshotInfo Next;
     }
 
     public class SnapshotStorage
     {
-        public SnapshotInfo this[int index] => _snapshots[index];
-        public int Count => _snapshots.Count;
-
-        private readonly IList<SnapshotInfo> _snapshots;
+        public SnapshotInfo First { get; private set; }
+        public SnapshotInfo Last { get; private set; }
 
         public SnapshotStorage()
         {
-            _snapshots = new List<SnapshotInfo>();
+            First = null;
+            Last = null;
         }
 
         public void PurgeUntil(int tick)
         {
-            for (var i = 0; i < _snapshots.Count; i++)
+            var holder = First;
+
+            while (holder != null)
             {
-                if (_snapshots[i].Tick >= tick)
+                var next = holder.Next;
+
+                if (holder.Tick >= tick)
                     return;
 
-                _snapshots.RemoveAt(i);
-                i--;
+                holder.Next = null;
+                holder.Previous = null;
+
+                if (next == null)
+                    break;
+
+                First = next;
+                next.Previous = null;
+                holder = next;
             }
-            _snapshots.Clear();
+
+            First = null;
+            Last = null;
         }
 
         public void Add(int tick, long tagTime, Snapshot snapshot)
         {
-            _snapshots.Add(new SnapshotInfo
+            var holder = new SnapshotInfo
             {
                 Tick = tick,
                 TagTime = tagTime,
-                Snapshot = snapshot
-            });
+                Snapshot = snapshot,
+                Next = null,
+                Previous = null
+            };
+
+            holder.Next = null;
+            holder.Previous = Last;
+
+            if (Last != null)
+                Last.Next = holder;
+            else
+                First = holder;
+            Last = holder;
         }
 
         public bool Get(int tick, out long tagTime, out Snapshot snapshot)
         {
-            for (var i = 0; i < _snapshots.Count; i++)
+            var holder = First;
+
+            while (holder != null)
             {
-                if (_snapshots[i].Tick == tick)
+                if (holder.Tick == tick)
                 {
-                    tagTime = _snapshots[i].TagTime;
-                    snapshot = _snapshots[i].Snapshot;
+                    tagTime = holder.TagTime;
+                    snapshot = holder.Snapshot;
                     return true;
                 }
+
+                holder = holder.Next;
             }
 
             tagTime = -1;
@@ -63,7 +92,18 @@ namespace TeeSharp.Common.Snapshots
 
         public void PurgeAll()
         {
-            _snapshots.Clear();
+            var holder = First;
+
+            while (holder != null)
+            {
+                var next = holder.Next;
+                holder.Previous = null;
+                holder.Next = null;
+                holder = next;
+            }
+            
+            First = null;
+            Last = null;
         }
     }
 }

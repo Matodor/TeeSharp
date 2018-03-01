@@ -55,7 +55,11 @@ namespace TeeSharp.Common.Snapshots
                 }
 
                 if (keep)
-                    snapshotBuilder.AddItem(item.Object, item.Id);
+                {
+                    var copy = SnapObjectsInfo.GetInstanceByType(item.Object.Type);
+                    copy.Deserialize(item.Object.Serialize(), 0);
+                    snapshotBuilder.AddItem(copy, item.Id);
+                }
             }
 
             for (var i = 0; i < numUpdatedItems; i++)
@@ -65,7 +69,7 @@ namespace TeeSharp.Common.Snapshots
 
                 var type = (SnapObject) inputData[inputOffset++];
                 var id = inputData[inputOffset++];
-                var itemSize = 0; // in bytes
+                int itemSize; // in bytes
 
                 if (SnapObjectsInfo.GetSizeByType(type) != 0)
                     itemSize = SnapObjectsInfo.GetSizeByType(type);

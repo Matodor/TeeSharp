@@ -16,7 +16,7 @@ namespace TeeSharp.Common.Protocol
         public bool Jump;
         public int Fire;
         public bool Hook;
-        public PlayerFlags PlayerFlags = PlayerFlags.NONE;
+        public PlayerFlags PlayerFlags = 0;
         public int WantedWeapon;
         public int NextWeapon;
         public int PrevWeapon;
