@@ -34,12 +34,13 @@ namespace TeeSharp.Core
                           ((buf[3] + 128) << 00);  
             }
 
-            ints[ints.Length - 1] &= 0x7FFFFF00;
+            ints[ints.Length - 1] = (int) (ints[ints.Length - 1] & 0xffffff00);
             return ints;
         }
 
         public static string IntsToStr(this int[] ints)
         {
+            return "test";
             var bytes = new byte[ints.Length * 4];
             var count = 0;
 
