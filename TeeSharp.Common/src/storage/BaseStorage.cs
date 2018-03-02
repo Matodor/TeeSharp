@@ -12,6 +12,10 @@ namespace TeeSharp.Common.Storage
 
     public abstract class BaseStorage : BaseInterface
     {
+        public const int
+            TYPE_SAVE = 0,
+            TYPE_ALL = -1;
+
         public abstract bool Init(string appName, StorageType storageType);
         public abstract FileStream OpenFile(string fileName, FileAccess fileAccess, int pathIndex = -1);
 

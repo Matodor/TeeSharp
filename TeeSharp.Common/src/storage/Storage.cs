@@ -36,20 +36,20 @@ namespace TeeSharp.Common.Storage
             // Furthermore the top entry also defines the save path where
             // all data (settings.cfg, screenshots, ...) are stored.
 
-            var savePath = GetPath(0, null);
+            var savePath = GetPath(TYPE_SAVE, null);
             if (storageType != StorageType.BASIC && _paths.Count != 0 && !Directory.Exists(savePath))
             {
                 if (storageType == StorageType.CLIENT)
                 {
-                    Directory.CreateDirectory(GetPath(0, "screenshots"));
-                    Directory.CreateDirectory(GetPath(0, "screenshots/auto"));
-                    Directory.CreateDirectory(GetPath(0, "maps"));
-                    Directory.CreateDirectory(GetPath(0, "downloadedmaps"));
+                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "screenshots"));
+                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "screenshots/auto"));
+                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "maps"));
+                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "downloadedmaps"));
                 }
 
-                Directory.CreateDirectory(GetPath(0, "dumps"));
-                Directory.CreateDirectory(GetPath(0, "demos"));
-                Directory.CreateDirectory(GetPath(0, "demos/auto"));
+                Directory.CreateDirectory(GetPath(TYPE_SAVE, "dumps"));
+                Directory.CreateDirectory(GetPath(TYPE_SAVE, "demos"));
+                Directory.CreateDirectory(GetPath(TYPE_SAVE, "demos/auto"));
             }
 
             return _paths.Count != 0;
@@ -62,7 +62,8 @@ namespace TeeSharp.Common.Storage
                 var path = GetPath(0, fileName);
                 return !File.Exists(path) 
                     ? null 
-                    : File.Open(path, FileMode.Open, fileAccess);
+                    : File.Open(path, FileMode.Open, fileAccess, FileShare.Read)
+                    ;
             }
 
             if (pathIndex >= 0 && pathIndex < _paths.Count)
@@ -70,7 +71,7 @@ namespace TeeSharp.Common.Storage
                 var path = GetPath(pathIndex, fileName);
                 return !File.Exists(path) 
                     ? null 
-                    : File.Open(path, FileMode.Open, fileAccess);
+                    : File.Open(path, FileMode.Open, fileAccess, FileShare.Read);
             }
 
             for (var i = 0; i < _paths.Count; i++)
@@ -78,7 +79,7 @@ namespace TeeSharp.Common.Storage
                 var path = GetPath(i, fileName);
                 if (!File.Exists(path))
                     continue;
-                return File.Open(path, FileMode.Open, fileAccess);
+                return File.Open(path, FileMode.Open, fileAccess, FileShare.Read);
             }
 
             return null;

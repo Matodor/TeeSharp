@@ -16,5 +16,12 @@ namespace TeeSharp.Common.Snapshots
                 data.Length >= SerializeLength &&
                 dataOffset + SerializeLength <= data.Length;
         }
+
+        public BaseSnapObject MakeCopy()
+        {
+            var item = SnapObjectsInfo.GetInstanceByType(Type);
+            item.Deserialize(Serialize(), 0);
+            return item;
+        }
     }
 }

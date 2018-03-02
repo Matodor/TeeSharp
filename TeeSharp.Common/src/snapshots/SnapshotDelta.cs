@@ -56,9 +56,7 @@ namespace TeeSharp.Common.Snapshots
 
                 if (keep)
                 {
-                    var copy = SnapObjectsInfo.GetInstanceByType(item.Object.Type);
-                    copy.Deserialize(item.Object.Serialize(), 0);
-                    snapshotBuilder.AddItem(copy, item.Id);
+                    snapshotBuilder.AddItem(item.Object.MakeCopy(), item.Id);
                 }
             }
 
