@@ -7,6 +7,7 @@ namespace TeeSharp.Common
     public class BaseTuningParams : BaseInterface, IEnumerable<KeyValuePair<string, TuningParameter>>
     {
         public virtual TuningParameter this[string key] => Parameters[key];
+        public virtual int Count => Parameters.Count;
 
         protected virtual IDictionary<string, TuningParameter> Parameters { get; set; }
 

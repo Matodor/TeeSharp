@@ -18,15 +18,15 @@ namespace TeeSharp.Map
 
     public static class DataFileReader
     {
-        public static DataFile Read(FileStream fs, out string error)
+        public static DataFile Read(Stream stream, out string error)
         {
             uint crc;
-            var buffer = new byte[fs.Length];
-            fs.Read(buffer, 0, buffer.Length);
-            fs.Seek(0, SeekOrigin.Begin);
+            var buffer = new byte[stream.Length];
+            stream.Read(buffer, 0, buffer.Length);
+            stream.Seek(0, SeekOrigin.Begin);
             crc = Crc32.ComputeChecksum(buffer);
 
-            var versionHeader = fs.ReadStruct<DataFileVersionHeader>();
+            var versionHeader = stream.ReadStruct<DataFileVersionHeader>();
             if (versionHeader.Magic != "DATA" && versionHeader.Magic != "ATAD")
             {
                 error = $"wrong signature ({versionHeader.Magic})";
@@ -39,25 +39,25 @@ namespace TeeSharp.Map
                 return null;
             }
 
-            var header = fs.ReadStruct<DataFileHeader>();
+            var header = stream.ReadStruct<DataFileHeader>();
 
             var itemTypes = new DataFileItemType[header.NumItemTypes];
             for (var i = 0; i < itemTypes.Length; i++)
-                itemTypes[i] = fs.ReadStruct<DataFileItemType>();
+                itemTypes[i] = stream.ReadStruct<DataFileItemType>();
 
             var itemOffsets = new int[header.NumItems];
             for (var i = 0; i < itemOffsets.Length; i++)
-                itemOffsets[i] = fs.ReadStruct<int>();
+                itemOffsets[i] = stream.ReadStruct<int>();
 
             var dataOffsets = new int[header.NumData];
             for (var i = 0; i < dataOffsets.Length; i++)
-                dataOffsets[i] = fs.ReadStruct<int>();
+                dataOffsets[i] = stream.ReadStruct<int>();
 
             var dataSizes = new int[header.NumData];
             for (var i = 0; i < dataSizes.Length; i++)
-                dataSizes[i] = fs.ReadStruct<int>();
+                dataSizes[i] = stream.ReadStruct<int>();
 
-            var itemStartIndex = fs.Position;
+            var itemStartIndex = stream.Position;
 
             error = string.Empty;
             return new DataFile(

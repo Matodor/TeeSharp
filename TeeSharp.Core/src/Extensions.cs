@@ -106,7 +106,7 @@ namespace TeeSharp.Core
             return value;
         }
 
-        public static T ReadStruct<T>(this FileStream fs)
+        public static T ReadStruct<T>(this Stream fs)
         {
             var buffer = new byte[Marshal.SizeOf<T>()];
             fs.Read(buffer, 0, buffer.Length);

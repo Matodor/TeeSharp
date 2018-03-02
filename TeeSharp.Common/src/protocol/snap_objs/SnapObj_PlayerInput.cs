@@ -21,6 +21,20 @@ namespace TeeSharp.Common.Protocol
         public int NextWeapon;
         public int PrevWeapon;
 
+        public void Reset()
+        {
+            Direction = 0;
+            TargetX = 0;
+            TargetY = 0;
+            Jump = false;
+            Fire = 0;
+            Hook = false;
+            PlayerFlags = 0;
+            WantedWeapon = 0;
+            NextWeapon = 0;
+            PrevWeapon = 0;
+    }
+
         public bool Compare(SnapObj_PlayerInput other)
         {
             return

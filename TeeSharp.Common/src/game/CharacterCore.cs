@@ -46,7 +46,11 @@ namespace TeeSharp.Common.Game
             HookState =  HookState.IDLE;
             HookedPlayer = -1;
             Jumped = 0;
+            Direction = 0;
+            Angle = 0;
             TriggeredEvents = CoreEvents.NONE;
+
+            Input.Reset();
         }
 
         public virtual void Tick(bool useInput)

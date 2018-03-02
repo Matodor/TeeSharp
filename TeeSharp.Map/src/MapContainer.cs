@@ -1,7 +1,5 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
-using TeeSharp.Core;
-using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Map
 {
@@ -48,7 +46,7 @@ namespace TeeSharp.Map
             return (i << 16) + Marshal.SizeOf<T>();
         }
 
-        public static MapContainer Load(FileStream stream, out string error)
+        public static MapContainer Load(Stream stream, out string error)
         {
             var dataFile = DataFileReader.Read(stream, out error);
             if (dataFile == null)

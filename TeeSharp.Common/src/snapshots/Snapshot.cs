@@ -1,4 +1,5 @@
-﻿using TeeSharp.Core;
+﻿using TeeSharp.Common.Enums;
+using TeeSharp.Core;
 
 namespace TeeSharp.Common.Snapshots
 {
@@ -22,6 +23,12 @@ namespace TeeSharp.Common.Snapshots
         {
             _items = new SnapshotItem[0];
             Size = 0;
+        }
+
+        public SnapshotItem FindItem(int id, SnapObject type)
+        {
+            var key = (int) type << 16 | id;
+            return FindItem(key);
         }
 
         public SnapshotItem FindItem(int key)
