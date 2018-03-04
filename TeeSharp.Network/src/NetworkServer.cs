@@ -80,11 +80,14 @@ namespace TeeSharp.Network
 
         public override bool Receive(out NetworkChunk packet)
         {
-            if (ChunkReceiver.FetchChunk(out packet))
-                return true;
-
-            while (UdpClient.Available > 0)
+            while (true)
             {
+                if (ChunkReceiver.FetchChunk(out packet))
+                    return true;
+
+                if (UdpClient.Available <= 0)
+                    return false;
+
                 var remote = (IPEndPoint) null;
                 byte[] data;
 
@@ -184,9 +187,6 @@ namespace TeeSharp.Network
                     }
                 }
             }
-
-            packet = null;
-            return false;
         }
 
         public override void Drop(int clientId, string reason)

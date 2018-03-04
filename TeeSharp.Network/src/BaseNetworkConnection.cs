@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using TeeSharp.Core;
@@ -14,6 +15,8 @@ namespace TeeSharp.Network
     public abstract class BaseNetworkConnection : BaseInterface
     {
         public const int BUFFERSIZE = 1024 * 32;
+
+        public abstract event Action<string> Disconnected;
 
         public abstract NetworkConnectionConfig Config { get; set; }
         public abstract ConnectionState State { get; protected set; }

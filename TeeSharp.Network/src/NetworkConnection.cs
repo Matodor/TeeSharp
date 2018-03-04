@@ -10,6 +10,8 @@ namespace TeeSharp.Network
 {
     public class NetworkConnection : BaseNetworkConnection
     {
+        public override event Action<string> Disconnected;
+
         public override NetworkConnectionConfig Config { get; set; }
         public override ConnectionState State { get; protected set; }
         public override long ConnectedAt { get; protected set; }
@@ -153,6 +155,7 @@ namespace TeeSharp.Network
             }
 
             Reset();
+            Disconnected?.Invoke(reason);
         }
 
         public override bool Feed(NetworkChunkConstruct packet, IPEndPoint remote)
