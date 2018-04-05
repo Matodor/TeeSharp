@@ -80,16 +80,16 @@ namespace TeeSharp.Core
             return memcmp(b1, compareArray, limit) == 0;
         }
 
-        public static T[] ReadStructs<T>(this byte[] buffer)
+        public static T[] ReadStructs<T>(this byte[] buffer, int offset = 0)
         {
             var size = Marshal.SizeOf<T>();
-            var array = new T[buffer.Length / size];
+            var array = new T[(buffer.Length - offset) / size];
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             var ptr = handle.AddrOfPinnedObject();
 
             for (var i = 0; i < array.Length; i++)
             {
-                array[i] = Marshal.PtrToStructure<T>(ptr + size * i);
+                array[i] = Marshal.PtrToStructure<T>(ptr + (size * i + offset));
             }
 
             handle.Free();
@@ -99,8 +99,8 @@ namespace TeeSharp.Core
         public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
         {
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, offset);
-            var value = Marshal.PtrToStructure<T>(ptr);
+            var ptr = handle.AddrOfPinnedObject();
+            var value = Marshal.PtrToStructure<T>(ptr + offset);
 
             handle.Free();
             return value;
