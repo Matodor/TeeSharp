@@ -9,13 +9,13 @@ namespace TeeSharp.Server.Game.Entities
         public override float ProximityRadius { get; protected set; } = 16f;
 
         private readonly int _ownerId;
-        private Vec2 _direction;
-        private Vec2 _from;
+        private Vector2 _direction;
+        private Vector2 _from;
         private float _energy;
         private int _bounces;
         private int _evalTick;
     
-        public Laser(Vec2 position, Vec2 direction, float startEnergy,
+        public Laser(Vector2 position, Vector2 direction, float startEnergy,
             int ownerId) : base(1)
         {
             Position = position;
@@ -87,9 +87,9 @@ namespace TeeSharp.Server.Game.Entities
             _evalTick++;
         }
 
-        protected virtual bool HitCharacter(Vec2 from, Vec2 to)
+        protected virtual bool HitCharacter(Vector2 from, Vector2 to)
         {
-            var hitAt = Vec2.zero;
+            var hitAt = Vector2.zero;
             var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
             var hitCharacter = GameWorld.IntersectCharacter(Position, to, 0f, ref hitAt, ownerCharacter);
 
@@ -99,7 +99,7 @@ namespace TeeSharp.Server.Game.Entities
             _from = from;
             Position = hitAt;
             _energy = -1;
-            hitCharacter.TakeDamage(Vec2.zero, (int)Tuning["LaserDamage"].FloatValue, 
+            hitCharacter.TakeDamage(Vector2.zero, (int)Tuning["LaserDamage"].FloatValue, 
                 _ownerId, Weapon.RIFLE);
             return true;
         }

@@ -30,14 +30,14 @@ namespace TeeSharp.Common
             return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));
         }
 
-        public abstract TileFlags IntersectLine(Vec2 pos0, Vec2 pos1, out Vec2 outCollision,
-            out Vec2 outBeforeCollision);
+        public abstract TileFlags IntersectLine(Vector2 pos0, Vector2 pos1, out Vector2 outCollision,
+            out Vector2 outBeforeCollision);
 
-        public abstract bool TestBox(Vec2 pos, Vec2 size);
+        public abstract bool TestBox(Vector2 pos, Vector2 size);
 
-        public abstract void MovePoint(ref Vec2 inOutPos, ref Vec2 inOutVel,
+        public abstract void MovePoint(ref Vector2 inOutPos, ref Vector2 inOutVel,
             float elasticity, out int bounces);
-        public abstract void MoveBox(ref Vec2 vec2, ref Vec2 vel1, Vec2 boxSize,
+        public abstract void MoveBox(ref Vector2 pos, ref Vector2 vel, Vector2 boxSize,
             float elasticity);
 
         public virtual bool IsTileSolid(float x, float y)
@@ -48,7 +48,7 @@ namespace TeeSharp.Common
             ).HasFlag(TileFlags.SOLID);
         }
 
-        public virtual bool IsTileSolid(Vec2 pos)
+        public virtual bool IsTileSolid(Vector2 pos)
         {
             return IsTileSolid(pos.x, pos.y);
         }

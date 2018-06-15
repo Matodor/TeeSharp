@@ -98,6 +98,7 @@ namespace TeeSharp.MasterServer
         private void RequestServers(IPEndPoint masterServer)
         {
             Debug.Log("masterserver", $"request servers list from {masterServer}");
+
             _networkClient.Send(new NetworkChunk
             {
                 ClientId = -1,

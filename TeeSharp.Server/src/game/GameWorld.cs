@@ -45,7 +45,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override IEnumerable<T> FindEntities<T>(Vec2 pos, float radius)
+        public override IEnumerable<T> FindEntities<T>(Vector2 pos, float radius)
         {
             var current = Entity<T>.FirstTypeEntity;
             while (current != null)
@@ -93,8 +93,8 @@ namespace TeeSharp.Server.Game
             entity.PrevTypeEntity = null;
         }
 
-        public override Character IntersectCharacter(Vec2 pos1, Vec2 pos2, 
-            float radius, ref Vec2 newPos, Character notThis)
+        public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
+            float radius, ref Vector2 newPos, Character notThis)
         {
             var closestLength = Math.Distance(pos1, pos2) * 100f;
             Character closest = null;
@@ -121,7 +121,7 @@ namespace TeeSharp.Server.Game
             return closest;
         }
 
-        public override Character ClosestCharacter(Vec2 pos, float radius, Character notThis)
+        public override Character ClosestCharacter(Vector2 pos, float radius, Character notThis)
         {
             var closestRange = radius * 2f;
             Character closest = null;

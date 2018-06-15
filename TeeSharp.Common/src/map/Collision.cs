@@ -55,7 +55,7 @@ namespace TeeSharp.Common
             return TileFlags.NONE;
         }
 
-        public override TileFlags IntersectLine(Vec2 pos0, Vec2 pos1, out Vec2 outCollision, out Vec2 outBeforeCollision)
+        public override TileFlags IntersectLine(Vector2 pos0, Vector2 pos1, out Vector2 outCollision, out Vector2 outBeforeCollision)
         {
             var distance = Math.Distance(pos0, pos1);
             var end = (int) (distance + 1);
@@ -87,7 +87,7 @@ namespace TeeSharp.Common
             return GameLayerTiles[index];
         }
 
-        public override bool TestBox(Vec2 pos, Vec2 size)
+        public override bool TestBox(Vector2 pos, Vector2 size)
         {
             size *= 0.5f;
             if (IsTileSolid(pos.x - size.x, pos.y - size.y))
@@ -101,7 +101,7 @@ namespace TeeSharp.Common
             return false;
         }
 
-        public override void MovePoint(ref Vec2 inOutPos, ref Vec2 inOutVel, 
+        public override void MovePoint(ref Vector2 inOutPos, ref Vector2 inOutVel, 
             float elasticity, out int bounces)
         {
             bounces = 0;
@@ -139,7 +139,7 @@ namespace TeeSharp.Common
             }
         }
 
-        public override void MoveBox(ref Vec2 pos, ref Vec2 vel, Vec2 boxSize, 
+        public override void MoveBox(ref Vector2 pos, ref Vector2 vel, Vector2 boxSize, 
             float elasticity)
         {
             elasticity = System.Math.Clamp(elasticity, 0f, 1f);
@@ -156,14 +156,14 @@ namespace TeeSharp.Common
                 if (TestBox(newPos, boxSize))
                 {
                     var hits = 0;
-                    if (TestBox(new Vec2(pos.x, newPos.y), boxSize))
+                    if (TestBox(new Vector2(pos.x, newPos.y), boxSize))
                     {
                         newPos.y = pos.y;
                         vel.y *= -elasticity;
                         hits++;
                     }
 
-                    if (TestBox(new Vec2(newPos.x, pos.y), boxSize))
+                    if (TestBox(new Vector2(newPos.x, pos.y), boxSize))
                     {
                         newPos.x = pos.x;
                         vel.x *= -elasticity;

@@ -8,8 +8,8 @@ namespace TeeSharp.Common.Protocol
         public override SnapObject Type { get; } = SnapObject.OBJ_LASER;
         public override int SerializeLength { get; } = 5;
 
-        public Vec2 Position;
-        public Vec2 From;
+        public Vector2 Position;
+        public Vector2 From;
         public int StartTick;
 
         public override void Deserialize(int[] data, int dataOffset)
@@ -17,12 +17,12 @@ namespace TeeSharp.Common.Protocol
             if (!RangeCheck(data, dataOffset))
                 return;
 
-            Position = new Vec2(
+            Position = new Vector2(
                 data[dataOffset + 0],
                 data[dataOffset + 1]
             );
 
-            From = new Vec2(
+            From = new Vector2(
                 data[dataOffset + 2],
                 data[dataOffset + 3]
             );

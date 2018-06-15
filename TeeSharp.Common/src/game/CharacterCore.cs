@@ -5,10 +5,10 @@ namespace TeeSharp.Common.Game
 {
     public class CharacterCore
     {
-        public virtual Vec2 Position { get; set; }
-        public virtual Vec2 Velocity { get; set; }
-        public virtual Vec2 HookPosition { get; set; }
-        public virtual Vec2 HookDirection { get; set; }
+        public virtual Vector2 Position { get; set; }
+        public virtual Vector2 Velocity { get; set; }
+        public virtual Vector2 HookPosition { get; set; }
+        public virtual Vector2 HookDirection { get; set; }
         public virtual int HookTick { get; set; }
         public virtual HookState HookState { get; set; }
         public virtual int Jumped { get; set; }
@@ -38,10 +38,10 @@ namespace TeeSharp.Common.Game
 
         public virtual void Reset()
         {
-            Position = Vec2.zero;
-            Velocity = Vec2.zero;
-            HookPosition = Vec2.zero;
-            HookDirection = Vec2.zero;
+            Position = Vector2.zero;
+            Velocity = Vector2.zero;
+            HookPosition = Vector2.zero;
+            HookDirection = Vector2.zero;
             HookTick = 0;
             HookState =  HookState.IDLE;
             HookedPlayer = -1;
@@ -63,7 +63,7 @@ namespace TeeSharp.Common.Game
             else if (Collision.IsTileSolid(Position.x - TEE_SIZE / 2, Position.y + TEE_SIZE / 2 + 5))
                 isGrounded = true;
 
-            var targetDirection = new Vec2(Input.TargetX, Input.TargetY).Normalized;
+            var targetDirection = new Vector2(Input.TargetX, Input.TargetY).Normalized;
             float maxSpeed = isGrounded ? World.Tuning["GroundControlSpeed"] : World.Tuning["AirControlSpeed"];
             float accel = isGrounded ? World.Tuning["GroundControlAccel"] : World.Tuning["AirControlAccel"];
             float friction = isGrounded ? World.Tuning["GroundFriction"] : World.Tuning["AirFriction"];
@@ -288,7 +288,7 @@ namespace TeeSharp.Common.Game
                                 (distance / World.Tuning["HookLength"]);
                             float dragSpeed = World.Tuning["HookDragSpeed"];
 
-                            characterCore.Velocity = new Vec2(
+                            characterCore.Velocity = new Vector2(
                                 Math.SaturatedAdd(-dragSpeed, dragSpeed, 
                                     characterCore.Velocity.x, hookAccel*direction.x*1.5f),
                                 Math.SaturatedAdd(-dragSpeed, dragSpeed, 
@@ -336,7 +336,7 @@ namespace TeeSharp.Common.Game
             vel.x *= rampValue;
 
             var newPos = Position;
-            Collision.MoveBox(ref newPos, ref vel, new Vec2(TEE_SIZE, TEE_SIZE), 0);
+            Collision.MoveBox(ref newPos, ref vel, new Vector2(TEE_SIZE, TEE_SIZE), 0);
 
             vel.x = vel.x * (1.0f / rampValue);
 
@@ -408,13 +408,13 @@ namespace TeeSharp.Common.Game
 
         public virtual void Read(SnapObj_Character character)
         {
-            Position = new Vec2(character.PosX, character.PosY);
-            Velocity = new Vec2(character.VelX / 256.0f, character.VelY / 256.0f);
+            Position = new Vector2(character.PosX, character.PosY);
+            Velocity = new Vector2(character.VelX / 256.0f, character.VelY / 256.0f);
 
             HookState = character.HookState;
             HookTick = character.HookTick;
-            HookPosition = new Vec2(character.HookX, character.HookY);
-            HookDirection = new Vec2(character.HookDx / 256.0f, character.HookDy / 256.0f);
+            HookPosition = new Vector2(character.HookX, character.HookY);
+            HookDirection = new Vector2(character.HookDx / 256.0f, character.HookDy / 256.0f);
             HookedPlayer = character.HookedPlayer;
 
             Jumped = character.Jumped;

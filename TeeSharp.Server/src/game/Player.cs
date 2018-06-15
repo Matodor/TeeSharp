@@ -71,7 +71,7 @@ namespace TeeSharp.Server.Game
             {
                 if (Character == null && Team == Team.SPECTATORS && SpectatorId == -1)
                 {
-                    ViewPos -= new Vec2(
+                    ViewPos -= new Vector2(
                         Math.Clamp(ViewPos.x - LatestActivity.TargetX, -500f, 500f),
                         Math.Clamp(ViewPos.y - LatestActivity.TargetY, -400f, 400f)
                     );

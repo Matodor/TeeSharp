@@ -13,7 +13,7 @@ namespace TeeSharp.Common.Protocol
             if (!RangeCheck(data, dataOffset))
                 return;
 
-            Position = new Vec2(
+            Position = new Vector2(
                 data[dataOffset + 0],
                 data[dataOffset + 1]
             );

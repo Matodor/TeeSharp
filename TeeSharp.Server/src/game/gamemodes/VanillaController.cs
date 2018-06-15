@@ -26,11 +26,11 @@ namespace TeeSharp.Server.Game
 
         protected VanillaController()
         {
-            SpawnPos = new IList<Vec2>[]
+            SpawnPos = new IList<Vector2>[]
             {
-                new List<Vec2>(), // default spawn pos
-                new List<Vec2>(), // red team spawn pos
-                new List<Vec2>()  // blue team spawn pos
+                new List<Vector2>(), // default spawn pos
+                new List<Vector2>(), // red team spawn pos
+                new List<Vector2>()  // blue team spawn pos
             };
 
             Scores = new int[GameContext.Players.Length];
@@ -486,7 +486,7 @@ namespace TeeSharp.Server.Game
             return 0;
         }
 
-        public override void OnEntity(int entityIndex, Vec2 pos)
+        public override void OnEntity(int entityIndex, Vector2 pos)
         {
             var item = (MapItems) entityIndex;
             var powerup = Powerup.NONE;

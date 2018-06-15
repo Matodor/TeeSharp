@@ -55,12 +55,12 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
         public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
 
-        public abstract void CreateExplosion(Vec2 pos, int owner, Weapon weapon, bool noDamage);
-        public abstract void CreatePlayerSpawn(Vec2 pos);
-        public abstract void CreateDeath(Vec2 pos, int clientId);
-        public abstract void CreateDamageInd(Vec2 pos, float a, int amount);
-        public abstract void CreateHammerHit(Vec2 pos);
-        public abstract void CreateSound(Vec2 pos, Sound sound, int mask = -1);
+        public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);
+        public abstract void CreatePlayerSpawn(Vector2 pos);
+        public abstract void CreateDeath(Vector2 pos, int clientId);
+        public abstract void CreateDamageInd(Vector2 pos, float a, int amount);
+        public abstract void CreateHammerHit(Vector2 pos);
+        public abstract void CreateSound(Vector2 pos, Sound sound, int mask = -1);
         public abstract void CreaetSoundGlobal(Sound sound, int targetId = -1);
 
         public virtual int MaskAll()

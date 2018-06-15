@@ -7,7 +7,7 @@ namespace TeeSharp.Server.Game
     public abstract class Entity : BaseInterface
     {
         public abstract float ProximityRadius { get; protected set; }
-        public virtual Vec2 Position { get; set; }
+        public virtual Vector2 Position { get; set; }
         public virtual bool MarkedForDestroy { get; private set; }
 
         protected virtual BaseTuningParams Tuning { get; set; }
@@ -31,7 +31,7 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < IDs.Length; i++)
                 IDs[i] = Server.SnapshotNewId();
 
-            Position = Vec2.zero;
+            Position = Vector2.zero;
         }
 
         public virtual void Tick() { }
@@ -57,7 +57,7 @@ namespace TeeSharp.Server.Game
             return NetworkClipped(snappingClient, Position);
         }
 
-        public virtual bool NetworkClipped(int snappingClient, Vec2 checkPos)
+        public virtual bool NetworkClipped(int snappingClient, Vector2 checkPos)
         {
             if (snappingClient == -1)
                 return false;
@@ -74,7 +74,7 @@ namespace TeeSharp.Server.Game
             return Common.Math.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
         }
 
-        public bool GameLayerClipped(Vec2 checkPos)
+        public bool GameLayerClipped(Vector2 checkPos)
         {
             return Math.RoundToInt(checkPos.x) / 32 < -200 ||
                    Math.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||

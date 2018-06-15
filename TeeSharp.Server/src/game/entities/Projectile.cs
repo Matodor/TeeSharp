@@ -10,7 +10,7 @@ namespace TeeSharp.Server.Game.Entities
 
         private readonly Weapon _weapon;
         private readonly int _ownerId;
-        private readonly Vec2 _dir;
+        private readonly Vector2 _dir;
         private readonly int _damage;
         private readonly bool _explosive;
         private readonly float _force;
@@ -18,7 +18,7 @@ namespace TeeSharp.Server.Game.Entities
         private int _startTick;
         private int _lifeSpan;
 
-        public Projectile(Weapon weapon, int ownerId, Vec2 pos, Vec2 dir,
+        public Projectile(Weapon weapon, int ownerId, Vector2 pos, Vector2 dir,
             int lifeSpan, int damage, bool explosive, float force, Sound soundImpact) : base(1)
         {
             Position = pos;
@@ -38,7 +38,7 @@ namespace TeeSharp.Server.Game.Entities
             Destroy();
         }
 
-        protected Vec2 GetPos(float t)
+        protected Vector2 GetPos(float t)
         {
             var curvature = 0f;
             var speed = 0f;

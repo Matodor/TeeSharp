@@ -31,14 +31,14 @@ namespace TeeSharp.Server.Game
         public abstract T FindEntity<T>(Predicate<Entity<T>> predicate) where T : Entity<T>;
 
         public abstract IEnumerable<T> GetEntities<T>() where T : Entity<T>; 
-        public abstract IEnumerable<T> FindEntities<T>(Vec2 pos, float radius) where T : Entity<T>; 
+        public abstract IEnumerable<T> FindEntities<T>(Vector2 pos, float radius) where T : Entity<T>; 
         public abstract IEnumerable<T> FindEntities<T>(Predicate<Entity<T>> predicate) where T : Entity<T>; 
         
         public abstract void AddEntity<T>(Entity<T> entity) where T : Entity<T>;
         public abstract void RemoveEntity<T>(Entity<T> entity) where T : Entity<T>;
 
-        public abstract Character IntersectCharacter(Vec2 pos1, Vec2 pos2, float radius, ref Vec2 newPos, Character notThis);
-        public abstract Character ClosestCharacter(Vec2 pos, float radius, Character notThis);
+        public abstract Character IntersectCharacter(Vector2 pos1, Vector2 pos2, float radius, ref Vector2 newPos, Character notThis);
+        public abstract Character ClosestCharacter(Vector2 pos, float radius, Character notThis);
         public abstract void Reset();
         public abstract void RemoveEntities();
 

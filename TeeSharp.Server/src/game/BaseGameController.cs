@@ -10,7 +10,7 @@ namespace TeeSharp.Server.Game
 {
     public class SpawnEval
     {
-        public Vec2 Pos;
+        public Vector2 Pos;
         public bool Got;
         public Team FriendlyTeam;
         public float Score;
@@ -19,7 +19,7 @@ namespace TeeSharp.Server.Game
         {
             Got = false;
             FriendlyTeam = Team.SPECTATORS;
-            Pos = new Vec2(100, 100);
+            Pos = new Vector2(100, 100);
         }
     }
 
@@ -27,7 +27,7 @@ namespace TeeSharp.Server.Game
     {
         public abstract string GameType { get; }
 
-        protected virtual IList<Vec2>[] SpawnPos { get; set; }
+        protected virtual IList<Vector2>[] SpawnPos { get; set; }
 
         protected virtual BaseGameWorld GameWorld { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
@@ -56,7 +56,7 @@ namespace TeeSharp.Server.Game
 
         public abstract void OnCharacterSpawn(Character character);
         public abstract void OnSnapshot(int snappingClient);
-        public abstract void OnEntity(int tileIndex, Vec2 pos);
+        public abstract void OnEntity(int tileIndex, Vector2 pos);
         public abstract void OnPlayerInfoChange(BasePlayer player);
         public abstract int OnCharacterDeath(Character victim, 
             BasePlayer killer, Weapon weapon);
@@ -69,11 +69,11 @@ namespace TeeSharp.Server.Game
             GameWorld = Kernel.Get<BaseGameWorld>();
         }
 
-        public virtual bool CanSpawn(Team team, int clientId, out Vec2 spawnPos)
+        public virtual bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)
         {
             if (team == Team.SPECTATORS)
             {
-                spawnPos = Vec2.zero;
+                spawnPos = Vector2.zero;
                 return false;
             }
 
@@ -102,7 +102,7 @@ namespace TeeSharp.Server.Game
             return eval.Got;
         }
 
-        protected virtual float EvaluateSpawnPos(SpawnEval eval, Vec2 pos)
+        protected virtual float EvaluateSpawnPos(SpawnEval eval, Vector2 pos)
         {
             var score = 0f;
 
@@ -119,17 +119,17 @@ namespace TeeSharp.Server.Game
             return score;
         }
 
-        protected virtual void EvaluateSpawnType(SpawnEval eval, IList<Vec2> spawnPos)
+        protected virtual void EvaluateSpawnType(SpawnEval eval, IList<Vector2> spawnPos)
         {
             for (var i = 0; i < spawnPos.Count; i++)
             {
                 var positions = new[]
                 {
-                    new Vec2(0.0f, 0.0f),
-                    new Vec2(-32.0f, 0.0f),
-                    new Vec2(0.0f, -32.0f),
-                    new Vec2(32.0f, 0.0f),
-                    new Vec2(0.0f, 32.0f)
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(-32.0f, 0.0f),
+                    new Vector2(0.0f, -32.0f),
+                    new Vector2(32.0f, 0.0f),
+                    new Vector2(0.0f, 32.0f)
                 };  // start, left, up, right, down
 
                 var result = -1;

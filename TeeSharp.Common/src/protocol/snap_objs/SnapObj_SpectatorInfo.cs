@@ -9,7 +9,7 @@ namespace TeeSharp.Common.Protocol
         public override int SerializeLength { get; } = 3;
 
         public int SpectatorId;
-        public Vec2 ViewPos;
+        public Vector2 ViewPos;
 
         public override void Deserialize(int[] data, int dataOffset)
         {
@@ -17,7 +17,7 @@ namespace TeeSharp.Common.Protocol
                 return;
 
             SpectatorId = data[dataOffset + 0];
-            ViewPos = new Vec2(
+            ViewPos = new Vector2(
                 data[dataOffset + 1],
                 data[dataOffset + 2]
             );

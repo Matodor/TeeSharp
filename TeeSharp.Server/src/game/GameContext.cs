@@ -40,7 +40,7 @@ namespace TeeSharp.Server.Game
                 for (var x = 0; x < Layers.GameLayer.Width; x++)
                 {
                     var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
-                    var pos = new Vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+                    var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 
                     if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
                         GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
@@ -65,7 +65,7 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].IsReady;
         }
 
-        public override void CreateExplosion(Vec2 pos, int owner, Weapon weapon, bool noDamage)
+        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage)
         {
             var e = Events.Create<SnapEvent_Explosion>();
             if (e != null)
@@ -81,7 +81,7 @@ namespace TeeSharp.Server.Game
             foreach (var character in characters)
             {
                 var diff = character.Position - pos;
-                var forceDir = new Vec2(0, 1);
+                var forceDir = new Vector2(0, 1);
                 var l = diff.Length;
 
                 if (l > 0)
@@ -94,7 +94,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void CreatePlayerSpawn(Vec2 pos)
+        public override void CreatePlayerSpawn(Vector2 pos)
         {
             var e = Events.Create<SnapEvent_Spawn>();
             if (e == null)
@@ -103,7 +103,7 @@ namespace TeeSharp.Server.Game
             e.Position = pos;
         }
 
-        public override void CreateDeath(Vec2 pos, int clientId)
+        public override void CreateDeath(Vector2 pos, int clientId)
         {
             var e = Events.Create<SnapEvent_Death>();
             if (e == null)
@@ -113,7 +113,7 @@ namespace TeeSharp.Server.Game
             e.Position = pos;
         }
 
-        public override void CreateDamageInd(Vec2 pos, float a, int amount)
+        public override void CreateDamageInd(Vector2 pos, float a, int amount)
         {
             a = 3 * 3.14159f / 2 + a;
             var s = a - System.Math.PI / 3;
@@ -131,7 +131,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void CreateHammerHit(Vec2 pos)
+        public override void CreateHammerHit(Vector2 pos)
         {
             var e = Events.Create<SnapEvent_HammerHit>();
             if (e == null)
@@ -140,7 +140,7 @@ namespace TeeSharp.Server.Game
             e.Position = pos;
         }
 
-        public override void CreateSound(Vec2 pos, Sound sound, int mask = -1)
+        public override void CreateSound(Vector2 pos, Sound sound, int mask = -1)
         {
             if (sound < 0 || sound >= Sound.NUM_SOUNDS)
                 return;

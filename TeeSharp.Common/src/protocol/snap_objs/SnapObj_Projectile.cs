@@ -8,8 +8,8 @@ namespace TeeSharp.Common.Protocol
         public override SnapObject Type { get; } = SnapObject.OBJ_PROJECTILE;
         public override int SerializeLength { get; } = 6;
 
-        public Vec2 Position;
-        public Vec2 Velocity;
+        public Vector2 Position;
+        public Vector2 Velocity;
         public int StartTick;
         public Weapon Weapon;
 
@@ -28,12 +28,12 @@ namespace TeeSharp.Common.Protocol
             if (!RangeCheck(data, dataOffset))
                 return;
 
-            Position = new Vec2(
+            Position = new Vector2(
                 data[dataOffset + 0],
                 data[dataOffset + 1]
             );
 
-            Velocity = new Vec2(
+            Velocity = new Vector2(
                 data[dataOffset + 2],
                 data[dataOffset + 3]
             );

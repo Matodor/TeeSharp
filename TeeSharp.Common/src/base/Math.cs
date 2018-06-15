@@ -90,33 +90,33 @@
             return current;
         }
 
-        public static float Distance(Vec2 a, Vec2 b)
+        public static float Distance(Vector2 a, Vector2 b)
         {
             return (a - b).Length;
         }
 
-        public static float Dot(Vec2 a, Vec2 b)
+        public static float Dot(Vector2 a, Vector2 b)
         {
             return a.x * b.x + a.y * b.y;
         }
 
-        public static Vec2 Mix(Vec2 a, Vec2 b, float amount)
+        public static Vector2 Mix(Vector2 a, Vector2 b, float amount)
         {
             return a + (b - a) * amount;
         }
 
-        public static Vec2 CalcPos(Vec2 pos, Vec2 velocity, float curvature, 
+        public static Vector2 CalcPos(Vector2 pos, Vector2 velocity, float curvature, 
             float speed, float time)
         {
-            Vec2 n;
+            Vector2 n;
             time *= speed;
             n.x = pos.x + velocity.x * time;
             n.y = pos.y + velocity.y * time + curvature / 10000 * (time * time);
             return n;
         }
 
-        public static Vec2 ClosestPointOnLine(Vec2 linePoint0, Vec2 linePoint1,
-            Vec2 targetPoint)
+        public static Vector2 ClosestPointOnLine(Vector2 linePoint0, Vector2 linePoint1,
+            Vector2 targetPoint)
         {
             var c = targetPoint - linePoint0;
             var v = (linePoint1 - linePoint0).Normalized;
@@ -133,7 +133,7 @@
             return (float)(1.0f / System.Math.Pow(curvature, (value - start) / range));
         }
 
-        public static float GetAngle(Vec2 Dir)
+        public static float GetAngle(Vector2 Dir)
         {
             if (Dir.x == 0 && Dir.y == 0)
                 return 0.0f;
