@@ -244,5 +244,8 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
+# TeeSharp
 autoexec.cfg
 App.config
+
+!TeeSharp.Core/src/debug/
