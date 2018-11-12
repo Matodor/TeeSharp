@@ -20,7 +20,7 @@ namespace TeeSharp.Common.Game
 
         protected virtual WorldCore World { get; set; }
         protected virtual BaseCollision Collision { get; set; }
-        protected virtual SnapObj_Character QuantizeCore { get; set; } 
+        protected virtual SnapObj_Character QuantizeCore { get; set; }
 
         protected const float TEE_SIZE = 28.0f;
 
@@ -43,7 +43,7 @@ namespace TeeSharp.Common.Game
             HookPosition = Vector2.zero;
             HookDirection = Vector2.zero;
             HookTick = 0;
-            HookState =  HookState.IDLE;
+            HookState = HookState.IDLE;
             HookedPlayer = -1;
             Jumped = 0;
             Direction = 0;
@@ -74,9 +74,8 @@ namespace TeeSharp.Common.Game
             if (useInput)
             {
                 Direction = Input.Direction;
-                var angle = 0d;
-                angle = Input.TargetX == 0 
-                    ? System.Math.Atan(Input.TargetY) 
+                var angle = Input.TargetX == 0
+                    ? System.Math.Atan(Input.TargetY)
                     : System.Math.Atan(Input.TargetY / (float) Input.TargetX);
 
                 if (Input.TargetX < 0)
@@ -158,7 +157,7 @@ namespace TeeSharp.Common.Game
 
                 var goingToHitGround = false;
                 var goingToRetract = false;
-                var hitFlags = Collision.IntersectLine(HookPosition, newHookPos, 
+                var hitFlags = Collision.IntersectLine(HookPosition, newHookPos,
                     out newHookPos, out var _);
 
                 if (hitFlags != TileFlags.NONE)
@@ -189,7 +188,7 @@ namespace TeeSharp.Common.Game
                                 HookedPlayer = i;
                                 distance = Math.Distance(HookPosition, characterCore.Position);
                                 break;
-                            }  
+                            }
                         }
                     }
                 }
@@ -284,21 +283,21 @@ namespace TeeSharp.Common.Game
                     {
                         if (distance > TEE_SIZE * 1.50f)
                         {
-                            var hookAccel = World.Tuning["HookDragAccel"] *
-                                (distance / World.Tuning["HookLength"]);
+                            var hookAccelerate = World.Tuning["HookDragAccel"] *
+                                                 (distance / World.Tuning["HookLength"]);
                             float dragSpeed = World.Tuning["HookDragSpeed"];
 
                             characterCore.Velocity = new Vector2(
-                                Math.SaturatedAdd(-dragSpeed, dragSpeed, 
-                                    characterCore.Velocity.x, hookAccel*direction.x*1.5f),
-                                Math.SaturatedAdd(-dragSpeed, dragSpeed, 
-                                    characterCore.Velocity.y, hookAccel*direction.y*1.5f)
+                                Math.SaturatedAdd(-dragSpeed, dragSpeed,
+                                    characterCore.Velocity.x, hookAccelerate * direction.x * 1.5f),
+                                Math.SaturatedAdd(-dragSpeed, dragSpeed,
+                                    characterCore.Velocity.y, hookAccelerate * direction.y * 1.5f)
                             );
 
-                            vel.x = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.x, 
-                                -hookAccel * direction.x * 0.25f);
-                            vel.y = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.y, 
-                                -hookAccel * direction.y * 0.25f);
+                            vel.x = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.x,
+                                -hookAccelerate * direction.x * 0.25f);
+                            vel.y = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.y,
+                                -hookAccelerate * direction.y * 0.25f);
                         }
                     }
                 }
@@ -376,7 +375,7 @@ namespace TeeSharp.Common.Game
             Position = newPos;
             Velocity = vel;
         }
-        
+
         public virtual void Quantize()
         {
             Write(QuantizeCore);
