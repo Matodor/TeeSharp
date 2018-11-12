@@ -312,7 +312,7 @@ namespace TeeSharp.Common.Game
         public virtual void FillTo(CharacterCore output)
         {
             output.Position = Position;
-            output.Velocity = Position;
+            output.Velocity = Velocity;
             output.HookPosition = HookPosition;
             output.HookDirection = HookDirection;
             output.HookTick = HookTick;
