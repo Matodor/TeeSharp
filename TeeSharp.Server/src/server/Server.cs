@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TeeSharp.Common;
@@ -118,7 +119,7 @@ namespace TeeSharp.Server
             if (!StartNetworkServer())
                 return;
 
-            Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
+            Clients = new BaseServerClient[NetworkServer.ServerConfig.MaxClients];
             IdMap = new int[Clients.Length * VANILLA_MAX_CLIENTS];
 
             for (var i = 0; i < Clients.Length; i++)
@@ -131,9 +132,9 @@ namespace TeeSharp.Server
             StartTime = Time.Get();
             IsRunning = true;
 
-            _lastSent = new int[NetworkServer.Config.MaxClients];
-            _lastAsk = new int[NetworkServer.Config.MaxClients];
-            _lastAskTick = new int[NetworkServer.Config.MaxClients];
+            _lastSent = new int[NetworkServer.ServerConfig.MaxClients];
+            _lastAsk = new int[NetworkServer.ServerConfig.MaxClients];
+            _lastAskTick = new int[NetworkServer.ServerConfig.MaxClients];
 
             while (IsRunning)
             {
@@ -509,7 +510,6 @@ namespace TeeSharp.Server
             var networkConfig = new NetworkServerConfig
             {
                 LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
-                ConnectionTimeout = Config["ConnTimeout"],
                 MaxClientsPerIp = Config["SvMaxClientsPerIP"],
                 MaxClients = Config["SvMaxClients"]
             };
@@ -750,7 +750,7 @@ namespace TeeSharp.Server
                 return;
             }
 
-            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"] &&
+            if (clientId >= NetworkServer.ServerConfig.MaxClients - Config["SvReservedSlots"] &&
                 !string.IsNullOrEmpty(Config["SvReservedSlotsPass"]) &&
                 password != Config["SvReservedSlotsPass"])
             {
@@ -964,10 +964,15 @@ namespace TeeSharp.Server
             Clients[clientId].State = ServerClientState.EMPTY;
         }
 
-        protected override void NewClientCallback(int clientid)
+        protected override void NewClientCallback(int clientid, bool legacy)
         {
-            Clients[clientid].State = ServerClientState.AUTH;
+            Clients[clientid].State = legacy == false ?
+                ServerClientState.AUTH :
+                ServerClientState.CONNECTING;
             Clients[clientid].Reset();
+
+            if (legacy)
+                SendMap(clientid);
         }
 
         protected override bool LoadMap(string mapName)
@@ -1046,7 +1051,7 @@ namespace TeeSharp.Server
                 var packer = new Packer();
                 var playersCount = 0;
                 var clientsCount = 0;
-                var maxClients = NetworkServer.Config.MaxClients;
+                var maxClients = NetworkServer.ServerConfig.MaxClients;
 
                 for (var i = 0; i < Clients.Length; i++)
                 {

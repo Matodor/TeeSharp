@@ -11,10 +11,16 @@ namespace TeeSharp.Network
     {
         public const int
             MAX_PACKET_SIZE = 1400,
+            MAX_PAYLOAD = MAX_PACKET_SIZE - 10,
+            MAX_CHUNK_HEADER_SIZE = 5,
+            PACKET_HEADER_SIZE = 7,
+            PACKET_HEADER_SIZE_WITHOUT_TOKEN = 3,
+            MAX_CLIENTS = 16,
+            MAX_CONSOLE_CLIENTS = 4,
             MAX_SEQUENCE = 1024,
-            MAX_PAYLOAD = MAX_PACKET_SIZE - DATA_OFFSET,
             DATA_OFFSET = 6,
-            PACKET_HEADER_SIZE = 3;
+            COMPATIBILITY_SEQ = 2,
+            SEQUENCE_MASK = MAX_SEQUENCE - 1;
 
         private static readonly int[] _freqTable = {
             1<<30,4545,2657,431,1950,919,444,482,2244,617,838,542,715,1814,304,240,754,212,647,186,
@@ -74,43 +80,72 @@ namespace TeeSharp.Network
             }
         }
 
-        public static void SendControlMsg(UdpClient udpClient, IPEndPoint remote, 
-            int ack, ConnectionMessages msg, string extra)
+        public static void SendControlMsg(UdpClient udpClient,
+            IPEndPoint remote, int ack, bool useToken, uint token,
+            ConnectionMessages msg, byte[] extra)
         {
             NetworkChunkConstruct packet;
-            if (string.IsNullOrWhiteSpace(extra))
+            if (extra == null || extra.Length == 0)
             {
                 packet = new NetworkChunkConstruct(1)
                 {
-                    Flags = PacketFlags.CONTROL,
-                    Ack = ack,
-                    NumChunks = 0,
                     DataSize = 1
                 };
             }
             else
             {
-                var bytes = Encoding.UTF8.GetBytes(extra);
-                packet = new NetworkChunkConstruct(1 + bytes.Length)
+                packet = new NetworkChunkConstruct(1 + extra.Length)
                 {
-                    Flags = PacketFlags.CONTROL,
-                    Ack = ack,
-                    NumChunks = 0,
-                    DataSize = 1 + bytes.Length
+                    DataSize = 1 + extra.Length
                 };
-                Buffer.BlockCopy(bytes, 0, packet.Data, 1, bytes.Length);
+                Buffer.BlockCopy(extra, 0, packet.Data, 1, extra.Length);
             }
-            
-            packet.Data[0] = (byte) msg;
+
+            packet.NumChunks = 0;
+            packet.Flags = PacketFlags.CONTROL | (useToken ? PacketFlags.TOKEN : PacketFlags.NONE);
+            packet.Ack = ack;
+            packet.Token = token;
+            packet.Data[0] = (byte)msg;
             SendPacket(udpClient, remote, packet);
+        }
+
+        public static void SendControlMsg(UdpClient udpClient, 
+            IPEndPoint remote, int ack, bool useToken, uint token,
+            ConnectionMessages msg, string extra)
+        {
+            if (string.IsNullOrWhiteSpace(extra))
+            {
+                SendControlMsg(udpClient, remote, ack, useToken, token,
+                    msg, (byte[]) null);
+            }
+            else
+            {
+                SendControlMsg(udpClient, remote, ack, useToken, token,
+                    msg, Encoding.UTF8.GetBytes(extra));
+            }
         }
 
         public static void SendPacket(UdpClient udpClient, IPEndPoint endPoint, 
             NetworkChunkConstruct packet)
         {
             var buffer = new byte[MAX_PACKET_SIZE];
-            var compressedSize = _huffman.Compress(packet.Data, 0, packet.DataSize,
-                buffer, PACKET_HEADER_SIZE, buffer.Length - PACKET_HEADER_SIZE);
+            var headerSize = PACKET_HEADER_SIZE_WITHOUT_TOKEN;
+            var compressedSize = -1;
+
+            if (packet.Flags.HasFlag(PacketFlags.TOKEN))
+            {
+                headerSize = PACKET_HEADER_SIZE;
+                packet.Token.ToByteArray(buffer, 3);
+            }
+
+            if (!packet.Flags.HasFlag(PacketFlags.CONTROL))
+            {
+                compressedSize = _huffman.Compress(packet.Data, 0, packet.DataSize,
+                    buffer, headerSize, buffer.Length - headerSize);
+            }
+
+            //compressedSize = _huffman.Compress(packet.Data, 0, packet.DataSize,
+            //    buffer, PACKET_HEADER_SIZE, buffer.Length - PACKET_HEADER_SIZE);
             
             int finalSize;
             if (compressedSize > 0 && compressedSize < packet.DataSize)
@@ -121,11 +156,11 @@ namespace TeeSharp.Network
             else
             {
                 finalSize = packet.DataSize;
-                Buffer.BlockCopy(packet.Data, 0, buffer, PACKET_HEADER_SIZE, packet.DataSize);
+                Buffer.BlockCopy(packet.Data, 0, buffer, headerSize, packet.DataSize);
                 packet.Flags &= ~PacketFlags.COMPRESSION;
             }
 
-            finalSize += PACKET_HEADER_SIZE;
+            finalSize += headerSize;
             buffer[0] = (byte) ((((int) packet.Flags << 4) & 0xf0) | ((packet.Ack >> 8) & 0xf));
             buffer[1] = (byte) (packet.Ack & 0xff);
             buffer[2] = (byte) packet.NumChunks;
@@ -141,29 +176,20 @@ namespace TeeSharp.Network
         public static bool UnpackPacket(byte[] buffer, int size, 
             NetworkChunkConstruct packet)
         {
-            if (size < PACKET_HEADER_SIZE ||
+            if (size < PACKET_HEADER_SIZE_WITHOUT_TOKEN ||
                 size > MAX_PACKET_SIZE)
             {
                 Debug.Warning("network", $"packet too small, size={size}");
                 return false;
             }
+            
+            packet.Flags = (PacketFlags) (buffer[0] >> 2);
+            packet.Ack = ((buffer[0] & 0x3) << 8) | buffer[1];
+            packet.NumChunks = buffer[2];
+            packet.DataSize = size - PACKET_HEADER_SIZE_WITHOUT_TOKEN;
+            packet.Token = 0;
 
-            void ResetPacket()
-            {
-                packet.Ack = 0;
-                packet.DataSize = 0;
-                packet.Flags = PacketFlags.NONE;
-                packet.NumChunks = 0;
-            }
-
-            ResetPacket();
-
-            var flags = (PacketFlags) (buffer[0] >> 4);
-            var ack = ((buffer[0] & 0xf) << 8) | buffer[1];
-            var numChunks = buffer[2];
-            var dataSize = size - PACKET_HEADER_SIZE;
-
-            if (flags.HasFlag(PacketFlags.CONNLESS))
+            if (packet.Flags.HasFlag(PacketFlags.CONNLESS))
             {
                 if (size < DATA_OFFSET)
                 {
@@ -171,17 +197,39 @@ namespace TeeSharp.Network
                     return false;
                 }
 
-                dataSize = size - DATA_OFFSET;
-                
                 packet.Flags = PacketFlags.CONNLESS;
                 packet.Ack = 0;
                 packet.NumChunks = 0;
-                packet.DataSize = dataSize;
-                Buffer.BlockCopy(buffer, DATA_OFFSET, packet.Data, 0, dataSize);
+                packet.DataSize = size - DATA_OFFSET;
+                Buffer.BlockCopy(buffer, DATA_OFFSET, packet.Data, 0, packet.DataSize);
             }
             else
             {
-                if (flags.HasFlag(PacketFlags.COMPRESSION))
+                var dataStart = PACKET_HEADER_SIZE_WITHOUT_TOKEN;
+                if (packet.Flags.HasFlag(PacketFlags.TOKEN))
+                {
+                    if (size < PACKET_HEADER_SIZE)
+                    {
+                        Debug.Warning("network", $"packet with token too small, {size}");
+                        return false;
+                    }
+
+                    dataStart = PACKET_HEADER_SIZE;
+                    packet.DataSize -= 4;
+                    packet.Token = buffer.ToUInt32(3);
+                }
+
+                if (packet.Flags.HasFlag(PacketFlags.COMPRESSION))
+                {
+                    packet.DataSize = _huffman.Decompress(buffer, dataStart, packet.DataSize,
+                        packet.Data, 0, MAX_PAYLOAD);
+                }
+                else
+                {
+                    Buffer.BlockCopy(buffer, dataStart, packet.Data, 0, packet.DataSize);
+                }
+
+                /*if (flags.HasFlag(PacketFlags.COMPRESSION))
                 {
                     if (flags.HasFlag(PacketFlags.CONTROL))
                         return false;
@@ -197,12 +245,11 @@ namespace TeeSharp.Network
                 packet.Flags = flags;
                 packet.Ack = ack;
                 packet.NumChunks = numChunks;
-                packet.DataSize = dataSize;
+                packet.DataSize = dataSize;*/
             }
 
             if (packet.DataSize < 0)
             {
-                ResetPacket();
                 Debug.Warning("network", "error during packet decoding");
                 return false;
             }

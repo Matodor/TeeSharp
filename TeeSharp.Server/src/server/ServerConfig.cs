@@ -9,25 +9,21 @@ namespace TeeSharp.Server
         {
             AppendVariables(new Dictionary<string, ConfigVariable>()
             {
-                { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 100, 5, 1000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout") },
-                { "ConnTimeoutProtection", new ConfigInt("ConnTimeoutProtection", "conn_timeout_protection", 1000, 5, 10000, ConfigFlags.SAVE | ConfigFlags.SERVER, "Network timeout protection") },
-
                 { "SvSpoofProtection", new ConfigInt("SvSpoofProtection", "sv_spoof_protection", 0, 0, 1, ConfigFlags.SERVER, "Enable spoof protection") },
                 { "SvMapWindow", new ConfigInt("SvMapWindow", "sv_map_window", 15, 0, 100, ConfigFlags.SERVER, "Map downloading send-ahead window") },
                 { "SvFastDownload", new ConfigInt("SvFastDownload", "sv_fast_download", 1, 0, 1, ConfigFlags.SERVER, "Enables fast download of maps") },
                 { "SvNetlimit", new ConfigInt("SvNetlimit", "sv_netlimit", 0, 0, 10000, ConfigFlags.SERVER, "Netlimit: Maximum amount of traffic a client is allowed to use (in kb/s)") },
                 { "SvNetlimitAlpha", new ConfigInt("SvNetlimitAlpha", "sv_netlimit_alpha", 50, 1, 100, ConfigFlags.SERVER, "Netlimit: Alpha of Exponention moving average") },
                 { "SvMapUpdateRate", new ConfigInt("SvMapUpdateRate", "sv_mapupdaterate", 5, 1, 100, ConfigFlags.SERVER, "(Tw32) real id <-> vanilla id players map update rate") },
-
-                { "Password", new ConfigString("Password", "password", 32, "", ConfigFlags.CLIENT|ConfigFlags.SERVER, "Password to the server") },
-                { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },
-                { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Adjusts the amount of information in the console") },
-
                 { "SvReservedSlots", new ConfigInt("SvReservedSlots", "sv_reserved_slots", 0, 0, 16, ConfigFlags.SERVER, "The number of slots that are reserved for special players") },
                 { "SvReservedSlotsPass", new ConfigString("SvReservedSlotsPass", "sv_reserved_slots_pass", 32, "", ConfigFlags.SERVER, "The password that is required to use a reserved slot") },
 
+                { "SvAllowOldClients", new ConfigInt("SvAllowOldClients", "sv_allow_old_clients", 1, 0, 1, ConfigFlags.SERVER, "Allow clients to connect that do not support the anti-spoof protocol (this presents a DoS risk)") },
+                { "SvOldClientsPerInterval", new ConfigInt("SvOldClientsPerInterval", "sv_old_clients_per_interval", 5, 0, int.MaxValue, ConfigFlags.SERVER, "Maximum number of clients that can connect per interval set by `sv_old_clients_interval`") },
+                { "SvOldClientsInterval", new ConfigInt("SvOldClientsInterval", "sv_old_clients_interval", 20, 0, int.MaxValue, ConfigFlags.SERVER, "Interval (in seconds) in which `sv_old_clients_per_interval` clients are allowed to connect") },
+                { "SvOldClientsSkip", new ConfigInt("SvOldClientsSkip", "sv_old_clients_skip", 20, 0, int.MaxValue, ConfigFlags.SERVER, "How many legacy connection attempts to ignore before sending a legacy handshake despite the rate limit being hit") },
+
                 { "SvName", new ConfigString("SvName", "sv_name", 128, "TeeSharp server", ConfigFlags.SERVER, "Server name") },
-                { "Bindaddr", new ConfigString("Bindaddr", "bindaddr", 128, "", ConfigFlags.CLIENT|ConfigFlags.SERVER|ConfigFlags.MASTER, "Address to bind the client/server to") },
                 { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },
                 { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
                 { "SvMap", new ConfigString("SvMap", "sv_map", 128, "dm1", ConfigFlags.SERVER, "Map to use on the server") },
@@ -41,15 +37,6 @@ namespace TeeSharp.Server
                 { "SvRconBantime", new ConfigInt("SvRconBantime", "sv_rcon_bantime", 0, 0, 1440, ConfigFlags.SERVER, "The time a client gets banned if remote console authentication fails. 0 makes it just use kick") },
                 { "SvAutoDemoRecord", new ConfigInt("SvAutoDemoRecord", "sv_auto_demo_record", 0, 0, 1, ConfigFlags.SERVER, "Automatically record demos") },
                 { "SvAutoDemoMax", new ConfigInt("SvAutoDemoMax", "sv_auto_demo_max", 10, 0, 1000, ConfigFlags.SERVER, "Maximum number of automatically recorded demos (0 = no limit)") },
-
-                { "EcBindaddr", new ConfigString("EcBindaddr", "ec_bindaddr", 128, "localhost", ConfigFlags.ECON, "Address to bind the external console to. Anything but 'localhost' is dangerous") },
-                { "EcPort", new ConfigInt("EcPort", "ec_port", 0, 0, 0, ConfigFlags.ECON, "Port to use for the external console") },
-                { "EcPassword", new ConfigString("EcPassword", "ec_password", 32, "", ConfigFlags.ECON, "External console password") },
-                { "EcBantime", new ConfigInt("EcBantime", "ec_bantime", 0, 0, 1440, ConfigFlags.ECON, "The time a client gets banned if econ authentication fails. 0 just closes the connection") },
-                { "EcAuthTimeout", new ConfigInt("EcAuthTimeout", "ec_auth_timeout", 30, 1, 120, ConfigFlags.ECON, "Time in seconds before the the econ authentification times out ") },
-                { "EcOutputLevel", new ConfigInt("EcOutputLevel", "ec_output_level", 1, 0, 2, ConfigFlags.ECON, "Adjusts the amount of information in the external console") },
-
-                { "Debug", new ConfigInt("Debug", "debug", 1, 0, 1, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Debug mode") },
 
                 { "SvWarmup", new ConfigInt("SvWarmup", "sv_warmup", 0, 0, 0, ConfigFlags.SERVER, "Number of seconds to do warmup before round starts") },
                 { "SvMotd", new ConfigString("SvMotd", "sv_motd", 900, "", ConfigFlags.SERVER, "Message of the day to display for the clients") },
@@ -77,9 +64,6 @@ namespace TeeSharp.Server
                 { "SvVoteKick", new ConfigInt("SvVoteKick", "sv_vote_kick", 1, 0, 1, ConfigFlags.SERVER, "Allow voting to kick players") },
                 { "SvVoteKickMin", new ConfigInt("SvVoteKickMin", "sv_vote_kick_min", 0, 0, 64, ConfigFlags.SERVER, "Minimum number of players required to start a kick vote") },
                 { "SvVoteKickBantime", new ConfigInt("SvVoteKickBantime", "sv_vote_kick_bantime", 5, 0, 1440, ConfigFlags.SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick") },
-                
-                { "DbgFocus", new ConfigInt("DbgFocus", "dbg_focus", 0, 0, 1, ConfigFlags.CLIENT, "") },
-                { "DbgTuning", new ConfigInt("DbgTuning", "dbg_tuning", 0, 0, 1, ConfigFlags.CLIENT, "") },
             });
         }
     }

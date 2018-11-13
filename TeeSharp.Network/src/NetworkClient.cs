@@ -24,10 +24,7 @@ namespace TeeSharp.Network
 
             UdpClient = socket;
             Connection = Kernel.Get<BaseNetworkConnection>();
-            Connection.Init(UdpClient, new NetworkConnectionConfig
-            {
-                ConnectionTimeout = config.ConnectionTimeout
-            });
+            Connection.Init(UdpClient);
 
             return true;
         }

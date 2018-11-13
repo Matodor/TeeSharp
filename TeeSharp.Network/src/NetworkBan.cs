@@ -8,8 +8,9 @@ namespace TeeSharp.Network
         {
         }
 
-        public override void BanAddr(IPEndPoint clientAddr, int seconds, string reason)
+        public override bool BanAddr(IPEndPoint clientAddr, int seconds, string reason)
         {
+            return true;
         }
 
         public override bool IsBanned(IPEndPoint remote, out string reason)

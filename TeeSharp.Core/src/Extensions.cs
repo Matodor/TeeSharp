@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -171,6 +172,18 @@ namespace TeeSharp.Core
             }
 
             return tmp.ToString();
+        }
+
+        public static uint ToUInt32(this byte[] array, int startIndex = 0)
+        {
+            return BitConverter.ToUInt32(array, startIndex);
+        }
+
+        public static void ToByteArray(this uint value, byte[] dstArray, 
+            int offset)
+        {
+            Buffer.BlockCopy(BitConverter.GetBytes(value), 0, dstArray,
+                offset, sizeof(uint));
         }
     }
 }

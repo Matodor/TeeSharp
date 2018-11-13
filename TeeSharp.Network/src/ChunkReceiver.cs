@@ -68,8 +68,10 @@ namespace TeeSharp.Network
 
                 if (Connection != null && header.Flags.HasFlag(ChunkFlags.VITAL))
                 {
-                    if (header.Sequence == (Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE)
+                    if (Connection.UnknownAck ||
+                        header.Sequence == (Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE)
                     {
+                        Connection.UnknownAck = false;
                         Connection.Ack = (Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE;
                     }
                     else

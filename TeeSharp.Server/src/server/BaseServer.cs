@@ -89,7 +89,7 @@ namespace TeeSharp.Server
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(int tick);
         protected abstract void DelClientCallback(int clientId, string reason);
-        protected abstract void NewClientCallback(int clientid);
+        protected abstract void NewClientCallback(int clientid, bool legacy);
 
         protected abstract bool LoadMap(string mapName);
         protected abstract void SendMap(int clientId);

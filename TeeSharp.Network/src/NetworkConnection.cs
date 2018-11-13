@@ -3,23 +3,30 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using TeeSharp.Common;
+using TeeSharp.Common.Config;
+using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
+using Math = System.Math;
 
 namespace TeeSharp.Network
 {
     public class NetworkConnection : BaseNetworkConnection
     {
-        public override event Action<string> Disconnected;
+        public override BaseConfig Config { get; protected set; }
 
-        public override NetworkConnectionConfig Config { get; set; }
         public override ConnectionState State { get; protected set; }
         public override long ConnectedAt { get; protected set; }
         public override IPEndPoint EndPoint { get; protected set; }
         public override string Error { get; protected set; }
 
         public override int Sequence { get; set; }
+        public override bool UnknownAck { get; set; }
         public override int Ack { get; set; }
+        public override int PeerAck { get; set; }
+        public override bool UseToken { get; set; }
+        public override uint Token { get; set; }
         public override long LastReceiveTime { get; protected set; }
         public override long LastSendTime { get; protected set; }
 
@@ -37,7 +44,7 @@ namespace TeeSharp.Network
             ResendQueueConstruct = new NetworkChunkConstruct();
             ResendQueue = new Queue<NetworkChunkResend>();
         }
-
+        
         public override bool Connect(IPEndPoint endPoint)
         {
             if (State != ConnectionState.OFFLINE)
@@ -46,7 +53,49 @@ namespace TeeSharp.Network
             Reset();
             EndPoint = endPoint;
             State = ConnectionState.CONNECT;
-            SendControlMsg(ConnectionMessages.CONNECT, "");
+            Token = Secure.RandomUInt32();
+            SendConnect();
+            return true;
+        }
+
+        public override void SendConnect()
+        {
+            var connect = new byte[512];
+            Token.ToByteArray(connect, 4);
+            SendControlMsg(ConnectionMessages.CONNECT, connect);
+        }
+
+        public override bool Accept(IPEndPoint addr, uint token)
+        {
+            if (State != ConnectionState.OFFLINE)
+                return false;
+
+            Reset();
+            EndPoint = addr;
+            State = ConnectionState.ONLINE;
+            LastReceiveTime = Time.Get();
+            Token = token;
+
+            Debug.Log("connection", "connection online");
+            return true;
+        }
+
+        public override bool AcceptLegacy(IPEndPoint addr)
+        {
+            if (State != ConnectionState.OFFLINE)
+                return false;
+
+            Reset();
+            EndPoint = addr;
+            State = ConnectionState.ONLINE;
+            LastReceiveTime = Time.Get();
+
+            Token = 0;
+            UseToken = false;
+            UnknownAck = true;
+            Sequence = NetworkCore.COMPATIBILITY_SEQ;
+
+            Debug.Log("connection", "legacy connecting online");
             return true;
         }
 
@@ -60,14 +109,18 @@ namespace TeeSharp.Network
 
         public override void Reset()
         {
-            Ack = 0;
             Sequence = 0;
+            UnknownAck = false;
+            Ack = 0;
+            PeerAck = 0;
             RemoteClosed = false;
 
             State = ConnectionState.OFFLINE;
             ConnectedAt = 0;
             LastReceiveTime = 0;
             LastSendTime = 0;
+            UseToken = true;
+            Token = 0;
 
             EndPoint = null;
 
@@ -78,11 +131,12 @@ namespace TeeSharp.Network
             ResetQueueConstruct();
         }
 
-        public override void Init(UdpClient udpClient, NetworkConnectionConfig config)
+        public override void Init(UdpClient udpClient)
         {
             Reset();
 
-            Config = config;
+            Config = Kernel.Get<BaseConfig>();
+            Error = string.Empty;
             UdpClient = udpClient;
         }
 
@@ -96,7 +150,7 @@ namespace TeeSharp.Network
 
             if (State != ConnectionState.OFFLINE &&
                 State != ConnectionState.CONNECT &&
-                (Time.Get() - LastReceiveTime) > Time.Freq() * Config.ConnectionTimeout)
+                (Time.Get() - LastReceiveTime) > Time.Freq() * Config["ConnTimeout"])
             {
                 State = ConnectionState.ERROR;
                 Error = "Timeout";
@@ -106,10 +160,10 @@ namespace TeeSharp.Network
             if (ResendQueue.Count > 0)
             {
                 var resend = ResendQueue.Peek();
-                if (Time.Get() - resend.FirstSendTime > Time.Freq() * Config.ConnectionTimeout)
+                if (Time.Get() - resend.FirstSendTime > Time.Freq() * Config["ConnTimeout"])
                 {
                     State = ConnectionState.ERROR;
-                    Error = $"Too weak connection (not acked for {Config.ConnectionTimeout} seconds)";
+                    Error = $"Too weak connection (not acked for {Config["ConnTimeout"]} seconds)";
                 }
                 else if (Time.Get() - resend.LastSendTime > Time.Freq())
                 {
@@ -134,11 +188,6 @@ namespace TeeSharp.Network
                 if (Time.Get() - LastSendTime > Time.Freq() / 2)
                     SendControlMsg(ConnectionMessages.CONNECT, "");
             }
-            else if (State == ConnectionState.PENDING)
-            {
-                if (Time.Get() - LastSendTime > Time.Freq() / 2)
-                    SendControlMsg(ConnectionMessages.CONNECTACCEPT, "");
-            }
         }
 
         public override void Disconnect(string reason)
@@ -155,11 +204,59 @@ namespace TeeSharp.Network
             }
 
             Reset();
-            Disconnected?.Invoke(reason);
         }
 
         public override bool Feed(NetworkChunkConstruct packet, IPEndPoint remote)
         {
+            if (packet.Flags.HasFlag(PacketFlags.RESEND))
+                Resend();
+
+            if (UseToken)
+            {
+                if (!packet.Flags.HasFlag(PacketFlags.TOKEN))
+                {
+                    if (!packet.Flags.HasFlag(PacketFlags.CONTROL) || packet.DataSize < 1)
+                    {
+                        Debug.Log("connection", "dropping msg without token");
+                        return false;
+                    }
+
+                    if (packet.Data[0] == (int) ConnectionMessages.CONNECTACCEPT)
+                    {
+                        if (!Config["ClAllowOldServers"])
+                        {
+                            Debug.Log("connection", "dropping connect+accept without token");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("connection", "dropping ctrl msg without token");
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (packet.Token != Token)
+                    {
+                        Debug.Log("connection", $"dropping msg with invalid token, wanted={Token} got={packet.Token}");
+                        return false;
+                    }
+                }
+            }
+
+            if (Sequence >= PeerAck)
+            {
+                if (packet.Ack < PeerAck || packet.Ack > Sequence)
+                    return false;
+            }
+            else
+            {
+                if (packet.Ack < PeerAck && packet.Ack > Sequence)
+                    return false;
+            }
+
+            PeerAck = packet.Ack;
             if (packet.Flags.HasFlag(PacketFlags.RESEND))
                 Resend();
 
@@ -182,33 +279,33 @@ namespace TeeSharp.Network
                     Debug.Log("connection", $"closed reason='{reason}'");
                     return false;
                 }
-
-                if (State == ConnectionState.OFFLINE && 
-                    msg == ConnectionMessages.CONNECT)
+                else
                 {
-                    Reset();
+                    if (State == ConnectionState.CONNECT)
+                    {
+                        if (msg == ConnectionMessages.CONNECTACCEPT)
+                        {
+                            if (packet.Flags.HasFlag(PacketFlags.TOKEN))
+                            {
+                                if (packet.DataSize < 1 + 4)
+                                {
+                                    Debug.Log("connection", $"got short connect+accept, size={packet.DataSize}");
+                                    return true;
+                                }
 
-                    State = ConnectionState.PENDING;
-                    EndPoint = remote;
-                    LastSendTime = Time.Get();
-                    LastReceiveTime = Time.Get();
-                    ConnectedAt = Time.Get();
+                                Token = packet.Data.ToUInt32(1);
+                            }
+                            else
+                            {
+                                UseToken = false;
+                            }
 
-                    SendControlMsg(ConnectionMessages.CONNECTACCEPT, "");
-                    Debug.Log("connection", "got connection, sending connect+accept");
+                            LastReceiveTime = Time.Get();
+                            State = ConnectionState.ONLINE;
+                            Debug.Log("connection", "got connect+accept, sending accept. connection online");
+                        }
+                    }
                 }
-                else if (State == ConnectionState.CONNECT && msg == ConnectionMessages.CONNECTACCEPT)
-                {
-                    LastReceiveTime = Time.Get();
-                    State = ConnectionState.ONLINE;
-                    SendControlMsg(ConnectionMessages.ACCEPT, "");
-                    Debug.Log("connection", "got connect+accept, sending accept. connection online");
-                }
-            }
-            else if (State == ConnectionState.PENDING)
-            {
-                State = ConnectionState.ONLINE;
-                Debug.Log("connection", "connecting online");
             }
 
             if (State == ConnectionState.ONLINE)
@@ -232,6 +329,13 @@ namespace TeeSharp.Network
                 return 0;
 
             ResendQueueConstruct.Ack = Ack;
+
+            if (UseToken)
+            {
+                ResendQueueConstruct.Flags |= PacketFlags.TOKEN;
+                ResendQueueConstruct.Token = Token;
+            }
+
             NetworkCore.SendPacket(UdpClient, EndPoint, ResendQueueConstruct);
             LastSendTime = Time.Get();
             ResetQueueConstruct();
@@ -296,10 +400,20 @@ namespace TeeSharp.Network
             return QueueChunkEx(flags, dataSize, data, Sequence);
         }
 
+        public override void SendControlMsg(ConnectionMessages msg, byte[] extra)
+        {
+            LastSendTime = Time.Get();
+            var useToken = UseToken && msg != ConnectionMessages.CONNECT;
+            NetworkCore.SendControlMsg(UdpClient, EndPoint, Ack, useToken,
+                Token, msg, extra);
+        }
+
         public override void SendControlMsg(ConnectionMessages msg, string extra)
         {
             LastSendTime = Time.Get();
-            NetworkCore.SendControlMsg(UdpClient, EndPoint, Ack, msg, extra);
+            var useToken = UseToken && msg != ConnectionMessages.CONNECT;
+            NetworkCore.SendControlMsg(UdpClient, EndPoint, Ack, useToken, 
+                Token, msg, extra);
         }
 
         protected override void ResendChunk(NetworkChunkResend resend)
@@ -319,7 +433,7 @@ namespace TeeSharp.Network
 
         protected override void AckChunks(int ack)
         {
-            while (true)
+            do
             {
                 if (ResendQueue.Count == 0)
                     return;
@@ -334,7 +448,7 @@ namespace TeeSharp.Network
                     else return;
                 }
                 else return;
-            }
+            } while (true);
         }
     }
 }

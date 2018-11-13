@@ -3,9 +3,9 @@
     public enum ConnectionState
     {
         OFFLINE = 0,
-        CONNECT,
-        PENDING,
-        ONLINE,
-        ERROR,
+        CONNECT = 1,
+        //PENDING,
+        ONLINE = 3,
+        ERROR = 4,
     }
 }

@@ -6,9 +6,11 @@ namespace TeeSharp.Network.Enums
     public enum PacketFlags
     {
         NONE = 0,
-        CONTROL = 1 << 0,
-        CONNLESS = 1 << 1,
-        RESEND = 1 << 2,
-        COMPRESSION = 1 << 3
+        UNUSED = 1 << 0,
+        TOKEN = 1 << 1,
+        CONTROL = 1 << 2,
+        CONNLESS = 1 << 3,
+        RESEND = 1 << 4,
+        COMPRESSION = 1 << 5,
     }
 }
