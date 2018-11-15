@@ -24,6 +24,7 @@ namespace TeeSharp.Server.Game
                 EventItem = new T(),
                 Mask = mask
             };
+
             EventInfos.Add(info);
 
             return (T) info.EventItem;
