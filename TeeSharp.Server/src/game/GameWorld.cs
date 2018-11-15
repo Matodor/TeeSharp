@@ -51,7 +51,7 @@ namespace TeeSharp.Server.Game
             while (current != null)
             {
                 if (Math.Distance(current.Position, pos) < radius + current.ProximityRadius)
-                    yield return (T)current;
+                    yield return (T) current;
                 current = current.NextTypeEntity;
             }
         }

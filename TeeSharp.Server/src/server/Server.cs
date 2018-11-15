@@ -104,7 +104,6 @@ namespace TeeSharp.Server
 
         public override void Run()
         {
-           
             if (IsRunning)
                 return;
 
@@ -554,7 +553,7 @@ namespace TeeSharp.Server
                 if (diff > 100)
                 {
                     Clients[clientId].Traffic = (int) (alpha * ((float) packet.DataSize / diff) +
-                                                       (1.0f - alpha) * Clients[clientId].Traffic);
+                                                      (1.0f - alpha) * Clients[clientId].Traffic);
                     Clients[clientId].TrafficSince = now;
                 }
             }

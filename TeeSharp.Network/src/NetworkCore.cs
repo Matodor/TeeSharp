@@ -161,7 +161,7 @@ namespace TeeSharp.Network
             }
 
             finalSize += headerSize;
-            buffer[0] = (byte) ((((int) packet.Flags << 4) & 0xf0) | ((packet.Ack >> 8) & 0xf));
+            buffer[0] = (byte) ((((int) packet.Flags << 2) & 0xfc) | ((packet.Ack >> 8) & 0x3));
             buffer[1] = (byte) (packet.Ack & 0xff);
             buffer[2] = (byte) packet.NumChunks;
             udpClient.Send(buffer, finalSize, endPoint);

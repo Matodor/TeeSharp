@@ -20,13 +20,13 @@ namespace TeeSharp.Map
     {
         public static DataFile Read(Stream stream, out string error)
         {
-            uint crc;
             var buffer = new byte[stream.Length];
             stream.Read(buffer, 0, buffer.Length);
             stream.Seek(0, SeekOrigin.Begin);
-            crc = Crc32.ComputeChecksum(buffer);
 
+            var crc = Crc32.ComputeChecksum(buffer);
             var versionHeader = stream.ReadStruct<DataFileVersionHeader>();
+
             if (versionHeader.Magic != "DATA" && versionHeader.Magic != "ATAD")
             {
                 error = $"wrong signature ({versionHeader.Magic})";

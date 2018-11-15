@@ -32,132 +32,6 @@ namespace TeeSharp.Network
         protected virtual long LegacyRateLimitStart { get; set; }
         protected virtual int LegacyRateLimitNum { get; set; }
 
-        public override void Init()
-        {
-            NetworkBan = Kernel.Get<BaseNetworkBan>();
-            ChunkReceiver = Kernel.Get<BaseChunkReceiver>();
-            Config = Kernel.Get<BaseConfig>();
-
-            Salts = new byte[2][];
-            for (var i = 0; i < Salts.Length; i++)
-                Salts[i] = new byte[16];
-        }
-
-        protected virtual uint GetToken(IPEndPoint addr)
-        {
-            return GetToken(addr, CurrentSalt);
-        }
-
-        protected virtual uint GetToken(IPEndPoint addr, int saltIndex)
-        {
-            using (var stream = new MemoryStream())
-            {
-                if (addr.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    stream.Write(BitConverter.GetBytes(1), 0, 4);
-                    stream.Write(addr.Address.GetAddressBytes(), 0, 4);
-                    stream.Write(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 12);
-                    stream.Write(BitConverter.GetBytes((short) addr.Port), 0, 2);
-                }
-
-                stream.Write(Salts[CurrentSalt], 0, Salts[CurrentSalt].Length);
-
-                return Secure.MD5Provider.ComputeHash(stream).ToUInt32();
-            }
-        }
-
-        protected virtual bool IsCorrectToken(IPEndPoint addr, uint token)
-        {
-            for (var i = 0; i < Salts.Length; i++)
-            {
-                if (GetToken(addr, i) == token)
-                    return true;
-            }
-
-            return false;
-        }
-
-        protected virtual uint GetLegacyToken(IPEndPoint addr)
-        {
-            return GetLegacyToken(addr, CurrentSalt);
-        }
-
-        protected virtual uint GetLegacyToken(IPEndPoint addr, int saltIndex)
-        {
-            return DeriveLegacyToken(GetToken(addr, saltIndex));
-        }
-
-        protected virtual uint DeriveLegacyToken(uint token)
-        {
-            token &= ~0x80000000;
-            if (token < 2)
-            {
-                token += 2;
-            }
-            return token;
-        }
-
-        protected virtual bool IsCorrectLegacyToken(IPEndPoint addr, uint legacyToken)
-        {
-            for (var i = 0; i < Salts.Length; i++)
-            {
-                if (GetLegacyToken(addr, i) == legacyToken)
-                    return true;
-            }
-
-            return false;
-        }
-
-        protected virtual bool DecodeLegacyHandShake(byte[] data, int dataSize, out uint legacyToken)
-        {
-            var unpacker = new Unpacker();
-            unpacker.Reset(data, dataSize);
-            var msgId = unpacker.GetInt();
-            var token = unpacker.GetInt();
-
-            if (unpacker.Error || msgId != System(NetworkMessages.CL_INPUT))
-            {
-                legacyToken = 0;
-                return false;
-            }
-
-            legacyToken = (uint) token;
-            return true;
-        }
-
-        protected virtual bool LegacyRateLimit()
-        {
-            var accept = false;
-            var max = Config["SvOldClientsPerInterval"].AsInt();
-            var interval = Config["SvOldClientsInterval"].AsInt();
-            var useRateLimit = max > 0 && interval > 0;
-
-            if (useRateLimit)
-            {
-                var now = Time.Get();
-
-                if (LegacyRateLimitStart < 0 || 
-                    LegacyRateLimitStart + interval * Time.Freq() <= now)
-                {
-                    LegacyRateLimitStart = now;
-                    LegacyRateLimitNum = Math.Clamp(LegacyRateLimitNum - max, 0, max);
-                }
-
-                accept = LegacyRateLimitNum < max;
-            }
-
-            if (Config["SvOldClientsSkip"].AsInt() > 0 && (!accept || !useRateLimit))
-            {
-                accept = new Random().Next(0, int.MaxValue) <= 
-                         int.MaxValue / Config["SvOldClientsSkip"].AsInt();
-            }
-
-            if (accept && useRateLimit)
-                LegacyRateLimitNum++;
-
-            return !accept;
-        }
-
         public override bool Open(NetworkServerConfig config)
         {
             if (!NetworkCore.CreateUdpClient(config.LocalEndPoint, out var socket))
@@ -169,7 +43,7 @@ namespace TeeSharp.Network
 
             for (var i = 0; i < Salts.Length; i++)
                 Secure.RandomFill(Salts[i]);
-            
+
             LastSaltUpdate = Time.Get();
             LegacyRateLimitStart = -1;
             LegacyRateLimitNum = 0;
@@ -179,7 +53,7 @@ namespace TeeSharp.Network
                 Connections[i] = Kernel.Get<BaseNetworkConnection>();
                 Connections[i].Init(UdpClient);
             }
-            
+
             return true;
         }
 
@@ -189,14 +63,10 @@ namespace TeeSharp.Network
             DelClientCallback = delClientCB;
         }
 
-        public override IPEndPoint ClientEndPoint(int clientId)
+        public override void Drop(int clientId, string reason)
         {
-            return Connections[clientId].EndPoint;
-        }
-
-        public override AddressFamily NetType()
-        {
-            return UdpClient.Client.AddressFamily;
+            DelClientCallback?.Invoke(clientId, reason);
+            Connections[clientId].Disconnect(reason);
         }
 
         public override void Update()
@@ -222,6 +92,140 @@ namespace TeeSharp.Network
                         Drop(clientId, Connections[clientId].Error);
                 }
             }
+        }
+        
+        protected virtual uint GetToken(IPEndPoint addr)
+        {
+            return GetToken(addr, CurrentSalt);
+        }
+
+        protected virtual uint GetToken(IPEndPoint addr, int saltIndex)
+        {
+            using (var stream = new MemoryStream())
+            {
+                if (addr.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    stream.Write(BitConverter.GetBytes(1), 0, 4);
+                    stream.Write(addr.Address.GetAddressBytes(), 0, 4);
+                    stream.Write(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 12);
+                    stream.Write(BitConverter.GetBytes(addr.Port), 0, 4);
+                }
+
+                stream.Write(Salts[CurrentSalt], 0, Salts[CurrentSalt].Length);
+
+                return Secure.MD5Provider.ComputeHash(stream.ToArray()).ToUInt32();
+            }
+        }
+
+        protected virtual bool IsCorrectToken(IPEndPoint addr, uint token)
+        {
+            for (var i = 0; i < Salts.Length; i++)
+            {
+                if (GetToken(addr, i) == token)
+                    return true;
+            }
+
+            return false;
+        }
+
+        protected virtual uint GetLegacyToken(IPEndPoint addr)
+        {
+            return GetLegacyToken(addr, CurrentSalt);
+        }
+
+        protected virtual uint GetLegacyToken(IPEndPoint addr, int saltIndex)
+        {
+            return DeriveLegacyToken(GetToken(addr, saltIndex));
+        }
+
+        public override void Init()
+        {
+            NetworkBan = Kernel.Get<BaseNetworkBan>();
+            ChunkReceiver = Kernel.Get<BaseChunkReceiver>();
+            Config = Kernel.Get<BaseConfig>();
+
+            Salts = new byte[2][];
+            for (var i = 0; i < Salts.Length; i++)
+                Salts[i] = new byte[16];
+        }
+
+        protected virtual uint DeriveLegacyToken(uint token)
+        {
+            token &= ~0x80000000;
+            if (token < 2)
+                token += 2;
+            return token;
+        }
+
+        protected virtual bool IsCorrectLegacyToken(IPEndPoint addr, uint legacyToken)
+        {
+            for (var i = 0; i < Salts.Length; i++)
+            {
+                if (GetLegacyToken(addr, i) == legacyToken)
+                    return true;
+            }
+
+            return false;
+        }
+
+        protected virtual bool LegacyRateLimit()
+        {
+            var accept = false;
+            var max = Config["SvOldClientsPerInterval"].AsInt();
+            var interval = Config["SvOldClientsInterval"].AsInt();
+            var useRateLimit = max > 0 && interval > 0;
+
+            if (useRateLimit)
+            {
+                var now = Time.Get();
+
+                if (LegacyRateLimitStart < 0 ||
+                    LegacyRateLimitStart + interval * Time.Freq() <= now)
+                {
+                    LegacyRateLimitStart = now;
+                    LegacyRateLimitNum = Math.Clamp(LegacyRateLimitNum - max, 0, max);
+                }
+
+                accept = LegacyRateLimitNum < max;
+            }
+
+            if (Config["SvOldClientsSkip"] > 0 && (!accept || !useRateLimit))
+            {
+                accept = new Random().Next(0, int.MaxValue) <=
+                         int.MaxValue / Config["SvOldClientsSkip"];
+            }
+
+            if (accept && useRateLimit)
+                LegacyRateLimitNum++;
+
+            return !accept;
+        }
+
+        protected virtual bool DecodeLegacyHandShake(byte[] data, int dataSize, out uint legacyToken)
+        {
+            var unpacker = new Unpacker();
+            unpacker.Reset(data, dataSize);
+            var msgId = unpacker.GetInt();
+            var token = unpacker.GetInt();
+
+            if (unpacker.Error || msgId != System(NetworkMessages.CL_INPUT))
+            {
+                legacyToken = 0;
+                return false;
+            }
+
+            legacyToken = (uint) token;
+            return true;
+        }
+        
+        public override IPEndPoint ClientEndPoint(int clientId)
+        {
+            return Connections[clientId].EndPoint;
+        }
+
+        public override AddressFamily NetType()
+        {
+            return UdpClient.Client.AddressFamily;
         }
 
         public override bool Receive(out NetworkChunk packet)
@@ -341,11 +345,10 @@ namespace TeeSharp.Network
                                 ChunkReceiver.Start(remote, null, -1);
                                 var chunk = new NetworkChunk();
                                 var correct = false;
-                                uint legacyToken;
 
                                 while (ChunkReceiver.FetchChunk(out chunk))
                                 {
-                                    if (DecodeLegacyHandShake(chunk.Data, chunk.DataSize, out legacyToken))
+                                    if (DecodeLegacyHandShake(chunk.Data, chunk.DataSize, out var legacyToken))
                                     {
                                         if (IsCorrectLegacyToken(remote, legacyToken))
                                         {
@@ -437,6 +440,8 @@ namespace TeeSharp.Network
             NetworkChunkConstruct packet1, 
             NetworkChunkConstruct packet2, uint legacyToken)
         {
+            throw new NotImplementedException();
+
             packet1.Flags = PacketFlags.CONTROL;
             packet1.Ack = 0;
             packet1.NumChunks = 0;
@@ -476,12 +481,12 @@ namespace TeeSharp.Network
             Debug.Assert(packet.DataSize + NetworkCore.MAX_CHUNK_HEADER_SIZE + 
                          dataSize <= packet.Data.Length, "too much data");
 
-            var header = new NetworkChunkHeader();
-            header.Flags = sequence >= 0 
-                ? ChunkFlags.VITAL 
-                : ChunkFlags.NONE;
-            header.Size = dataSize;
-            header.Sequence = sequence >= 0 ? sequence : 0;
+            var header = new NetworkChunkHeader
+            {
+                Flags = sequence >= 0 ? ChunkFlags.VITAL : ChunkFlags.NONE,
+                Size = dataSize,
+                Sequence = sequence >= 0 ? sequence : 0
+            };
 
             var packetDataOffset = packet.DataSize;
             var chunkStartOffset = packetDataOffset;
@@ -498,13 +503,7 @@ namespace TeeSharp.Network
         {
             return ((int) msg << 1) | 1;
         }
-
-        public override void Drop(int clientId, string reason)
-        {
-            DelClientCallback?.Invoke(clientId, reason);
-            Connections[clientId].Disconnect(reason);
-        }
-
+        
         public override int FindSlot(IPEndPoint endPoint, bool comparePorts)
         {
             for (var i = 0; i < Connections.Length; i++)

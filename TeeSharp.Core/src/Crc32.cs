@@ -5,7 +5,7 @@
 
 using System;
 
-namespace TeeSharp.Map
+namespace TeeSharp.Core
 {
     public static class Crc32
     {

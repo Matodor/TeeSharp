@@ -8,9 +8,9 @@ namespace TeeSharp.Map
         public const int
             TILESLAYERFLAG_GAME = 1;
 
-        public uint CRC { get; }
         public int Size { get; }
-        public byte[] RawData { get; }
+        public uint CRC => _dataFile.Crc;
+        public byte[] RawData => _dataFile.Raw;
         public string MapName { get; set; }
 
         private readonly DataFile _dataFile;
@@ -18,10 +18,7 @@ namespace TeeSharp.Map
         private MapContainer(DataFile dataFile)
         {
             _dataFile = dataFile;
-
-            CRC = _dataFile.Crc;
             Size = _dataFile.Raw.Length;
-            RawData = _dataFile.Raw;
         }
 
         public void GetType(MapItemTypes type, out int startItems, out int numItems)
@@ -36,9 +33,14 @@ namespace TeeSharp.Map
             return item;
         }
 
-        public T[] GetData<T>(int index)
+        public T GetData<T>(int index)
         {
             return _dataFile.GetData<T>(index);
+        }
+
+        public void UnloadData(int index)
+        {
+            _dataFile.UnloadData(index);
         }
 
         public static int MakeVersion<T>(int i, T v)

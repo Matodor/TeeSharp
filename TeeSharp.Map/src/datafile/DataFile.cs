@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using ComponentAce.Compression.Libs.zlib;
 using TeeSharp.Core;
 
@@ -8,14 +10,14 @@ namespace TeeSharp.Map
 {
     public class DataFile
     {
-        public byte[] Raw;
+        public readonly byte[] Raw;
         public readonly uint Crc;
         public readonly DataFileVersionHeader VersionHeader;
         public readonly DataFileHeader Header;
-        public readonly DataFileItemType[] ItemTypes;
-        public readonly int[] ItemOffsets;
-        public readonly int[] DataOffsets;
-        public readonly int[] DataSizes;
+        public readonly IReadOnlyList<DataFileItemType> ItemTypes;
+        public readonly IReadOnlyList<int> ItemOffsets;
+        public readonly IReadOnlyList<int> DataOffsets;
+        public readonly IReadOnlyList<int> DataSizes;
 
         public int ItemStartIndex { get; }
         public int DataStartIndex => ItemStartIndex + Header.ItemSize;
@@ -27,10 +29,10 @@ namespace TeeSharp.Map
             uint crc, 
             DataFileVersionHeader versionHeader,
             DataFileHeader header, 
-            DataFileItemType[] itemTypes,
-            int[] itemOffsets,
-            int[] dataOffsets,
-            int[] dataSizes,
+            IReadOnlyList<DataFileItemType> itemTypes,
+            IReadOnlyList<int> itemOffsets,
+            IReadOnlyList<int> dataOffsets,
+            IReadOnlyList<int> dataSizes,
             int itemStartIndex)
         {
             Raw = raw;
@@ -57,43 +59,58 @@ namespace TeeSharp.Map
                 return Header.DataSize - DataOffsets[index];
             return DataOffsets[index + 1] - DataOffsets[index];
         }
-
-        public T[] GetData<T>(int index)
+        
+        public T GetData<T>(int index)
         {
-            if (_dataObjects[index] == null)
+            if (_dataObjects[index] != null)
+                return (T) _dataObjects[index];
+
+            var dataSize = GetDataSize(index);
+            var uncompressedSize = DataSizes[index];
+
+            Debug.Log("datafile", $"loading data={typeof(T).Name} index={index} size={dataSize} uncompressed={uncompressedSize}");
+            using (var outMemoryStream = new MemoryStream())
+            using (var outZStream = new ZOutputStream(outMemoryStream))
+            using (var inMemoryStream = new MemoryStream(
+                Raw,
+                DataStartIndex + DataOffsets[index],
+                dataSize
+            ))
             {
-                var dataSize = GetDataSize(index);
-                var uncompressedSize = DataSizes[index];
+                inMemoryStream.CopyStream(outZStream);
+                outZStream.finish();
 
-                Debug.Log("datafile", $"loading data={typeof(T).Name} index={index} size={dataSize} uncompressed={uncompressedSize}");
-                using (var outMemoryStream = new MemoryStream())
-                using (var outZStream = new ZOutputStream(outMemoryStream))
-                using (var inMemoryStream = new MemoryStream(
-                    Raw,
-                    DataStartIndex + DataOffsets[index],
-                    dataSize
-                ))
+                if (typeof(T).IsArray)
                 {
-                    inMemoryStream.CopyStream(outZStream);
-                    outZStream.finish();
+                    if (typeof(T) == typeof(string[]))
+                        throw new NotSupportedException("GetData not supported array string");
 
-                    _dataObjects[index] = outMemoryStream.ToArray().ReadStructs<T>();
+                    _dataObjects[index] = outMemoryStream.ToArray().ReadStructs(typeof(T).GetElementType());
+                }
+                else
+                {
+                    if (typeof(T) == typeof(string))
+                    {
+                        _dataObjects[index] = Encoding.UTF8.GetString(outMemoryStream.ToArray()).SanitizeCC();
+                    }
+                    else
+                        _dataObjects[index] = outMemoryStream.ToArray().ReadStructs<T>();
                 }
             }
 
-            return (T[]) _dataObjects[index];
+            return (T) _dataObjects[index];
         }
 
         public void GetType(int typeId, out int start, out int num)
         {
             for (var i = 0; i < Header.NumItemTypes; i++)
             {
-                if (ItemTypes[i].TypeId == typeId)
-                {
-                    start = ItemTypes[i].Start;
-                    num = ItemTypes[i].Num;
-                    return;
-                }
+                if (ItemTypes[i].TypeId != typeId)
+                    continue;
+
+                start = ItemTypes[i].Start;
+                num = ItemTypes[i].Num;
+                return;
             }
 
             start = 0;
@@ -117,7 +134,7 @@ namespace TeeSharp.Map
 
             for (var i = 0; i < num; i++)
             {
-                var item = GetItem<T>(start + i, out var _, out var itemId);
+                var item = GetItem<T>(start + i, out _, out var itemId);
                 if (id == itemId)
                     return item;
             }
