@@ -15,4 +15,4 @@ TeeSharp is implementation of Teeworlds in .NET
 # Questions?
 Come talk to us here:
 
-[![Discord Server](https://discordapp.com/api/guilds/403578274284044299/embed.png?style=banner2)](https://discord.gg/nTk7HgF)
+[![Discord Server](https://discordapp.com/api/guilds/403578274284044299/embed.png?style=banner2)](https://discord.gg/qgBV9qZ)
