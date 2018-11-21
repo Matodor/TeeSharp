@@ -95,6 +95,7 @@ namespace TeeSharp.Server
         protected abstract void SendMap(int clientId);
 
         protected abstract void RegisterConsoleCommands();
+        protected abstract void SendRconLine(int clientId, string line);
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
 

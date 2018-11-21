@@ -90,7 +90,7 @@ namespace TeeSharp.Network
                 {
                     ClientId = ClientId,
                     EndPoint = EndPoint,
-                    Flags = SendFlags.NONE,
+                    Flags = (SendFlags) header.Flags,
                     DataSize = header.Size,
                     Data = new byte[header.Size]
                 };

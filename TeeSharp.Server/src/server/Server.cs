@@ -90,8 +90,7 @@ namespace TeeSharp.Server
             Storage.Init("TeeSharp", StorageType.SERVER);
 
             Console.Init();
-            Console.RegisterPrintCallback((OutputLevel) (int) Config["ConsoleOutputLevel"],
-                SendRconLineAuthed);
+            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
 
             NetworkServer.Init();
 
@@ -592,12 +591,9 @@ namespace TeeSharp.Server
                         break;
                 }
             }
-            else
+            else if (Clients[clientId].State >= ServerClientState.READY)
             {
-                if (Clients[clientId].State >= ServerClientState.READY)
-                {
-                    GameContext.OnMessage(msg, unpacker, clientId);
-                }
+                GameContext.OnMessage(msg, unpacker, clientId);
             }
         }
 
@@ -609,7 +605,36 @@ namespace TeeSharp.Server
 
         protected override void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            var login = unpacker.GetString();
+            var password = unpacker.GetString();
+
+            SendRconLine(clientId, password);
+            if (!packet.Flags.HasFlag(SendFlags.VITAL) || unpacker.Error)
+                return;
+
+            if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
+                string.IsNullOrEmpty(Config["SvRconModPassword"]))
+            {
+                SendRconLine(clientId, "No rcon password set on server. Set sv_rcon_password and/or sv_rcon_mod_password to enable the remote console.");
+            }
+
+            var authed = false;
+            if (password == Config["SvRconPassword"])
+            {
+                authed = true;
+            }
+            else if (password == Config["SvRconModPassword"])
+            {
+                authed = true;
+            }
+            
+            if (authed)
+            {
+                var msg = new MsgPacker((int) NetworkMessages.SV_RCON_AUTH_STATUS);
+                msg.AddInt(1);
+                msg.AddInt(1);
+                SendMsgEx(msg, MsgFlags.VITAL, clientId, true);
+            }
         }
 
         protected override void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId)
@@ -1184,6 +1209,13 @@ namespace TeeSharp.Server
         protected override void ConsoleKick(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
+        }
+
+        protected override void SendRconLine(int clientId, string line)
+        {
+            var packer = new MsgPacker((int) NetworkMessages.SV_RCON_LINE);
+            packer.AddString(line, 512);
+            SendMsgEx(packer, MsgFlags.VITAL, clientId, true);
         }
 
         protected override void SendRconLineAuthed(string message, object data)
