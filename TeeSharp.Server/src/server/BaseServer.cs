@@ -89,12 +89,13 @@ namespace TeeSharp.Server
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(int tick);
         protected abstract void DelClientCallback(int clientId, string reason);
-        protected abstract void NewClientCallback(int clientid);
+        protected abstract void NewClientCallback(int clientid, bool legacy);
 
         protected abstract bool LoadMap(string mapName);
         protected abstract void SendMap(int clientId);
 
         protected abstract void RegisterConsoleCommands();
+        protected abstract void SendRconLine(int clientId, string line);
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
 

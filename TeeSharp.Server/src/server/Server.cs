@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TeeSharp.Common;
@@ -89,8 +90,7 @@ namespace TeeSharp.Server
             Storage.Init("TeeSharp", StorageType.SERVER);
 
             Console.Init();
-            Console.RegisterPrintCallback((OutputLevel) (int) Config["ConsoleOutputLevel"],
-                SendRconLineAuthed);
+            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
 
             NetworkServer.Init();
 
@@ -103,7 +103,6 @@ namespace TeeSharp.Server
 
         public override void Run()
         {
-           
             if (IsRunning)
                 return;
 
@@ -118,7 +117,7 @@ namespace TeeSharp.Server
             if (!StartNetworkServer())
                 return;
 
-            Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
+            Clients = new BaseServerClient[NetworkServer.ServerConfig.MaxClients];
             IdMap = new int[Clients.Length * VANILLA_MAX_CLIENTS];
 
             for (var i = 0; i < Clients.Length; i++)
@@ -131,9 +130,9 @@ namespace TeeSharp.Server
             StartTime = Time.Get();
             IsRunning = true;
 
-            _lastSent = new int[NetworkServer.Config.MaxClients];
-            _lastAsk = new int[NetworkServer.Config.MaxClients];
-            _lastAskTick = new int[NetworkServer.Config.MaxClients];
+            _lastSent = new int[NetworkServer.ServerConfig.MaxClients];
+            _lastAsk = new int[NetworkServer.ServerConfig.MaxClients];
+            _lastAskTick = new int[NetworkServer.ServerConfig.MaxClients];
 
             while (IsRunning)
             {
@@ -509,7 +508,6 @@ namespace TeeSharp.Server
             var networkConfig = new NetworkServerConfig
             {
                 LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
-                ConnectionTimeout = Config["ConnTimeout"],
                 MaxClientsPerIp = Config["SvMaxClientsPerIP"],
                 MaxClients = Config["SvMaxClients"]
             };
@@ -554,7 +552,7 @@ namespace TeeSharp.Server
                 if (diff > 100)
                 {
                     Clients[clientId].Traffic = (int) (alpha * ((float) packet.DataSize / diff) +
-                                                       (1.0f - alpha) * Clients[clientId].Traffic);
+                                                      (1.0f - alpha) * Clients[clientId].Traffic);
                     Clients[clientId].TrafficSince = now;
                 }
             }
@@ -593,12 +591,9 @@ namespace TeeSharp.Server
                         break;
                 }
             }
-            else
+            else if (Clients[clientId].State >= ServerClientState.READY)
             {
-                if (Clients[clientId].State >= ServerClientState.READY)
-                {
-                    GameContext.OnMessage(msg, unpacker, clientId);
-                }
+                GameContext.OnMessage(msg, unpacker, clientId);
             }
         }
 
@@ -610,7 +605,36 @@ namespace TeeSharp.Server
 
         protected override void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId)
         {
-            throw new NotImplementedException();
+            var login = unpacker.GetString();
+            var password = unpacker.GetString();
+
+            SendRconLine(clientId, password);
+            if (!packet.Flags.HasFlag(SendFlags.VITAL) || unpacker.Error)
+                return;
+
+            if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
+                string.IsNullOrEmpty(Config["SvRconModPassword"]))
+            {
+                SendRconLine(clientId, "No rcon password set on server. Set sv_rcon_password and/or sv_rcon_mod_password to enable the remote console.");
+            }
+
+            var authed = false;
+            if (password == Config["SvRconPassword"])
+            {
+                authed = true;
+            }
+            else if (password == Config["SvRconModPassword"])
+            {
+                authed = true;
+            }
+            
+            if (authed)
+            {
+                var msg = new MsgPacker((int) NetworkMessages.SV_RCON_AUTH_STATUS);
+                msg.AddInt(1);
+                msg.AddInt(1);
+                SendMsgEx(msg, MsgFlags.VITAL, clientId, true);
+            }
         }
 
         protected override void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId)
@@ -750,7 +774,7 @@ namespace TeeSharp.Server
                 return;
             }
 
-            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"] &&
+            if (clientId >= NetworkServer.ServerConfig.MaxClients - Config["SvReservedSlots"] &&
                 !string.IsNullOrEmpty(Config["SvReservedSlotsPass"]) &&
                 password != Config["SvReservedSlotsPass"])
             {
@@ -964,10 +988,15 @@ namespace TeeSharp.Server
             Clients[clientId].State = ServerClientState.EMPTY;
         }
 
-        protected override void NewClientCallback(int clientid)
+        protected override void NewClientCallback(int clientid, bool legacy)
         {
-            Clients[clientid].State = ServerClientState.AUTH;
+            Clients[clientid].State = legacy == false ?
+                ServerClientState.AUTH :
+                ServerClientState.CONNECTING;
             Clients[clientid].Reset();
+
+            if (legacy)
+                SendMap(clientid);
         }
 
         protected override bool LoadMap(string mapName)
@@ -1046,7 +1075,7 @@ namespace TeeSharp.Server
                 var packer = new Packer();
                 var playersCount = 0;
                 var clientsCount = 0;
-                var maxClients = NetworkServer.Config.MaxClients;
+                var maxClients = NetworkServer.ServerConfig.MaxClients;
 
                 for (var i = 0; i < Clients.Length; i++)
                 {
@@ -1180,6 +1209,13 @@ namespace TeeSharp.Server
         protected override void ConsoleKick(ConsoleResult result, object data)
         {
             throw new NotImplementedException();
+        }
+
+        protected override void SendRconLine(int clientId, string line)
+        {
+            var packer = new MsgPacker((int) NetworkMessages.SV_RCON_LINE);
+            packer.AddString(line, 512);
+            SendMsgEx(packer, MsgFlags.VITAL, clientId, true);
         }
 
         protected override void SendRconLineAuthed(string message, object data)

@@ -15,7 +15,7 @@ namespace TeeSharp.Common
             Layers = layers;
             Width = Layers.GameLayer.Width;
             Height = Layers.GameLayer.Height;
-            GameLayerTiles = Layers.Map.GetData<Tile>(Layers.GameLayer.Data);
+            GameLayerTiles = Layers.Map.GetData<Tile[]>(Layers.GameLayer.Data);
 
             for (var i = 0; i < Width * Height; i++)
             {

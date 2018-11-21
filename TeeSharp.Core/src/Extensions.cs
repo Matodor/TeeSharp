@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -80,42 +81,51 @@ namespace TeeSharp.Core
             return memcmp(b1, compareArray, limit) == 0;
         }
 
-        public static T[] ReadStructs<T>(this byte[] buffer, int offset = 0)
+        public static object ReadStructs(this byte[] buffer, Type type, int offset = 0)
         {
-            var size = Marshal.SizeOf<T>();
-            var array = new T[(buffer.Length - offset) / size];
+            var size = Marshal.SizeOf(type);
+            var array = Array.CreateInstance(type, (buffer.Length - offset) / size);
+
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
             var ptr = handle.AddrOfPinnedObject();
 
             for (var i = 0; i < array.Length; i++)
-            {
-                array[i] = Marshal.PtrToStructure<T>(ptr + (size * i + offset));
-            }
+                array.SetValue(Marshal.PtrToStructure(ptr + (size * i + offset), type), i);
 
             handle.Free();
             return array;
         }
 
-        public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
+        public static T[] ReadStructs<T>(this byte[] buffer, int offset = 0)
+        {
+            return (T[]) ReadStructs(buffer, typeof(T), offset);
+        }
+
+        public static object ReadStruct(this byte[] buffer, Type type, int offset = 0)
         {
             var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            var ptr = handle.AddrOfPinnedObject();
-            var value = Marshal.PtrToStructure<T>(ptr + offset);
+            var value = Marshal.PtrToStructure(handle.AddrOfPinnedObject() + offset, type);
 
             handle.Free();
             return value;
         }
 
-        public static T ReadStruct<T>(this Stream fs)
+        public static T ReadStruct<T>(this byte[] buffer, int offset = 0)
         {
-            var buffer = new byte[Marshal.SizeOf<T>()];
+            return (T) ReadStruct(buffer, typeof(T), offset);
+        }
+
+        public static object ReadStruct(this Stream fs, Type type)
+        {
+            var buffer = new byte[Marshal.SizeOf(type)];
             fs.Read(buffer, 0, buffer.Length);
 
-            var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            var value = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+            return ReadStruct(buffer, type);
+        }
 
-            handle.Free();
-            return value;
+        public static T ReadStruct<T>(this Stream fs)
+        {
+            return (T) ReadStruct(fs, typeof(T));
         }
 
         public static void CopyStream(this Stream input, Stream output)
@@ -171,6 +181,25 @@ namespace TeeSharp.Core
             }
 
             return tmp.ToString();
+        }
+
+        public static uint ToUInt32(this byte[] array, int offset = 0)
+        {
+            return (uint) (
+               (array[0 + offset] << 24) | 
+               (array[1 + offset] << 16) | 
+               (array[2 + offset] << 8) |
+               (array[3 + offset])
+            );
+        }
+
+        public static void ToByteArray(this uint value, byte[] dstArray, 
+            int offset)
+        {
+            dstArray[0 + offset] = (byte) ((value & 0xff000000) >> 24);
+            dstArray[1 + offset] = (byte) ((value & 0x00ff0000) >> 16);
+            dstArray[2 + offset] = (byte) ((value & 0x0000ff00) >> 8);
+            dstArray[3 + offset] = (byte) ((value & 0x000000ff) >> 0);
         }
     }
 }

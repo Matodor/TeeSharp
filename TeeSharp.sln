@@ -15,13 +15,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.OverrideServer", "
 		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Common", "TeeSharp.Common\TeeSharp.Common.csproj", "{A3E30B8C-3604-48D4-84A4-B5D778660BF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Common", "TeeSharp.Common\TeeSharp.Common.csproj", "{A3E30B8C-3604-48D4-84A4-B5D778660BF6}"
 	ProjectSection(ProjectDependencies) = postProject
 		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Server", "TeeSharp.Server\TeeSharp.Server.csproj", "{FB04F479-414B-4D41-9E49-5F89B69454BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Server", "TeeSharp.Server\TeeSharp.Server.csproj", "{FB04F479-414B-4D41-9E49-5F89B69454BB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
 		{A3E30B8C-3604-48D4-84A4-B5D778660BF6} = {A3E30B8C-3604-48D4-84A4-B5D778660BF6}
@@ -30,29 +30,34 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Server", "TeeSharp
 		{A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0} = {A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Network", "TeeSharp.Network\TeeSharp.Network.csproj", "{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Network", "TeeSharp.Network\TeeSharp.Network.csproj", "{D655D9AE-26A0-4F52-84A0-C55D6D8BC337}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Map", "TeeSharp.Map\TeeSharp.Map.csproj", "{02870652-7012-43E1-BCEC-B72E2139B8BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Map", "TeeSharp.Map\TeeSharp.Map.csproj", "{02870652-7012-43E1-BCEC-B72E2139B8BC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.MasterServer", "TeeSharp.MasterServer\TeeSharp.MasterServer.csproj", "{A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.MasterServer", "TeeSharp.MasterServer\TeeSharp.MasterServer.csproj", "{A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337} = {D655D9AE-26A0-4F52-84A0-C55D6D8BC337}
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Core", "TeeSharp.Core\TeeSharp.Core.csproj", "{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Core", "TeeSharp.Core\TeeSharp.Core.csproj", "{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.MasterServer", "Examples\Examples.MasterServer\Examples.MasterServer\Examples.MasterServer.csproj", "{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.MasterServer", "Examples\Examples.MasterServer\Examples.MasterServer\Examples.MasterServer.csproj", "{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337} = {D655D9AE-26A0-4F52-84A0-C55D6D8BC337}
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
 		{A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0} = {A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.MapParser", "Examples\Examples.MapParser\Examples.MapParser.csproj", "{00B55690-D184-4224-82F7-D0EE71CFB9D4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
 	EndProjectSection
 EndProject
 Global
@@ -97,8 +102,15 @@ Global
 		{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3731B45C-849E-4CC8-83CD-AC5FE52221EC}
 	EndGlobalSection
 EndGlobal

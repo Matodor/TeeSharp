@@ -9,6 +9,7 @@ namespace TeeSharp.Network
         public int NumChunks;
         public int DataSize;
         public readonly byte[] Data;
+        public uint Token;
 
         public NetworkChunkConstruct()
         {

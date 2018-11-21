@@ -50,7 +50,6 @@ namespace TeeSharp.Server.Game
             CheckPureTuning();
         }
 
-
         public override void RegisterConsoleCommands()
         {
         }

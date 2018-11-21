@@ -10,7 +10,7 @@ namespace TeeSharp.Network
 
         public int Pack(byte[] inputData, int inputOffset)
         {
-            inputData[inputOffset + 0] = (byte) ((((int) Flags & 0b11) << 6) | ((Size >> 4) & 0b111111));
+            inputData[inputOffset + 0] = (byte) ((((int) Flags & 3) << 6) | ((Size >> 4) & 0x3F));
             inputData[inputOffset + 1] = (byte) (Size & 0xf);
 
             if (Flags.HasFlag(ChunkFlags.VITAL))

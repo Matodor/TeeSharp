@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 using TeeSharp.Server.Game.Entities;
+using Math = TeeSharp.Common.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -33,7 +36,9 @@ namespace TeeSharp.Server.Game
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
-        
+
+        private string _mapWish;
+
         public abstract int GetPlayerScore(int clientId);
         public abstract string GetTeamName(Team team);
         public abstract Team GetAutoTeam(int clientId);
@@ -67,6 +72,25 @@ namespace TeeSharp.Server.Game
             GameContext = Kernel.Get<BaseGameContext>();
             Config = Kernel.Get<BaseConfig>();
             GameWorld = Kernel.Get<BaseGameWorld>();
+        }
+
+
+        public virtual void ChangeMap(string toMap)
+        {
+            _mapWish = toMap;
+        }
+
+        public virtual void CycleMap()
+        {
+            // TODO
+            throw new NotImplementedException();
+
+            if (!string.IsNullOrEmpty(_mapWish))
+            {
+                GameContext.Console.Print(OutputLevel.DEBUG, "game", $"rotating map to {_mapWish}");
+                _mapWish = string.Empty;
+                
+            }
         }
 
         public virtual bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)

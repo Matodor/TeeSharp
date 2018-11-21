@@ -1,10 +1,11 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using TeeSharp.Common.Config;
 using TeeSharp.Core;
 
 namespace TeeSharp.Network
 {
-    public delegate void NewClientCallback(int clientId);
+    public delegate void NewClientCallback(int clientId, bool legacy);
     public delegate void DelClientCallback(int clientId, string reason);
 
     public struct NetworkServerConfig
@@ -12,15 +13,15 @@ namespace TeeSharp.Network
         public IPEndPoint LocalEndPoint;
         public int MaxClients;
         public int MaxClientsPerIp;
-        public int ConnectionTimeout;
     }
 
     public abstract class BaseNetworkServer : BaseInterface
     {
-        public abstract NetworkServerConfig Config { get; protected set; }
+        public abstract NetworkServerConfig ServerConfig { get; protected set; }
 
         protected abstract BaseChunkReceiver ChunkReceiver { get; set; }
         protected abstract BaseNetworkBan NetworkBan { get; set; }
+        protected abstract BaseConfig Config { get; set; }
 
         protected abstract BaseNetworkConnection[] Connections { get; set; }
         protected abstract UdpClient UdpClient { get; set; }
@@ -29,7 +30,10 @@ namespace TeeSharp.Network
         
         public abstract void Init();
         public abstract bool Open(NetworkServerConfig config);
+
+        public abstract void SetMaxClientsPerIp(int max);
         public abstract void SetCallbacks(NewClientCallback newClientCB, DelClientCallback delClientCB);
+
         public abstract IPEndPoint ClientEndPoint(int clientId);
         public abstract AddressFamily NetType();
         public abstract void Update();

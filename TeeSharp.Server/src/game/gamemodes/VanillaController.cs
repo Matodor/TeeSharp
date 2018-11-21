@@ -273,6 +273,9 @@ namespace TeeSharp.Server.Game
                 if (GameContext.Players[i] == null)
                     continue;
 
+                Scores[i] = 0;
+                ScoresStartTick[i] = Server.Tick;
+
                 GameContext.Players[i].Respawn();
                 GameContext.Players[i].RespawnTick = Server.Tick + Server.TickSpeed / 2;
             }
@@ -411,15 +414,8 @@ namespace TeeSharp.Server.Game
         public override string GetTeamName(Team team)
         {
             if (IsTeamplay())
-            {
-                if (team == Team.RED)
-                    return "red team";
-                return "blue team";
-            }
-
-            if (team == Team.SPECTATORS)
-                return "spectators";
-            return "game";
+                return team == Team.RED ? "red team" : "blue team";
+            return team == Team.SPECTATORS ? "spectators" : "game";
         }
 
         public override bool CheckTeamBalance()
@@ -537,7 +533,7 @@ namespace TeeSharp.Server.Game
 
             if (powerup != Powerup.NONE)
             {
-                var pickup = new Pickup(powerup, weapon)
+                new Pickup(powerup, weapon)
                 {
                     Position = pos
                 };
