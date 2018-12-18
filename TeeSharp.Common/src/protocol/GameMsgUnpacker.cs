@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsgUnpacker : BaseGameMsgUnpacker
     {
-        protected const SanitizeType CC_TRIM = SanitizeType.SANITIZE_CC | SanitizeType.SKIP_START_WHITESPACES;
+        protected const SanitizeType CC_TRIM = SanitizeType.SanitizeCC | SanitizeType.SkipStartWhitespaces;
 
         public override bool Unpack(int msgId, Unpacker unpacker, 
             out BaseGameMessage msg, out string failedOn)

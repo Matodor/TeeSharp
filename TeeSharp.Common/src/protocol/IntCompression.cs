@@ -8,7 +8,7 @@
             value = value ^ (value >> 31);
 
             data[dataOffset] = (byte)(data[dataOffset] | (value & 63));
-            value >>= 6; // discard 6 bits
+            value >>= 6;
 
             if (value != 0)
             {
@@ -19,7 +19,7 @@
                     dataOffset++;
 
                     data[dataOffset] = (byte)(value & 127);
-                    value >>= 7; // discard 7 bits
+                    value >>= 7;
                     data[dataOffset] = (byte)(data[dataOffset] | (byte)(value != 0 ? 128 : 0));
 
                     if (value == 0)

@@ -760,14 +760,14 @@ namespace TeeSharp.Server
             if (Clients[clientId].State != ServerClientState.AUTH)
                 return;
 
-            var version = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            var version = unpacker.GetString(SanitizeType.SanitizeCC);
             if (string.IsNullOrEmpty(version) || !version.StartsWith(GameContext.NetVersion))
             {
                 NetworkServer.Drop(clientId, $"Wrong version. Server is running '{GameContext.NetVersion}' and client '{version}'");
                 return;
             }
 
-            var password = unpacker.GetString(SanitizeType.SANITIZE_CC);
+            var password = unpacker.GetString(SanitizeType.SanitizeCC);
             if (!string.IsNullOrEmpty(Config["Password"]) && password != Config["Password"])
             {
                 NetworkServer.Drop(clientId, "Wrong password");

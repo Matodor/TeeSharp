@@ -6,17 +6,23 @@ namespace TeeSharp.Common
 {
     public class Packer
     {
-        public const int MAX_PACKER_BUFFER_SIZE = 1024 * 2;
+        private const int PackerBufferSize = 1024 * 2;
 
         public bool Error { get; private set; }
 
         private readonly byte[] _buffer;
-        private int _currentIndex;
+        private int _index;
 
         public Packer()
         {
-            _buffer = new byte[MAX_PACKER_BUFFER_SIZE];
-            _currentIndex = 0;
+            _buffer = new byte[PackerBufferSize];
+            Reset();
+        }
+
+        public void Reset()
+        {
+            Error = false;
+            _index = 0;
         }
 
         public byte[] Data()
@@ -26,24 +32,19 @@ namespace TeeSharp.Common
 
         public int Size()
         {
-            return _currentIndex;
+            return _index;
         }
 
-        public void Reset()
-        {
-            Error = false;
-            _currentIndex = 0;
-        }
 
         public void AddInt(int value)
         {
             if (Error)
                 return;
 
-            if (_currentIndex + 4 >= MAX_PACKER_BUFFER_SIZE)
+            if (_index + 4 >= PackerBufferSize)
                 Error = true;
             else
-                _currentIndex = IntCompression.Pack(_buffer, _currentIndex, value);
+                _index = IntCompression.Pack(_buffer, _index, value);
         }
 
         public void AddString(string value, int limit = 0)
@@ -54,16 +55,16 @@ namespace TeeSharp.Common
             var strBytes = Encoding.UTF8.GetBytes(value.Limit(limit));
             if (strBytes.Length > 0)
             {
-                if (_currentIndex + strBytes.Length >= MAX_PACKER_BUFFER_SIZE)
+                if (_index + strBytes.Length >= PackerBufferSize)
                 {
                     Error = true;
                     return;
                 }
 
-                Buffer.BlockCopy(strBytes, 0, _buffer, _currentIndex, strBytes.Length);
-                _currentIndex += strBytes.Length;
+                Buffer.BlockCopy(strBytes, 0, _buffer, _index, strBytes.Length);
+                _index += strBytes.Length;
             }
-            _buffer[_currentIndex++] = 0;
+            _buffer[_index++] = 0;
         }
 
         public void AddRaw(byte[] inputData)
@@ -76,14 +77,14 @@ namespace TeeSharp.Common
             if (inputSize <= 0 || inputOffset < 0 || Error)
                 return;
 
-            if (_currentIndex + inputSize >= MAX_PACKER_BUFFER_SIZE)
+            if (_index + inputSize >= PackerBufferSize)
             {
                 Error = true;
                 return;
             }
 
-            Buffer.BlockCopy(inputData, inputOffset, _buffer, _currentIndex, inputSize);
-            _currentIndex += inputSize;
+            Buffer.BlockCopy(inputData, inputOffset, _buffer, _index, inputSize);
+            _index += inputSize;
         }
     }
 }

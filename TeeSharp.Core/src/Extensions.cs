@@ -151,6 +151,11 @@ namespace TeeSharp.Core
             return source.Substring(0, maxLength);
         }
 
+        public static string SkipWhitespaces(this string str)
+        {
+            return str.TrimStart(' ', '\t', '\n', '\r');
+        }
+
         public static string SanitizeCC(this string str)
         {
             var tmp = new StringBuilder(str.Length);

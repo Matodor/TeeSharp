@@ -1,30 +1,23 @@
 ﻿using System;
 using System.Text;
+using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 
 namespace TeeSharp.Common
 {
-    [Flags]
-    public enum SanitizeType
-    {
-        SANITIZE = 1 << 0,
-        SANITIZE_CC = 1 << 1,
-        SKIP_START_WHITESPACES = 1 << 2
-    }
-
     public class Unpacker
     {
         public bool Error { get; private set; }
 
         private byte[] _buffer;
-        private int _currentIndex;
+        private int _index;
         private int _endIndex;
 
         public void Reset(byte[] data, int size)
         {
             _buffer = data;
             _endIndex = size;
-            _currentIndex = 0;
+            _index = 0;
 
             Error = false;
         }
@@ -34,14 +27,14 @@ namespace TeeSharp.Common
             if (Error)
                 return 0;
 
-            if (_currentIndex >= _endIndex)
+            if (_index >= _endIndex)
             {
                 Error = true;
                 return 0;
             }
 
-            _currentIndex = IntCompression.Unpack(_buffer, _currentIndex, out var result);
-            if (_currentIndex > _endIndex)
+            _index = IntCompression.Unpack(_buffer, _index, out var result);
+            if (_index > _endIndex)
             {
                 Error = true;
                 return 0;
@@ -52,14 +45,14 @@ namespace TeeSharp.Common
 
         public string GetString(SanitizeType flags = 0)
         {
-            if (Error || _currentIndex >= _endIndex)
-                return "";
+            if (Error || _index >= _endIndex)
+                return string.Empty;
 
-            var startIndex = _currentIndex;
-            while (_buffer[_currentIndex] != 0)
+            var startIndex = _index;
+            while (_buffer[_index] != 0)
             {
-                _currentIndex++;
-                if (_currentIndex > _endIndex)
+                _index++;
+                if (_index > _endIndex)
                 {
                     Error = true;
                     return string.Empty;
@@ -67,16 +60,16 @@ namespace TeeSharp.Common
             }
 
             var strUTF8 = Encoding.UTF8.GetString(
-                _buffer, startIndex, _currentIndex - startIndex);
-            _currentIndex++;
+                _buffer, startIndex, _index - startIndex);
+            _index++;
 
-            if (flags.HasFlag(SanitizeType.SANITIZE))
+            if (flags.HasFlag(SanitizeType.Sanitize))
                 strUTF8 = strUTF8.Sanitize();
-            else if (flags.HasFlag(SanitizeType.SANITIZE_CC))
+            else if (flags.HasFlag(SanitizeType.SanitizeCC))
                 strUTF8 = strUTF8.SanitizeCC();
 
-            return flags.HasFlag(SanitizeType.SKIP_START_WHITESPACES)
-                ? strUTF8.TrimStart(' ', '\t', '\n', '\r')
+            return flags.HasFlag(SanitizeType.SkipStartWhitespaces)
+                ? strUTF8.SkipWhitespaces()
                 : strUTF8;
         }
 
@@ -85,15 +78,15 @@ namespace TeeSharp.Common
             if (Error)
                 return null;
 
-            if (size < 0 || _currentIndex + size > _endIndex)
+            if (size < 0 || _index + size > _endIndex)
             {
                 Error = true;
                 return null;
             }
 
             var data = new byte[size];
-            Buffer.BlockCopy(_buffer, _currentIndex, data, 0, size);
-            _currentIndex += size;
+            Buffer.BlockCopy(_buffer, _index, data, 0, size);
+            _index += size;
             return data;
         }
     }
