@@ -113,7 +113,7 @@ namespace TeeSharp.Network
 
                 stream.Write(Salts[CurrentSalt], 0, Salts[CurrentSalt].Length);
 
-                return Secure.MD5Provider.ComputeHash(stream.ToArray()).ToUInt32();
+                return Secure.MD5.ComputeHash(stream.ToArray()).ToUInt32();
             }
         }
 
@@ -448,7 +448,7 @@ namespace TeeSharp.Network
             packet1.DataSize = 1;
             packet1.Data[0] = (byte) ConnectionMessages.CONNECTACCEPT;
 
-            packet2.Flags = PacketFlags.NONE;
+            packet2.Flags = PacketFlags.None;
             packet2.Ack = 0;
             packet2.NumChunks = 0;
             packet2.DataSize = 0;
@@ -562,6 +562,7 @@ namespace TeeSharp.Network
         {
             var config = ServerConfig;
             config.MaxClientsPerIp = Math.Clamp(max, 1, config.MaxClients);
+            ServerConfig = config;
         }
     }
 }

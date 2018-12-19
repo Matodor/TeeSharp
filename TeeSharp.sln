@@ -55,9 +55,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.MasterServer", "Ex
 		{A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0} = {A7D4B0EF-EA67-46B5-B3CE-B1DD5D53A5C0}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.MapParser", "Examples\Examples.MapParser\Examples.MapParser.csproj", "{00B55690-D184-4224-82F7-D0EE71CFB9D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.MapParser", "Examples\Examples.MapParser\Examples.MapParser.csproj", "{00B55690-D184-4224-82F7-D0EE71CFB9D4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{02870652-7012-43E1-BCEC-B72E2139B8BC} = {02870652-7012-43E1-BCEC-B72E2139B8BC}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Tests", "TeeSharp.Tests\TeeSharp.Tests.csproj", "{7EF22792-3843-44AC-A797-26969630C6F1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337} = {D655D9AE-26A0-4F52-84A0-C55D6D8BC337}
 	EndProjectSection
 EndProject
 Global
@@ -106,6 +111,10 @@ Global
 		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00B55690-D184-4224-82F7-D0EE71CFB9D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EF22792-3843-44AC-A797-26969630C6F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EF22792-3843-44AC-A797-26969630C6F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EF22792-3843-44AC-A797-26969630C6F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EF22792-3843-44AC-A797-26969630C6F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

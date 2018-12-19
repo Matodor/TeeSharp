@@ -5,14 +5,14 @@ namespace TeeSharp.Common
 {
     public static class Secure
     {
-        public static readonly MD5 MD5Provider
+        public static readonly MD5 MD5
             = MD5CryptoServiceProvider.Create();
-        public static readonly RandomNumberGenerator RNGProvider 
+        public static readonly RandomNumberGenerator RNG 
             = RNGCryptoServiceProvider.Create();
 
         static Secure()
         {
-            MD5Provider.Initialize();
+            MD5.Initialize();
         }
 
         public static uint RandomUInt32()
@@ -24,7 +24,7 @@ namespace TeeSharp.Common
 
         public static void RandomFill(byte[] bytes)
         {
-            RNGProvider.GetBytes(bytes);
+            RNG.GetBytes(bytes);
         }
     }
 }

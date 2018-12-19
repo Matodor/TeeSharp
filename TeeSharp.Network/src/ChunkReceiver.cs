@@ -7,8 +7,6 @@ namespace TeeSharp.Network
 {
     public class ChunkReceiver : BaseChunkReceiver
     {
-        public override NetworkChunkConstruct ChunkConstruct { get; set; }
-
         protected override bool Valid { get; set; }
         protected override int CurrentChunk { get; set; }
         protected override int ClientId { get; set; }

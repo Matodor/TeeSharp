@@ -102,7 +102,7 @@ namespace TeeSharp.Network
         public override void ResetQueueConstruct()
         {
             ResendQueueConstruct.DataSize = 0;
-            ResendQueueConstruct.Flags = PacketFlags.NONE;
+            ResendQueueConstruct.Flags = PacketFlags.None;
             ResendQueueConstruct.NumChunks = 0;
             ResendQueueConstruct.Ack = 0;
         }
@@ -325,7 +325,7 @@ namespace TeeSharp.Network
         public override int Flush()
         {
             var numChunks = ResendQueueConstruct.NumChunks;
-            if (numChunks == 0 && ResendQueueConstruct.Flags == PacketFlags.NONE)
+            if (numChunks == 0 && ResendQueueConstruct.Flags == PacketFlags.None)
                 return 0;
 
             ResendQueueConstruct.Ack = Ack;

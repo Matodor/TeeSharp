@@ -5,7 +5,7 @@ namespace TeeSharp.Network
 {
     public abstract class BaseChunkReceiver : BaseInterface
     {
-        public abstract NetworkChunkConstruct ChunkConstruct { get; set; }
+        public virtual NetworkChunkConstruct ChunkConstruct { get; protected set; }
 
         protected abstract bool Valid { get; set; }
         protected abstract int CurrentChunk { get; set; }

@@ -102,7 +102,7 @@ namespace TeeSharp.Network
             }
 
             packet.NumChunks = 0;
-            packet.Flags = PacketFlags.CONTROL | (useToken ? PacketFlags.TOKEN : PacketFlags.NONE);
+            packet.Flags = PacketFlags.CONTROL | (useToken ? PacketFlags.TOKEN : PacketFlags.None);
             packet.Ack = ack;
             packet.Token = token;
             packet.Data[0] = (byte)msg;

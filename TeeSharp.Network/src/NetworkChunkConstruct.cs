@@ -1,24 +1,22 @@
 ﻿using TeeSharp.Network.Enums;
+using Token = System.UInt32;
 
 namespace TeeSharp.Network
 {
     public class NetworkChunkConstruct
     {
-        public PacketFlags Flags;
-        public int Ack;
-        public int NumChunks;
-        public int DataSize;
-        public readonly byte[] Data;
-        public uint Token;
+        public Token Token { get; set; }
+        public Token ResponseToken { get; set; }
 
-        public NetworkChunkConstruct()
-        {
-            Data = new byte[NetworkCore.MAX_PAYLOAD];
-        }
+        public PacketFlags Flags { get; set; }
+        public int Ack { get; set; }
+        public int NumChunks { get; set; }
+        public int DataSize { get; set; }
+        public byte[] Buffer { get; }
 
-        public NetworkChunkConstruct(int dataSize)
+        public NetworkChunkConstruct(int bufferSize)
         {
-            Data = new byte[dataSize];
+            Buffer = new byte[bufferSize];
         }
     }
 }

@@ -2,10 +2,11 @@
 {
     public enum ConnectionMessages
     {
-        KEEPALIVE = 0,
-        CONNECT = 1,
-        CONNECTACCEPT = 2,
-        ACCEPT = 3,
-        CLOSE = 4
+        KeepAlive = 0,
+        Connect,
+        ConnectAccept,
+        Accept,
+        Close,
+        Token
     }
 }
