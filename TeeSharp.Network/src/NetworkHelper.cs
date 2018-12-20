@@ -50,6 +50,20 @@ namespace TeeSharp.Network
             return digest[0] ^ digest[1] ^ digest[2] ^ digest[3];
         }
 
+        public static IPAddress GetLocalIP(AddressFamily addressFamily)
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == addressFamily)
+                {
+                    return ip;
+                }
+            }
+
+            throw new Exception($"No network adapters with an {addressFamily} address family in the system!");
+        }
+
         public static void SendConnectionMsgWithToken(UdpClient client, IPEndPoint endPoint,
             uint token, int ack, ConnectionMessages msg, uint myToken, bool extended)
         {
