@@ -120,10 +120,101 @@ namespace TeeSharp.Network
             client.Send(buffer, buffer.Length, endPoint);
         }
 
-        public static bool UnpackPacket(byte[] data, int dataLength, 
+        public static bool UnpackPacket(byte[] data, int dataSize, 
             NetworkChunkConstruct chunkConstruct)
         {
-            throw new NotImplementedException();
+            if (dataSize < PacketHeaderSize || dataSize > MaxPacketSize)
+            {
+                Debug.Log("network", $"packet size wrong, size={dataSize}");
+                return false;
+            }
+
+            chunkConstruct.Flags = (PacketFlags) ((data[0] & 0xfc) >> 2);
+
+            if (chunkConstruct.Flags.HasFlag(PacketFlags.Connless))
+            {
+                if (dataSize < PacketHeaderSizeConnless)
+                {
+                    Debug.Log("network", $"connless packet too small, size={dataSize}");
+                    return false;
+                }
+
+                chunkConstruct.Flags = PacketFlags.Connless;
+                chunkConstruct.Ack = 0;
+                chunkConstruct.NumChunks = 0;
+
+                var version = data[0] & 0x3;
+                if (version != PacketVersion)
+                    return false;
+
+                chunkConstruct.DataSize = dataSize - PacketHeaderSizeConnless;
+                chunkConstruct.Token = 
+                    (uint) ((data[1] << 24) | 
+                            (data[2] << 16) | 
+                            (data[3] << 8) | 
+                            (data[4]));
+                chunkConstruct.ResponseToken = 
+                    (uint) ((data[5] << 24) | 
+                            (data[6] << 16) | 
+                            (data[7] << 8) | 
+                            (data[8]));
+
+                Buffer.BlockCopy(data, PacketHeaderSizeConnless, 
+                    chunkConstruct.Data, 0, chunkConstruct.DataSize);
+            }
+            else
+            {
+                if (dataSize - PacketHeaderSize > MaxPayload)
+                {
+                    Debug.Log("network", $"packet payload too big, size={dataSize}");
+                    return false;
+                }
+
+                chunkConstruct.Ack = ((data[0] & 0x3) << 8) | data[1];
+                chunkConstruct.NumChunks = data[2];
+                chunkConstruct.DataSize = dataSize - PacketHeaderSize;
+                chunkConstruct.ResponseToken = TokenHelper.TokenNone;
+                chunkConstruct.Token = 
+                    (uint) ((data[3] << 24) | 
+                            (data[4] << 16) | 
+                            (data[5] << 8) | 
+                            (data[6]));
+
+                if (chunkConstruct.Flags.HasFlag(PacketFlags.Compression))
+                {
+                    chunkConstruct.DataSize = Huffman.Decompress(data, PacketHeaderSize,
+                        chunkConstruct.DataSize, chunkConstruct.Data, 0, chunkConstruct.Data.Length);
+                }
+                else
+                {
+                    Buffer.BlockCopy(data, PacketHeaderSize, 
+                        chunkConstruct.Data, 0, chunkConstruct.DataSize);
+                }
+            }
+
+            if (chunkConstruct.DataSize < 0)
+            {
+                Debug.Log("network", "error during packet decoding");
+                return false;
+            }
+
+            if (chunkConstruct.Flags.HasFlag(PacketFlags.Control))
+            {
+                if (chunkConstruct.DataSize >= 5)
+                {
+                    if (chunkConstruct.Data[0] == (int) ConnectionMessages.Connect ||
+                        chunkConstruct.Data[0] == (int) ConnectionMessages.Token)
+                    {
+                        chunkConstruct.ResponseToken = 
+                            (uint) ((chunkConstruct.Data[1] << 24) | 
+                                    (chunkConstruct.Data[2] << 16) |
+                                    (chunkConstruct.Data[3] << 8) | 
+                                    (chunkConstruct.Data[4]));
+                    }
+                }
+            }
+
+            return true;
         }
 
         public static void SendPacket(UdpClient client, IPEndPoint endPoint, 
