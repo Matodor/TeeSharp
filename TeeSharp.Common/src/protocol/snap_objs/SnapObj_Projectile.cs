@@ -1,64 +1,19 @@
-﻿using TeeSharp.Common.Enums;
+﻿using System.Runtime.InteropServices;
+using TeeSharp.Common.Enums;
 using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_Projectile : BaseSnapObject
     {
-        public override SnapObject Type { get; } = SnapObject.OBJ_PROJECTILE;
-        public override int SerializeLength { get; } = 6;
+        public override SnapshotObjects Type => SnapshotObjects.Projectile;
 
-        public Vector2 Position;
-        public Vector2 Velocity;
-        public int StartTick;
-        public Weapon Weapon;
-
-        public void FillMsgPacker(MsgPacker msg)
-        {
-            msg.AddInt((int) Position.x);
-            msg.AddInt((int) Position.y);
-            msg.AddInt((int) Velocity.x);
-            msg.AddInt((int) Velocity.y);
-            msg.AddInt((int) Weapon);
-            msg.AddInt(StartTick);
-        }
-
-        public override void Deserialize(int[] data, int dataOffset)
-        {
-            if (!RangeCheck(data, dataOffset))
-                return;
-
-            Position = new Vector2(
-                data[dataOffset + 0],
-                data[dataOffset + 1]
-            );
-
-            Velocity = new Vector2(
-                data[dataOffset + 2],
-                data[dataOffset + 3]
-            );
-
-            Weapon = (Weapon) data[dataOffset + 4];
-            StartTick = data[dataOffset + 5];
-        }
-
-        public override int[] Serialize()
-        {
-            return new []
-            {
-                (int) Position.x,
-                (int) Position.y,
-                (int) Velocity.x,
-                (int) Velocity.y,
-                (int) Weapon,
-                StartTick
-            };
-        }
-
-        public override string ToString()
-        {
-            return $"SnapObj_Projectile pos={Position} vel={Velocity}" +
-                   $" weapon={Weapon} startTick={StartTick}";
-        }
+        [MarshalAs(UnmanagedType.I4)] public int X;
+        [MarshalAs(UnmanagedType.I4)] public int Y;
+        [MarshalAs(UnmanagedType.I4)] public int VelX;
+        [MarshalAs(UnmanagedType.I4)] public int VelY;
+        [MarshalAs(UnmanagedType.I4)] public Weapon Weapon;
+        [MarshalAs(UnmanagedType.I4)] public int StartTick;
     }
 }

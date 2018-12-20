@@ -5,7 +5,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapEvent_Death : BaseSnapEvent
     {
-        public override SnapObject Type { get; } = SnapObject.EVENT_DEATH;
+        public override SnapshotObjects Type => = SnapshotObjects.EVENT_DEATH;
         public override int SerializeLength { get; } = 3;
 
         public int ClientId;

@@ -6,7 +6,7 @@ namespace TeeSharp.Common.Protocol
     // not used
     public class SnapEvent_SoundGlobal : BaseSnapEvent
     {
-        public override SnapObject Type { get; } = SnapObject.EVENT_SOUNDGLOBAL;
+        public override SnapshotObjects Type => = SnapshotObjects.EVENT_SOUNDGLOBAL;
         public override int SerializeLength { get; } = 3;
 
         public Sound Sound;

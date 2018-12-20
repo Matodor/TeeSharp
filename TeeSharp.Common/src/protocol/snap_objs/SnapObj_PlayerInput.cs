@@ -1,108 +1,35 @@
-﻿using TeeSharp.Common.Enums;
+﻿using System.Runtime.InteropServices;
+using TeeSharp.Common.Enums;
 using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Common.Protocol
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_PlayerInput : BaseSnapObject
     {
-        public const int INPUT_STATE_MASK = 0b11_1111;
+        public override SnapshotObjects Type => SnapshotObjects.PlayerInput;
 
-        public override SnapObject Type { get; } = SnapObject.OBJ_PLAYERINPUT;
-        public override int SerializeLength { get; } = 10;
-
-        public int Direction;
-        public int TargetX;
-        public int TargetY;
-        public bool Jump;
-        public int Fire;
-        public bool Hook;
-        public PlayerFlags PlayerFlags = 0;
-        public int WantedWeapon;
-        public int NextWeapon;
-        public int PrevWeapon;
-
-        public void Reset()
+        public bool IsJump
         {
-            Direction = 0;
-            TargetX = 0;
-            TargetY = 0;
-            Jump = false;
-            Fire = 0;
-            Hook = false;
-            PlayerFlags = 0;
-            WantedWeapon = 0;
-            NextWeapon = 0;
-            PrevWeapon = 0;
-    }
-
-        public bool Compare(SnapObj_PlayerInput other)
-        {
-            return
-                Direction == other.Direction &&
-                TargetX == other.TargetX &&
-                TargetY == other.TargetY &&
-                Jump == other.Jump &&
-                Fire == other.Fire &&
-                Hook == other.Hook &&
-                PlayerFlags == other.PlayerFlags &&
-                WantedWeapon == other.WantedWeapon &&
-                NextWeapon == other.NextWeapon &&
-                PrevWeapon == other.PrevWeapon;
+            get => Jump != 0;
+            set => Jump = value ? 1 : 0;
         }
 
-        public void FillFrom(SnapObj_PlayerInput other)
+        public bool IsHook
         {
-            Direction = other.Direction;
-            TargetX = other.TargetX;
-            TargetY = other.TargetY;
-            Jump = other.Jump;
-            Fire = other.Fire;
-            Hook = other.Hook;
-            PlayerFlags = other.PlayerFlags;
-            WantedWeapon = other.WantedWeapon;
-            NextWeapon = other.NextWeapon;
-            PrevWeapon = other.PrevWeapon;
+            get => Hook != 0;
+            set => Hook = value ? 1 : 0;
         }
 
-        public override void Deserialize(int[] data, int dataOffset)
-        {
-            if (!RangeCheck(data, dataOffset))
-                return;
-
-            Direction = data[dataOffset + 0];
-            TargetX = data[dataOffset + 1];
-            TargetY = data[dataOffset + 2];
-            Jump = data[dataOffset + 3] != 0;
-            Fire = data[dataOffset + 4];
-            Hook = data[dataOffset + 5] != 0;
-            PlayerFlags = (PlayerFlags) data[dataOffset + 6];
-            WantedWeapon = data[dataOffset + 7];
-            NextWeapon = data[dataOffset + 8];
-            PrevWeapon = data[dataOffset + 9];
-        }
-        
-        public override int[] Serialize()
-        {
-            return new[]
-            {
-                Direction,
-                TargetX,
-                TargetY,
-                Jump ? 1 : 0,
-                Fire,
-                Hook ? 1 : 0,
-                (int) PlayerFlags,
-                WantedWeapon,
-                NextWeapon,
-                PrevWeapon,
-            };
-        }
-
-        public override string ToString()
-        {
-            return $"SnapObj_PlayerInput dir={Direction} target={TargetX}:{TargetY}" +
-                   $" jump={Jump} fire={Fire} hook={Hook} playerFlags={PlayerFlags}" +
-                   $" wantedWeapon={WantedWeapon} nextWeapon={NextWeapon} prevWeapon={PrevWeapon}";
-        }
+        [MarshalAs(UnmanagedType.I4)] public int Direction;
+        [MarshalAs(UnmanagedType.I4)] public int TargetX;
+        [MarshalAs(UnmanagedType.I4)] public int TargetY;
+        [MarshalAs(UnmanagedType.I4)] public int Jump;
+        [MarshalAs(UnmanagedType.I4)] public int Fire;
+        [MarshalAs(UnmanagedType.I4)] public int Hook;
+        [MarshalAs(UnmanagedType.I4)] public PlayerFlags PlayerFlags;
+        [MarshalAs(UnmanagedType.I4)] public Weapon WantedWeapon;
+        [MarshalAs(UnmanagedType.I4)] public int NextWeapon;
+        [MarshalAs(UnmanagedType.I4)] public int PreviousWeapon;
     }
 }

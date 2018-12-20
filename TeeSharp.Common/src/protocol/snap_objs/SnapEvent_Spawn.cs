@@ -5,7 +5,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapEvent_Spawn : BaseSnapEvent
     {
-        public override SnapObject Type { get; } = SnapObject.EVENT_SPAWN;
+        public override SnapshotObjects Type => = SnapshotObjects.EVENT_SPAWN;
         public override int SerializeLength { get; } = 2;
 
         public override void Deserialize(int[] data, int dataOffset)

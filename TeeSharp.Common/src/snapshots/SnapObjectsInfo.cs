@@ -9,34 +9,34 @@ namespace TeeSharp.Common.Snapshots
 {
     public static class SnapObjectsInfo
     {
-        private static readonly Dictionary<SnapObject, int> _typesSizes;
-        private static readonly Dictionary<SnapObject, Func<BaseSnapObject>> _activators;
+        private static readonly Dictionary<SnapshotObjects, int> _typesSizes;
+        private static readonly Dictionary<SnapshotObjects, Func<BaseSnapObject>> _activators;
 
         static SnapObjectsInfo()
         {
-            var types = new Dictionary<SnapObject, Type>()
+            var types = new Dictionary<SnapshotObjects, Type>()
             {
-                {SnapObject.EVENT_DAMAGEIND, typeof(SnapEvent_DamageInd)},
-                {SnapObject.EVENT_DEATH, typeof(SnapEvent_Death)},
-                {SnapObject.EVENT_EXPLOSION, typeof(SnapEvent_Explosion)},
-                {SnapObject.EVENT_HAMMERHIT, typeof(SnapEvent_HammerHit)},
-                {SnapObject.EVENT_SOUNDGLOBAL, typeof(SnapEvent_SoundGlobal)},
-                {SnapObject.EVENT_SOUNDWORLD, typeof(SnapEvent_SoundWorld)},
-                {SnapObject.EVENT_SPAWN, typeof(SnapEvent_Spawn)},
+                {SnapshotObjects.EVENT_DAMAGEIND, typeof(SnapEvent_DamageInd)},
+                {SnapshotObjects.EVENT_DEATH, typeof(SnapEvent_Death)},
+                {SnapshotObjects.EVENT_EXPLOSION, typeof(SnapEvent_Explosion)},
+                {SnapshotObjects.EVENT_HAMMERHIT, typeof(SnapEvent_HammerHit)},
+                {SnapshotObjects.EVENT_SOUNDGLOBAL, typeof(SnapEvent_SoundGlobal)},
+                {SnapshotObjects.EVENT_SOUNDWORLD, typeof(SnapEvent_SoundWorld)},
+                {SnapshotObjects.EVENT_SPAWN, typeof(SnapEvent_Spawn)},
 
-                {SnapObject.OBJ_CHARACTER, typeof(SnapObj_Character)},
-                {SnapObject.OBJ_CLIENTINFO, typeof(SnapObj_ClientInfo)},
-                {SnapObject.OBJ_GAMEINFO, typeof(SnapObj_GameInfo)},
-                {SnapObject.OBJ_LASER, typeof(SnapObj_Laser)},
-                {SnapObject.OBJ_PICKUP, typeof(SnapObj_Pickup)},
-                {SnapObject.OBJ_PLAYERINFO, typeof(SnapObj_PlayerInfo)},
-                {SnapObject.OBJ_PLAYERINPUT, typeof(SnapObj_PlayerInput)},
-                {SnapObject.OBJ_PROJECTILE, typeof(SnapObj_Projectile)},
-                {SnapObject.OBJ_SPECTATORINFO, typeof(SnapObj_SpectatorInfo)},
+                {SnapshotObjects.OBJ_CHARACTER, typeof(SnapObj_Character)},
+                {SnapshotObjects.OBJ_CLIENTINFO, typeof(SnapObj_ClientInfo)},
+                {SnapshotObjects.OBJ_GAMEINFO, typeof(SnapObj_GameInfo)},
+                {SnapshotObjects.OBJ_LASER, typeof(SnapObj_Laser)},
+                {SnapshotObjects.OBJ_PICKUP, typeof(SnapObj_Pickup)},
+                {SnapshotObjects.OBJ_PLAYERINFO, typeof(SnapObj_PlayerInfo)},
+                {SnapshotObjects.PlayerInput, typeof(SnapObj_PlayerInput)},
+                {SnapshotObjects.OBJ_PROJECTILE, typeof(SnapObj_Projectile)},
+                {SnapshotObjects.OBJ_SPECTATORINFO, typeof(SnapObj_SpectatorInfo)},
             };
 
-            _activators = new Dictionary<SnapObject, Func<BaseSnapObject>>(types.Count);
-            _typesSizes = new Dictionary<SnapObject, int>(types.Count);
+            _activators = new Dictionary<SnapshotObjects, Func<BaseSnapObject>>(types.Count);
+            _typesSizes = new Dictionary<SnapshotObjects, int>(types.Count);
 
             foreach (var pair in types)
             {
@@ -46,14 +46,14 @@ namespace TeeSharp.Common.Snapshots
             }
         }
 
-        public static int GetSizeByType(SnapObject type)
+        public static int GetSizeByType(SnapshotObjects type)
         {
             return _typesSizes.ContainsKey(type)
                 ? _typesSizes[type]
                 : 0;
         }
 
-        public static BaseSnapObject GetInstanceByType(SnapObject type)
+        public static BaseSnapObject GetInstanceByType(SnapshotObjects type)
         {
             return _activators.ContainsKey(type) 
                 ? _activators[type]() 

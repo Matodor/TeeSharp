@@ -54,8 +54,8 @@ namespace TeeSharp.Common.Snapshots
                 return false;
             }
 
-            if (obj.Type <= Enums.SnapObject.INVALID || 
-                obj.Type >= Enums.SnapObject.NUM)
+            if (obj.Type <= Enums.SnapshotObjects.INVALID || 
+                obj.Type >= Enums.SnapshotObjects.NUM)
             {
                 Debug.Warning("snapshots", "wrong object type");
                 return false;
@@ -83,8 +83,8 @@ namespace TeeSharp.Common.Snapshots
             }
             
             var obj = new T();
-            if (obj.Type <= Enums.SnapObject.INVALID || 
-                obj.Type >= Enums.SnapObject.NUM)
+            if (obj.Type <= Enums.SnapshotObjects.INVALID || 
+                obj.Type >= Enums.SnapshotObjects.NUM)
             {
                 Debug.Warning("snapshots", "wrong object type");
                 return null;

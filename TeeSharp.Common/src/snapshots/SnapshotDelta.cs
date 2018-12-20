@@ -65,7 +65,7 @@ namespace TeeSharp.Common.Snapshots
                 if (inputOffset + 2 > endIndex)
                     return null;
 
-                var type = (SnapObject) inputData[inputOffset++];
+                var type = (SnapshotObjects) inputData[inputOffset++];
                 var id = inputData[inputOffset++];
                 int itemSize; // in bytes
 

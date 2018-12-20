@@ -5,7 +5,7 @@ namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotItem
     {
-        public SnapObject Type => (SnapObject) (Key >> 16);
+        public SnapshotObjects Type => (SnapshotObjects) (Key >> 16);
         public int Id => Key & 0xffff;
         public readonly int Size;
 

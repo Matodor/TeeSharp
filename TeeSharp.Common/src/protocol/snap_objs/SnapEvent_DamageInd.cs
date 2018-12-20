@@ -5,7 +5,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class SnapEvent_DamageInd : BaseSnapEvent
     {
-        public override SnapObject Type { get; } = SnapObject.EVENT_DAMAGEIND;
+        public override SnapshotObjects Type => = SnapshotObjects.EVENT_DAMAGEIND;
         public override int SerializeLength { get; } = 3;
 
         public int Angle;
