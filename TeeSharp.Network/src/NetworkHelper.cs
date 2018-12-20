@@ -11,14 +11,20 @@ namespace TeeSharp.Network
 {
     public static class NetworkHelper
     {
+        public const int ConnectionBufferSize = 1024 * 32;
         public const int MaxClients = 64;
+
         public const int PacketVersion = 1;
         public const int PacketHeaderSize = 7;
         public const int PacketHeaderSizeConnless = PacketHeaderSize + 2;
+
         public const int MaxPacketHeaderSize = PacketHeaderSizeConnless;
         public const int MaxPacketSize = 1400;
+        public const int MaxPacketChunks = 256;
         public const int MaxChunkHeaderSize = 3;
         public const int MaxPayload = MaxPacketSize - MaxPacketHeaderSize;
+        public const int MaxSequence = 1024;
+
         public const int SeedTime = 16;
         public const int AddrMaxStringSize = 1 + (8 * 4 + 7) + 1 + 1 + 5 + 1; // [XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX]:XXXXX
 
@@ -120,7 +126,7 @@ namespace TeeSharp.Network
             throw new NotImplementedException();
         }
 
-        private static void SendPacket(UdpClient client, IPEndPoint endPoint, 
+        public static void SendPacket(UdpClient client, IPEndPoint endPoint, 
             NetworkChunkConstruct packet)
         {
             if (packet.DataSize == 0)
@@ -181,6 +187,22 @@ namespace TeeSharp.Network
                 client = null;
                 return false;
             }
+        }
+
+        public static bool IsSequenceInBackroom(int sequence, int ack)
+        {
+            var bottom = ack - MaxSequence / 2;
+            if (bottom < 0)
+            {
+                if (sequence <= ack)
+                    return true;
+                if (sequence >= (bottom + MaxSequence))
+                    return true;
+            }
+            else if (sequence <= ack && sequence >= bottom)
+                return true;
+
+            return false;
         }
 
         private static readonly int[] _freqTable = 

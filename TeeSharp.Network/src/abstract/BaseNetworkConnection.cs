@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
@@ -25,12 +26,12 @@ namespace TeeSharp.Network
 
         protected virtual bool RemoteClosed { get; set; }
         protected virtual NetworkChunkConstruct ResendChunkConstruct { get; set; }
-        protected virtual IList<NetworkChunkResend> ChunksFoResends { get; set; }
+        protected virtual IList<NetworkChunkResend> ChunksForResends { get; set; }
+        protected virtual int SizeOfChunksForResends { get; set; }
 
         protected virtual uint Token { get; set; }
         protected virtual uint PeerToken { get; set; }
         protected virtual UdpClient UdpClient { get; set; } 
-        protected virtual BaseConfig Config { get; set; }
 
         public abstract void Init(UdpClient udpClient);
         public abstract bool Connect(IPEndPoint endPoint);
@@ -39,7 +40,7 @@ namespace TeeSharp.Network
 
         public abstract void Update();
         public abstract int Flush();
-        public abstract bool Feed(NetworkChunkConstruct packet, IPEndPoint remote);
+        public abstract bool Feed(NetworkChunkConstruct packet, IPEndPoint endPoint);
         public abstract bool QueueChunk(ChunkFlags flags, byte[] data, int dataSize);
         public abstract void SendPacketConnless(byte[] data, int dataSize);
 
@@ -55,5 +56,11 @@ namespace TeeSharp.Network
 
         protected abstract void ResendChunk(NetworkChunkResend resend);
         protected abstract void Resend();
+        protected abstract void SignalResend();
+
+        public static uint GenerateToken(IPEndPoint endPoint)
+        {
+            return (uint) (RNG.Int() & TokenHelper.TokenMask);
+        }
     }
 }

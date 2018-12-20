@@ -156,6 +156,18 @@ namespace TeeSharp.Core
             return str.TrimStart(' ', '\t', '\n', '\r');
         }
 
+        public static string SanitizeStrong(this string str)
+        {
+            var tmp = new StringBuilder(str);
+            for (var i = 0; i < tmp.Length; i++)
+            {
+                tmp[i] = (char) (tmp[i] & 0x7f);
+                if (tmp[i] < 32)
+                    tmp[i] = (char) 32;
+            }
+            return tmp.ToString();
+        }
+
         public static string SanitizeCC(this string str)
         {
             var tmp = new StringBuilder(str.Length);
@@ -188,23 +200,23 @@ namespace TeeSharp.Core
             return tmp.ToString();
         }
 
-        public static uint ToUInt32(this byte[] array, int offset = 0)
-        {
-            return (uint) (
-               (array[0 + offset] << 24) | 
-               (array[1 + offset] << 16) | 
-               (array[2 + offset] << 8) |
-               (array[3 + offset])
-            );
-        }
+        //public static uint ToUInt32(this byte[] array, int offset = 0)
+        //{
+        //    return (uint) (
+        //       (array[0 + offset] << 24) | 
+        //       (array[1 + offset] << 16) | 
+        //       (array[2 + offset] << 8) |
+        //       (array[3 + offset])
+        //    );
+        //}
 
-        public static void ToByteArray(this uint value, byte[] dstArray, 
-            int offset)
-        {
-            dstArray[0 + offset] = (byte) ((value & 0xff000000) >> 24);
-            dstArray[1 + offset] = (byte) ((value & 0x00ff0000) >> 16);
-            dstArray[2 + offset] = (byte) ((value & 0x0000ff00) >> 8);
-            dstArray[3 + offset] = (byte) ((value & 0x000000ff) >> 0);
-        }
+        //public static void ToByteArray(this uint value, byte[] dstArray, 
+        //    int offset)
+        //{
+        //    dstArray[0 + offset] = (byte) ((value & 0xff000000) >> 24);
+        //    dstArray[1 + offset] = (byte) ((value & 0x00ff0000) >> 16);
+        //    dstArray[2 + offset] = (byte) ((value & 0x0000ff00) >> 8);
+        //    dstArray[3 + offset] = (byte) ((value & 0x000000ff) >> 0);
+        //}
     }
 }
