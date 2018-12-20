@@ -7,15 +7,9 @@ namespace TeeSharp.Network
 {
     public class ChunkReceiver : BaseChunkReceiver
     {
-        protected override bool Valid { get; set; }
-        protected override int CurrentChunk { get; set; }
-        protected override int ClientId { get; set; }
-        protected override BaseNetworkConnection Connection { get; set; }
-        protected override IPEndPoint EndPoint { get; set; }
-
         public ChunkReceiver()
         {
-            ChunkConstruct = new ChunkConstruct();
+            ChunkConstruct = new ChunkConstruct(NetworkHelper.MaxPayload);
         }
 
         public override void Start(IPEndPoint remote, 
@@ -43,7 +37,6 @@ namespace TeeSharp.Network
                 if (!Valid || CurrentChunk >= ChunkConstruct.NumChunks)
                 {
                     Clear();
-                    packet = null;
                     return false;
                 }
 
@@ -60,25 +53,22 @@ namespace TeeSharp.Network
                 if (dataOffset + header.Size > end)
                 {
                     Clear();
-                    packet = null;
                     return false;
                 }
 
-                if (Connection != null && header.Flags.HasFlag(ChunkFlags.VITAL))
+                if (Connection != null && header.Flags.HasFlag(ChunkFlags.Vital))
                 {
-                    if (Connection.UnknownAck ||
-                        header.Sequence == (Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE)
+                    if (header.Sequence == (Connection.Ack + 1) % NetworkHelper.MaxSequence)
                     {
-                        Connection.UnknownAck = false;
-                        Connection.Ack = (Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE;
+                        Connection.Ack = (Connection.Ack + 1) % NetworkHelper.MaxSequence;
                     }
                     else
                     {
-                        if (NetworkCore.IsSeqInBackroom(header.Sequence, Connection.Ack))
+                        if (NetworkHelper.IsSequenceInBackroom(header.Sequence, Connection.Ack))
                             continue;
 
                         Debug.Log("connection",
-                            $"asking for resend {header.Sequence} {(Connection.Ack + 1) % NetworkCore.MAX_SEQUENCE}");
+                            $"asking for resend {header.Sequence} {(Connection.Ack + 1) % NetworkHelper.MaxSequence}");
                         Connection.SignalResend();
                         continue;
                     }
@@ -88,12 +78,15 @@ namespace TeeSharp.Network
                 {
                     ClientId = ClientId,
                     EndPoint = EndPoint,
-                    Flags = (SendFlags) header.Flags,
+                    Flags = header.Flags.HasFlag(ChunkFlags.Vital)
+                        ? SendFlags.Vital 
+                        : SendFlags.None,
                     DataSize = header.Size,
                     Data = new byte[header.Size]
                 };
 
-                Buffer.BlockCopy(ChunkConstruct.Data, dataOffset, packet.Data, 0, header.Size);
+                Buffer.BlockCopy(ChunkConstruct.Data, dataOffset, 
+                    packet.Data, 0, header.Size);
                 return true;
             }
         }

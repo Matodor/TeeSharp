@@ -16,9 +16,9 @@ namespace TeeSharp.Network
         public virtual string Error { get; protected set; }
 
         public virtual long ConnectedAt { get; protected set; }
+        public virtual int Ack { get; set; }
 
         protected virtual int Sequence { get; set; }
-        protected virtual int Ack { get; set; }
         protected virtual int PeerAck { get; set; }
 
         protected virtual long LastReceiveTime { get; set; }
@@ -43,6 +43,7 @@ namespace TeeSharp.Network
         public abstract bool Feed(ChunkConstruct packet, IPEndPoint endPoint);
         public abstract bool QueueChunk(ChunkFlags flags, byte[] data, int dataSize);
         public abstract void SendPacketConnless(byte[] data, int dataSize);
+        public abstract void SignalResend();
 
         protected abstract void Reset();
         protected abstract void AckChunks(int ack);
@@ -56,7 +57,6 @@ namespace TeeSharp.Network
 
         protected abstract void ResendChunk(ChunkResend resend);
         protected abstract void Resend();
-        protected abstract void SignalResend();
 
         public static uint GenerateToken(IPEndPoint endPoint)
         {

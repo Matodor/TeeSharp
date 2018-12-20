@@ -76,7 +76,7 @@ namespace TeeSharp.Network
             }
         }
 
-        protected override void SignalResend()
+        public override void SignalResend()
         {
             ResendChunkConstruct.Flags |= PacketFlags.Resend;
         }
