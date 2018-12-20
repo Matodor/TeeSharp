@@ -37,7 +37,7 @@ namespace TeeSharp.Network
             NextSeedTime = Time.Get() + Time.Freq() * SeedTime;
         }
 
-        public override bool ProcessMessage(IPEndPoint endPoint, NetworkChunkConstruct packet)
+        public override bool ProcessMessage(IPEndPoint endPoint, ChunkConstruct packet)
         {
             var broadcastResponse = false;
 

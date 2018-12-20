@@ -96,7 +96,7 @@ namespace TeeSharp.Network
         public static void SendConnectionMsg(UdpClient client, IPEndPoint endPoint,
             uint token, int ack, ConnectionMessages msg, byte[] extraData, int extraSize)
         {
-            var packet = new NetworkChunkConstruct(1 + extraSize)
+            var packet = new ChunkConstruct(1 + extraSize)
             {
                 Token = token,
                 Flags = PacketFlags.Control,
@@ -135,7 +135,7 @@ namespace TeeSharp.Network
         }
 
         public static bool UnpackPacket(byte[] data, int dataSize, 
-            NetworkChunkConstruct chunkConstruct)
+            ChunkConstruct chunkConstruct)
         {
             if (dataSize < PacketHeaderSize || dataSize > MaxPacketSize)
             {
@@ -232,7 +232,7 @@ namespace TeeSharp.Network
         }
 
         public static void SendPacket(UdpClient client, IPEndPoint endPoint, 
-            NetworkChunkConstruct packet)
+            ChunkConstruct packet)
         {
             if (packet.DataSize == 0)
                 return;

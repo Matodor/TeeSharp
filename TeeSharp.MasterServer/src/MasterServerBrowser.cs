@@ -33,7 +33,7 @@ namespace TeeSharp.MasterServer
             
         }
 
-        public void OnPacket(NetworkChunk packet)
+        public void OnPacket(Chunk packet)
         {
             // get servers from masterserver
             if (packet.DataSize >= MasterServerPackets.SERVERBROWSE_LIST.Length + 1 &&
@@ -99,7 +99,7 @@ namespace TeeSharp.MasterServer
         {
             Debug.Log("masterserver", $"request servers list from {masterServer}");
 
-            _networkClient.Send(new NetworkChunk
+            _networkClient.Send(new Chunk
             {
                 ClientId = -1,
                 Flags = SendFlags.CONNLESS,

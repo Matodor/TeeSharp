@@ -3,7 +3,7 @@ using Token = System.UInt32;
 
 namespace TeeSharp.Network
 {
-    public class NetworkChunkConstruct
+    public class ChunkConstruct
     {
         public Token Token { get; set; }
         public Token ResponseToken { get; set; }
@@ -14,7 +14,7 @@ namespace TeeSharp.Network
         public int DataSize { get; set; }
         public byte[] Data { get; }
 
-        public NetworkChunkConstruct(int bufferSize)
+        public ChunkConstruct(int bufferSize)
         {
             Data = new byte[bufferSize];
         }

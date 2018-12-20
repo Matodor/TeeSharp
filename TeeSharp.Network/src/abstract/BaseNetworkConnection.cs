@@ -25,8 +25,8 @@ namespace TeeSharp.Network
         protected virtual long LastSendTime { get; set; }
 
         protected virtual bool RemoteClosed { get; set; }
-        protected virtual NetworkChunkConstruct ResendChunkConstruct { get; set; }
-        protected virtual IList<NetworkChunkResend> ChunksForResends { get; set; }
+        protected virtual ChunkConstruct ResendChunkConstruct { get; set; }
+        protected virtual IList<ChunkResend> ChunksForResends { get; set; }
         protected virtual int SizeOfChunksForResends { get; set; }
 
         protected virtual uint Token { get; set; }
@@ -40,7 +40,7 @@ namespace TeeSharp.Network
 
         public abstract void Update();
         public abstract int Flush();
-        public abstract bool Feed(NetworkChunkConstruct packet, IPEndPoint endPoint);
+        public abstract bool Feed(ChunkConstruct packet, IPEndPoint endPoint);
         public abstract bool QueueChunk(ChunkFlags flags, byte[] data, int dataSize);
         public abstract void SendPacketConnless(byte[] data, int dataSize);
 
@@ -54,7 +54,7 @@ namespace TeeSharp.Network
             byte[] extra, int extraSize);
         protected abstract void SendConnectionMsgWithToken(ConnectionMessages msg);
 
-        protected abstract void ResendChunk(NetworkChunkResend resend);
+        protected abstract void ResendChunk(ChunkResend resend);
         protected abstract void Resend();
         protected abstract void SignalResend();
 

@@ -76,7 +76,7 @@ namespace TeeSharp.Network
             TokenCache.Update();
         }
 
-        public override bool Receive(ref NetworkChunk packet, ref uint responseToken)
+        public override bool Receive(ref Chunk packet, ref uint responseToken)
         {
             // TODO make multithreaded 
             // https://docs.microsoft.com/ru-ru/dotnet/standard/io/how-to-use-named-pipes-for-network-interprocess-communication
@@ -136,7 +136,7 @@ namespace TeeSharp.Network
                                     ChunkReceiver.Start(endPoint, Connections[i], i);
                                 else
                                 {
-                                    packet = new NetworkChunk()
+                                    packet = new Chunk()
                                     {
                                         Flags = SendFlags.Connless,
                                         EndPoint = endPoint,
@@ -196,7 +196,7 @@ namespace TeeSharp.Network
                 }
                 else if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Connless))
                 {
-                    packet = new NetworkChunk()
+                    packet = new Chunk()
                     {
                         Flags = SendFlags.Connless,
                         ClientId = -1,
@@ -211,7 +211,7 @@ namespace TeeSharp.Network
             }
         }
 
-        public override bool Send(NetworkChunk packet, uint token = TokenHelper.TokenNone)
+        public override bool Send(Chunk packet, uint token = TokenHelper.TokenNone)
         {
             if (packet.Flags.HasFlag(SendFlags.Connless))
             {

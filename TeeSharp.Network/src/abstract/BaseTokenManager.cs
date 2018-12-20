@@ -22,7 +22,7 @@ namespace TeeSharp.Network
         public abstract void Update();
         public abstract void GenerateSeed();
         public abstract bool ProcessMessage(IPEndPoint endPoint, 
-            NetworkChunkConstruct chunkConstruct);
+            ChunkConstruct chunkConstruct);
         public abstract bool CheckToken(IPEndPoint endPoint, uint token,
             uint responseToken, ref bool broadcastResponse);
         public abstract uint GenerateToken(IPEndPoint endPoint);

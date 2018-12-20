@@ -15,7 +15,7 @@ namespace TeeSharp.Network
 
         public ChunkReceiver()
         {
-            ChunkConstruct = new NetworkChunkConstruct();
+            ChunkConstruct = new ChunkConstruct();
         }
 
         public override void Start(IPEndPoint remote, 
@@ -33,9 +33,9 @@ namespace TeeSharp.Network
             Valid = false;
         }
 
-        public override bool FetchChunk(ref NetworkChunk packet)
+        public override bool FetchChunk(ref Chunk packet)
         {
-            var header = new NetworkChunkHeader();
+            var header = new ChunkHeader();
             var end = ChunkConstruct.DataSize;
 
             while (true)
@@ -84,7 +84,7 @@ namespace TeeSharp.Network
                     }
                 }
 
-                packet = new NetworkChunk
+                packet = new Chunk
                 {
                     ClientId = ClientId,
                     EndPoint = EndPoint,

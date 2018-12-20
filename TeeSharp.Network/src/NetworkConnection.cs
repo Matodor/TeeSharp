@@ -106,7 +106,7 @@ namespace TeeSharp.Network
                 Flush();
             }
 
-            var header = new NetworkChunkHeader
+            var header = new ChunkHeader
             {
                 Flags = flags,
                 Size = dataSize,
@@ -130,7 +130,7 @@ namespace TeeSharp.Network
                     return false;
                 }
 
-                var resend = new NetworkChunkResend
+                var resend = new ChunkResend
                 {
                     Sequence = sequence,
                     Flags = flags,
@@ -181,7 +181,7 @@ namespace TeeSharp.Network
             NetworkHelper.SendPacketConnless(UdpClient, EndPoint, PeerToken, Token, data, dataSize);
         }
 
-        protected override void ResendChunk(NetworkChunkResend resend)
+        protected override void ResendChunk(ChunkResend resend)
         {
             QueueChunkEx(resend.Flags | ChunkFlags.Resend, resend.Data,
                 resend.DataSize, resend.Sequence);
@@ -224,7 +224,7 @@ namespace TeeSharp.Network
             Reset();
         }
 
-        public override bool Feed(NetworkChunkConstruct packet, IPEndPoint endPoint)
+        public override bool Feed(ChunkConstruct packet, IPEndPoint endPoint)
         {
             if (Sequence >= PeerAck)
             {

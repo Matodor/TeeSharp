@@ -319,7 +319,7 @@ namespace TeeSharp.Server
             if (msg == null)
                 return false;
 
-            var packet = new NetworkChunk()
+            var packet = new Chunk()
             {
                 ClientId = clientId,
                 DataSize = msg.Size(),
@@ -522,7 +522,7 @@ namespace TeeSharp.Server
             return true;
         }
 
-        protected override void ProcessClientPacket(NetworkChunk packet)
+        protected override void ProcessClientPacket(Chunk packet)
         {
             var clientId = packet.ClientId;
             var unpacker = new Unpacker();
@@ -597,13 +597,13 @@ namespace TeeSharp.Server
             }
         }
 
-        protected override void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgPing(Chunk packet, Unpacker unpacker, int clientId)
         {
             var msg = new MsgPacker((int) NetworkMessages.PING_REPLY);
             SendMsgEx(msg, 0, clientId, true);
         }
 
-        protected override void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRconAuth(Chunk packet, Unpacker unpacker, int clientId)
         {
             var login = unpacker.GetString();
             var password = unpacker.GetString();
@@ -637,12 +637,12 @@ namespace TeeSharp.Server
             }
         }
 
-        protected override void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRconCmd(Chunk packet, Unpacker unpacker, int clientId)
         {
             
         }
 
-        protected override void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgInput(Chunk packet, Unpacker unpacker, int clientId)
         {
             Clients[clientId].LastAckedSnapshot = unpacker.GetInt();
             var intendedTick = unpacker.GetInt();
@@ -692,7 +692,7 @@ namespace TeeSharp.Server
                 GameContext.OnClientDirectInput(clientId, input.PlayerInput);
         }
 
-        protected override void NetMsgEnterGame(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgEnterGame(Chunk packet, Unpacker unpacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.READY || 
                 !GameContext.IsClientReady(clientId))
@@ -705,7 +705,7 @@ namespace TeeSharp.Server
             GameContext.OnClientEnter(clientId);
         }
 
-        protected override void NetMsgReady(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgReady(Chunk packet, Unpacker unpacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.CONNECTING)
                 return;
@@ -718,7 +718,7 @@ namespace TeeSharp.Server
             SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
         }
 
-        protected override void NetMsgRequestMapData(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRequestMapData(Chunk packet, Unpacker unpacker, int clientId)
         {
             if (Clients[clientId].State < ServerClientState.CONNECTING)
                 return;
@@ -755,7 +755,7 @@ namespace TeeSharp.Server
             SendMapData(last, chunk, chunkSize, offset, clientId);
         }
 
-        protected override void NetMsgInfo(NetworkChunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgInfo(Chunk packet, Unpacker unpacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.AUTH)
                 return;
@@ -790,7 +790,7 @@ namespace TeeSharp.Server
         {
             NetworkServer.Update();
 
-            NetworkChunk packet = null;
+            Chunk packet = null;
             uint token = 0;
 
             while (NetworkServer.Receive(ref packet, ref token))
@@ -1171,7 +1171,7 @@ namespace TeeSharp.Server
                         : "1", 2);
                 }
 
-                NetworkServer.Send(new NetworkChunk
+                NetworkServer.Send(new Chunk
                 {
                     ClientId = -1,
                     EndPoint = endPoint,

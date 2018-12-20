@@ -25,8 +25,8 @@ namespace TeeSharp.Network
         public abstract bool Connect(IPEndPoint endPoint);
         public abstract void Update();
 
-        public abstract bool Receive(out NetworkChunk packet);
-        public abstract void Send(NetworkChunk packet);
+        public abstract bool Receive(out Chunk packet);
+        public abstract void Send(Chunk packet);
 
         public abstract void Flush();
         public abstract bool GotProblems();

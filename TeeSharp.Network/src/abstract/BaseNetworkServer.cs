@@ -42,9 +42,9 @@ namespace TeeSharp.Network
 
         public abstract IPEndPoint ClientEndPoint(int clientId);
         public abstract void Update();
-        public abstract bool Receive(ref NetworkChunk packet, ref uint token);
+        public abstract bool Receive(ref Chunk packet, ref uint token);
         public abstract void Drop(int clientId, string reason);
-        public abstract bool Send(NetworkChunk packet, uint token = 4294967295U);
+        public abstract bool Send(Chunk packet, uint token = 4294967295U);
         public abstract void AddToken(IPEndPoint endPoint, uint token);
         
         protected abstract NetworkServerConfig CheckConfig(

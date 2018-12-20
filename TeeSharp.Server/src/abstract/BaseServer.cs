@@ -84,7 +84,7 @@ namespace TeeSharp.Server
         public abstract void SnapshotFreeId(int id);
 
         protected abstract bool StartNetworkServer();
-        protected abstract void ProcessClientPacket(NetworkChunk packet);
+        protected abstract void ProcessClientPacket(Chunk packet);
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(int tick);
@@ -99,14 +99,14 @@ namespace TeeSharp.Server
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
 
-        protected abstract void NetMsgPing(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRconAuth(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRconCmd(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgInput(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgEnterGame(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgReady(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRequestMapData(NetworkChunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgInfo(NetworkChunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgPing(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRconAuth(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRconCmd(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgInput(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgEnterGame(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgReady(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgRequestMapData(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgInfo(Chunk packet, Unpacker unpacker, int clientId);
 
         protected abstract void ConsoleReload(ConsoleResult result, object data);
         protected abstract void ConsoleLogout(ConsoleResult result, object data);

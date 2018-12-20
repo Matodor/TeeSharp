@@ -50,7 +50,7 @@ namespace TeeSharp.Network
                 Disconnect(Connection.Error);
         }
 
-        public override bool Receive(out NetworkChunk packet)
+        public override bool Receive(out Chunk packet)
         {
             while (true)
             {
@@ -80,7 +80,7 @@ namespace TeeSharp.Network
 
                 if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.CONNLESS))
                 {
-                    packet = new NetworkChunk
+                    packet = new Chunk
                     {
                         ClientId = -1,
                         Flags = SendFlags.CONNLESS,
@@ -97,7 +97,7 @@ namespace TeeSharp.Network
             }
         }
 
-        public override void Send(NetworkChunk packet)
+        public override void Send(Chunk packet)
         {
             if (packet.DataSize > NetworkCore.MAX_PAYLOAD)
             {
