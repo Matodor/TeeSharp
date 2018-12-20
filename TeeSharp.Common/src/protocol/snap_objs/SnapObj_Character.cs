@@ -17,7 +17,7 @@ namespace TeeSharp.Common.Protocol
         public int Direction;
         public int Jumped;
         public int HookedPlayer;
-        public HookState HookState = HookState.IDLE;
+        public HookState HookState = HookState.Idle;
         public int HookTick;
         public int HookX;
         public int HookY;
@@ -27,8 +27,8 @@ namespace TeeSharp.Common.Protocol
         public int Health;
         public int Armor;
         public int AmmoCount;
-        public Weapon Weapon = Weapon.HAMMER;
-        public Emote Emote = Emote.NORMAL;
+        public Weapon Weapon = Weapon.Hammer;
+        public Emote Emote = Emote.Normal;
         public int AttackTick;
 
         public bool Compare(SnapObj_Character other)

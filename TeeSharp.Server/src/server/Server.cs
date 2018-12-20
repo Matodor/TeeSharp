@@ -330,12 +330,12 @@ namespace TeeSharp.Server
             if (system)
                 packet.Data[0] |= 1;
 
-            if (flags.HasFlag(MsgFlags.VITAL))
+            if (flags.HasFlag(MsgFlags.Vital))
                 packet.Flags |= SendFlags.VITAL;
-            if (flags.HasFlag(MsgFlags.FLUSH))
+            if (flags.HasFlag(MsgFlags.Flush))
                 packet.Flags |= SendFlags.FLUSH;
 
-            if (!flags.HasFlag(MsgFlags.NOSEND))
+            if (!flags.HasFlag(MsgFlags.NoSend))
             {
                 if (clientId == -1)
                 {
@@ -633,7 +633,7 @@ namespace TeeSharp.Server
                 var msg = new MsgPacker((int) NetworkMessages.SV_RCON_AUTH_STATUS);
                 msg.AddInt(1);
                 msg.AddInt(1);
-                SendMsgEx(msg, MsgFlags.VITAL, clientId, true);
+                SendMsgEx(msg, MsgFlags.Vital, clientId, true);
             }
         }
 
@@ -669,7 +669,7 @@ namespace TeeSharp.Server
                 var msg = new MsgPacker((int)NetworkMessages.SV_INPUT_TIMING);
                 msg.AddInt(intendedTick);
                 msg.AddInt((int) timeLeft);
-                SendMsgEx(msg, MsgFlags.NONE, clientId, true);
+                SendMsgEx(msg, MsgFlags.None, clientId, true);
             }
 
             Clients[clientId].LastInputTick = intendedTick;
@@ -715,7 +715,7 @@ namespace TeeSharp.Server
             GameContext.OnClientConnected(clientId);
 
             var msg = new MsgPacker((int) NetworkMessages.SV_CON_READY);
-            SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
+            SendMsgEx(msg, MsgFlags.Vital | MsgFlags.Flush, clientId, true);
         }
 
         protected override void NetMsgRequestMapData(Chunk packet, Unpacker unpacker, int clientId)
@@ -875,7 +875,7 @@ namespace TeeSharp.Server
             msg.AddInt(chunk);
             msg.AddInt(chunkSize);
             msg.AddRaw(CurrentMap.RawData, offset, chunkSize);
-            SendMsgEx(msg, MsgFlags.FLUSH, clientId, true);
+            SendMsgEx(msg, MsgFlags.Flush, clientId, true);
 
             Debug.Log("server", $"sending chunk {chunk} with size {chunkSize}");
         }
@@ -929,7 +929,7 @@ namespace TeeSharp.Server
                     var msg = new MsgPacker((int) NetworkMessages.SV_SNAPEMPTY);
                     msg.AddInt(Tick);
                     msg.AddInt(Tick - deltaTick);
-                    SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                    SendMsgEx(msg, MsgFlags.Flush, i, true);
                     continue;
                 }
 
@@ -951,7 +951,7 @@ namespace TeeSharp.Server
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * Snapshot.MAX_SNAPSHOT_PACKSIZE, chunk);
-                        SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                        SendMsgEx(msg, MsgFlags.Flush, i, true);
                     }
                     else
                     {
@@ -963,7 +963,7 @@ namespace TeeSharp.Server
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * Snapshot.MAX_SNAPSHOT_PACKSIZE, chunk);
-                        SendMsgEx(msg, MsgFlags.FLUSH, i, true);
+                        SendMsgEx(msg, MsgFlags.Flush, i, true);
                     }
                 }
             }
@@ -1040,7 +1040,7 @@ namespace TeeSharp.Server
             msg.AddString(CurrentMap.MapName);
             msg.AddInt((int) CurrentMap.CRC);
             msg.AddInt(CurrentMap.Size);
-            SendMsgEx(msg, MsgFlags.VITAL | MsgFlags.FLUSH, clientId, true);
+            SendMsgEx(msg, MsgFlags.Vital | MsgFlags.Flush, clientId, true);
         }
 
         protected override void RegisterConsoleCommands()
@@ -1218,7 +1218,7 @@ namespace TeeSharp.Server
         {
             var packer = new MsgPacker((int) NetworkMessages.SV_RCON_LINE);
             packer.AddString(line, 512);
-            SendMsgEx(packer, MsgFlags.VITAL, clientId, true);
+            SendMsgEx(packer, MsgFlags.Vital, clientId, true);
         }
 
         protected override void SendRconLineAuthed(string message, object data)

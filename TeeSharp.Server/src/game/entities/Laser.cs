@@ -54,13 +54,13 @@ namespace TeeSharp.Server.Game.Entities
                     Position = tempPos;
                     _direction = tempDir.Normalized;
 
-                    _energy -= Math.Distance(_from, Position) + Tuning["LaserBounceCost"];
+                    _energy -= MathHelper.Distance(_from, Position) + Tuning["LaserBounceCost"];
                     _bounces++;
 
                     if (_bounces > Tuning["LaserBounceNum"])
                         _energy = -1;
 
-                    GameContext.CreateSound(Position, Sound.RIFLE_BOUNCE);
+                    GameContext.CreateSound(Position, Sound.LaserBounce);
                 }
             }
             else if (!HitCharacter(Position, to))
@@ -100,7 +100,7 @@ namespace TeeSharp.Server.Game.Entities
             Position = hitAt;
             _energy = -1;
             hitCharacter.TakeDamage(Vector2.zero, (int)Tuning["LaserDamage"].FloatValue, 
-                _ownerId, Weapon.RIFLE);
+                _ownerId, Weapon.Laser);
             return true;
         }
 

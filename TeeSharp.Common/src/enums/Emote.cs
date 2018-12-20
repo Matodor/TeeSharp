@@ -2,13 +2,13 @@
 {
     public enum Emote
     {
-        NORMAL = 0,
-        PAIN,
-        HAPPY,
-        SURPRISE,
-        ANGRY,
-        BLINK,
+        Normal = 0,
+        Pain,
+        Happy,
+        Surprise,
+        Angry,
+        Blink,
 
-        NUM_EMOTES,
+        NumEmotes,
     }
 }

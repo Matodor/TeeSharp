@@ -7,7 +7,6 @@ using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 using TeeSharp.Server.Game.Entities;
-using Math = TeeSharp.Common.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -21,7 +20,7 @@ namespace TeeSharp.Server.Game
         public SpawnEval()
         {
             Got = false;
-            FriendlyTeam = Team.SPECTATORS;
+            FriendlyTeam = Team.Spectators;
             Pos = new Vector2(100, 100);
         }
     }
@@ -95,7 +94,7 @@ namespace TeeSharp.Server.Game
 
         public virtual bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)
         {
-            if (team == Team.SPECTATORS)
+            if (team == Team.Spectators)
             {
                 spawnPos = Vector2.zero;
                 return false;
@@ -133,10 +132,10 @@ namespace TeeSharp.Server.Game
             foreach (var character in GameContext.World.GetEntities<Character>())
             {
                 var scoremod = 1f;
-                if (eval.FriendlyTeam != Team.SPECTATORS && character.Player.Team == eval.FriendlyTeam)
+                if (eval.FriendlyTeam != Team.Spectators && character.Player.Team == eval.FriendlyTeam)
                     scoremod = 0.5f;
 
-                var d = Math.Distance(pos, character.Position);
+                var d = MathHelper.Distance(pos, character.Position);
                 score += scoremod * (System.Math.Abs(d) < 0.00001 ? 1000000000.0f : 1.0f / d);
             }
 
@@ -168,7 +167,7 @@ namespace TeeSharp.Server.Game
                     for (var c = 0; c < characters.Length; c++)
                     {
                         if (GameContext.Collision.IsTileSolid(spawnPos[i] + positions[index]) ||
-                            Math.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
+                            MathHelper.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
                             characters[c].ProximityRadius)
                         {
                             result = -1;

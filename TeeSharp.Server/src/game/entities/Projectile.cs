@@ -45,23 +45,23 @@ namespace TeeSharp.Server.Game.Entities
 
             switch (_weapon)
             {
-                case Weapon.GUN:
+                case Weapon.Gun:
                     curvature = Tuning["GunCurvature"];
                     speed = Tuning["GunSpeed"];
                     break;
 
-                case Weapon.SHOTGUN:
+                case Weapon.Shotgun:
                     curvature = Tuning["ShotgunCurvature"];
                     speed = Tuning["ShotgunSpeed"];
                     break;
 
-                case Weapon.GRENADE:
+                case Weapon.Grenade:
                     curvature = Tuning["GrenadeCurvature"];
                     speed = Tuning["GrenadeSpeed"];
                     break;
             }
 
-            return Math.CalcPos(Position, _dir, curvature, speed, t);
+            return MathHelper.CalcPos(Position, _dir, curvature, speed, t);
         }
 
         public override void Tick()
@@ -80,7 +80,7 @@ namespace TeeSharp.Server.Game.Entities
             if (targetCharacter != null || collide != TileFlags.NONE ||
                 _lifeSpan < 0 || GameLayerClipped(currentPos))
             {
-                if (_lifeSpan >= 0 || _weapon == Weapon.GRENADE)
+                if (_lifeSpan >= 0 || _weapon == Weapon.Grenade)
                     GameContext.CreateSound(currentPos, _soundImpact);
 
                 if (_explosive)

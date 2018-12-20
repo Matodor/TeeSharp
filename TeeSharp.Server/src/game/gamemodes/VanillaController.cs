@@ -39,8 +39,8 @@ namespace TeeSharp.Server.Game
             DoWarmup(Config["SvWarmup"]);
 
             TeamScores = new int[2];
-            TeamScores[(int) Team.RED] = 0;
-            TeamScores[(int) Team.BLUE] = 0;
+            TeamScores[(int) Team.Red] = 0;
+            TeamScores[(int) Team.Blue] = 0;
 
             GameOverTick = -1;
             SuddenDeath = 0;
@@ -84,7 +84,7 @@ namespace TeeSharp.Server.Game
                 for (var i = 0; i < GameContext.Players.Length; i++)
                 {
                     if (GameContext.Players[i] == null ||
-                        GameContext.Players[i].Team == Team.SPECTATORS)
+                        GameContext.Players[i].Team == Team.Spectators)
                     {
                         continue;
                     }
@@ -97,7 +97,7 @@ namespace TeeSharp.Server.Game
 
                 if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
                 {
-                    var m = teamPlayers[0] > teamPlayers[1] ? Team.RED : Team.BLUE;
+                    var m = teamPlayers[0] > teamPlayers[1] ? Team.Red : Team.Blue;
                     var numBalance = Math.Abs(teamPlayers[0] - teamPlayers[1]) / 2;
 
                     do
@@ -190,12 +190,12 @@ namespace TeeSharp.Server.Game
             if (IsTeamplay())
             {
                 if (Config["SvScorelimit"] > 0 &&
-                    (TeamScores[(int) Team.RED] >= Config["SvScorelimit"] ||
-                     TeamScores[(int) Team.BLUE] >= Config["SvScorelimit"]) ||
+                    (TeamScores[(int) Team.Red] >= Config["SvScorelimit"] ||
+                     TeamScores[(int) Team.Blue] >= Config["SvScorelimit"]) ||
                     Config["SvTimelimit"] > 0 && Server.Tick - RoundStartTick >=
                     Config["SvTimelimit"] * Server.TickSpeed * 60)
                 {
-                    if (TeamScores[(int) Team.RED] != TeamScores[(int) Team.BLUE])
+                    if (TeamScores[(int) Team.Red] != TeamScores[(int) Team.Blue])
                         EndRound();
                     else
                         SuddenDeath = 1;
@@ -255,8 +255,8 @@ namespace TeeSharp.Server.Game
             SuddenDeath = 0;
             GameOverTick = -1;
             GameWorld.IsPaused = false;
-            TeamScores[(int) Team.RED] = 0;
-            TeamScores[(int) Team.BLUE] = 0;
+            TeamScores[(int) Team.Red] = 0;
+            TeamScores[(int) Team.Blue] = 0;
             ForceBalanced = false;
             GameContext.Console.Print(OutputLevel.DEBUG, "game", $"start round type='{GameType}' teamplay='{GameFlags.HasFlag(GameFlags.TEAMS)}'");
         }
@@ -283,7 +283,7 @@ namespace TeeSharp.Server.Game
         
         public override bool CanChangeTeam(BasePlayer player, Team joinTeam)
         {
-            if (!IsTeamplay() || joinTeam == Team.SPECTATORS || Config["SvTeambalanceTime"])
+            if (!IsTeamplay() || joinTeam == Team.Spectators || Config["SvTeambalanceTime"])
                 return true;
 
             var teamPlayers = new int[] {0, 0};
@@ -293,19 +293,19 @@ namespace TeeSharp.Server.Game
                 if (GameContext.Players[i] == null)
                     continue;
 
-                if (GameContext.Players[i].Team != Team.SPECTATORS)
+                if (GameContext.Players[i].Team != Team.Spectators)
                     teamPlayers[(int) GameContext.Players[i].Team]++;
             }
 
             teamPlayers[(int) joinTeam]++;
 
-            if (player.Team != Team.SPECTATORS)
+            if (player.Team != Team.Spectators)
                 teamPlayers[(int) joinTeam ^ 1]--;
 
             if (System.Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
             {
-                return teamPlayers[0] < teamPlayers[1] && joinTeam == Team.RED ||
-                       teamPlayers[0] > teamPlayers[1] && joinTeam == Team.BLUE;
+                return teamPlayers[0] < teamPlayers[1] && joinTeam == Team.Red ||
+                       teamPlayers[0] > teamPlayers[1] && joinTeam == Team.Blue;
             }
             return true;
         }
@@ -318,8 +318,8 @@ namespace TeeSharp.Server.Game
                 if (GameContext.Players[i] == null || clientId == i)
                     continue;
 
-                if (GameContext.Players[i].Team >= Team.RED &&
-                    GameContext.Players[i].Team <= Team.BLUE)
+                if (GameContext.Players[i].Team >= Team.Red &&
+                    GameContext.Players[i].Team <= Team.Blue)
                 {
                     numPlayers[(int)GameContext.Players[i].Team]++;
                 }
@@ -328,21 +328,21 @@ namespace TeeSharp.Server.Game
             var team = (Team) 0;
             if (IsTeamplay())
             {
-                team = numPlayers[(int) Team.RED] > numPlayers[(int) Team.BLUE]
-                    ? Team.BLUE
-                    : Team.RED;
+                team = numPlayers[(int) Team.Red] > numPlayers[(int) Team.Blue]
+                    ? Team.Blue
+                    : Team.Red;
             }
 
             return CanJoinTeam(clientId, team) 
                 ? team 
-                : Team.SPECTATORS;
+                : Team.Spectators;
         }
 
         public override bool CanJoinTeam(int clientId, Team team)
         {
-            if (team == Team.SPECTATORS ||
+            if (team == Team.Spectators ||
                 GameContext.Players[clientId] != null &&
-                GameContext.Players[clientId].Team != Team.SPECTATORS)
+                GameContext.Players[clientId].Team != Team.Spectators)
             {
                 return true;
             }
@@ -353,8 +353,8 @@ namespace TeeSharp.Server.Game
                 if (GameContext.Players[i] == null || clientId == i) 
                     continue;
 
-                if (GameContext.Players[i].Team >= Team.RED &&
-                    GameContext.Players[i].Team <= Team.BLUE)
+                if (GameContext.Players[i].Team >= Team.Red &&
+                    GameContext.Players[i].Team <= Team.Blue)
                 {
                     numPlayers[(int) GameContext.Players[i].Team]++;
                 }
@@ -405,7 +405,7 @@ namespace TeeSharp.Server.Game
         public override Team ClampTeam(Team team)
         {
             if (team < 0)
-                return Team.SPECTATORS;
+                return Team.Spectators;
             if (IsTeamplay())
                 return (Team) ((int) team & 1);
             return 0;
@@ -414,8 +414,8 @@ namespace TeeSharp.Server.Game
         public override string GetTeamName(Team team)
         {
             if (IsTeamplay())
-                return team == Team.RED ? "red team" : "blue team";
-            return team == Team.SPECTATORS ? "spectators" : "game";
+                return team == Team.Red ? "red team" : "blue team";
+            return team == Team.Spectators ? "spectators" : "game";
         }
 
         public override bool CheckTeamBalance()
@@ -427,7 +427,7 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < GameContext.Players.Length; i++)
             {
                 if (GameContext.Players[i] == null ||
-                    GameContext.Players[i].Team == Team.SPECTATORS)
+                    GameContext.Players[i].Team == Team.Spectators)
                 {
                     continue;
                 }
@@ -451,13 +451,13 @@ namespace TeeSharp.Server.Game
         public override void OnCharacterSpawn(Character character)
         {
             character.IncreaseHealth(10);
-            character.GiveWeapon(Weapon.HAMMER, -1);
-            character.GiveWeapon(Weapon.GUN, 10);
+            character.GiveWeapon(Weapon.Hammer, -1);
+            character.GiveWeapon(Weapon.Gun, 10);
         }
 
         public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)
         {
-            if (killer == null || weapon == Weapon.GAME)
+            if (killer == null || weapon == Weapon.Game)
                 return 0;
 
             if (killer == victim.Player)
@@ -476,7 +476,7 @@ namespace TeeSharp.Server.Game
                 }
             }
 
-            if (weapon == Weapon.SELF)
+            if (weapon == Weapon.Self)
                 victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
 
             return 0;
@@ -485,8 +485,8 @@ namespace TeeSharp.Server.Game
         public override void OnEntity(int entityIndex, Vector2 pos)
         {
             var item = (MapItems) entityIndex;
-            var powerup = Powerup.NONE;
-            var weapon = Weapon.HAMMER;
+            var powerup = Powerup.None;
+            var weapon = Weapon.Hammer;
 
             switch (item)
             {
@@ -503,35 +503,35 @@ namespace TeeSharp.Server.Game
                     break;
 
                 case MapItems.ENTITY_ARMOR_1:
-                    powerup = Powerup.ARMOR;
+                    powerup = Powerup.Armor;
                     break;
 
                 case MapItems.ENTITY_HEALTH_1:
-                    powerup = Powerup.HEALTH;
+                    powerup = Powerup.Health;
                     break;
 
                 case MapItems.ENTITY_WEAPON_SHOTGUN:
-                    powerup = Powerup.WEAPON;
-                    weapon = Weapon.SHOTGUN;
+                    powerup = Powerup.Weapon;
+                    weapon = Weapon.Shotgun;
                     break;
 
                 case MapItems.ENTITY_WEAPON_GRENADE:
-                    powerup = Powerup.WEAPON;
-                    weapon = Weapon.GRENADE;
+                    powerup = Powerup.Weapon;
+                    weapon = Weapon.Grenade;
                     break;
 
                 case MapItems.ENTITY_POWERUP_NINJA:
-                    powerup = Powerup.NINJA;
-                    weapon = Weapon.NINJA;
+                    powerup = Powerup.Ninja;
+                    weapon = Weapon.Ninja;
                     break;
 
                 case MapItems.ENTITY_WEAPON_RIFLE:
-                    powerup = Powerup.WEAPON;
-                    weapon = Weapon.RIFLE;
+                    powerup = Powerup.Weapon;
+                    weapon = Weapon.Laser;
                     break;
             }
 
-            if (powerup != Powerup.NONE)
+            if (powerup != Powerup.None)
             {
                 new Pickup(powerup, weapon)
                 {
@@ -548,7 +548,7 @@ namespace TeeSharp.Server.Game
 
             player.TeeInfo.UseCustomColor = true;
 
-            if (player.Team >= Team.RED && player.Team <= Team.BLUE)
+            if (player.Team >= Team.Red && player.Team <= Team.Blue)
             {
                 player.TeeInfo.ColorBody = teamColors[(int) player.Team];
                 player.TeeInfo.ColorFeet = teamColors[(int) player.Team];
@@ -573,7 +573,7 @@ namespace TeeSharp.Server.Game
             if (GameOverTick != -1)
                 gameInfo.GameStateFlags |= GameStateFlags.GAMEOVER;
             if (SuddenDeath != 0)
-                gameInfo.GameStateFlags |= GameStateFlags.SUDDENDEATH;
+                gameInfo.GameStateFlags |= GameStateFlags.SuddenDeath;
             if (GameContext.World.IsPaused)
                 gameInfo.GameStateFlags |= GameStateFlags.PAUSED;
 

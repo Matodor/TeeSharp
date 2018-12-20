@@ -4,7 +4,6 @@ using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
 using TeeSharp.Server.Game.Entities;
-using Math = TeeSharp.Common.Math;
 
 namespace TeeSharp.Server.Game
 {
@@ -50,7 +49,7 @@ namespace TeeSharp.Server.Game
             var current = Entity<T>.FirstTypeEntity;
             while (current != null)
             {
-                if (Math.Distance(current.Position, pos) < radius + current.ProximityRadius)
+                if (MathHelper.Distance(current.Position, pos) < radius + current.ProximityRadius)
                     yield return (T) current;
                 current = current.NextTypeEntity;
             }
@@ -96,7 +95,7 @@ namespace TeeSharp.Server.Game
         public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
             float radius, ref Vector2 newPos, Character notThis)
         {
-            var closestLength = Math.Distance(pos1, pos2) * 100f;
+            var closestLength = MathHelper.Distance(pos1, pos2) * 100f;
             Character closest = null;
 
             foreach (var character in GetEntities<Character>())
@@ -104,11 +103,11 @@ namespace TeeSharp.Server.Game
                 if (character == notThis)
                     continue;
 
-                var intersectPos = Math.ClosestPointOnLine(pos1, pos2, character.Position);
-                var length = Math.Distance(character.Position, intersectPos);
+                var intersectPos = MathHelper.ClosestPointOnLine(pos1, pos2, character.Position);
+                var length = MathHelper.Distance(character.Position, intersectPos);
                 if (length < character.ProximityRadius + radius)
                 {
-                    length = Math.Distance(pos1, intersectPos);
+                    length = MathHelper.Distance(pos1, intersectPos);
                     if (length < closestLength)
                     {
                         newPos = intersectPos;
@@ -131,7 +130,7 @@ namespace TeeSharp.Server.Game
                 if (character == notThis)
                     continue;
 
-                var len = Math.Distance(pos, character.Position);
+                var len = MathHelper.Distance(pos, character.Position);
                 if (len < character.ProximityRadius + radius)
                 {
                     if (len < closestRange)
@@ -247,7 +246,7 @@ namespace TeeSharp.Server.Game
 
                     // copypasted chunk from character.cpp Snap() follows
                     if (GameContext.Players[i].GetCharacter() != null &&
-                        GameContext.Players[i].Team != Team.SPECTATORS &&
+                        GameContext.Players[i].Team != Team.Spectators &&
                         GameContext.Players[i].ClientVersion == ClientVersion.VANILLA)
                     {
                         PlayersDistances[j].First = (float) 1e8;
@@ -255,7 +254,7 @@ namespace TeeSharp.Server.Game
                     else
                         PlayersDistances[j].First = 0;
 
-                    PlayersDistances[j].First += Math.Distance(
+                    PlayersDistances[j].First += MathHelper.Distance(
                         GameContext.Players[i].ViewPos,
                         GameContext.Players[j].GetCharacter().Position
                     );

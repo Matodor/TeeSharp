@@ -1,9 +1,11 @@
-﻿namespace TeeSharp.Common
+﻿using System;
+
+namespace TeeSharp.Common
 {
-    public static class Math
+    public static class MathHelper
     {
-        public const float DEG2RAD = 0.01745329F;
-        public const float RAD2DEG = 57.29578F;
+        public const float Deg2Rad = 0.0174532925199433f;
+        public const float Rad2Deg = 57.2957795130823f;
 
         public static int RoundToInt(float f)
         {

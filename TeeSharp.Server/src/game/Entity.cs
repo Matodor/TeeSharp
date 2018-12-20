@@ -71,15 +71,15 @@ namespace TeeSharp.Server.Game
                 return true;
             }
 
-            return Common.Math.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
+            return Common.MathHelper.Distance(GameContext.Players[snappingClient].ViewPos, checkPos) > 1100.0f;
         }
 
         public bool GameLayerClipped(Vector2 checkPos)
         {
-            return Math.RoundToInt(checkPos.x) / 32 < -200 ||
-                   Math.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||
-                   Math.RoundToInt(checkPos.y) / 32 < -200 ||
-                   Math.RoundToInt(checkPos.y) / 32 > GameContext.Collision.Height + 200;
+            return MathHelper.RoundToInt(checkPos.x) / 32 < -200 ||
+                   MathHelper.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||
+                   MathHelper.RoundToInt(checkPos.y) / 32 < -200 ||
+                   MathHelper.RoundToInt(checkPos.y) / 32 > GameContext.Collision.Height + 200;
         }
     }
 

@@ -71,7 +71,7 @@ namespace TeeSharp.Server.Game
         public abstract void PostTick();
         public abstract void Respawn();
         public abstract void SetTeam(Team team);
-        public abstract void KillCharacter(Weapon weapon = Weapon.GAME);
+        public abstract void KillCharacter(Weapon weapon = Weapon.Game);
 
         public abstract void FakeSnapshot(int snappingClient);
         public abstract void OnDisconnect(string reason);

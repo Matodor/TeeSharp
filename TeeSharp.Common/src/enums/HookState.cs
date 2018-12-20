@@ -2,12 +2,11 @@
 {
     public enum HookState
     {
-        RETRACTED = -1,
-        IDLE = 0,
-        RETRACT_START = 1,
-        RETRACT_PROCESS = 2,
-        RETRACT_END = 3,
-        FLYING = 4,
-        GRABBED = 5, 
+        Retracted = -1,
+        Idle = 0,
+        RetractStart = 1,
+        RetractEnd = 3,
+        Flying = 4,
+        Grabbed = 5, 
     }
 }

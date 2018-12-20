@@ -2,18 +2,17 @@
 {
     public enum Weapon
     {
-        //
-        GAME = -3,  // team switching etc
-        SELF = -2,  // console kill command
-        WORLD = -1, // death tiles etc
-        //
-        HAMMER = 0,
-        GUN,
-        SHOTGUN,
-        GRENADE,
-        RIFLE,
-        NINJA,
+        Game = -3,  // team switching etc
+        Self = -2,  // console kill command
+        World = -1, // death tiles etc
 
-        NUM_WEAPONS,
+        Hammer = 0,
+        Gun,
+        Shotgun,
+        Grenade,
+        Laser,
+        Ninja,
+
+        NumWeapons,
     }
 }

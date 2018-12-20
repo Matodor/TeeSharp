@@ -188,7 +188,7 @@ namespace TeeSharp.Common.Protocol
                 failedOn = "Killer";
             if (msg.Victim < 0)
                 failedOn = "Victim";
-            if (msg.Weapon < Weapon.GAME)
+            if (msg.Weapon < Weapon.Game)
                 failedOn = "Weapon";
 
             return msg;
@@ -202,7 +202,7 @@ namespace TeeSharp.Common.Protocol
                 Sound = (Sound) unpacker.GetInt()
             };
 
-            if (msg.Sound < 0 || msg.Sound >= Sound.NUM_SOUNDS)
+            if (msg.Sound < 0 || msg.Sound >= Sound.NumSounds)
                 failedOn = "Sound";
 
             return msg;
@@ -234,7 +234,7 @@ namespace TeeSharp.Common.Protocol
                 Weapon = (Weapon) unpacker.GetInt()
             };
 
-            if (msg.Weapon < 0 || msg.Weapon >= Weapon.NUM_WEAPONS)
+            if (msg.Weapon < 0 || msg.Weapon >= Weapon.NumWeapons)
                 failedOn = "Weapon";
 
             return msg;
@@ -251,7 +251,7 @@ namespace TeeSharp.Common.Protocol
 
             if (msg.ClientId < 0)
                 failedOn = "ClientId";
-            if (msg.Emoticon < 0 || msg.Emoticon >= Emoticons.NUM_EMOTICONS)
+            if (msg.Emoticon < 0 || msg.Emoticon >= Emoticons.NumEmoticons)
                 failedOn = "Emoticon";
 
             return msg;
@@ -367,7 +367,7 @@ namespace TeeSharp.Common.Protocol
                 Team = (Team) unpacker.GetInt()
             };
 
-            if (msg.Team < Team.SPECTATORS || msg.Team > Team.BLUE)
+            if (msg.Team < Team.Spectators || msg.Team > Team.Blue)
                 failedOn = "Team";
 
             return msg;
@@ -431,7 +431,7 @@ namespace TeeSharp.Common.Protocol
                 Emoticon = (Emoticons) unpacker.GetInt()
             };
 
-            if (msg.Emoticon < 0 || msg.Emoticon >= Emoticons.NUM_EMOTICONS)
+            if (msg.Emoticon < 0 || msg.Emoticon >= Emoticons.NumEmoticons)
                 failedOn = "Emoticon";
 
             return msg;

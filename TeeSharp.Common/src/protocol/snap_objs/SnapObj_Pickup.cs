@@ -9,8 +9,8 @@ namespace TeeSharp.Common.Protocol
         public override int SerializeLength { get; } = 4;
 
         public Vector2 Position;
-        public Powerup Powerup = Powerup.WEAPON;
-        public Weapon Weapon = Weapon.HAMMER;
+        public Powerup Powerup = Powerup.Weapon;
+        public Weapon Weapon = Weapon.Hammer;
 
         public override void Deserialize(int[] data, int dataOffset)
         {
@@ -30,8 +30,8 @@ namespace TeeSharp.Common.Protocol
         {
             return new []
             {
-                Math.RoundToInt(Position.x),
-                Math.RoundToInt(Position.y),
+                MathHelper.RoundToInt(Position.x),
+                MathHelper.RoundToInt(Position.y),
                 (int) Powerup,
                 (int) Weapon
             };

@@ -27,8 +27,8 @@ namespace TeeSharp.Common.Protocol
         {
             return new[]
             {
-                Math.RoundToInt(Position.x),
-                Math.RoundToInt(Position.y),
+                MathHelper.RoundToInt(Position.x),
+                MathHelper.RoundToInt(Position.y),
                 Angle
             };
         }

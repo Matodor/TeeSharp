@@ -37,8 +37,8 @@ namespace TeeSharp.Server.Game.Entities
                 {
                     _spawnTick = -1;
 
-                    if (_powerup == Powerup.WEAPON)
-                        GameContext.CreateSound(Position, Sound.WEAPON_SPAWN);
+                    if (_powerup == Powerup.Weapon)
+                        GameContext.CreateSound(Position, Sound.WeaponSpawn);
                 }
                 else return;
             }
@@ -50,52 +50,52 @@ namespace TeeSharp.Server.Game.Entities
             var respawnTime = -1;
             switch (_powerup)
             {
-                case Powerup.HEALTH:
+                case Powerup.Health:
                     if (character.IncreaseHealth(1))
                     {
-                        GameContext.CreateSound(Position, Sound.PICKUP_HEALTH);
+                        GameContext.CreateSound(Position, Sound.PickupHealth);
                         respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
                     }
                     break;
 
-                case Powerup.ARMOR:
+                case Powerup.Armor:
                     if (character.IncreaseArmor(1))
                     {
-                        GameContext.CreateSound(Position, Sound.PICKUP_ARMOR);
+                        GameContext.CreateSound(Position, Sound.PickupArmor);
                         respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
                     }
                     break;
 
-                case Powerup.WEAPON:
-                    if (_weapon >= 0 && _weapon < Weapon.NUM_WEAPONS)
+                case Powerup.Weapon:
+                    if (_weapon >= 0 && _weapon < Weapon.NumWeapons)
                     {
                         if (character.GiveWeapon(_weapon, 10))
                         {
                             respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
 
-                            if (_weapon == Weapon.GRENADE)
-                                GameContext.CreateSound(Position, Sound.PICKUP_GRENADE);
-                            else if (_weapon == Weapon.SHOTGUN)
-                                GameContext.CreateSound(Position, Sound.PICKUP_SHOTGUN);
-                            else if (_weapon == Weapon.RIFLE)
-                                GameContext.CreateSound(Position, Sound.PICKUP_SHOTGUN);
+                            if (_weapon == Weapon.Grenade)
+                                GameContext.CreateSound(Position, Sound.PickupGrenade);
+                            else if (_weapon == Weapon.Shotgun)
+                                GameContext.CreateSound(Position, Sound.PickupShotgun);
+                            else if (_weapon == Weapon.Laser)
+                                GameContext.CreateSound(Position, Sound.PickupShotgun);
 
                             GameContext.SendWeaponPickup(character.Player.ClientId, _weapon);
                         }
                     }
                     break;
 
-                case Powerup.NINJA:
+                case Powerup.Ninja:
                     character.GiveNinja();
                     respawnTime = ServerData.Data.Pickups[(int)_powerup].RespawnTime;
 
                     foreach (var chr in GameWorld.GetEntities<Character>())
                     {
                         if (chr != character)
-                            chr.SetEmote(Emote.SURPRISE, Server.Tick + Server.TickSpeed);
+                            chr.SetEmote(Emote.Surprise, Server.Tick + Server.TickSpeed);
                     }
 
-                    character.SetEmote(Emote.ANGRY, Server.Tick + 1200 * Server.TickSpeed / 1000);
+                    character.SetEmote(Emote.Angry, Server.Tick + 1200 * Server.TickSpeed / 1000);
                     break;
             }
 

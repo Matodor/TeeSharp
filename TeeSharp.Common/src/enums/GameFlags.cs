@@ -5,8 +5,9 @@ namespace TeeSharp.Common.Enums
     [Flags]
     public enum GameFlags
     {
-        NONE = 0,
-        TEAMS = 1 << 0,
-        FLAGS = 1 << 1,
+        None = 0,
+        Teams = 1 << 0,
+        Flags = 1 << 1,
+        Survival = 1 << 2,
     }
 }

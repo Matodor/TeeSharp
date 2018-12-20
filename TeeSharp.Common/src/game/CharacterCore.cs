@@ -15,7 +15,7 @@ namespace TeeSharp.Common.Game
         public virtual int Direction { get; set; }
         public virtual int Angle { get; set; }
         public virtual int HookedPlayer { get; set; }
-        public virtual CoreEvents TriggeredEvents { get; set; }
+        public virtual CoreEventFlags TriggeredEvents { get; set; }
         public virtual SnapObj_PlayerInput Input { get; set; }
 
         protected virtual WorldCore World { get; set; }
@@ -43,19 +43,19 @@ namespace TeeSharp.Common.Game
             HookPosition = Vector2.zero;
             HookDirection = Vector2.zero;
             HookTick = 0;
-            HookState = HookState.IDLE;
+            HookState = HookState.Idle;
             HookedPlayer = -1;
             Jumped = 0;
             Direction = 0;
             Angle = 0;
-            TriggeredEvents = CoreEvents.NONE;
+            TriggeredEvents = CoreEventFlags.NONE;
 
             Input.Reset();
         }
 
         public virtual void Tick(bool useInput)
         {
-            TriggeredEvents = CoreEvents.NONE;
+            TriggeredEvents = CoreEventFlags.NONE;
 
             var isGrounded = false;
             if (Collision.IsTileSolid(Position.x + TEE_SIZE / 2, Position.y + TEE_SIZE / 2 + 5))
@@ -88,13 +88,13 @@ namespace TeeSharp.Common.Game
                     {
                         if (isGrounded)
                         {
-                            TriggeredEvents |= CoreEvents.GROUND_JUMP;
+                            TriggeredEvents |= CoreEventFlags.GroundJump;
                             vel.y = -World.Tuning["GroundJumpImpulse"];
                             Jumped |= 1;
                         }
                         else if ((Jumped & 2) == 0)
                         {
-                            TriggeredEvents |= CoreEvents.AIR_JUMP;
+                            TriggeredEvents |= CoreEventFlags.AirJump;
                             vel.y = -World.Tuning["AirJumpImpulse"];
                             Jumped |= 3;
                         }
@@ -104,54 +104,54 @@ namespace TeeSharp.Common.Game
 
                 if (Input.Hook)
                 {
-                    if (HookState == HookState.IDLE)
+                    if (HookState == HookState.Idle)
                     {
-                        HookState = HookState.FLYING;
+                        HookState = HookState.Flying;
                         HookPosition = Position + targetDirection * TEE_SIZE * 1.5f;
                         HookDirection = targetDirection;
                         HookedPlayer = -1;
                         HookTick = 0;
-                        TriggeredEvents |= CoreEvents.HOOK_LAUNCH;
+                        TriggeredEvents |= CoreEventFlags.HookLaunch;
                     }
                 }
                 else
                 {
                     HookedPlayer = -1;
-                    HookState = HookState.IDLE;
+                    HookState = HookState.Idle;
                     HookPosition = Position;
                 }
             }
 
             if (Direction < 0)
-                vel.x = Math.SaturatedAdd(-maxSpeed, maxSpeed, vel.x, -accel);
+                vel.x = MathHelper.SaturatedAdd(-maxSpeed, maxSpeed, vel.x, -accel);
             else if (Direction > 0)
-                vel.x = Math.SaturatedAdd(-maxSpeed, maxSpeed, vel.x, +accel);
+                vel.x = MathHelper.SaturatedAdd(-maxSpeed, maxSpeed, vel.x, +accel);
             else
                 vel.x *= friction;
 
             if (isGrounded)
                 Jumped &= ~2;
 
-            if (HookState == HookState.IDLE)
+            if (HookState == HookState.Idle)
             {
                 HookedPlayer = -1;
                 HookPosition = Position;
             }
-            else if (HookState >= HookState.RETRACT_START && HookState < HookState.RETRACT_END)
+            else if (HookState >= HookState.RetractStart && HookState < HookState.RetractEnd)
             {
                 HookState++;
             }
-            else if (HookState == HookState.RETRACT_END)
+            else if (HookState == HookState.RetractEnd)
             {
-                HookState = HookState.RETRACTED;
-                TriggeredEvents |= CoreEvents.HOOK_RETRACT;
+                HookState = HookState.Retracted;
+                TriggeredEvents |= CoreEventFlags.HOOK_RETRACT;
             }
-            else if (HookState == HookState.FLYING)
+            else if (HookState == HookState.Flying)
             {
                 var newHookPos = HookPosition + HookDirection * World.Tuning["HookFireSpeed"];
-                if (Math.Distance(Position, newHookPos) > World.Tuning["HookLength"])
+                if (MathHelper.Distance(Position, newHookPos) > World.Tuning["HookLength"])
                 {
-                    HookState = HookState.RETRACT_START;
+                    HookState = HookState.RetractStart;
                     newHookPos = Position + (newHookPos - Position).Normalized * World.Tuning["HookLength"];
                 }
 
@@ -177,40 +177,40 @@ namespace TeeSharp.Common.Game
                         if (characterCore == null || characterCore == this)
                             continue;
 
-                        var closestPoint = Math.ClosestPointOnLine(HookPosition, newHookPos,
+                        var closestPoint = MathHelper.ClosestPointOnLine(HookPosition, newHookPos,
                             characterCore.Position);
-                        if (Math.Distance(characterCore.Position, closestPoint) < TEE_SIZE + 2f)
+                        if (MathHelper.Distance(characterCore.Position, closestPoint) < TEE_SIZE + 2f)
                         {
-                            if (HookedPlayer == -1 || Math.Distance(HookPosition, characterCore.Position) < distance)
+                            if (HookedPlayer == -1 || MathHelper.Distance(HookPosition, characterCore.Position) < distance)
                             {
-                                TriggeredEvents |= CoreEvents.HOOK_ATTACH_PLAYER;
-                                HookState = HookState.GRABBED;
+                                TriggeredEvents |= CoreEventFlags.HookAttachPlayer;
+                                HookState = HookState.Grabbed;
                                 HookedPlayer = i;
-                                distance = Math.Distance(HookPosition, characterCore.Position);
+                                distance = MathHelper.Distance(HookPosition, characterCore.Position);
                                 break;
                             }
                         }
                     }
                 }
 
-                if (HookState == HookState.FLYING)
+                if (HookState == HookState.Flying)
                 {
                     if (goingToHitGround)
                     {
-                        TriggeredEvents |= CoreEvents.HOOK_ATTACH_GROUND;
-                        HookState = HookState.GRABBED;
+                        TriggeredEvents |= CoreEventFlags.HookAttachGround;
+                        HookState = HookState.Grabbed;
                     }
                     else if (goingToRetract)
                     {
-                        TriggeredEvents |= CoreEvents.HOOK_HIT_NOHOOK;
-                        HookState = HookState.RETRACT_START;
+                        TriggeredEvents |= CoreEventFlags.HookHitNoHook;
+                        HookState = HookState.RetractStart;
                     }
 
                     HookPosition = newHookPos;
                 }
             }
 
-            if (HookState == HookState.GRABBED)
+            if (HookState == HookState.Grabbed)
             {
                 if (HookedPlayer != -1)
                 {
@@ -220,12 +220,12 @@ namespace TeeSharp.Common.Game
                     else
                     {
                         HookedPlayer = -1;
-                        HookState = HookState.RETRACTED;
+                        HookState = HookState.Retracted;
                         HookPosition = Position;
                     }
                 }
 
-                if (HookedPlayer == -1 && Math.Distance(HookPosition, Position) > 46.0f)
+                if (HookedPlayer == -1 && MathHelper.Distance(HookPosition, Position) > 46.0f)
                 {
                     var hookVel = (HookPosition - Position).Normalized * World.Tuning["HookDragAccel"];
                     if (hookVel.y > 0)
@@ -247,7 +247,7 @@ namespace TeeSharp.Common.Game
                 if (HookedPlayer != -1 && (HookTick > 60 || World.CharacterCores[HookedPlayer] == null))
                 {
                     HookedPlayer = -1;
-                    HookState = HookState.RETRACTED;
+                    HookState = HookState.Retracted;
                     HookPosition = Position;
                 }
             }
@@ -261,7 +261,7 @@ namespace TeeSharp.Common.Game
                     if (characterCore == null || characterCore == this)
                         continue;
 
-                    var distance = Math.Distance(Position, characterCore.Position);
+                    var distance = MathHelper.Distance(Position, characterCore.Position);
                     var direction = (Position - characterCore.Position).Normalized;
 
                     if (World.Tuning["PlayerCollision"] > 0 &&
@@ -272,7 +272,7 @@ namespace TeeSharp.Common.Game
                         var velocity = 0.5f;
 
                         if (vel.Length > 0.0001)
-                            velocity = 1 - (Math.Dot(vel.Normalized, direction) + 1) / 2;
+                            velocity = 1 - (MathHelper.Dot(vel.Normalized, direction) + 1) / 2;
 
                         vel += direction * a * (velocity * 0.75f);
                         vel *= 0.85f;
@@ -288,15 +288,15 @@ namespace TeeSharp.Common.Game
                             float dragSpeed = World.Tuning["HookDragSpeed"];
 
                             characterCore.Velocity = new Vector2(
-                                Math.SaturatedAdd(-dragSpeed, dragSpeed,
+                                MathHelper.SaturatedAdd(-dragSpeed, dragSpeed,
                                     characterCore.Velocity.x, hookAccelerate * direction.x * 1.5f),
-                                Math.SaturatedAdd(-dragSpeed, dragSpeed,
+                                MathHelper.SaturatedAdd(-dragSpeed, dragSpeed,
                                     characterCore.Velocity.y, hookAccelerate * direction.y * 1.5f)
                             );
 
-                            vel.x = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.x,
+                            vel.x = MathHelper.SaturatedAdd(-dragSpeed, dragSpeed, vel.x,
                                 -hookAccelerate * direction.x * 0.25f);
-                            vel.y = Math.SaturatedAdd(-dragSpeed, dragSpeed, vel.y,
+                            vel.y = MathHelper.SaturatedAdd(-dragSpeed, dragSpeed, vel.y,
                                 -hookAccelerate * direction.y * 0.25f);
                         }
                     }
@@ -327,7 +327,7 @@ namespace TeeSharp.Common.Game
         public virtual void Move()
         {
             var vel = Velocity;
-            var rampValue = Math.VelocityRamp(vel.Length * 50,
+            var rampValue = MathHelper.VelocityRamp(vel.Length * 50,
                 World.Tuning["VelrampStart"],
                 World.Tuning["VelrampRange"],
                 World.Tuning["VelrampCurvature"]);
@@ -341,14 +341,14 @@ namespace TeeSharp.Common.Game
 
             if (World.Tuning["PlayerCollision"] > 0)
             {
-                var distance = Math.Distance(Position, newPos);
+                var distance = MathHelper.Distance(Position, newPos);
                 var end = (int) (distance + 1);
                 var lastPos = Position;
 
                 for (var i = 0; i < end; i++)
                 {
                     var amount = i / distance;
-                    var pos = Math.Mix(Position, newPos, amount);
+                    var pos = MathHelper.Mix(Position, newPos, amount);
 
                     for (var c = 0; c < World.CharacterCores.Length; c++)
                     {
@@ -356,12 +356,12 @@ namespace TeeSharp.Common.Game
                         if (character == null || character == this)
                             continue;
 
-                        var d = Math.Distance(pos, character.Position);
+                        var d = MathHelper.Distance(pos, character.Position);
                         if (d < TEE_SIZE && d > 0)
                         {
                             if (amount > 0)
                                 Position = lastPos;
-                            else if (Math.Distance(newPos, character.Position) > d)
+                            else if (MathHelper.Distance(newPos, character.Position) > d)
                                 Position = newPos;
 
                             return;
@@ -384,20 +384,20 @@ namespace TeeSharp.Common.Game
 
         public virtual void Write(SnapObj_Character character)
         {
-            character.PosX = Math.RoundToInt(Position.x);
-            character.PosY = Math.RoundToInt(Position.y);
+            character.PosX = MathHelper.RoundToInt(Position.x);
+            character.PosY = MathHelper.RoundToInt(Position.y);
 
-            character.VelX = Math.RoundToInt(Velocity.x * 256.0f);
-            character.VelY = Math.RoundToInt(Velocity.y * 256.0f);
+            character.VelX = MathHelper.RoundToInt(Velocity.x * 256.0f);
+            character.VelY = MathHelper.RoundToInt(Velocity.y * 256.0f);
 
             character.HookState = HookState;
             character.HookTick = HookTick;
 
-            character.HookX = Math.RoundToInt(HookPosition.x);
-            character.HookY = Math.RoundToInt(HookPosition.y);
+            character.HookX = MathHelper.RoundToInt(HookPosition.x);
+            character.HookY = MathHelper.RoundToInt(HookPosition.y);
 
-            character.HookDx = Math.RoundToInt(HookDirection.x * 256.0f);
-            character.HookDy = Math.RoundToInt(HookDirection.y * 256.0f);
+            character.HookDx = MathHelper.RoundToInt(HookDirection.x * 256.0f);
+            character.HookDy = MathHelper.RoundToInt(HookDirection.y * 256.0f);
 
             character.HookedPlayer = HookedPlayer;
             character.Jumped = Jumped;

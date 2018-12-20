@@ -69,7 +69,7 @@ namespace TeeSharp.Server.Game
             }
             else
             {
-                if (Character == null && Team == Team.SPECTATORS && SpectatorId == -1)
+                if (Character == null && Team == Team.Spectators && SpectatorId == -1)
                 {
                     ViewPos -= new Vector2(
                         Math.Clamp(ViewPos.x - LatestActivity.TargetX, -500f, 500f),
@@ -94,19 +94,19 @@ namespace TeeSharp.Server.Game
 
         public override void PostTick()
         {
-            if (PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_SCOREBOARD))
+            if (PlayerFlags.HasFlag(PlayerFlags.Scoreboard))
             {
                 for (var i = 0; i < GameContext.Players.Length; i++)
                 {
                     if (GameContext.Players[i] != null &&
-                        GameContext.Players[i].Team != Team.SPECTATORS)
+                        GameContext.Players[i].Team != Team.Spectators)
                     {
                         ActLatency[i] = GameContext.Players[i].Latency.Min;
                     }
                 }
             }
 
-            if (SpectatorId >= 0 && Team == Team.SPECTATORS && GameContext.Players[SpectatorId] != null)
+            if (SpectatorId >= 0 && Team == Team.Spectators && GameContext.Players[SpectatorId] != null)
                 ViewPos = GameContext.Players[SpectatorId].ViewPos;
         }
 
@@ -127,7 +127,7 @@ namespace TeeSharp.Server.Game
                 $"team_join player='{ClientId}:{Name}' team={Team}");
             GameContext.GameController.OnPlayerInfoChange(this);
 
-            if (Team == Team.SPECTATORS)
+            if (Team == Team.Spectators)
             {
                 for (var i = 0; i < GameContext.Players.Length; i++)
                 {
@@ -142,7 +142,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void KillCharacter(Weapon weapon = Weapon.GAME)
+        public override void KillCharacter(Weapon weapon = Weapon.Game)
         {
             if (Character == null)
                 return;
@@ -153,7 +153,7 @@ namespace TeeSharp.Server.Game
 
         public override void Respawn()
         {
-            if (Team != Team.SPECTATORS)
+            if (Team != Team.Spectators)
                 Spawning = true;
         }
 
@@ -205,7 +205,7 @@ namespace TeeSharp.Server.Game
                 ? Latency.Min
                 : GameContext.Players[snappingClient].ActLatency[ClientId];
 
-            if (ClientId == snappingClient && Team == Team.SPECTATORS)
+            if (ClientId == snappingClient && Team == Team.Spectators)
             {
                 var spectatorInfo = Server.SnapObject<SnapObj_SpectatorInfo>(ClientId);
                 if (spectatorInfo == null)
@@ -241,8 +241,8 @@ namespace TeeSharp.Server.Game
         public override void OnPredictedInput(SnapObj_PlayerInput input)
         {
             // ignore input when player chat open
-            if (PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING) &&
-                input.PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+            if (PlayerFlags.HasFlag(PlayerFlags.Chatting) &&
+                input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
             {
                 return;
             }
@@ -252,9 +252,9 @@ namespace TeeSharp.Server.Game
 
         public override void OnDirectInput(SnapObj_PlayerInput input)
         {
-            if (input.PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+            if (input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
             {
-                if (PlayerFlags.HasFlag(PlayerFlags.PLAYERFLAG_CHATTING))
+                if (PlayerFlags.HasFlag(PlayerFlags.Chatting))
                     return;
 
                 Character?.ResetInput();
@@ -265,7 +265,7 @@ namespace TeeSharp.Server.Game
             PlayerFlags = input.PlayerFlags;
             Character?.OnDirectInput(input);
 
-            if (Character == null && Team != Team.SPECTATORS && (input.Fire & 1) != 0)
+            if (Character == null && Team != Team.Spectators && (input.Fire & 1) != 0)
                 Spawning = true;
 
             if (input.Direction != 0 ||

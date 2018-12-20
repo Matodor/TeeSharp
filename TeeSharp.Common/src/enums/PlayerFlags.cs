@@ -5,9 +5,13 @@ namespace TeeSharp.Common.Enums
     [Flags]
     public enum PlayerFlags
     {
-        PLAYING = 1 << 0,
-        PLAYERFLAG_IN_MENU = 1 << 1,
-        PLAYERFLAG_CHATTING = 1 << 2,
-        PLAYERFLAG_SCOREBOARD = 1 << 3,
+        None = 0,
+        Admin = 1 << 0,
+        Chatting = 1 << 1,
+        Scoreboard = 1 << 2,
+        Ready = 1 << 3,
+        Dead = 1 << 4,
+        Watching = 1 << 5,
+        Bot = 1 << 6,
     }
 }

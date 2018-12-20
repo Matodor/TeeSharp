@@ -56,7 +56,7 @@ namespace TeeSharp.Server.Game
 
         public override bool IsClientSpectator(int clientId)
         {
-            return Players[clientId] != null && Players[clientId].Team == Team.SPECTATORS;
+            return Players[clientId] != null && Players[clientId].Team == Team.Spectators;
         }
 
         public override bool IsClientReady(int clientId)
@@ -120,7 +120,7 @@ namespace TeeSharp.Server.Game
 
             for (var i = 0; i < amount; i++)
             {
-                var f = Common.Math.Mix(s, e, (float) (i + 1) / (amount + 2));
+                var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
                 var @event = Events.Create<SnapEvent_DamageInd>();
                 if (@event == null)
                     continue;
@@ -141,7 +141,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateSound(Vector2 pos, Sound sound, int mask = -1)
         {
-            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
+            if (sound < 0 || sound >= Sound.NumSounds)
                 return;
 
             var e = Events.Create<SnapEvent_SoundWorld>();
@@ -154,7 +154,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreaetSoundGlobal(Sound sound, int targetId = -1)
         {
-            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
+            if (sound < 0 || sound >= Sound.NumSounds)
                 return;
 
             var msg = new GameMsg_SvSoundGlobal
@@ -163,12 +163,12 @@ namespace TeeSharp.Server.Game
             };
 
             if (targetId == -2)
-                Server.SendPackMsg(msg, MsgFlags.NOSEND, -1);
+                Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
             else
             {
-                var flags = MsgFlags.VITAL;
+                var flags = MsgFlags.Vital;
                 if (targetId != -1)
-                    flags |= MsgFlags.NORECORD;
+                    flags |= MsgFlags.NoRecord;
                 Server.SendPackMsg(msg, flags, targetId);
             }
         }
@@ -203,7 +203,7 @@ namespace TeeSharp.Server.Game
             var msg = new MsgPacker((int) GameMessages.SV_TUNEPARAMS);
             foreach (var pair in Tuning)
                 msg.AddInt(pair.Value.Value);
-            Server.SendMsg(msg, MsgFlags.VITAL, clientId);
+            Server.SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
         public override void SendBroadcast(int clientId, string msg)
@@ -211,7 +211,7 @@ namespace TeeSharp.Server.Game
             Server.SendPackMsg(new GameMsg_SvBroadcast
             {
                 Message = msg
-            }, MsgFlags.VITAL, clientId);
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendWeaponPickup(int clientId, Weapon weapon)
@@ -219,7 +219,7 @@ namespace TeeSharp.Server.Game
             Server.SendPackMsg(new GameMsg_SvWeaponPickup
             {
                 Weapon = weapon
-            }, MsgFlags.VITAL, clientId);
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendChatTarget(int clientId, string msg)
@@ -229,7 +229,7 @@ namespace TeeSharp.Server.Game
                 IsTeam = false,
                 ClientId = -1,
                 Message = msg
-            }, MsgFlags.VITAL, clientId);
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendChat(int chatterClientId, bool isTeamChat, string msg)
@@ -251,12 +251,12 @@ namespace TeeSharp.Server.Game
                 };
 
                 // pack one for the recording only
-                Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NOSEND, -1);
+                Server.SendPackMsg(p, MsgFlags.Vital | MsgFlags.NoSend, -1);
 
                 for (var i = 0; i < Players.Length; i++)
                 {
                     if (Players[i] != null && Players[i].Team == Players[chatterClientId].Team)
-                        Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NORECORD, i);
+                        Server.SendPackMsg(p, MsgFlags.Vital | MsgFlags.NoRecord, i);
                 }
             }
             else
@@ -266,7 +266,7 @@ namespace TeeSharp.Server.Game
                     ClientId = chatterClientId,
                     Message = msg,
                     IsTeam = false
-                }, MsgFlags.VITAL, -1);
+                }, MsgFlags.Vital, -1);
             }
         }
 
@@ -343,7 +343,7 @@ namespace TeeSharp.Server.Game
         protected virtual void OnMsgSetSpectatorMode(BasePlayer player,
             GameMsg_ClSetSpectatorMode msg)
         {
-            if (player.Team != Team.SPECTATORS ||
+            if (player.Team != Team.Spectators ||
                 player.SpectatorId == msg.SpectatorId ||
                 player.ClientId == msg.SpectatorId ||
                 Config["SvSpamprotection"] && 
@@ -356,7 +356,7 @@ namespace TeeSharp.Server.Game
             if (msg.SpectatorId != -1 &&
                 (msg.SpectatorId < -1 || msg.SpectatorId >= Players.Length ||
                  Players[msg.SpectatorId] == null ||
-                 Players[msg.SpectatorId].Team == Team.SPECTATORS))
+                 Players[msg.SpectatorId].Team == Team.Spectators))
             {
                 SendChatTarget(player.ClientId, "Invalid spectator id");
                 return;
@@ -367,7 +367,7 @@ namespace TeeSharp.Server.Game
 
         protected virtual void OnMsgSetTeam(BasePlayer player, GameMsg_ClSetTeam msg)
         {
-            if (msg.Team < Team.SPECTATORS || msg.Team > Team.BLUE) 
+            if (msg.Team < Team.Spectators || msg.Team > Team.Blue) 
                 return;
 
             if (World.IsPaused || player.Team == msg.Team || 
@@ -377,7 +377,7 @@ namespace TeeSharp.Server.Game
                 return;
             }
 
-            if (msg.Team != Team.SPECTATORS && LockTeams)
+            if (msg.Team != Team.Spectators && LockTeams)
             {
                 player.LastSetTeam = Server.Tick;
                 SendBroadcast(player.ClientId, "Teams are locked");
@@ -403,7 +403,7 @@ namespace TeeSharp.Server.Game
                 player.SetTeam(msg.Team);
                 GameController.CheckTeamBalance();
 
-                if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
+                if (player.Team == Team.Spectators || msg.Team == Team.Spectators)
                 {
                     // vote update
                 }
@@ -464,7 +464,7 @@ namespace TeeSharp.Server.Game
 
             SendTuningParams(player.ClientId);
             Server.SendPackMsg(new GameMsg_SvReadyToEnter(),
-                MsgFlags.VITAL | MsgFlags.FLUSH, player.ClientId);
+                MsgFlags.Vital | MsgFlags.Flush, player.ClientId);
         }
 
         public override void OnBeforeSnapshots()
@@ -495,7 +495,7 @@ namespace TeeSharp.Server.Game
         public override void OnClientConnected(int clientId)
         {
             var startTeam = Config["SvTournamentMode"]
-                ? Team.SPECTATORS
+                ? Team.Spectators
                 : GameController.GetAutoTeam(clientId);
 
             Players[clientId] = Kernel.Get<BasePlayer>();
@@ -506,7 +506,7 @@ namespace TeeSharp.Server.Game
             // send active vote
 
             Server.SendPackMsg(new GameMsg_SvMotd {Message = Config["SvMotd"]},
-                MsgFlags.VITAL | MsgFlags.FLUSH, clientId);
+                MsgFlags.Vital | MsgFlags.Flush, clientId);
         }
 
         public override void OnClientEnter(int clientId)

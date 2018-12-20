@@ -34,10 +34,10 @@ namespace TeeSharp.Common.Protocol
         {
             return new[]
             {
-                Math.RoundToInt(Position.x),
-                Math.RoundToInt(Position.y),
-                Math.RoundToInt(From.x),
-                Math.RoundToInt(From.y),
+                MathHelper.RoundToInt(Position.x),
+                MathHelper.RoundToInt(Position.y),
+                MathHelper.RoundToInt(From.x),
+                MathHelper.RoundToInt(From.y),
                 StartTick   
             };
         }

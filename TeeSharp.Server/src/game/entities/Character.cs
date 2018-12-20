@@ -87,11 +87,11 @@ namespace TeeSharp.Server.Game.Entities
         public Character(BasePlayer player, Vector2 spawnPos) : base(1)
         {
             HitObjects = new List<Entity>();
-            Weapons = new WeaponStat[(int) Weapon.NUM_WEAPONS];
+            Weapons = new WeaponStat[(int) Weapon.NumWeapons];
             NinjaStat = new NinjaStat();
 
-            ActiveWeapon = Weapon.GUN;
-            LastWeapon = Weapon.HAMMER;
+            ActiveWeapon = Weapon.Gun;
+            LastWeapon = Weapon.Hammer;
             QueuedWeapon = (Weapon) (-1);
 
             Position = spawnPos;
@@ -138,10 +138,10 @@ namespace TeeSharp.Server.Game.Entities
             LastWeapon = ActiveWeapon;
             QueuedWeapon = (Weapon) (-1);
             ActiveWeapon = weapon;
-            GameContext.CreateSound(Position, Sound.WEAPON_SWITCH);
+            GameContext.CreateSound(Position, Sound.WeaponSwitch);
 
-            if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NUM_WEAPONS)
-                ActiveWeapon = Weapon.HAMMER;
+            if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NumWeapons)
+                ActiveWeapon = Weapon.Hammer;
         }
 
         public bool IsGrounded()
@@ -184,9 +184,9 @@ namespace TeeSharp.Server.Game.Entities
                 Victim = Player.ClientId,
                 Weapon = weapon,
                 ModeSpecial = modeSpecial
-            }, MsgFlags.VITAL, -1);
+            }, MsgFlags.Vital, -1);
 
-            GameContext.CreateSound(Position, Sound.PLAYER_DIE);
+            GameContext.CreateSound(Position, Sound.PlayerDie);
             Player.DieTick = Server.Tick;
             IsAlive = false;
             GameContext.CreateDeath(Position, Player.ClientId);
@@ -213,7 +213,7 @@ namespace TeeSharp.Server.Game.Entities
             if (LatestInput.TargetX == 0 && LatestInput.TargetY == 0)
                 LatestInput.TargetY = -1;
 
-            if (NumInputs > 2 && Player.Team != Team.SPECTATORS)
+            if (NumInputs > 2 && Player.Team != Team.Spectators)
             {
                 HandleWeaponSwitch();
                 FireWeapon();
@@ -224,7 +224,7 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponSwitch()
         {
-            if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.NINJA].Got)
+            if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
                 return;
 
             SetWeapon(QueuedWeapon);
@@ -243,7 +243,7 @@ namespace TeeSharp.Server.Game.Entities
             {
                 while (next != 0)
                 {
-                    wantedWeapon = (Weapon) ((int) (wantedWeapon + 1) % (int) Weapon.NUM_WEAPONS);
+                    wantedWeapon = (Weapon) ((int) (wantedWeapon + 1) % (int) Weapon.NumWeapons);
                     if (Weapons[(int) wantedWeapon].Got)
                         next--;
                 }
@@ -254,7 +254,7 @@ namespace TeeSharp.Server.Game.Entities
                 while (prev != 0)
                 {
                     wantedWeapon = wantedWeapon - 1 < 0
-                        ? Weapon.NUM_WEAPONS - 1
+                        ? Weapon.NumWeapons - 1
                         : wantedWeapon - 1;
                     if (Weapons[(int) wantedWeapon].Got)
                         prev--;
@@ -265,7 +265,7 @@ namespace TeeSharp.Server.Game.Entities
                 wantedWeapon = (Weapon) (Input.WantedWeapon - 1);
 
             if (wantedWeapon >= 0 &&
-                wantedWeapon < Weapon.NUM_WEAPONS &&
+                wantedWeapon < Weapon.NumWeapons &&
                 wantedWeapon != ActiveWeapon &&
                 Weapons[(int) wantedWeapon].Got)
             {
@@ -277,9 +277,9 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual bool CanFire()
         {
-            var fullAuto = ActiveWeapon == Weapon.GRENADE ||
-                           ActiveWeapon == Weapon.SHOTGUN ||
-                           ActiveWeapon == Weapon.RIFLE;
+            var fullAuto = ActiveWeapon == Weapon.Grenade ||
+                           ActiveWeapon == Weapon.Shotgun ||
+                           ActiveWeapon == Weapon.Laser;
 
             var willFire = InputCount.Count(LatestPrevInput.Fire, LatestInput.Fire).Presses != 0 ||
                            fullAuto && (LatestInput.Fire & 1) != 0 && Weapons[(int)ActiveWeapon].Ammo != 0;
@@ -292,7 +292,7 @@ namespace TeeSharp.Server.Game.Entities
                 ReloadTimer = 125 * Server.TickSpeed / 1000;
                 if (LastNoAmmoSound + Server.TickSpeed <= Server.Tick)
                 {
-                    GameContext.CreateSound(Position, Sound.WEAPON_NOAMMO);
+                    GameContext.CreateSound(Position, Sound.WeaponNoAmmo);
                     LastNoAmmoSound = Server.Tick;
                 }
                 return false;
@@ -304,7 +304,7 @@ namespace TeeSharp.Server.Game.Entities
         protected virtual void DoWeaponFireRifle(Vector2 direction)
         {
             var laser = new Laser(Position, direction, Tuning["LaserReach"], Player.ClientId);
-            GameContext.CreateSound(Position, Sound.RIFLE_FIRE);
+            GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
         protected virtual void DoWeaponFireNinja(Vector2 projStartPos, Vector2 direction)
@@ -314,14 +314,14 @@ namespace TeeSharp.Server.Game.Entities
             NinjaStat.CurrentMoveTime = ServerData.Data.Weapons.Ninja.MoveTime * Server.TickSpeed / 1000;
             NinjaStat.OldVelAmount = Core.Velocity.Length;
 
-            GameContext.CreateSound(Position, Sound.NINJA_FIRE);
+            GameContext.CreateSound(Position, Sound.NinjaFire);
         }
 
         protected virtual void DoWeaponFireGrenade(Vector2 projStartPos, Vector2 direction)
         {
-            var projectile = new Projectile(Weapon.GRENADE, Player.ClientId,
+            var projectile = new Projectile(Weapon.Grenade, Player.ClientId,
                 projStartPos, direction, (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
-                1, true, 0f, Sound.GRENADE_EXPLODE);
+                1, true, 0f, Sound.GrenadeExplode);
 
             var msg = new MsgPacker((int)GameMessages.SV_EXTRAPROJECTILE);
             msg.AddInt(1);
@@ -330,8 +330,8 @@ namespace TeeSharp.Server.Game.Entities
             projectile.FillInfo(snapObj);
             snapObj.FillMsgPacker(msg);
 
-            Server.SendMsg(msg, MsgFlags.NONE, Player.ClientId);
-            GameContext.CreateSound(Position, Sound.GRENADE_FIRE);
+            Server.SendMsg(msg, MsgFlags.None, Player.ClientId);
+            GameContext.CreateSound(Position, Sound.GrenadeFire);
         }
 
         protected virtual void DoWeaponFireShotgun(Vector2 projStartPos, Vector2 direction)
@@ -344,12 +344,12 @@ namespace TeeSharp.Server.Game.Entities
 
             for (var i = -SHOT_SPREAD; i <= SHOT_SPREAD; i++)
             {
-                var angle = Math.GetAngle(direction);
+                var angle = MathHelper.GetAngle(direction);
                 angle += spreading[i + 2];
                 var v = 1 - System.Math.Abs(i) / (float)SHOT_SPREAD;
-                var speed = Math.Mix(Tuning["ShotgunSpeeddiff"], 1f, v);
+                var speed = MathHelper.Mix(Tuning["ShotgunSpeeddiff"], 1f, v);
 
-                var projectile = new Projectile(Weapon.SHOTGUN, Player.ClientId,
+                var projectile = new Projectile(Weapon.Shotgun, Player.ClientId,
                     projStartPos,
                     new Vector2((float)System.Math.Cos(angle), (float)System.Math.Sin(angle)) * speed,
                     (int)(Server.TickSpeed * Tuning["ShotgunLifetime"]), 1, false,
@@ -360,13 +360,13 @@ namespace TeeSharp.Server.Game.Entities
                 snapObj.FillMsgPacker(msg);
             }
 
-            Server.SendMsg(msg, MsgFlags.NONE, Player.ClientId);
-            GameContext.CreateSound(Position, Sound.SHOTGUN_FIRE);
+            Server.SendMsg(msg, MsgFlags.None, Player.ClientId);
+            GameContext.CreateSound(Position, Sound.ShotgunFire);
         }
 
         protected virtual void DoWeaponFireGun(Vector2 projStartPos, Vector2 direction)
         {
-            var projectile = new Projectile(Weapon.GUN, Player.ClientId,
+            var projectile = new Projectile(Weapon.Gun, Player.ClientId,
                 projStartPos, direction, (int)(Server.TickSpeed * Tuning["GunLifetime"]),
                 1, false, 0f, (Sound)(-1));
 
@@ -377,13 +377,13 @@ namespace TeeSharp.Server.Game.Entities
             projectile.FillInfo(snapObj);
             snapObj.FillMsgPacker(msg);
 
-            Server.SendMsg(msg, MsgFlags.NONE, Player.ClientId);
-            GameContext.CreateSound(Position, Sound.GUN_FIRE);
+            Server.SendMsg(msg, MsgFlags.None, Player.ClientId);
+            GameContext.CreateSound(Position, Sound.GunFire);
         }
 
         protected virtual void DoWeaponFireHammer(Vector2 projStartPos, Vector2 direction)
         {
-            GameContext.CreateSound(Position, Sound.HAMMER_FIRE);
+            GameContext.CreateSound(Position, Sound.HammerFire);
             var targets = GameWorld.FindEntities<Character>(projStartPos, ProximityRadius * 0.5f);
             var hits = 0;
 
@@ -409,7 +409,7 @@ namespace TeeSharp.Server.Game.Entities
                     : new Vector2(0, -1f);
 
                 target.TakeDamage(new Vector2(0f, -1f) + (dir + new Vector2(0f, -1f)).Normalized * 10f,
-                    ServerData.Data.Weapons.Hammer.Damage, Player.ClientId, Weapon.HAMMER);
+                    ServerData.Data.Weapons.Hammer.Damage, Player.ClientId, Weapon.Hammer);
                 hits++;
             }
 
@@ -421,27 +421,27 @@ namespace TeeSharp.Server.Game.Entities
         {
             switch (weapon)
             {
-                case Weapon.HAMMER:
+                case Weapon.Hammer:
                     DoWeaponFireHammer(projStartPos, direction);
                     break;
 
-                case Weapon.GUN:
+                case Weapon.Gun:
                     DoWeaponFireGun(projStartPos, direction);
                     break;
 
-                case Weapon.SHOTGUN:
+                case Weapon.Shotgun:
                     DoWeaponFireShotgun(projStartPos, direction);
                     break;
 
-                case Weapon.GRENADE:
+                case Weapon.Grenade:
                     DoWeaponFireGrenade(projStartPos, direction);
                     break;
 
-                case Weapon.NINJA:
+                case Weapon.Ninja:
                     DoWeaponFireNinja(projStartPos, direction);
                     break;
 
-                case Weapon.RIFLE:
+                case Weapon.Laser:
                     DoWeaponFireRifle(direction);
                     break;
             }
@@ -530,13 +530,13 @@ namespace TeeSharp.Server.Game.Entities
                     if (GameContext.Players[i] == null)
                         continue;
 
-                    if (GameContext.Players[i].Team == Team.SPECTATORS &&
+                    if (GameContext.Players[i].Team == Team.Spectators &&
                         GameContext.Players[i].SpectatorId == from)
                     {
                         mask |= GameContext.MaskOne(i);
                     }
                 }
-                GameContext.CreateSound(GameContext.Players[from].ViewPos, Sound.HIT, mask);
+                GameContext.CreateSound(GameContext.Players[from].ViewPos, Sound.Hit, mask);
             }
 
             if (Health <= 0)
@@ -546,29 +546,29 @@ namespace TeeSharp.Server.Game.Entities
                 if (from >= 0 && from != Player.ClientId && GameContext.Players[from] != null)
                 {
                     var chr = GameContext.Players[from].GetCharacter();
-                    chr?.SetEmote(Emote.HAPPY, Server.Tick + Server.TickSpeed);
+                    chr?.SetEmote(Emote.Happy, Server.Tick + Server.TickSpeed);
                 }
 
                 return false;
             }
 
             GameContext.CreateSound(Position, damage > 2 
-                ? Sound.PLAYER_PAIN_LONG 
-                : Sound.PLAYER_PAIN_SHORT);
+                ? Sound.PlayerPainLong 
+                : Sound.PlayerPainShort);
 
-            SetEmote(Emote.PAIN, Server.Tick + 500 * Server.TickSpeed / 1000);
+            SetEmote(Emote.Pain, Server.Tick + 500 * Server.TickSpeed / 1000);
             return true;
         }
 
         protected virtual void HandleNinja()
         {
-            if (ActiveWeapon != Weapon.NINJA)
+            if (ActiveWeapon != Weapon.Ninja)
                 return;
 
             if (Server.Tick - NinjaStat.ActivationTick > 
                 ServerData.Data.Weapons.Ninja.Duration * Server.Tick / 1000)
             {
-                Weapons[(int) Weapon.NINJA].Got = false;
+                Weapons[(int) Weapon.Ninja].Got = false;
                 ActiveWeapon = LastWeapon;
 
                 SetWeapon(ActiveWeapon);
@@ -612,15 +612,15 @@ namespace TeeSharp.Server.Game.Entities
                 if (alreadyHit)
                     continue;
                 
-                if (Math.Distance(character.Position, Position) > ProximityRadius * 2f)
+                if (MathHelper.Distance(character.Position, Position) > ProximityRadius * 2f)
                     continue;
 
-                GameContext.CreateSound(character.Position, Sound.NINJA_HIT);
+                GameContext.CreateSound(character.Position, Sound.NinjaHit);
                 if (HitObjects.Count < 10)
                     HitObjects.Add(character);
 
                 character.TakeDamage(new Vector2(0, -10.0f), ServerData.Data.Weapons.Ninja.Damage, 
-                    Player.ClientId, Weapon.NINJA);
+                    Player.ClientId, Weapon.Ninja);
             }
         }
 
@@ -665,14 +665,14 @@ namespace TeeSharp.Server.Game.Entities
         public virtual void GiveNinja()
         {
             NinjaStat.ActivationTick = Server.Tick;
-            Weapons[(int) Weapon.NINJA].Got = true;
-            Weapons[(int) Weapon.NINJA].Ammo = -1;
+            Weapons[(int) Weapon.Ninja].Got = true;
+            Weapons[(int) Weapon.Ninja].Ammo = -1;
 
-            if (ActiveWeapon != Weapon.NINJA)
+            if (ActiveWeapon != Weapon.Ninja)
                 LastWeapon = ActiveWeapon;
 
-            ActiveWeapon = Weapon.NINJA;
-            GameContext.CreateSound(Position, Sound.PICKUP_NINJA);
+            ActiveWeapon = Weapon.Ninja;
+            GameContext.CreateSound(Position, Sound.PickupNinja);
         }
 
         public virtual bool GiveWeapon(Weapon weapon, int ammo)
@@ -717,7 +717,7 @@ namespace TeeSharp.Server.Game.Entities
                 GameContext.Collision.GetTileFlags(Position.x - rDiv3, Position.y + rDiv3).HasFlag(TileFlags.DEATH) ||
                 GameLayerClipped(Position))
             {
-                Die(Player.ClientId, Weapon.WORLD);
+                Die(Player.ClientId, Weapon.World);
             }
 
             HandleWeapons();
@@ -736,19 +736,19 @@ namespace TeeSharp.Server.Game.Entities
             var events = Core.TriggeredEvents;
             var mask = GameContext.MaskAllExceptOne(Player.ClientId);
 
-            if (events.HasFlag(CoreEvents.GROUND_JUMP))
-                GameContext.CreateSound(Position, Sound.PLAYER_JUMP, mask);
+            if (events.HasFlag(CoreEventFlags.GroundJump))
+                GameContext.CreateSound(Position, Sound.PlayerJump, mask);
 
-            if (events.HasFlag(CoreEvents.HOOK_ATTACH_PLAYER))
-                GameContext.CreateSound(Position, Sound.HOOK_ATTACH_PLAYER, GameContext.MaskAll());
+            if (events.HasFlag(CoreEventFlags.HookAttachPlayer))
+                GameContext.CreateSound(Position, Sound.HookAttachPlayer, GameContext.MaskAll());
 
-            if (events.HasFlag(CoreEvents.HOOK_ATTACH_GROUND))
-                GameContext.CreateSound(Position, Sound.HOOK_ATTACH_GROUND, mask);
+            if (events.HasFlag(CoreEventFlags.HookAttachGround))
+                GameContext.CreateSound(Position, Sound.HookAttachGround, mask);
 
-            if (events.HasFlag(CoreEvents.HOOK_HIT_NOHOOK))
-                GameContext.CreateSound(Position, Sound.HOOK_NOATTACH, mask);
+            if (events.HasFlag(CoreEventFlags.HookHitNoHook))
+                GameContext.CreateSound(Position, Sound.HookNoAttach, mask);
 
-            if (Player.Team == Team.SPECTATORS)
+            if (Player.Team == Team.Spectators)
                 Position = new Vector2(Input.TargetX, Input.TargetY);
 
             {
@@ -827,7 +827,7 @@ namespace TeeSharp.Server.Game.Entities
             if (EmoteStopTick < Server.Tick)
             {
                 EmoteStopTick = -1;
-                Emote = Emote.NORMAL;
+                Emote = Emote.Normal;
             }
 
             character.Emote = Emote;
@@ -849,10 +849,10 @@ namespace TeeSharp.Server.Game.Entities
                     character.AmmoCount = Weapons[(int) ActiveWeapon].Ammo;
             }
 
-            if (character.Emote == Emote.NORMAL)
+            if (character.Emote == Emote.Normal)
             {
                 if (250 - ((Server.Tick - LastAction) % 250) < 5)
-                    character.Emote = Emote.BLINK;
+                    character.Emote = Emote.Blink;
             }
 
 

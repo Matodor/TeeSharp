@@ -57,14 +57,14 @@ namespace TeeSharp.Common
 
         public override TileFlags IntersectLine(Vector2 pos0, Vector2 pos1, out Vector2 outCollision, out Vector2 outBeforeCollision)
         {
-            var distance = Math.Distance(pos0, pos1);
+            var distance = MathHelper.Distance(pos0, pos1);
             var end = (int) (distance + 1);
             var last = pos0;
 
             for (var i = 0; i < end; i++)
             {
                 var amount = i / distance;
-                var pos = Math.Mix(pos0, pos1, amount);
+                var pos = MathHelper.Mix(pos0, pos1, amount);
 
                 if (IsTileSolid(pos.x, pos.y))
                 {

@@ -27,7 +27,7 @@ namespace TeeSharp.Common
         public abstract TileFlags GetTileFlags(int x, int y);
         public virtual TileFlags GetTileFlags(float x, float y)
         {
-            return GetTileFlags(Math.RoundToInt(x), Math.RoundToInt(y));
+            return GetTileFlags(MathHelper.RoundToInt(x), MathHelper.RoundToInt(y));
         }
 
         public abstract TileFlags IntersectLine(Vector2 pos0, Vector2 pos1, out Vector2 outCollision,
@@ -43,8 +43,8 @@ namespace TeeSharp.Common
         public virtual bool IsTileSolid(float x, float y)
         {
             return GetTileFlags(
-                Math.RoundToInt(x), 
-                Math.RoundToInt(y)
+                MathHelper.RoundToInt(x), 
+                MathHelper.RoundToInt(y)
             ).HasFlag(TileFlags.SOLID);
         }
 

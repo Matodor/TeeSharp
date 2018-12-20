@@ -28,8 +28,8 @@ namespace TeeSharp.Common.Protocol
             return new[]
             {
                 SpectatorId,
-                Math.RoundToInt(ViewPos.x),
-                Math.RoundToInt(ViewPos.y),
+                MathHelper.RoundToInt(ViewPos.x),
+                MathHelper.RoundToInt(ViewPos.y),
             };
         }
     }

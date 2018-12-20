@@ -2,8 +2,8 @@
 {
     public enum FlagStates
     {
-        MISSING = -3,
-        ATSTAND,
-        TAKEN,
+        Missing = -3,
+        AtStand,
+        Taken,
     }
 }

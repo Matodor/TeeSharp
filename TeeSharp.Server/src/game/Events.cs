@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Math = TeeSharp.Common.Math;
+using TeeSharp.Common;
 
 namespace TeeSharp.Server.Game
 {
@@ -43,7 +43,7 @@ namespace TeeSharp.Server.Game
                     GameContext.MaskIsSet(EventInfos[i].Mask, snappingClient))
                 {
                     if (snappingClient == -1 || 
-                        Math.Distance(GameContext.Players[snappingClient].ViewPos,
+                        MathHelper.Distance(GameContext.Players[snappingClient].ViewPos,
                             EventInfos[i].EventItem.Position) < 1500f)
                     {
                         Server.AddSnapItem(EventInfos[i].EventItem, i);
