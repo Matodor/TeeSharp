@@ -15,16 +15,16 @@ namespace TeeSharp.Common
             MD5.Initialize();
         }
 
-        public static uint RandomUInt32()
-        {
-            var bytes = new byte[4];
-            RandomFill(bytes);
-            return BitConverter.ToUInt32(bytes, 0);
-        }
+        //public static uint RandomUInt32()
+        //{
+        //    var bytes = new byte[4];
+        //    RandomFill(bytes);
+        //    return BitConverter.ToUInt32(bytes, 0);
+        //}
 
-        public static void RandomFill(byte[] bytes)
-        {
-            RNG.GetBytes(bytes);
-        }
+        //public static void RandomFill(byte[] bytes)
+        //{
+        //    RNG.GetBytes(bytes);
+        //}
     }
 }

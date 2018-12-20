@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using TeeSharp.Common;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
@@ -10,11 +11,13 @@ namespace TeeSharp.Network
 {
     public static class NetworkHelper
     {
+        public const int MaxClients = 64;
         public const int PacketVersion = 1;
         public const int PacketHeaderSize = 7;
         public const int PacketHeaderSizeConnless = PacketHeaderSize + 2;
         public const int MaxPacketHeaderSize = PacketHeaderSizeConnless;
         public const int MaxPacketSize = 1400;
+        public const int MaxChunkHeaderSize = 3;
         public const int MaxPayload = MaxPacketSize - MaxPacketHeaderSize;
         public const int SeedTime = 16;
         public const int AddrMaxStringSize = 1 + (8 * 4 + 7) + 1 + 1 + 5 + 1; // [XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX]:XXXXX
@@ -56,7 +59,21 @@ namespace TeeSharp.Network
             SendConnectionMsg(client, endPoint, token, 0, msg, buffer, extended ? buffer.Length : 4);
         }
 
-        private static void SendConnectionMsg(UdpClient client, IPEndPoint endPoint,
+        public static void SendConnectionMsg(UdpClient client, IPEndPoint endPoint,
+            uint token, int ack, ConnectionMessages msg, string extra)
+        {
+            if (string.IsNullOrWhiteSpace(extra))
+            {
+                SendConnectionMsg(client, endPoint, token, ack, msg, null, 0);
+            }
+            else
+            {
+                var data = Encoding.UTF8.GetBytes(extra);
+                SendConnectionMsg(client, endPoint, token, ack, msg, data, data.Length);
+            }
+        }
+
+        public static void SendConnectionMsg(UdpClient client, IPEndPoint endPoint,
             uint token, int ack, ConnectionMessages msg, byte[] extraData, int extraSize)
         {
             var packet = new NetworkChunkConstruct(1 + extraSize)
@@ -67,10 +84,10 @@ namespace TeeSharp.Network
                 NumChunks = 0,
                 DataSize = 1 + extraSize
             };
-            packet.Buffer[0] = (byte) msg;
+            packet.Data[0] = (byte) msg;
 
             if (extraSize > 0)
-                Buffer.BlockCopy(extraData, 0, packet.Buffer, 1, extraSize);
+                Buffer.BlockCopy(extraData, 0, packet.Data, 1, extraSize);
 
             SendPacket(client, endPoint, packet);
         }
@@ -97,6 +114,12 @@ namespace TeeSharp.Network
             client.Send(buffer, buffer.Length, endPoint);
         }
 
+        public static bool UnpackPacket(byte[] data, int dataLength, 
+            NetworkChunkConstruct chunkConstruct)
+        {
+            throw new NotImplementedException();
+        }
+
         private static void SendPacket(UdpClient client, IPEndPoint endPoint, 
             NetworkChunkConstruct packet)
         {
@@ -110,7 +133,7 @@ namespace TeeSharp.Network
 
             if (!packet.Flags.HasFlag(PacketFlags.Control))
             {
-                compressedSize = Huffman.Compress(packet.Buffer, 0, packet.DataSize,
+                compressedSize = Huffman.Compress(packet.Data, 0, packet.DataSize,
                     buffer, PacketHeaderSize, MaxPayload);
             }
 
@@ -123,7 +146,7 @@ namespace TeeSharp.Network
             else
             {
                 finalSize = packet.DataSize;
-                Buffer.BlockCopy(packet.Buffer, 0, buffer, PacketHeaderSize, packet.DataSize);
+                Buffer.BlockCopy(packet.Data, 0, buffer, PacketHeaderSize, packet.DataSize);
                 packet.Flags &= ~PacketFlags.Compression;
             }
 
@@ -137,6 +160,27 @@ namespace TeeSharp.Network
             buffer[6] = (byte) ((packet.Token) & 0xff);
 
             client.Send(buffer, finalSize, endPoint);
+        }
+
+        public static bool UdpClient(IPEndPoint endPoint, out UdpClient client)
+        {
+            try
+            {
+                client = new UdpClient(endPoint)
+                {
+                    Client =
+                    {
+                        Blocking = false,
+                    }
+                };
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.Exception("network", e.ToString());
+                client = null;
+                return false;
+            }
         }
 
         private static readonly int[] _freqTable = 

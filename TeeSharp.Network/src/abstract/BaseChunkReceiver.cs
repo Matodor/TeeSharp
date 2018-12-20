@@ -16,6 +16,6 @@ namespace TeeSharp.Network
         public abstract void Clear();
         public abstract void Start(IPEndPoint remote, BaseNetworkConnection connection,
             int clientId);
-        public abstract bool FetchChunk(out NetworkChunk packet);
+        public abstract bool FetchChunk(ref NetworkChunk packet);
     }
 }

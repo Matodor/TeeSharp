@@ -12,11 +12,11 @@ namespace TeeSharp.Network
         public int Ack { get; set; }
         public int NumChunks { get; set; }
         public int DataSize { get; set; }
-        public byte[] Buffer { get; }
+        public byte[] Data { get; }
 
         public NetworkChunkConstruct(int bufferSize)
         {
-            Buffer = new byte[bufferSize];
+            Data = new byte[bufferSize];
         }
     }
 }

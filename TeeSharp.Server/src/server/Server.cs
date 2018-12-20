@@ -507,18 +507,18 @@ namespace TeeSharp.Server
 
             var networkConfig = new NetworkServerConfig
             {
-                LocalEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
+                BindEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
                 MaxClientsPerIp = Config["SvMaxClientsPerIP"],
                 MaxClients = Config["SvMaxClients"]
             };
 
             if (!NetworkServer.Open(networkConfig))
             {
-                Debug.Error("server", $"couldn't open socket. port {networkConfig.LocalEndPoint.Port} might already be in use");
+                Debug.Error("server", $"couldn't open socket. port {networkConfig.BindEndPoint.Port} might already be in use");
                 return false;
             }
 
-            Debug.Log("server", $"network server running at: {networkConfig.LocalEndPoint}");
+            Debug.Log("server", $"network server running at: {networkConfig.BindEndPoint}");
             return true;
         }
 
@@ -790,7 +790,10 @@ namespace TeeSharp.Server
         {
             NetworkServer.Update();
 
-            while (NetworkServer.Receive(out var packet))
+            NetworkChunk packet = null;
+            uint token = 0;
+
+            while (NetworkServer.Receive(ref packet, ref token))
             {
                 if (packet.ClientId == -1)
                 {

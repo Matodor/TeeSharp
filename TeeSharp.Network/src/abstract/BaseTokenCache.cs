@@ -45,7 +45,7 @@ namespace TeeSharp.Network
 
         public abstract void Init(UdpClient client, BaseTokenManager tokenManager);
         public abstract void SendPacketConnless(IPEndPoint endPoint,
-            byte[] data, int dataSize, SendCallbackData callbackData);
+            byte[] data, int dataSize, SendCallbackData callbackData = null);
         public abstract void PurgeStoredPacket(int trackId);
         public abstract void FetchToken(IPEndPoint endPoint);
         public abstract void AddToken(IPEndPoint endPoint, 

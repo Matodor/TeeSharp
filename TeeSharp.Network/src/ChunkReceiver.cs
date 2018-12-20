@@ -33,7 +33,7 @@ namespace TeeSharp.Network
             Valid = false;
         }
 
-        public override bool FetchChunk(out NetworkChunk packet)
+        public override bool FetchChunk(ref NetworkChunk packet)
         {
             var header = new NetworkChunkHeader();
             var end = ChunkConstruct.DataSize;

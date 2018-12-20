@@ -58,28 +58,7 @@ namespace TeeSharp.Network
 
             throw new Exception($"No network adapters with an {addressFamily} address family in the system!");
         }
-
-        public static bool CreateUdpClient(IPEndPoint endPoint, out UdpClient client)
-        {
-            try
-            {
-                client = new UdpClient(endPoint)
-                {
-                    Client =
-                    {
-                        Blocking = false,
-                    }
-                };
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.Exception("exception", e.ToString());
-                client = null;
-                return false;
-            }
-        }
-
+        
         public static void SendControlMsg(UdpClient udpClient,
             IPEndPoint remote, int ack, bool useToken, uint token,
             ConnectionMessages msg, byte[] extra)

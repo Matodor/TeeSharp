@@ -49,7 +49,7 @@ namespace TeeSharp.Network
 
             var verified = packet.Token != TokenHelper.TokenNone;
             var tokenMessage = packet.Flags.HasFlag(PacketFlags.Control) &&
-                               packet.Buffer[0] == (int) ConnectionMessages.Token;
+                               packet.Data[0] == (int) ConnectionMessages.Token;
 
             if (packet.Flags.HasFlag(PacketFlags.Connless) || !tokenMessage)
                 return verified && !broadcastResponse;

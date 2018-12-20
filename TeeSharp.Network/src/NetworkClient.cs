@@ -54,7 +54,7 @@ namespace TeeSharp.Network
         {
             while (true)
             {
-                if (ChunkReceiver.FetchChunk(out packet))
+                if (ChunkReceiver.FetchChunk(ref packet))
                     return true;
 
                 if (UdpClient.Available <= 0)

@@ -14,30 +14,6 @@ namespace TeeSharp.Network
 {
     public class NetworkConnection : BaseNetworkConnection
     {
-        public override BaseConfig Config { get; protected set; }
-
-        public override ConnectionState State { get; protected set; }
-        public override long ConnectedAt { get; protected set; }
-        public override IPEndPoint EndPoint { get; protected set; }
-        public override string Error { get; protected set; }
-
-        public override int Sequence { get; set; }
-        public override bool UnknownAck { get; set; }
-        public override int Ack { get; set; }
-        public override int PeerAck { get; set; }
-        public override bool UseToken { get; set; }
-        public override uint Token { get; set; }
-        public override long LastReceiveTime { get; protected set; }
-        public override long LastSendTime { get; protected set; }
-
-        protected override UdpClient UdpClient { get; set; }
-        protected override int BufferSize { get; set; }
-        protected override bool RemoteClosed { get; set; }
-        protected override Queue<NetworkChunkResend> ResendQueue { get; set; }
-        protected override NetworkChunkConstruct ResendQueueConstruct { get; set; }
-
-        private const int SIZEOF_NETWORK_CHUNK_RESEND = 32;
-
         public NetworkConnection()
         {
             Error = string.Empty;
