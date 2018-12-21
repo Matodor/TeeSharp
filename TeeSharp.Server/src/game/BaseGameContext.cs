@@ -20,8 +20,8 @@ namespace TeeSharp.Server.Game
         public virtual BaseGameWorld World { get; protected set; }
         public virtual BaseGameConsole Console { get; set; }
 
-        public virtual BaseLayers Layers { get; set; }
-        public virtual BaseCollision Collision { get; set; }
+        public virtual BaseMapLayers MapLayers { get; set; }
+        public virtual BaseMapCollision MapCollision { get; set; }
 
         protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseConfig Config { get; set; }
@@ -52,8 +52,8 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientConnected(int clientId);
         public abstract void OnClientEnter(int clientId);
         public abstract void OnClientDrop(int clientId, string reason);
-        public abstract void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input);
-        public abstract void OnClientDirectInput(int clientId, SnapObj_PlayerInput input);
+        public abstract void OnClientPredictedInput(int clientId, SnapshotPlayerInput input);
+        public abstract void OnClientDirectInput(int clientId, SnapshotPlayerInput input);
 
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);
         public abstract void CreatePlayerSpawn(Vector2 pos);
@@ -63,22 +63,22 @@ namespace TeeSharp.Server.Game
         public abstract void CreateSound(Vector2 pos, Sound sound, int mask = -1);
         public abstract void CreaetSoundGlobal(Sound sound, int targetId = -1);
 
-        public virtual int MaskAll()
+        public static int MaskAll()
         {
             return -1;
         }
 
-        public virtual int MaskOne(int clientID)
+        public static int MaskOne(int clientID)
         {
             return 1 << clientID;
         }
 
-        public virtual int MaskAllExceptOne(int clientId)
+        public static int MaskAllExceptOne(int clientId)
         {
             return 0b1111111_11111111_11111111_11111111 ^ MaskOne(clientId);
         }
 
-        public virtual bool MaskIsSet(int mask, int clientID)
+        public static bool MaskIsSet(int mask, int clientID)
         {
             return (mask & MaskOne(clientID)) != 0;
         }

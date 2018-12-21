@@ -5,30 +5,41 @@ namespace TeeSharp.Common.Snapshots
 {
     public class Snapshot
     {
-        public const int MAX_SNAPSHOT_PACKSIZE = 900;
+        public const int MaxParts = 64;
+        public const int MaxSize = MaxParts * 1024;
+        public const int MaxPacketSize = 900;
+
         public SnapshotItem this[int index] => _items[index];
 
+        public readonly int Size;
         public int ItemsCount => _items.Length;
-        public int Size { get; private set; }
 
         private SnapshotItem[] _items;
 
         public Snapshot(SnapshotItem[] items, int size)
         {
-            _items = items;
             Size = size;
+            _items = items;
         }
 
-        public void Clear()
+        public static SnapshotItems Type(int key)
         {
-            _items = new SnapshotItem[0];
-            Size = 0;
+            return (SnapshotItems) (key >> 16);
+        }
+
+        public static int Id(int key)
+        {
+            return key & 0xffff;
+        }
+
+        public static int Key(int id, SnapshotItems type)
+        {
+            return (int) type << 16 | id;
         }
 
         public SnapshotItem FindItem(int id, SnapshotItems type)
         {
-            var key = (int) type << 16 | id;
-            return FindItem(key);
+            return FindItem(Key(id, type));
         }
 
         public SnapshotItem FindItem(int key)
@@ -48,7 +59,7 @@ namespace TeeSharp.Common.Snapshots
 
             for (var i = 0; i < _items.Length; i++)
             {
-                var data = _items[i].Object.Serialize();
+                var data = _items[i].Item.Serialize();
                 for (var field = 0; field < data.Length; field++)
                 {
                     crc += data[field];
@@ -64,7 +75,7 @@ namespace TeeSharp.Common.Snapshots
             for (var i = 0; i < _items.Length; i++)
             {
                 Debug.Log("snapshot", $"type={_items[i].Type} id={_items[i].Id}");
-                var data = _items[i].Object.Serialize();
+                var data = _items[i].Item.Serialize();
                 for (var field = 0; field < data.Length; field++)
                     Debug.Log("snapshot", $"field={field} value={data[field]}");
             }

@@ -4,8 +4,8 @@ namespace TeeSharp.MasterServer
 {
     public class CountryInfo
     {
-        public string ShortName { get; }
-        public string FullName { get; }
+        public readonly string ShortName;
+        public readonly string FullName;
 
         private CountryInfo(string sh, string full)
         {
@@ -30,7 +30,7 @@ namespace TeeSharp.MasterServer
             /* ISO 3166-1 */
             { 4     , new CountryInfo("AF", "Afghanistan") },
             { 248   , new CountryInfo("AX", "Уland Islands") },
-            { 8 , new CountryInfo("AL", "Albania") },
+            { 8     , new CountryInfo("AL", "Albania") },
             { 12    , new CountryInfo("DZ", "Algeria") },
             { 16    , new CountryInfo("AS", "American Samoa") },
             { 20    , new CountryInfo("AD", "Andorra") },

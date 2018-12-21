@@ -7,14 +7,14 @@ namespace TeeSharp.Common.Game
     {
         public CharacterCore()
         {
-            QuantizeCore = new SnapObj_Character();
-            Input = new SnapObj_PlayerInput();
+            QuantizeCore = new SnapshotCharacter();
+            Input = new SnapshotPlayerInput();
         }
 
-        public virtual void Init(WorldCore worldCore, BaseCollision collision)
+        public virtual void Init(WorldCore worldCore, BaseMapCollision mapCollision)
         {
             World = worldCore;
-            Collision = collision;
+            MapCollision = mapCollision;
         }
 
         public virtual void Reset()
@@ -39,9 +39,9 @@ namespace TeeSharp.Common.Game
             TriggeredEvents = CoreEventFlags.None;
 
             var isGrounded = false;
-            if (Collision.IsTileSolid(Position.x + TeeSize / 2, Position.y + TeeSize / 2 + 5))
+            if (MapCollision.IsTileSolid(Position.x + TeeSize / 2, Position.y + TeeSize / 2 + 5))
                 isGrounded = true;
-            else if (Collision.IsTileSolid(Position.x - TeeSize / 2, Position.y + TeeSize / 2 + 5))
+            else if (MapCollision.IsTileSolid(Position.x - TeeSize / 2, Position.y + TeeSize / 2 + 5))
                 isGrounded = true;
 
             var targetDirection = new Vector2(Input.TargetX, Input.TargetY).Normalized;
@@ -132,12 +132,12 @@ namespace TeeSharp.Common.Game
 
                 var goingToHitGround = false;
                 var goingToRetract = false;
-                var hitFlags = Collision.IntersectLine(HookPosition, newHookPos,
+                var hitFlags = MapCollision.IntersectLine(HookPosition, newHookPos,
                     out newHookPos, out _);
 
-                if (hitFlags != TileFlags.None)
+                if (hitFlags != CollisionFlags.None)
                 {
-                    if (hitFlags.HasFlag(TileFlags.NoHook))
+                    if (hitFlags.HasFlag(CollisionFlags.NoHook))
                         goingToRetract = true;
                     else
                         goingToHitGround = true;
@@ -310,7 +310,7 @@ namespace TeeSharp.Common.Game
             vel.x *= rampValue;
 
             var newPos = Position;
-            Collision.MoveBox(ref newPos, ref vel, new Vector2(TeeSize, TeeSize), 0);
+            MapCollision.MoveBox(ref newPos, ref vel, new Vector2(TeeSize, TeeSize), 0);
 
             vel.x = vel.x * (1.0f / rampValue);
 
@@ -357,7 +357,7 @@ namespace TeeSharp.Common.Game
             Read(QuantizeCore);
         }
 
-        public virtual void Write(SnapObj_Character core)
+        public virtual void Write(SnapshotCharacter core)
         {
             core.X = MathHelper.RoundToInt(Position.x);
             core.Y = MathHelper.RoundToInt(Position.y);
@@ -380,7 +380,7 @@ namespace TeeSharp.Common.Game
             core.Angle = Angle;
         }
 
-        public virtual void Read(SnapObj_Character core)
+        public virtual void Read(SnapshotCharacter core)
         {
             Position = new Vector2(core.X, core.Y);
             Velocity = new Vector2(core.VelX / 256.0f, core.VelY / 256.0f);

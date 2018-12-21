@@ -43,8 +43,8 @@ namespace TeeSharp.Server
             kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
             kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
             kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>().AsSingleton();
-            kernel.Bind<BaseCollision>().To<Collision>().AsSingleton();
-            kernel.Bind<BaseLayers>().To<Layers>().AsSingleton();
+            kernel.Bind<BaseMapCollision>().To<MapCollision>().AsSingleton();
+            kernel.Bind<BaseMapLayers>().To<MapLayers>().AsSingleton();
 
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();

@@ -76,8 +76,8 @@ namespace TeeSharp.Server.Game
         public abstract void FakeSnapshot(int snappingClient);
         public abstract void OnDisconnect(string reason);
         public abstract void OnSnapshot(int snappingClient);
-        public abstract void OnPredictedInput(SnapObj_PlayerInput input);
-        public abstract void OnDirectInput(SnapObj_PlayerInput input);
+        public abstract void OnPredictedInput(SnapshotPlayerInput input);
+        public abstract void OnDirectInput(SnapshotPlayerInput input);
 
         protected abstract void TryRespawn();
 

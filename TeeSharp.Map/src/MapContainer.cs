@@ -5,9 +5,6 @@ namespace TeeSharp.Map
 {
     public class MapContainer
     {
-        public const int
-            TILESLAYERFLAG_GAME = 1;
-
         public int Size { get; }
         public uint CRC => _dataFile.Crc;
         public byte[] RawData => _dataFile.Raw;

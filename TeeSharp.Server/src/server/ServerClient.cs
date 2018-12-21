@@ -16,7 +16,7 @@ namespace TeeSharp.Server
                 Inputs[i] = new Input()
                 {
                     Tick = -1,
-                    PlayerInput = new SnapObj_PlayerInput()
+                    PlayerInput = new SnapshotPlayerInput()
                 };
             }
         }

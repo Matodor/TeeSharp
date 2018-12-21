@@ -29,6 +29,6 @@
         EventSoundWorld,
         EventDamage,
 
-        NumObjects,
+        NumItems,
     }
 }

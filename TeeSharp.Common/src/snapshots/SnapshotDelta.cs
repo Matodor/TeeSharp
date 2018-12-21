@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Common.Snapshots
@@ -54,7 +55,7 @@ namespace TeeSharp.Common.Snapshots
 
                 if (keep)
                 {
-                    snapshotBuilder.AddItem(item.Object.MakeCopy(), item.Id);
+                    snapshotBuilder.AddItem(item.Item.MakeCopy(), item.Id);
                 }
             }
 
@@ -67,8 +68,8 @@ namespace TeeSharp.Common.Snapshots
                 var id = inputData[inputOffset++];
                 int itemSize; // in bytes
 
-                if (SnapObjectsInfo.GetSizeByType(type) != 0)
-                    itemSize = SnapObjectsInfo.GetSizeByType(type);
+                if (SnapshotItemsInfo.GetSizeByType(type) != 0)
+                    itemSize = SnapshotItemsInfo.GetSizeByType(type);
                 else
                 {
                     if (inputOffset + 1 > endIndex)
@@ -81,11 +82,11 @@ namespace TeeSharp.Common.Snapshots
                     return null;
 
                 var key = ((int) type << 16) | id;
-                var newItem = snapshotBuilder.FindItem(key)?.Object;
+                var newItem = snapshotBuilder.FindItem(key)?.Item;
 
                 if (newItem == null)
                 {
-                    var item = SnapObjectsInfo.GetInstanceByType(type);
+                    var item = SnapshotItemsInfo.GetInstanceByType(type);
                     if (snapshotBuilder.AddItem(item, id))
                         newItem = item;
                 }
@@ -96,7 +97,7 @@ namespace TeeSharp.Common.Snapshots
                 var fromItem = from.FindItem(key);
                 if (fromItem != null)
                 {
-                    UndiffItem(fromItem.Object, inputData, inputOffset, newItem);
+                    UndiffItem(fromItem.Item, inputData, inputOffset, newItem);
                 }
                 else
                 {
@@ -127,13 +128,11 @@ namespace TeeSharp.Common.Snapshots
 
             GenerateHash(hashItems, to);
 
-            // pack deleted stuff
             for (var i = 0; i < from.ItemsCount; i++)
             {
                 var fromItem = from[i];
                 if (GetItemIndexHashed(fromItem.Key, hashItems) == -1)
                 {
-                    // deleted
                     numDeletedItems++;
                     outputData[outputOffset++] = fromItem.Key;
                 }
@@ -157,19 +156,19 @@ namespace TeeSharp.Common.Snapshots
                     var pastItem = from[pastIndex];
                     var offset = outputOffset + 3;
 
-                    if (SnapObjectsInfo.GetSizeByType(currentItem.Type) != 0)
+                    if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) != 0)
                         offset = outputOffset + 2;
 
-                    if (DiffItem(pastItem.Object, currentItem.Object,
+                    if (DiffItem(pastItem.Item, currentItem.Item,
                             outputData, offset) != 0)
                     {
                         outputData[outputOffset++] = (int) currentItem.Type;
                         outputData[outputOffset++] = currentItem.Id;
 
-                        if (SnapObjectsInfo.GetSizeByType(currentItem.Type) == 0)
-                            outputData[outputOffset++] = currentItem.Object.SerializeLength;
+                        if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) == 0)
+                            outputData[outputOffset++] = currentItem.Item.SerializeLength;
 
-                        outputOffset += currentItem.Object.SerializeLength; // count item int fields
+                        outputOffset += currentItem.Item.SerializeLength; // count item int fields
                         numUpdatedItems++;
                     }
                 }
@@ -178,10 +177,10 @@ namespace TeeSharp.Common.Snapshots
                     outputData[outputOffset++] = (int) currentItem.Type;
                     outputData[outputOffset++] = currentItem.Id;
 
-                    if (SnapObjectsInfo.GetSizeByType(currentItem.Type) == 0)
-                        outputData[outputOffset++] = currentItem.Object.SerializeLength;
+                    if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) == 0)
+                        outputData[outputOffset++] = currentItem.Item.SerializeLength;
 
-                    var data = currentItem.Object.Serialize();
+                    var data = currentItem.Item.Serialize();
                     Array.Copy(data, 0, outputData, outputOffset, data.Length);
 
                     outputOffset += data.Length;
@@ -199,8 +198,8 @@ namespace TeeSharp.Common.Snapshots
             return outputOffset;
         }
 
-        private static void UndiffItem(BaseSnapObject past, int[] inputData, 
-            int inputOffset, BaseSnapObject newItem)
+        private static void UndiffItem(BaseSnapshotItem past, int[] inputData, 
+            int inputOffset, BaseSnapshotItem newItem)
         {
             var pastData = past.Serialize();
             var newData = new int[pastData.Length];
@@ -213,7 +212,7 @@ namespace TeeSharp.Common.Snapshots
             newItem.Deserialize(newData, 0);
         }
 
-        private static int DiffItem(BaseSnapObject past, BaseSnapObject current,
+        private static int DiffItem(BaseSnapshotItem past, BaseSnapshotItem current,
             int[] outputData, int outputOffset)
         {
             var needed = 0;
@@ -230,9 +229,9 @@ namespace TeeSharp.Common.Snapshots
             return needed;
         }
 
-        public static int GetItemIndexHashed(int key, HashItem[] hashItems)
+        private static int GetItemIndexHashed(int key, HashItem[] hashItems)
         {
-            var hashId = ((key >> 12) & 0b1111_0000) | (key & 0b1111);
+            var hashId = ((key >> 12) & 0xF0) | (key & 0xF);
             for (var i = 0; i < hashItems[hashId].Num; i++)
             {
                 if (hashItems[hashId].Keys[i] == key)
@@ -242,7 +241,7 @@ namespace TeeSharp.Common.Snapshots
             return -1;
         }
 
-        public static void GenerateHash(HashItem[] hashItems, Snapshot snapshot)
+        private static void GenerateHash(HashItem[] hashItems, Snapshot snapshot)
         {
             for (var i = 0; i < hashItems.Length; i++)
                 hashItems[i].Num = 0;
@@ -250,7 +249,7 @@ namespace TeeSharp.Common.Snapshots
             for (var i = 0; i < snapshot.ItemsCount; i++)
             {
                 var key = snapshot[i].Key;
-                var hashId = ((key >> 12) & 0b1111_0000) | (key & 0b1111);
+                var hashId = ((key >> 12) & 0xF0) | (key & 0xF);
 
                 if (hashItems[hashId].Num != 64)
                 {

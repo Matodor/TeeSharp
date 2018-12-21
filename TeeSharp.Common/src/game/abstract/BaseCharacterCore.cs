@@ -22,10 +22,10 @@ namespace TeeSharp.Common
         public virtual int Direction { get; set; }
         public virtual int Angle { get; set; }
         public virtual CoreEventFlags TriggeredEvents { get; set; }
-        public virtual SnapObj_PlayerInput Input { get; set; }
+        public virtual SnapshotPlayerInput Input { get; set; }
 
         protected virtual WorldCore World { get; set; }
-        protected virtual BaseCollision Collision { get; set; }
-        protected virtual SnapObj_Character QuantizeCore { get; set; }
+        protected virtual BaseMapCollision MapCollision { get; set; }
+        protected virtual SnapshotCharacter QuantizeCore { get; set; }
     }
 }

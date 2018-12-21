@@ -40,7 +40,7 @@ namespace Examples.MapParser
 
         private static void ExportImages(MapContainer mapContainer)
         {
-            mapContainer.GetType(MapItemTypes.IMAGE, out var imagesStart, out var imagesNum);
+            mapContainer.GetType(MapItemTypes.Image, out var imagesStart, out var imagesNum);
             Debug.Log("map", imagesNum > 0 ? "images:" : "images not found");
 
             for (var i = 0; i < imagesNum; i++)

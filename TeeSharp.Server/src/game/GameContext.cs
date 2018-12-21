@@ -20,26 +20,26 @@ namespace TeeSharp.Server.Game
             Votes = Kernel.Get<BaseVotes>();
             Events = Kernel.Get<BaseEvents>();
             Server = Kernel.Get<BaseServer>();
-            Layers = Kernel.Get<BaseLayers>();
+            MapLayers = Kernel.Get<BaseMapLayers>();
             GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
-            Collision = Kernel.Get<BaseCollision>();
+            MapCollision = Kernel.Get<BaseMapCollision>();
             Config = Kernel.Get<BaseConfig>();
             Console = Kernel.Get<BaseGameConsole>();
             Tuning = Kernel.Get<BaseTuningParams>();
             World = Kernel.Get<BaseGameWorld>();
 
-            Layers.Init(Server.CurrentMap);
-            Collision.Init(Layers);
+            MapLayers.Init(Server.CurrentMap);
+            MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
             
             // TODO
             GameController = new GameControllerDM();
 
-            for (var y = 0; y < Layers.GameLayer.Height; y++)
+            for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
-                for (var x = 0; x < Layers.GameLayer.Width; x++)
+                for (var x = 0; x < MapLayers.GameLayer.Width; x++)
                 {
-                    var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
+                    var tile = MapCollision.GetTile(y * MapLayers.GameLayer.Width + x);
                     var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 
                     if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
@@ -66,7 +66,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage)
         {
-            var e = Events.Create<SnapEvent_Explosion>();
+            var e = Events.Create<SnapshotEventExplosion>();
             if (e != null)
                 e.Position = pos;
 
@@ -95,7 +95,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreatePlayerSpawn(Vector2 pos)
         {
-            var e = Events.Create<SnapEvent_Spawn>();
+            var e = Events.Create<SnapshotEventSpawn>();
             if (e == null)
                 return;
 
@@ -104,7 +104,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateDeath(Vector2 pos, int clientId)
         {
-            var e = Events.Create<SnapEvent_Death>();
+            var e = Events.Create<SnapshotEventDeath>();
             if (e == null)
                 return;
 
@@ -121,7 +121,7 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < amount; i++)
             {
                 var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
-                var @event = Events.Create<SnapEvent_Damage>();
+                var @event = Events.Create<SnapshotEventDamage>();
                 if (@event == null)
                     continue;
 
@@ -132,7 +132,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateHammerHit(Vector2 pos)
         {
-            var e = Events.Create<SnapEvent_HammerHit>();
+            var e = Events.Create<SnapshotEventHammerHit>();
             if (e == null)
                 return;
 
@@ -144,7 +144,7 @@ namespace TeeSharp.Server.Game
             if (sound < 0 || sound >= Sound.NumSounds)
                 return;
 
-            var e = Events.Create<SnapEvent_SoundWorld>();
+            var e = Events.Create<SnapshotEventSoundWorld>();
             if (e == null)
                 return;
 
@@ -539,13 +539,13 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input)
+        public override void OnClientPredictedInput(int clientId, SnapshotPlayerInput input)
         {
             if (!World.IsPaused)
                 Players[clientId].OnPredictedInput(input);
         }
 
-        public override void OnClientDirectInput(int clientId, SnapObj_PlayerInput input)
+        public override void OnClientDirectInput(int clientId, SnapshotPlayerInput input)
         {
             if (!World.IsPaused)
                 Players[clientId].OnDirectInput(input);

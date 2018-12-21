@@ -166,7 +166,7 @@ namespace TeeSharp.Server.Game
 
                     for (var c = 0; c < characters.Length; c++)
                     {
-                        if (GameContext.Collision.IsTileSolid(spawnPos[i] + positions[index]) ||
+                        if (GameContext.MapCollision.IsTileSolid(spawnPos[i] + positions[index]) ||
                             MathHelper.Distance(characters[c].Position, spawnPos[i] + positions[index]) <=
                             characters[c].ProximityRadius)
                         {

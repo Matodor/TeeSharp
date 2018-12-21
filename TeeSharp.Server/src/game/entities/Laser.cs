@@ -40,7 +40,7 @@ namespace TeeSharp.Server.Game.Entities
 
             var to = Position + _direction * _energy;
 
-            if (GameContext.Collision.IntersectLine(Position, to, out _, out to) != TileFlags.NONE)
+            if (GameContext.MapCollision.IntersectLine(Position, to, out _, out to) != CollisionFlags.NONE)
             {
                 if (!HitCharacter(Position, to))
                 {
@@ -50,7 +50,7 @@ namespace TeeSharp.Server.Game.Entities
                     var tempPos = Position;
                     var tempDir = _direction * 4f;
 
-                    GameContext.Collision.MovePoint(ref tempPos, ref tempDir, 1f, out _);
+                    GameContext.MapCollision.MovePoint(ref tempPos, ref tempDir, 1f, out _);
                     Position = tempPos;
                     _direction = tempDir.Normalized;
 
@@ -109,7 +109,7 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient))
                 return;
 
-            var laser = Server.SnapObject<SnapObj_Laser>(IDs[0]);
+            var laser = Server.SnapObject<SnapshotLaser>(IDs[0]);
             if (laser == null)
                 return;
 

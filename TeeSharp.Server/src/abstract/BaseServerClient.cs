@@ -29,7 +29,7 @@ namespace TeeSharp.Server
         public class Input
         {
             public int Tick { get; set; }
-            public SnapObj_PlayerInput PlayerInput { get; set; }
+            public SnapshotPlayerInput PlayerInput { get; set; }
         }
 
         public virtual SnapRate SnapRate { get; set; }

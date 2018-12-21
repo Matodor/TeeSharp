@@ -116,7 +116,7 @@ namespace TeeSharp.Server.Game.Entities
             if (_spawnTick != -1 || NetworkClipped(snappingClient))
                 return;
 
-            var pickup = Server.SnapObject<SnapObj_Pickup>(IDs[0]);
+            var pickup = Server.SnapObject<SnapshotPickup>(IDs[0]);
             if (pickup == null)
                 return;
 

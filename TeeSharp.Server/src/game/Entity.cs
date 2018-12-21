@@ -77,9 +77,9 @@ namespace TeeSharp.Server.Game
         public bool GameLayerClipped(Vector2 checkPos)
         {
             return MathHelper.RoundToInt(checkPos.x) / 32 < -200 ||
-                   MathHelper.RoundToInt(checkPos.x) / 32 > GameContext.Collision.Width + 200 ||
+                   MathHelper.RoundToInt(checkPos.x) / 32 > GameContext.MapCollision.Width + 200 ||
                    MathHelper.RoundToInt(checkPos.y) / 32 < -200 ||
-                   MathHelper.RoundToInt(checkPos.y) / 32 > GameContext.Collision.Height + 200;
+                   MathHelper.RoundToInt(checkPos.y) / 32 > GameContext.MapCollision.Height + 200;
         }
     }
 

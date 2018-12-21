@@ -31,13 +31,13 @@ namespace TeeSharp.Server.Game.Entities
         public static InputCount Count(int prev, int cur)
         {
             var c = new InputCount() {Presses = 0, Releases = 0};
-            prev &= SnapObj_PlayerInput.INPUT_STATE_MASK;
-            cur &= SnapObj_PlayerInput.INPUT_STATE_MASK;
+            prev &= SnapshotPlayerInput.INPUT_STATE_MASK;
+            cur &= SnapshotPlayerInput.INPUT_STATE_MASK;
             var i = prev;
 
             while (i != cur)
             {
-                i = (i + 1) & SnapObj_PlayerInput.INPUT_STATE_MASK;
+                i = (i + 1) & SnapshotPlayerInput.INPUT_STATE_MASK;
                 if ((i & 1) != 0)
                     c.Presses++;
                 else
@@ -76,9 +76,9 @@ namespace TeeSharp.Server.Game.Entities
         protected virtual Weapon LastWeapon { get; set; }
         protected virtual Weapon QueuedWeapon { get; set; }
 
-        protected virtual SnapObj_PlayerInput Input { get; set; }
-        protected virtual SnapObj_PlayerInput LatestPrevInput { get; set; }
-        protected virtual SnapObj_PlayerInput LatestInput { get; set; }
+        protected virtual SnapshotPlayerInput Input { get; set; }
+        protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
+        protected virtual SnapshotPlayerInput LatestInput { get; set; }
 
         protected virtual NinjaStat NinjaStat { get; set; }
         protected virtual WeaponStat[] Weapons { get; set; }
@@ -102,22 +102,22 @@ namespace TeeSharp.Server.Game.Entities
             Player = player;
             IsAlive = true;
 
-            Input = new SnapObj_PlayerInput();
-            LatestPrevInput = new SnapObj_PlayerInput();
-            LatestInput = new SnapObj_PlayerInput();
+            Input = new SnapshotPlayerInput();
+            LatestPrevInput = new SnapshotPlayerInput();
+            LatestInput = new SnapshotPlayerInput();
 
             Core = new CharacterCore();
             SendCore = new CharacterCore();
             ReckoningCore = new CharacterCore();
 
             Core.Reset();
-            Core.Init(GameWorld.WorldCore, GameContext.Collision);
+            Core.Init(GameWorld.WorldCore, GameContext.MapCollision);
             Core.Position = Position;
 
             var worldCore = new WorldCore(
                 GameWorld.WorldCore.CharacterCores.Length,
                 GameWorld.WorldCore.Tuning);
-            ReckoningCore.Init(worldCore, GameContext.Collision);
+            ReckoningCore.Init(worldCore, GameContext.MapCollision);
 
             GameWorld.WorldCore.CharacterCores[player.ClientId] = Core;
             GameContext.GameController.OnCharacterSpawn(this);
@@ -146,14 +146,14 @@ namespace TeeSharp.Server.Game.Entities
 
         public bool IsGrounded()
         {
-            if (GameContext.Collision.IsTileSolid(
+            if (GameContext.MapCollision.IsTileSolid(
                 Position.x + ProximityRadius / 2,
                 Position.y + ProximityRadius / 2 + 2))
             {
                 return true;
             }
 
-            if (GameContext.Collision.IsTileSolid(
+            if (GameContext.MapCollision.IsTileSolid(
                 Position.x - ProximityRadius / 2,
                 Position.y + ProximityRadius / 2 + 2))
             {
@@ -193,7 +193,7 @@ namespace TeeSharp.Server.Game.Entities
             Destroy();
         }
 
-        public virtual  void OnPredictedInput(SnapObj_PlayerInput newInput)
+        public virtual  void OnPredictedInput(SnapshotPlayerInput newInput)
         {
             if (!Input.Compare(newInput))
                 LastAction = Server.Tick;
@@ -205,7 +205,7 @@ namespace TeeSharp.Server.Game.Entities
                 Input.TargetY = -1;
         }
 
-        public virtual void OnDirectInput(SnapObj_PlayerInput newInput)
+        public virtual void OnDirectInput(SnapshotPlayerInput newInput)
         {
             LatestPrevInput.FillFrom(LatestInput);
             LatestInput.FillFrom(newInput);
@@ -326,7 +326,7 @@ namespace TeeSharp.Server.Game.Entities
             var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
             msg.AddInt(1);
 
-            var snapObj = new SnapObj_Projectile();
+            var snapObj = new SnapshotProjectile();
             projectile.FillInfo(snapObj);
             snapObj.FillMsgPacker(msg);
 
@@ -355,7 +355,7 @@ namespace TeeSharp.Server.Game.Entities
                     (int)(Server.TickSpeed * Tuning["ShotgunLifetime"]), 1, false,
                     0, (Sound)(-1));
 
-                var snapObj = new SnapObj_Projectile();
+                var snapObj = new SnapshotProjectile();
                 projectile.FillInfo(snapObj);
                 snapObj.FillMsgPacker(msg);
             }
@@ -370,7 +370,7 @@ namespace TeeSharp.Server.Game.Entities
                 projStartPos, direction, (int)(Server.TickSpeed * Tuning["GunLifetime"]),
                 1, false, 0f, (Sound)(-1));
 
-            var snapObj = new SnapObj_Projectile();
+            var snapObj = new SnapshotProjectile();
             var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
             msg.AddInt(1);
 
@@ -389,8 +389,8 @@ namespace TeeSharp.Server.Game.Entities
 
             foreach (var target in targets)
             {
-                if (target == this || GameContext.Collision.IntersectLine(
-                        projStartPos, target.Position, out var _, out var _) != TileFlags.NONE)
+                if (target == this || GameContext.MapCollision.IntersectLine(
+                        projStartPos, target.Position, out var _, out var _) != CollisionFlags.NONE)
                 {
                     continue;
                 }
@@ -589,7 +589,7 @@ namespace TeeSharp.Server.Game.Entities
             var vel = Core.Velocity;
             var pos = Core.Position;
 
-            GameContext.Collision.MoveBox(ref pos, ref vel, new Vector2(ProximityRadius, ProximityRadius), 0f);
+            GameContext.MapCollision.MoveBox(ref pos, ref vel, new Vector2(ProximityRadius, ProximityRadius), 0f);
             Core.Velocity = Vector2.zero;
             Core.Position = pos;
 
@@ -697,7 +697,7 @@ namespace TeeSharp.Server.Game.Entities
             if ((Input.Fire & 1) != 0)
                 Input.Fire++;
 
-            Input.Fire &= SnapObj_PlayerInput.INPUT_STATE_MASK;
+            Input.Fire &= SnapshotPlayerInput.INPUT_STATE_MASK;
             Input.Jump = false;
             
             LatestInput.FillFrom(Input);
@@ -711,10 +711,10 @@ namespace TeeSharp.Server.Game.Entities
 
             var rDiv3 = ProximityRadius / 3.0f;
 
-            if (GameContext.Collision.GetTileFlags(Position.x + rDiv3, Position.y - rDiv3).HasFlag(TileFlags.DEATH) ||
-                GameContext.Collision.GetTileFlags(Position.x + rDiv3, Position.y + rDiv3).HasFlag(TileFlags.DEATH) ||
-                GameContext.Collision.GetTileFlags(Position.x - rDiv3, Position.y - rDiv3).HasFlag(TileFlags.DEATH) ||
-                GameContext.Collision.GetTileFlags(Position.x - rDiv3, Position.y + rDiv3).HasFlag(TileFlags.DEATH) ||
+            if (GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.DEATH) ||
+                GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.DEATH) ||
+                GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.DEATH) ||
+                GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.DEATH) ||
                 GameLayerClipped(Position))
             {
                 Die(Player.ClientId, Weapon.World);
@@ -752,8 +752,8 @@ namespace TeeSharp.Server.Game.Entities
                 Position = new Vector2(Input.TargetX, Input.TargetY);
 
             {
-                var predicted = new SnapObj_Character();
-                var current = new SnapObj_Character();
+                var predicted = new SnapshotCharacter();
+                var current = new SnapshotCharacter();
 
                 ReckoningCore.Write(predicted);
                 Core.Write(current);
@@ -809,7 +809,7 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient))
                 return;
 
-            var character = Server.SnapObject<SnapObj_Character>(id);
+            var character = Server.SnapObject<SnapshotCharacter>(id);
             if (character == null)
                 return;
 

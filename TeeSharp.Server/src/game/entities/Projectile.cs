@@ -71,13 +71,13 @@ namespace TeeSharp.Server.Game.Entities
             var prevPos = GetPos(prevTime);
             var currentPos = GetPos(currentTime);
 
-            var collide = GameContext.Collision.IntersectLine(prevPos, currentPos, out currentPos, out _);
+            var collide = GameContext.MapCollision.IntersectLine(prevPos, currentPos, out currentPos, out _);
             var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
             var targetCharacter = GameWorld.IntersectCharacter(prevPos, currentPos, 6f, ref currentPos, ownerCharacter);
 
             _lifeSpan--;
 
-            if (targetCharacter != null || collide != TileFlags.NONE ||
+            if (targetCharacter != null || collide != CollisionFlags.NONE ||
                 _lifeSpan < 0 || GameLayerClipped(currentPos))
             {
                 if (_lifeSpan >= 0 || _weapon == Weapon.Grenade)
@@ -99,7 +99,7 @@ namespace TeeSharp.Server.Game.Entities
             _startTick++;
         }
 
-        public void FillInfo(SnapObj_Projectile projectile)
+        public void FillInfo(SnapshotProjectile projectile)
         {
             projectile.Position = Position;
             projectile.Velocity = _dir * 100f;
@@ -113,7 +113,7 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient, GetPos(currentTime)))
                 return;
 
-            var projectile = Server.SnapObject<SnapObj_Projectile>(IDs[0]);
+            var projectile = Server.SnapObject<SnapshotProjectile>(IDs[0]);
             if (projectile == null)
                 return;
 

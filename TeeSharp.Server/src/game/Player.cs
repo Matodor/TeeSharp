@@ -192,7 +192,7 @@ namespace TeeSharp.Server.Game
             clientInfo.ColorBody = TeeInfo.ColorBody;
             clientInfo.ColorFeet = TeeInfo.ColorFeet;
 
-            var playerInfo = Server.SnapObject<SnapObj_PlayerInfo>(id);
+            var playerInfo = Server.SnapObject<SnapshotPlayerInfo>(id);
             if (playerInfo == null)
                 return;
 
@@ -206,7 +206,7 @@ namespace TeeSharp.Server.Game
 
             if (ClientId == snappingClient && Team == Team.Spectators)
             {
-                var spectatorInfo = Server.SnapObject<SnapObj_SpectatorInfo>(ClientId);
+                var spectatorInfo = Server.SnapObject<SnapshotSpectatorInfo>(ClientId);
                 if (spectatorInfo == null)
                     return;
 
@@ -237,7 +237,7 @@ namespace TeeSharp.Server.Game
             clientInfo.Skin = TeeInfo.SkinName;
         }
 
-        public override void OnPredictedInput(SnapObj_PlayerInput input)
+        public override void OnPredictedInput(SnapshotPlayerInput input)
         {
             // ignore input when player chat open
             if (PlayerFlags.HasFlag(PlayerFlags.Chatting) &&
@@ -249,7 +249,7 @@ namespace TeeSharp.Server.Game
             Character?.OnPredictedInput(input);
         }
 
-        public override void OnDirectInput(SnapObj_PlayerInput input)
+        public override void OnDirectInput(SnapshotPlayerInput input)
         {
             if (input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
             {

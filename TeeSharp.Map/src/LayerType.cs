@@ -2,9 +2,9 @@
 {
     public enum LayerType
     {
-        INVALID = 0,
-        GAME,
-        TILES,
-        QUADS
+        Invalid = 0,
+        Game,
+        Tiles,
+        Quads
     }
 }

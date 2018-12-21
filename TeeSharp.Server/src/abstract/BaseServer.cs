@@ -57,8 +57,8 @@ namespace TeeSharp.Server
         public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
         public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
 
-        public abstract T SnapObject<T>(int id) where T : BaseSnapObject, new();
-        public abstract bool AddSnapItem<T>(T item, int id) where T : BaseSnapObject;
+        public abstract T SnapObject<T>(int id) where T : BaseSnapshotItem, new();
+        public abstract bool AddSnapItem<T>(T item, int id) where T : BaseSnapshotItem;
 
         protected abstract bool SendPackMsgBody<T>(T msg, MsgFlags flags, 
             int clientId) where T : BaseGameMessage;
