@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using TeeSharp.Common;
-using TeeSharp.Common.Config;
-using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
 using Math = System.Math;

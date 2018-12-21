@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_GameDataTeam : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.GameDataTeam;
+        public override SnapshotItems Type => SnapshotItems.GameDataTeam;
 
         [MarshalAs(UnmanagedType.I4)] public int ScoreRed;
         [MarshalAs(UnmanagedType.I4)] public int ScoreBlue;

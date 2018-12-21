@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using TeeSharp.Common;
 using TeeSharp.Network.Extensions;
 
 namespace TeeSharp.Network

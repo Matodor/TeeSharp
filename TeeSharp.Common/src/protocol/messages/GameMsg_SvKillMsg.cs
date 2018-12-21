@@ -4,18 +4,18 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvKillMsg : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.SV_KILLMSG;
+        public override GameMessages Type => GameMessages.ServerKillMessage;
 
-        public int Killer;
-        public int Victim;
-        public Weapon Weapon;
-        public int ModeSpecial;
+        public int Killer { get; set; }
+        public int Victim { get; set; }
+        public int Weapon { get; set; }
+        public int ModeSpecial { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {
             packer.AddInt(Killer);
             packer.AddInt(Victim);
-            packer.AddInt((int) Weapon);
+            packer.AddInt(Weapon);
             packer.AddInt(ModeSpecial);
             return packer.Error;
         }

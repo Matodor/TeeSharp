@@ -1,13 +1,12 @@
-﻿using System.Runtime.InteropServices;
-using TeeSharp.Common.Enums;
+﻿using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvWeaponPickup : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.SV_WEAPONPICKUP;
+        public override GameMessages Type => GameMessages.ServerWeaponPickup;
 
-        public Weapon Weapon;
+        public Weapon Weapon { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {

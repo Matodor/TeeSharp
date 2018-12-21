@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq.Expressions;
 using TeeSharp.Common.Enums;
-using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Common.Snapshots
 {
@@ -65,7 +63,7 @@ namespace TeeSharp.Common.Snapshots
                 if (inputOffset + 2 > endIndex)
                     return null;
 
-                var type = (SnapshotObjects) inputData[inputOffset++];
+                var type = (SnapshotItems) inputData[inputOffset++];
                 var id = inputData[inputOffset++];
                 int itemSize; // in bytes
 

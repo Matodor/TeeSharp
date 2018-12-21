@@ -121,7 +121,7 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < amount; i++)
             {
                 var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
-                var @event = Events.Create<SnapEvent_DamageInd>();
+                var @event = Events.Create<SnapEvent_Damage>();
                 if (@event == null)
                     continue;
 
@@ -304,12 +304,12 @@ namespace TeeSharp.Server.Game
             
             if (!Server.ClientInGame(clientId))
             {
-                if (msg.MsgId == GameMessages.CL_STARTINFO) 
+                if (msg.Type == GameMessages.CL_STARTINFO) 
                     OnMsgStartInfo(player, (GameMsg_ClStartInfo) msg);
             }
             else
             {
-                switch (msg.MsgId)
+                switch (msg.Type)
                 {
                     case GameMessages.CL_SAY:
                         OnMsgSay(player, (GameMsg_ClSay)msg);

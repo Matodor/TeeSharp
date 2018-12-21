@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using TeeSharp.Common.Enums;
-using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 
 namespace TeeSharp.Common.Snapshots
@@ -54,8 +52,8 @@ namespace TeeSharp.Common.Snapshots
                 return false;
             }
 
-            if (obj.Type <= Enums.SnapshotObjects.INVALID || 
-                obj.Type >= Enums.SnapshotObjects.NUM)
+            if (obj.Type <= Enums.SnapshotItems.INVALID || 
+                obj.Type >= Enums.SnapshotItems.NUM)
             {
                 Debug.Warning("snapshots", "wrong object type");
                 return false;
@@ -83,8 +81,8 @@ namespace TeeSharp.Common.Snapshots
             }
             
             var obj = new T();
-            if (obj.Type <= Enums.SnapshotObjects.INVALID || 
-                obj.Type >= Enums.SnapshotObjects.NUM)
+            if (obj.Type <= Enums.SnapshotItems.INVALID || 
+                obj.Type >= Enums.SnapshotItems.NUM)
             {
                 Debug.Warning("snapshots", "wrong object type");
                 return null;

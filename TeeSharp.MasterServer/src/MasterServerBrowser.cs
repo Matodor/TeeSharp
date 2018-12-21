@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
-using TeeSharp.Common;
 using TeeSharp.Core;
 using TeeSharp.Network;
 using TeeSharp.Network.Enums;

@@ -2,7 +2,6 @@
 using TeeSharp.Common;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
-using TeeSharp.Common.Protocol;
 using TeeSharp.Server.Game.Entities;
 using Math = System.Math;
 

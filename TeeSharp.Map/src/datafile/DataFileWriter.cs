@@ -1,6 +1,4 @@
-﻿using TeeSharp.Core;
-
-namespace TeeSharp.Map
+﻿namespace TeeSharp.Map
 {
     public class DataFileWriter
     {

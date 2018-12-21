@@ -4,12 +4,12 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvVoteStatus : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.SV_VOTESTATUS;
+        public override GameMessages Type => GameMessages.ServerVoteStatus;
 
-        public int Yes;
-        public int No;
-        public int Pass;
-        public int Total;
+        public int Yes { get; set; }
+        public int No { get; set; }
+        public int Pass { get; set; }
+        public int Total { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {

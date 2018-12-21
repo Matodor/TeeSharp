@@ -10,8 +10,4 @@
     <ProjectReference Include="..\TeeSharp.Map\TeeSharp.Map.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="src\protocol\objects\" />
-  </ItemGroup>
-
 </Project>

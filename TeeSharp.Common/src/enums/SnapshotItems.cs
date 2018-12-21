@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum SnapshotObjects
+    public enum SnapshotItems
     {
         Invalid = 0,
 
@@ -16,7 +16,18 @@
         Character,
         PlayerInfo,
         SpectatorInfo,
+
         DemoClientInfo,
+        DemoGameInfo,
+        DemoTuneParams,
+
+        EventCommon,
+        EventExplosion,
+        EventSpawn,
+        EventHammerHit,
+        EventDeath,
+        EventSoundWorld,
+        EventDamage,
 
         NumObjects,
     }

@@ -4,9 +4,9 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvMotd : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.SV_MOTD;
+        public override GameMessages Type => GameMessages.ServerMotd;
 
-        public string Message;
+        public string Message { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {

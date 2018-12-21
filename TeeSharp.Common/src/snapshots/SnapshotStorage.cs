@@ -1,6 +1,4 @@
-﻿using TeeSharp.Core;
-
-namespace TeeSharp.Common.Snapshots
+﻿namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotInfo
     {

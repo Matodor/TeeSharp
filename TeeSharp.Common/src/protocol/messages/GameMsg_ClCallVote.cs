@@ -4,17 +4,19 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClCallVote : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.CL_CALLVOTE;
+        public override GameMessages Type => GameMessages.ClientCallVote;
 
-        public string Type;
-        public string Value;
-        public string Reason;
+        public string VoteType { get; set; }
+        public string Value { get; set; }
+        public string Reason { get; set; }
+        public bool Force { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {
-            packer.AddString(Type);
+            packer.AddString(VoteType);
             packer.AddString(Value);
             packer.AddString(Reason);
+            packer.AddBool(Force);
             return packer.Error;
         }
     }

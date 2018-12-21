@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Net.Mime;
 using TeeSharp.Core;
 using TeeSharp.Map;
 using TeeSharp.Map.MapItems;

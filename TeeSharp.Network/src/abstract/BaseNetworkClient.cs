@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using TeeSharp.Core;
-using TeeSharp.Network.Enums;
 
 namespace TeeSharp.Network
 {

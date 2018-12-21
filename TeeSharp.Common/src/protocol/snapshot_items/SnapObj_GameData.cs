@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_GameData : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.GameData;
+        public override SnapshotItems Type => SnapshotItems.GameData;
 
         [MarshalAs(UnmanagedType.I4)] public int GameStartTick;
         [MarshalAs(UnmanagedType.I4)] public GameStateFlags GameStateFlags;

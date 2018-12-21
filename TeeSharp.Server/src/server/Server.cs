@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TeeSharp.Common;
@@ -461,7 +460,7 @@ namespace TeeSharp.Server
         protected override bool SendPackMsgOne(BaseGameMessage msg, 
             MsgFlags flags, int clientId)
         {
-            var packer = new MsgPacker((int) msg.MsgId);
+            var packer = new MsgPacker((int) msg.Type);
             if (msg.PackError(packer))
                 return false;
             return SendMsg(packer, flags, clientId);

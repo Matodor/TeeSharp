@@ -25,7 +25,7 @@ namespace TeeSharp.Common.Snapshots
             Size = 0;
         }
 
-        public SnapshotItem FindItem(int id, SnapshotObjects type)
+        public SnapshotItem FindItem(int id, SnapshotItems type)
         {
             var key = (int) type << 16 | id;
             return FindItem(key);

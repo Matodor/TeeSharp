@@ -6,6 +6,6 @@ namespace TeeSharp.Common.Snapshots
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public abstract class BaseSnapObject
     {
-        public abstract SnapshotObjects Type { get; }
+        public abstract SnapshotItems Type { get; }
     }
 }

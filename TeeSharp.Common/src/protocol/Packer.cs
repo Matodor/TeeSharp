@@ -35,6 +35,22 @@ namespace TeeSharp.Common
             return _index;
         }
 
+        public void AddBool(bool[] array)
+        {
+            for (var i = 0; i < array.Length; i++)
+                AddBool(array[i]);
+        }
+
+        public void AddBool(bool value)
+        {
+            AddInt(value ? 1 : 0);
+        }
+
+        public void AddInt(int[] array)
+        {
+            for (var i = 0; i < array.Length; i++)
+                AddInt(array[i]);
+        }
 
         public void AddInt(int value)
         {
@@ -45,6 +61,12 @@ namespace TeeSharp.Common
                 Error = true;
             else
                 _index = IntCompression.Pack(_buffer, _index, value);
+        }
+
+        public void AddString(string[] array, int limit = 0)
+        {
+            for (var i = 0; i < array.Length; i++)
+                AddString(array[i], limit);
         }
 
         public void AddString(string value, int limit = 0)

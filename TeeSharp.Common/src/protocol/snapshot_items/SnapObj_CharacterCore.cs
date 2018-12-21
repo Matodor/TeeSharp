@@ -5,9 +5,9 @@ using TeeSharp.Common.Snapshots;
 namespace TeeSharp.Common.Protocol
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-    public class SnapObj_Character : BaseSnapObject
+    public class SnapObj_CharacterCore : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.Character;
+        public override SnapshotItems Type => SnapshotItems.CharacterCore;
 
         [MarshalAs(UnmanagedType.I4)] public int Tick;
         [MarshalAs(UnmanagedType.I4)] public int X;
@@ -27,13 +27,5 @@ namespace TeeSharp.Common.Protocol
         [MarshalAs(UnmanagedType.I4)] public int HookY;
         [MarshalAs(UnmanagedType.I4)] public int HookDx;
         [MarshalAs(UnmanagedType.I4)] public int HookDy;
-
-        [MarshalAs(UnmanagedType.I4)] public int Health;
-        [MarshalAs(UnmanagedType.I4)] public int Armor;
-        [MarshalAs(UnmanagedType.I4)] public int AmmoCount;
-        [MarshalAs(UnmanagedType.I4)] public Weapon Weapon;
-        [MarshalAs(UnmanagedType.I4)] public Emote Emote;
-        [MarshalAs(UnmanagedType.I4)] public int AttackTick;
-        [MarshalAs(UnmanagedType.I4)] public CoreEventFlags TriggeredEvents;
     }
 }

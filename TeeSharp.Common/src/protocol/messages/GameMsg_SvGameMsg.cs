@@ -2,9 +2,9 @@
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_ClIsDDNet : BaseGameMessage
+    public class GameMsg_SvGameMsg : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.CL_ISDDNET;
+        public override GameMessages Type => GameMessages.ServerGameMessage;
 
         public override bool PackError(MsgPacker packer)
         {

@@ -9,34 +9,34 @@ namespace TeeSharp.Common.Snapshots
 {
     public static class SnapObjectsInfo
     {
-        private static readonly Dictionary<SnapshotObjects, int> _typesSizes;
-        private static readonly Dictionary<SnapshotObjects, Func<BaseSnapObject>> _activators;
+        private static readonly Dictionary<SnapshotItems, int> _typesSizes;
+        private static readonly Dictionary<SnapshotItems, Func<BaseSnapObject>> _activators;
 
         static SnapObjectsInfo()
         {
-            var types = new Dictionary<SnapshotObjects, Type>()
+            var types = new Dictionary<SnapshotItems, Type>()
             {
-                {SnapshotObjects.EVENT_DAMAGEIND, typeof(SnapEvent_DamageInd)},
-                {SnapshotObjects.EVENT_DEATH, typeof(SnapEvent_Death)},
-                {SnapshotObjects.EVENT_EXPLOSION, typeof(SnapEvent_Explosion)},
-                {SnapshotObjects.EVENT_HAMMERHIT, typeof(SnapEvent_HammerHit)},
-                {SnapshotObjects.EVENT_SOUNDGLOBAL, typeof(SnapEvent_SoundGlobal)},
-                {SnapshotObjects.EVENT_SOUNDWORLD, typeof(SnapEvent_SoundWorld)},
-                {SnapshotObjects.EVENT_SPAWN, typeof(SnapEvent_Spawn)},
+                {SnapshotItems.EVENT_DAMAGEIND, typeof(SnapEvent_Damage)},
+                {SnapshotItems.EVENT_DEATH, typeof(SnapEvent_Death)},
+                {SnapshotItems.EVENT_EXPLOSION, typeof(SnapEvent_Explosion)},
+                {SnapshotItems.EVENT_HAMMERHIT, typeof(SnapEvent_HammerHit)},
+                {SnapshotItems.EVENT_SOUNDGLOBAL, typeof(SnapEvent_SoundGlobal)},
+                {SnapshotItems.EVENT_SOUNDWORLD, typeof(SnapEvent_SoundWorld)},
+                {SnapshotItems.EVENT_SPAWN, typeof(SnapEvent_Spawn)},
 
-                {SnapshotObjects.OBJ_CHARACTER, typeof(SnapObj_Character)},
-                {SnapshotObjects.OBJ_CLIENTINFO, typeof(SnapObj_ClientInfo)},
-                {SnapshotObjects.OBJ_GAMEINFO, typeof(SnapObj_GameInfo)},
-                {SnapshotObjects.OBJ_LASER, typeof(SnapObj_Laser)},
-                {SnapshotObjects.OBJ_PICKUP, typeof(SnapObj_Pickup)},
-                {SnapshotObjects.OBJ_PLAYERINFO, typeof(SnapObj_PlayerInfo)},
-                {SnapshotObjects.PlayerInput, typeof(SnapObj_PlayerInput)},
-                {SnapshotObjects.OBJ_PROJECTILE, typeof(SnapObj_Projectile)},
-                {SnapshotObjects.OBJ_SPECTATORINFO, typeof(SnapObj_SpectatorInfo)},
+                {SnapshotItems.OBJ_CHARACTER, typeof(SnapObj_Character)},
+                {SnapshotItems.OBJ_CLIENTINFO, typeof(SnapObj_ClientInfo)},
+                {SnapshotItems.OBJ_GAMEINFO, typeof(SnapObj_GameInfo)},
+                {SnapshotItems.OBJ_LASER, typeof(SnapObj_Laser)},
+                {SnapshotItems.OBJ_PICKUP, typeof(SnapObj_Pickup)},
+                {SnapshotItems.OBJ_PLAYERINFO, typeof(SnapObj_PlayerInfo)},
+                {SnapshotItems.PlayerInput, typeof(SnapObj_PlayerInput)},
+                {SnapshotItems.OBJ_PROJECTILE, typeof(SnapObj_Projectile)},
+                {SnapshotItems.OBJ_SPECTATORINFO, typeof(SnapObj_SpectatorInfo)},
             };
 
-            _activators = new Dictionary<SnapshotObjects, Func<BaseSnapObject>>(types.Count);
-            _typesSizes = new Dictionary<SnapshotObjects, int>(types.Count);
+            _activators = new Dictionary<SnapshotItems, Func<BaseSnapObject>>(types.Count);
+            _typesSizes = new Dictionary<SnapshotItems, int>(types.Count);
 
             foreach (var pair in types)
             {
@@ -46,14 +46,14 @@ namespace TeeSharp.Common.Snapshots
             }
         }
 
-        public static int GetSizeByType(SnapshotObjects type)
+        public static int GetSizeByType(SnapshotItems type)
         {
             return _typesSizes.ContainsKey(type)
                 ? _typesSizes[type]
                 : 0;
         }
 
-        public static BaseSnapObject GetInstanceByType(SnapshotObjects type)
+        public static BaseSnapObject GetInstanceByType(SnapshotItems type)
         {
             return _activators.ContainsKey(type) 
                 ? _activators[type]() 

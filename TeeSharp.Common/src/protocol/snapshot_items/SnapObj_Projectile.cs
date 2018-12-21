@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_Projectile : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.Projectile;
+        public override SnapshotItems Type => SnapshotItems.Projectile;
 
         [MarshalAs(UnmanagedType.I4)] public int X;
         [MarshalAs(UnmanagedType.I4)] public int Y;

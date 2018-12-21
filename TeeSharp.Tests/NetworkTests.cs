@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TeeSharp.Network;

@@ -4,16 +4,18 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvChat : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.SV_CHAT;
+        public override GameMessages Type => GameMessages.ServerChat;
 
-        public bool IsTeam;
-        public int ClientId;
-        public string Message;
+        public Chat ChatMode { get; set; }
+        public int ClientId { get; set; }
+        public int TargetId { get; set; }
+        public string Message { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {
-            packer.AddInt(IsTeam ? 1 : 0);
+            packer.AddInt((int) ChatMode);
             packer.AddInt(ClientId);
+            packer.AddInt(TargetId);
             packer.AddString(Message);
             return packer.Error;
         }

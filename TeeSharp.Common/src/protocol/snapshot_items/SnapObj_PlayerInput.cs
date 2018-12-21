@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_PlayerInput : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.PlayerInput;
+        public override SnapshotItems Type => SnapshotItems.PlayerInput;
 
         public bool IsJump
         {
@@ -29,7 +29,7 @@ namespace TeeSharp.Common.Protocol
         [MarshalAs(UnmanagedType.I4)] public int Hook;
         [MarshalAs(UnmanagedType.I4)] public PlayerFlags PlayerFlags;
         [MarshalAs(UnmanagedType.I4)] public Weapon WantedWeapon;
-        [MarshalAs(UnmanagedType.I4)] public int NextWeapon;
-        [MarshalAs(UnmanagedType.I4)] public int PreviousWeapon;
+        [MarshalAs(UnmanagedType.I4)] public Weapon NextWeapon;
+        [MarshalAs(UnmanagedType.I4)] public Weapon PreviousWeapon;
     }
 }

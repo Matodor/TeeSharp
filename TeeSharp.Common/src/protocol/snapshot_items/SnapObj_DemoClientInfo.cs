@@ -7,13 +7,19 @@ namespace TeeSharp.Common.Protocol
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
     public class SnapObj_DemoClientInfo : BaseSnapObject
     {
-        public override SnapshotObjects Type => SnapshotObjects.DemoClientInfo;
+        public override SnapshotItems Type => SnapshotItems.DemoClientInfo;
+
+        public bool IsLocal
+        {
+            get => Local != 0;
+            set => Local = value ? 1 : 0;
+        }
 
         [MarshalAs(UnmanagedType.I4)] public int Local;
         [MarshalAs(UnmanagedType.I4)] public Team Team;
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public int[] Name;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public int[] Clan;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public int[] IntName;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public int[] IntClan;
 
         [MarshalAs(UnmanagedType.I4)] public int Country;
 

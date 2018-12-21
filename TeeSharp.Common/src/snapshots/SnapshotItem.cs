@@ -1,11 +1,10 @@
 ﻿using TeeSharp.Common.Enums;
-using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotItem
     {
-        public SnapshotObjects Type => (SnapshotObjects) (Key >> 16);
+        public SnapshotItems Type => (SnapshotItems) (Key >> 16);
         public int Id => Key & 0xffff;
         public readonly int Size;
 

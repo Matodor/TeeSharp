@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TeeSharp.Common
+﻿namespace TeeSharp.Common
 {
     public static class MathHelper
     {

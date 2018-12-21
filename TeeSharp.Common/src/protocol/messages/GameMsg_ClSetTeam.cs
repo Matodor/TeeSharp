@@ -4,9 +4,9 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClSetTeam : BaseGameMessage
     {
-        public override GameMessages MsgId { get; } = GameMessages.CL_SETTEAM;
+        public override GameMessages Type => GameMessages.ClientSetTeam;
 
-        public Team Team;
+        public Team Team { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {
