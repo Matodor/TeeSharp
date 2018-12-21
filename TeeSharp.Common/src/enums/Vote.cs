@@ -8,6 +8,8 @@
         StartSpectator,
         EndAbort,
         EndPass,
-        EndFail
+        EndFail,
+
+        NumTypes,
     }
 }

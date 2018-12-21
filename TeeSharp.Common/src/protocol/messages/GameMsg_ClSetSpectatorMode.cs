@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClSetSpectatorMode : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ClientSetSpectatorMode;
+        public override GameMessage Type => GameMessage.ClientSetSpectatorMode;
 
         public SpectatorMode SpectatorMode { get; set; }
         public int SpectatorId { get; set; }
@@ -14,6 +14,17 @@ namespace TeeSharp.Common.Protocol
             packer.AddInt((int) SpectatorMode);
             packer.AddInt(SpectatorId);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            SpectatorMode = (SpectatorMode) unpacker.GetInt();
+            SpectatorId = unpacker.GetInt();
+
+            if (SpectatorMode < 0 || SpectatorMode >= SpectatorMode.NumModes)
+                failedOn = nameof(SpectatorMode);
+
+            return unpacker.Error;
         }
     }
 }

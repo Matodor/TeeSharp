@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClCallVote : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ClientCallVote;
+        public override GameMessage Type => GameMessage.ClientCallVote;
 
         public string VoteType { get; set; }
         public string Value { get; set; }
@@ -18,6 +18,16 @@ namespace TeeSharp.Common.Protocol
             packer.AddString(Reason);
             packer.AddBool(Force);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            VoteType = unpacker.GetString(Sanitize);
+            Value = unpacker.GetString(Sanitize);
+            Reason = unpacker.GetString(Sanitize);
+            Force = unpacker.GetBool();
+
+            return unpacker.Error;
         }
     }
 }

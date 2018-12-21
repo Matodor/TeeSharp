@@ -99,14 +99,14 @@ namespace TeeSharp.Server
         protected abstract void SendRconLineAuthed(string message, object data);
         protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
 
-        protected abstract void NetMsgPing(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRconAuth(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRconCmd(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgInput(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgEnterGame(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgReady(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgRequestMapData(Chunk packet, Unpacker unpacker, int clientId);
-        protected abstract void NetMsgInfo(Chunk packet, Unpacker unpacker, int clientId);
+        protected abstract void NetMsgPing(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgRconAuth(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgRconCmd(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgInput(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgEnterGame(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgRequestMapData(Chunk packet, UnPacker unPacker, int clientId);
+        protected abstract void NetMsgInfo(Chunk packet, UnPacker unPacker, int clientId);
 
         protected abstract void ConsoleReload(ConsoleResult result, object data);
         protected abstract void ConsoleLogout(ConsoleResult result, object data);

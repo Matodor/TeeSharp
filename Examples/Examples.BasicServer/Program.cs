@@ -7,7 +7,7 @@ namespace Examples.BasicServer
     {
         internal static void Main(string[] args)
         {
-            var kernel = new Kernel(new DefaultServerKernel());
+            var kernel = new Kernel(new ServerKernelConfig());
             var server = kernel.Get<BaseServer>();
             server.Init(args);
             server.Run();

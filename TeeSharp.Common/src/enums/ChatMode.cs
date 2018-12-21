@@ -1,10 +1,12 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Chat
+    public enum ChatMode
     {
         None = 0,
         All,
         Team,
-        Whisper
+        Whisper,
+
+        NumModes,
     }
 }

@@ -4,9 +4,9 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClSay : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ClientSay;
+        public override GameMessage Type => GameMessage.ClientSay;
 
-        public Chat ChatMode { get; set; }
+        public ChatMode ChatMode { get; set; }
         public int TargetId { get; set; }
         public string Message { get; set; }
 
@@ -16,6 +16,18 @@ namespace TeeSharp.Common.Protocol
             packer.AddInt(TargetId);
             packer.AddString(Message);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            ChatMode = (ChatMode) unpacker.GetInt();
+            TargetId = unpacker.GetInt();
+            Message = unpacker.GetString(Sanitize);
+
+            if (ChatMode < 0 || ChatMode >= ChatMode.NumModes)
+                failedOn = nameof(ChatMode);
+
+            return unpacker.Error;
         }
     }
 }

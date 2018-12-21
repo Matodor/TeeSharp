@@ -5,7 +5,7 @@ using TeeSharp.Core;
 
 namespace TeeSharp.Common
 {
-    public class Unpacker
+    public class UnPacker
     {
         public bool Error { get; private set; }
 
@@ -20,6 +20,23 @@ namespace TeeSharp.Common
             _index = 0;
 
             Error = false;
+        }
+
+        public void GetBool(bool[] array)
+        {
+            for (var i = 0; i < array.Length; i++)
+                array[i] = GetBool();
+        }
+
+        public bool GetBool()
+        {
+            return GetInt() == 1;
+        }
+
+        public void GetInt(int[] array)
+        {
+            for (var i = 0; i < array.Length; i++)
+                array[i] = GetInt();
         }
 
         public int GetInt()
@@ -41,6 +58,12 @@ namespace TeeSharp.Common
             }
 
             return result;
+        }
+
+        public void GetString(string[] array, SanitizeType flags = 0)
+        {
+            for (var i = 0; i < array.Length; i++)
+                array[i] = GetString(flags);
         }
 
         public string GetString(SanitizeType flags = 0)

@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvTeam : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerTeam;
+        public override GameMessage Type => GameMessage.ServerTeam;
 
         public int ClientId { get; set; }
         public Team Team { get; set; }
@@ -18,6 +18,19 @@ namespace TeeSharp.Common.Protocol
             packer.AddBool(Silent);
             packer.AddInt(CooldownTick);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            ClientId = unpacker.GetInt();
+            Team = (Team) unpacker.GetInt();
+            Silent = unpacker.GetBool();
+            CooldownTick = unpacker.GetInt();
+
+            if (Team < Team.Spectators || Team > Team.Blue)
+                failedOn = nameof(Team);
+
+            return unpacker.Error;
         }
     }
 }

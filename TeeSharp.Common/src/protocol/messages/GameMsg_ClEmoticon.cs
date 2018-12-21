@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClEmoticon : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ClientEmoticon;
+        public override GameMessage Type => GameMessage.ClientEmoticon;
 
         public Emoticons Emoticon { get; set; }
 
@@ -12,6 +12,16 @@ namespace TeeSharp.Common.Protocol
         {
             packer.AddInt((int) Emoticon);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Emoticon = (Emoticons) unpacker.GetInt();
+
+            if (Emoticon < 0 || Emoticon >= Emoticons.NumEmoticons)
+                failedOn = nameof(Emoticon);
+
+            return unpacker.Error;
         }
     }
 }

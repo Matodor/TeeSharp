@@ -45,7 +45,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnInit();
         public abstract void OnTick();
         public abstract void OnShutdown();
-        public abstract void OnMessage(int msgId, Unpacker unpacker, int clientId);
+        public abstract void OnMessage(int msgId, UnPacker unPacker, int clientId);
         public abstract void OnBeforeSnapshots();
         public abstract void OnAfterSnapshots();
         public abstract void OnSnapshot(int snappingId);

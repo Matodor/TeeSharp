@@ -200,7 +200,7 @@ namespace TeeSharp.Server.Game
 
         public override void SendTuningParams(int clientId)
         {
-            var msg = new MsgPacker((int) GameMessages.SV_TUNEPARAMS);
+            var msg = new MsgPacker((int) GameMessage.SV_TUNEPARAMS);
             foreach (var pair in Tuning)
                 msg.AddInt(pair.Value.Value);
             Server.SendMsg(msg, MsgFlags.Vital, clientId);
@@ -292,11 +292,11 @@ namespace TeeSharp.Server.Game
             throw new System.NotImplementedException();
         }
 
-        public override void OnMessage(int msgId, Unpacker unpacker, int clientId)
+        public override void OnMessage(int msgId, UnPacker unPacker, int clientId)
         {
-            if (!GameMsgUnpacker.Unpack(msgId, unpacker, out var msg, out var error))
+            if (!GameMsgUnpacker.UnpackMessage(msgId, unPacker, out var msg, out var error))
             {
-                Console.Print(OutputLevel.DEBUG, "server", $"dropped gamemessage='{(GameMessages) msgId}' ({msgId}), failed on '{error}'");
+                Console.Print(OutputLevel.DEBUG, "server", $"dropped gamemessage='{(GameMessage) msgId}' ({msgId}), failed on '{error}'");
                 return;
             }
 
@@ -304,37 +304,37 @@ namespace TeeSharp.Server.Game
             
             if (!Server.ClientInGame(clientId))
             {
-                if (msg.Type == GameMessages.CL_STARTINFO) 
+                if (msg.Type == GameMessage.CL_STARTINFO) 
                     OnMsgStartInfo(player, (GameMsg_ClStartInfo) msg);
             }
             else
             {
                 switch (msg.Type)
                 {
-                    case GameMessages.CL_SAY:
+                    case GameMessage.CL_SAY:
                         OnMsgSay(player, (GameMsg_ClSay)msg);
                         break;
 
-                    case GameMessages.CL_SETTEAM:
+                    case GameMessage.CL_SETTEAM:
                         OnMsgSetTeam(player, (GameMsg_ClSetTeam) msg);
                         break;
 
-                    case GameMessages.CL_SETSPECTATORMODE:
+                    case GameMessage.CL_SETSPECTATORMODE:
                         OnMsgSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) msg);
                         break;
 
-                    case GameMessages.CL_CHANGEINFO:
+                    case GameMessage.CL_CHANGEINFO:
                         break;
-                    case GameMessages.CL_KILL:
+                    case GameMessage.CL_KILL:
                         break;
-                    case GameMessages.CL_EMOTICON:
+                    case GameMessage.CL_EMOTICON:
                         break;
-                    case GameMessages.CL_VOTE:
+                    case GameMessage.CL_VOTE:
                         break;
-                    case GameMessages.CL_CALLVOTE:
+                    case GameMessage.CL_CALLVOTE:
                         break;
-                    case GameMessages.CL_ISDDNET:
-                        OnMsgIsDDNet(unpacker, player, (GameMsg_ClIsDDNet) msg);
+                    case GameMessage.CL_ISDDNET:
+                        OnMsgIsDDNet(unPacker, player, (GameMsg_ClIsDDNet) msg);
                         break;
                 }
             }
@@ -414,10 +414,10 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        protected virtual void OnMsgIsDDNet(Unpacker unpacker, BasePlayer player, GameMsg_ClIsDDNet msg)
+        protected virtual void OnMsgIsDDNet(UnPacker unPacker, BasePlayer player, GameMsg_ClIsDDNet msg)
         {
-            var version = unpacker.GetInt();
-            if (unpacker.Error)
+            var version = unPacker.GetInt();
+            if (unPacker.Error)
             {
                 if (player.ClientVersion < ClientVersion.DDRACE)
                     player.ClientVersion = ClientVersion.DDRACE;

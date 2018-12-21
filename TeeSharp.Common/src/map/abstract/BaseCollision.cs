@@ -1,18 +1,10 @@
 ﻿using System;
+using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Common
 {
-    [Flags]
-    public enum TileFlags
-    {
-        NONE = 0,
-        SOLID = 1 << 0,
-        DEATH = 1 << 1,
-        NOHOOK = 1 << 2
-    }
-
     public abstract class BaseCollision : BaseInterface
     {
         public abstract int Width { get; protected set; }

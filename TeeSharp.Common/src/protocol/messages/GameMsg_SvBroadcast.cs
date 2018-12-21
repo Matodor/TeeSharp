@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvBroadcast : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerBroadcast;
+        public override GameMessage Type => GameMessage.ServerBroadcast;
 
         public string Message { get; set; }
 
@@ -12,6 +12,12 @@ namespace TeeSharp.Common.Protocol
         {
             packer.AddString(Message);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Message = unpacker.GetString(Sanitize);
+            return unpacker.Error;
         }
     }
 }

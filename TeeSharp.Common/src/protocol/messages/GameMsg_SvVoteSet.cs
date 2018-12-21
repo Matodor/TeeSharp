@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvVoteSet : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerVoteSet;
+        public override GameMessage Type => GameMessage.ServerVoteSet;
 
         public int ClientID { get; set; }
         public Vote VoteType { get; set; }
@@ -20,6 +20,22 @@ namespace TeeSharp.Common.Protocol
             packer.AddString(Description);
             packer.AddString(Reason);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            ClientID = unpacker.GetInt();
+            VoteType = (Vote) unpacker.GetInt();
+            Timeout = unpacker.GetInt();
+            Description = unpacker.GetString(Sanitize);
+            Reason = unpacker.GetString(Sanitize);
+
+            if (VoteType < 0 || VoteType >= Vote.NumTypes)
+                failedOn = nameof(VoteType);
+            if (Timeout < 0 || Timeout > 60)
+                failedOn = nameof(Timeout);
+
+            return unpacker.Error;
         }
     }
 }

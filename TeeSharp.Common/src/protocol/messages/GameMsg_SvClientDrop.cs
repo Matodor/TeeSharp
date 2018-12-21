@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvClientDrop : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerClientDrop;
+        public override GameMessage Type => GameMessage.ServerClientDrop;
 
         public int ClientID { get; set; }
         public string Reason { get; set; }
@@ -16,6 +16,18 @@ namespace TeeSharp.Common.Protocol
             packer.AddString(Reason);
             packer.AddBool(Silent);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            ClientID = unpacker.GetInt();
+            Reason = unpacker.GetString(Sanitize);
+            Silent = unpacker.GetBool();
+
+            if (ClientID < 0)
+                failedOn = nameof(ClientID);
+
+            return unpacker.Error;
         }
     }
 }

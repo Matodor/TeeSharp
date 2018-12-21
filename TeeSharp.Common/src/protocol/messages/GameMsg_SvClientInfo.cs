@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvClientInfo : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerClientInfo;
+        public override GameMessage Type => GameMessage.ServerClientInfo;
 
         public int ClientID { get; set; }
         public bool Local { get; set; }
@@ -40,6 +40,29 @@ namespace TeeSharp.Common.Protocol
             packer.AddBool(Silent);
 
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            ClientID = unpacker.GetInt();
+            Local = unpacker.GetBool();
+            Team = (Team) unpacker.GetInt();
+            Name = unpacker.GetString(Sanitize);
+            Clan = unpacker.GetString(Sanitize);
+            Country = unpacker.GetInt();
+
+            unpacker.GetString(SkinPartNames, Sanitize);
+            unpacker.GetBool(UseCustomColors);
+            unpacker.GetInt(SkinPartColors);
+
+            Silent = unpacker.GetBool();
+
+            if (ClientID < 0)
+                failedOn = nameof(ClientID);
+            if (Team < Team.Spectators || Team > Team.Blue)
+                failedOn = nameof(Team);
+
+            return unpacker.Error;
         }
     }
 }

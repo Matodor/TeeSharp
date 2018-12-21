@@ -61,15 +61,6 @@
             return inputOffset;
         }
 
-        /*public static void PasteInt(int value, byte[] destData, int destIndex)
-        {
-            var bytes = BitConverter.GetBytes(value);
-            destData[destIndex + 0] = bytes[0];
-            destData[destIndex + 1] = bytes[1];
-            destData[destIndex + 2] = bytes[2];
-            destData[destIndex + 3] = bytes[3];
-        }*/
-
         public static int Decompress(byte[] inputData, int inputOffset, 
             int inputSize, int[] outputData, int outputOffset)
         {

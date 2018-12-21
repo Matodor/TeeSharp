@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_DeClientLeave : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.DemoClientLeave;
+        public override GameMessage Type => GameMessage.DemoClientLeave;
 
         public string Name { get; set; }
         public int ClientId { get; set; }
@@ -16,6 +16,15 @@ namespace TeeSharp.Common.Protocol
             packer.AddInt(ClientId);
             packer.AddString(Reason);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Name = unpacker.GetString(Sanitize);
+            ClientId = unpacker.GetInt();
+            Reason = unpacker.GetString(Sanitize);
+
+            return unpacker.Error;
         }
     }
 }

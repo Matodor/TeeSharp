@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum GameMessages
+    public enum GameMessage
     {
         Invalid = 0,
 

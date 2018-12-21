@@ -1,4 +1,6 @@
-﻿namespace TeeSharp.Common
+﻿using System;
+
+namespace TeeSharp.Common
 {
     public static class MathHelper
     {
@@ -122,7 +124,7 @@
             var v = (linePoint1 - linePoint0).Normalized;
             var l = (linePoint0 - linePoint1).Length;
             var t = Dot(v, c) / l;
-            return Mix(linePoint0, linePoint1, System.Math.Clamp(t, 0, 1));
+            return Mix(linePoint0, linePoint1, Math.Clamp(t, 0, 1));
         }
 
         public static float VelocityRamp(float value, float start,
@@ -130,17 +132,22 @@
         {
             if (value < start)
                 return 1.0f;
-            return (float)(1.0f / System.Math.Pow(curvature, (value - start) / range));
+            return (float)(1.0f / Math.Pow(curvature, (value - start) / range));
         }
 
-        public static float GetAngle(Vector2 Dir)
+        public static float Angle(Vector2 v)
         {
-            if (Dir.x == 0 && Dir.y == 0)
-                return 0.0f;
-            float a = (float)System.Math.Atan(Dir.y / Dir.x);
-            if (Dir.x < 0)
-                a = (float) (a + System.Math.PI);
-            return a;
+	        return (float) Math.Atan2(v.y, v.x);
         }
+
+        //public static float GetAngle(Vector2 Dir)
+        //{
+        //    if (Dir.x == 0 && Dir.y == 0)
+        //        return 0.0f;
+        //    float a = (float)System.Math.Atan(Dir.y / Dir.x);
+        //    if (Dir.x < 0)
+        //        a = (float) (a + System.Math.PI);
+        //    return a;
+        //}
     }
 }

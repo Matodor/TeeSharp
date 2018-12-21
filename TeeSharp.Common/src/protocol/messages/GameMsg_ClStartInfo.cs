@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_ClStartInfo : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ClientStartInfo;
+        public override GameMessage Type => GameMessage.ClientStartInfo;
 
         public string Name { get; set; }
         public string Clan { get; set; }
@@ -30,6 +30,18 @@ namespace TeeSharp.Common.Protocol
             packer.AddBool(UseCustomColors);
             packer.AddInt(SkinPartColors);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Name = unpacker.GetString(Sanitize);
+            Clan = unpacker.GetString(Sanitize);
+            Country = unpacker.GetInt();
+            unpacker.GetString(SkinPartNames, Sanitize);
+            unpacker.GetBool(UseCustomColors);
+            unpacker.GetInt(SkinPartColors);
+
+            return unpacker.Error;
         }
     }
 }

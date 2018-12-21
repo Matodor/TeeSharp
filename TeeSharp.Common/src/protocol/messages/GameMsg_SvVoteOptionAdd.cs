@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvVoteOptionAdd : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerVoteOptionAdd;
+        public override GameMessage Type => GameMessage.ServerVoteOptionAdd;
 
         public string Description { get; set; }
 
@@ -12,6 +12,12 @@ namespace TeeSharp.Common.Protocol
         {
             packer.AddString(Description);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Description = unpacker.GetString(Sanitize);
+            return unpacker.Error;
         }
     }
 }

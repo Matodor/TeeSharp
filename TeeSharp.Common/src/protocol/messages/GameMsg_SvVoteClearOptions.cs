@@ -4,11 +4,16 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvVoteClearOptions : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerVoteClearOptions;
+        public override GameMessage Type => GameMessage.ServerVoteClearOptions;
 
         public override bool PackError(MsgPacker packer)
         {
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            return unpacker.Error;
         }
     }
 }

@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_SvGameInfo : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.ServerGameInfo;
+        public override GameMessage Type => GameMessage.ServerGameInfo;
 
         public GameFlags GameFlags { get; set; }
         public int ScoreLimit { get; set; }
@@ -20,6 +20,28 @@ namespace TeeSharp.Common.Protocol
             packer.AddInt(MatchNum);
             packer.AddInt(MatchCurrent);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            GameFlags = (GameFlags) unpacker.GetInt();
+            ScoreLimit = unpacker.GetInt();
+            TimeLimit = unpacker.GetInt();
+            MatchNum = unpacker.GetInt();
+            MatchCurrent = unpacker.GetInt();
+
+            if (GameFlags < 0)
+                failedOn = nameof(GameFlags);
+            if (ScoreLimit < 0)
+                failedOn = nameof(ScoreLimit);
+            if (TimeLimit < 0)
+                failedOn = nameof(TimeLimit);
+            if (MatchNum < 0)
+                failedOn = nameof(MatchNum);
+            if (MatchCurrent < 0)
+                failedOn = nameof(MatchCurrent);
+
+            return unpacker.Error;
         }
     }
 }

@@ -8,6 +8,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Game;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
@@ -22,10 +23,12 @@ using SnapshotItem = TeeSharp.Common.Snapshots.SnapshotItem;
 
 namespace TeeSharp.Server
 {
-    public class DefaultServerKernel : IKernelConfig
+    public class ServerKernelConfig : DefaultKernelConfig
     {
-        public void Load(IKernel kernel)
+        public override void Load(IKernel kernel)
         {
+            base.Load(kernel);
+
             // singletons
             kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
             kernel.Bind<BaseServer>().To<Server>().AsSingleton();
@@ -524,7 +527,7 @@ namespace TeeSharp.Server
         protected override void ProcessClientPacket(Chunk packet)
         {
             var clientId = packet.ClientId;
-            var unpacker = new Unpacker();
+            var unpacker = new UnPacker();
             unpacker.Reset(packet.Data, packet.DataSize);
 
             var msg = unpacker.GetInt();
@@ -596,19 +599,19 @@ namespace TeeSharp.Server
             }
         }
 
-        protected override void NetMsgPing(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgPing(Chunk packet, UnPacker unPacker, int clientId)
         {
             var msg = new MsgPacker((int) NetworkMessages.PING_REPLY);
             SendMsgEx(msg, 0, clientId, true);
         }
 
-        protected override void NetMsgRconAuth(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRconAuth(Chunk packet, UnPacker unPacker, int clientId)
         {
-            var login = unpacker.GetString();
-            var password = unpacker.GetString();
+            var login = unPacker.GetString();
+            var password = unPacker.GetString();
 
             SendRconLine(clientId, password);
-            if (!packet.Flags.HasFlag(SendFlags.VITAL) || unpacker.Error)
+            if (!packet.Flags.HasFlag(SendFlags.VITAL) || unPacker.Error)
                 return;
 
             if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
@@ -636,18 +639,18 @@ namespace TeeSharp.Server
             }
         }
 
-        protected override void NetMsgRconCmd(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRconCmd(Chunk packet, UnPacker unPacker, int clientId)
         {
             
         }
 
-        protected override void NetMsgInput(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgInput(Chunk packet, UnPacker unPacker, int clientId)
         {
-            Clients[clientId].LastAckedSnapshot = unpacker.GetInt();
-            var intendedTick = unpacker.GetInt();
-            var size = unpacker.GetInt();
+            Clients[clientId].LastAckedSnapshot = unPacker.GetInt();
+            var intendedTick = unPacker.GetInt();
+            var size = unPacker.GetInt();
 
-            if (unpacker.Error || size / sizeof(int) > BaseServerClient.MAX_INPUT_SIZE)
+            if (unPacker.Error || size / sizeof(int) > BaseServerClient.MAX_INPUT_SIZE)
                 return;
 
             if (Clients[clientId].LastAckedSnapshot > 0)
@@ -679,7 +682,7 @@ namespace TeeSharp.Server
 
             var data = new int[size / sizeof(int)];
             for (var i = 0; i < data.Length; i++)
-                data[i] = unpacker.GetInt();
+                data[i] = unPacker.GetInt();
 
             input.Tick = intendedTick;
             input.PlayerInput.Deserialize(data, 0);
@@ -691,7 +694,7 @@ namespace TeeSharp.Server
                 GameContext.OnClientDirectInput(clientId, input.PlayerInput);
         }
 
-        protected override void NetMsgEnterGame(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgEnterGame(Chunk packet, UnPacker unPacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.READY || 
                 !GameContext.IsClientReady(clientId))
@@ -704,7 +707,7 @@ namespace TeeSharp.Server
             GameContext.OnClientEnter(clientId);
         }
 
-        protected override void NetMsgReady(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.CONNECTING)
                 return;
@@ -717,12 +720,12 @@ namespace TeeSharp.Server
             SendMsgEx(msg, MsgFlags.Vital | MsgFlags.Flush, clientId, true);
         }
 
-        protected override void NetMsgRequestMapData(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgRequestMapData(Chunk packet, UnPacker unPacker, int clientId)
         {
             if (Clients[clientId].State < ServerClientState.CONNECTING)
                 return;
 
-            var chunk = unpacker.GetInt();
+            var chunk = unPacker.GetInt();
             var chunkSize = 1024 - 128;
             var offset = chunk * chunkSize;
             var last = 0;
@@ -754,19 +757,19 @@ namespace TeeSharp.Server
             SendMapData(last, chunk, chunkSize, offset, clientId);
         }
 
-        protected override void NetMsgInfo(Chunk packet, Unpacker unpacker, int clientId)
+        protected override void NetMsgInfo(Chunk packet, UnPacker unPacker, int clientId)
         {
             if (Clients[clientId].State != ServerClientState.AUTH)
                 return;
 
-            var version = unpacker.GetString(SanitizeType.SanitizeCC);
+            var version = unPacker.GetString(SanitizeType.SanitizeCC);
             if (string.IsNullOrEmpty(version) || !version.StartsWith(GameContext.NetVersion))
             {
                 NetworkServer.Drop(clientId, $"Wrong version. Server is running '{GameContext.NetVersion}' and client '{version}'");
                 return;
             }
 
-            var password = unpacker.GetString(SanitizeType.SanitizeCC);
+            var password = unPacker.GetString(SanitizeType.SanitizeCC);
             if (!string.IsNullOrEmpty(Config["Password"]) && password != Config["Password"])
             {
                 NetworkServer.Drop(clientId, "Wrong password");

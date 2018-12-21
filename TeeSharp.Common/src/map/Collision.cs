@@ -1,4 +1,5 @@
-﻿using TeeSharp.Map.MapItems;
+﻿using TeeSharp.Common.Enums;
+using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Common
 {

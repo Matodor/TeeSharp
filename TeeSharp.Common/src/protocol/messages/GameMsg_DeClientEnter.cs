@@ -4,7 +4,7 @@ namespace TeeSharp.Common.Protocol
 {
     public class GameMsg_DeClientEnter : BaseGameMessage
     {
-        public override GameMessages Type => GameMessages.DemoClientEnter;
+        public override GameMessage Type => GameMessage.DemoClientEnter;
 
         public string Name { get; set; }
         public int ClientId { get; set; }
@@ -16,6 +16,18 @@ namespace TeeSharp.Common.Protocol
             packer.AddInt(ClientId);
             packer.AddInt((int) Team);
             return packer.Error;
+        }
+
+        public override bool UnPackError(UnPacker unpacker, ref string failedOn)
+        {
+            Name = unpacker.GetString(Sanitize);
+            ClientId = unpacker.GetInt();
+            Team = (Team) unpacker.GetInt();
+
+            if (Team < Team.Spectators || Team > Team.Blue)
+                failedOn = nameof(Team);
+
+            return unpacker.Error;
         }
     }
 }

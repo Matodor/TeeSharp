@@ -323,7 +323,7 @@ namespace TeeSharp.Server.Game.Entities
                 projStartPos, direction, (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
                 1, true, 0f, Sound.GrenadeExplode);
 
-            var msg = new MsgPacker((int)GameMessages.SV_EXTRAPROJECTILE);
+            var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
             msg.AddInt(1);
 
             var snapObj = new SnapObj_Projectile();
@@ -339,7 +339,7 @@ namespace TeeSharp.Server.Game.Entities
             const int SHOT_SPREAD = 2;
 
             var spreading = new[] { -0.185f, -0.070f, 0, 0.070f, 0.185f };
-            var msg = new MsgPacker((int)GameMessages.SV_EXTRAPROJECTILE);
+            var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
             msg.AddInt(SHOT_SPREAD * 2 + 1);
 
             for (var i = -SHOT_SPREAD; i <= SHOT_SPREAD; i++)
@@ -371,7 +371,7 @@ namespace TeeSharp.Server.Game.Entities
                 1, false, 0f, (Sound)(-1));
 
             var snapObj = new SnapObj_Projectile();
-            var msg = new MsgPacker((int)GameMessages.SV_EXTRAPROJECTILE);
+            var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
             msg.AddInt(1);
 
             projectile.FillInfo(snapObj);
