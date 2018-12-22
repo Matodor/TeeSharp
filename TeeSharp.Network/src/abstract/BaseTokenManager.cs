@@ -19,7 +19,7 @@ namespace TeeSharp.Network
         public abstract void Init(UdpClient client, int seedTime = NetworkHelper.SeedTime);
         public abstract void Update();
         public abstract void GenerateSeed();
-        public abstract bool ProcessMessage(IPEndPoint endPoint, 
+        public abstract int ProcessMessage(IPEndPoint endPoint, 
             ChunkConstruct chunkConstruct);
         public abstract bool CheckToken(IPEndPoint endPoint, uint token,
             uint responseToken, ref bool broadcastResponse);

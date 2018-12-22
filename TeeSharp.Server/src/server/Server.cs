@@ -119,7 +119,7 @@ namespace TeeSharp.Server
             if (!StartNetworkServer())
                 return;
 
-            Clients = new BaseServerClient[NetworkServer.ServerConfig.MaxClients];
+            Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
             IdMap = new int[Clients.Length * VANILLA_MAX_CLIENTS];
 
             for (var i = 0; i < Clients.Length; i++)
@@ -132,9 +132,9 @@ namespace TeeSharp.Server
             StartTime = Time.Get();
             IsRunning = true;
 
-            _lastSent = new int[NetworkServer.ServerConfig.MaxClients];
-            _lastAsk = new int[NetworkServer.ServerConfig.MaxClients];
-            _lastAskTick = new int[NetworkServer.ServerConfig.MaxClients];
+            _lastSent = new int[NetworkServer.Config.MaxClients];
+            _lastAsk = new int[NetworkServer.Config.MaxClients];
+            _lastAskTick = new int[NetworkServer.Config.MaxClients];
 
             while (IsRunning)
             {
@@ -776,7 +776,7 @@ namespace TeeSharp.Server
                 return;
             }
 
-            if (clientId >= NetworkServer.ServerConfig.MaxClients - Config["SvReservedSlots"] &&
+            if (clientId >= NetworkServer.Config.MaxClients - Config["SvReservedSlots"] &&
                 !string.IsNullOrEmpty(Config["SvReservedSlotsPass"]) &&
                 password != Config["SvReservedSlotsPass"])
             {
@@ -1080,7 +1080,7 @@ namespace TeeSharp.Server
                 var packer = new Packer();
                 var playersCount = 0;
                 var clientsCount = 0;
-                var maxClients = NetworkServer.ServerConfig.MaxClients;
+                var maxClients = NetworkServer.Config.MaxClients;
 
                 for (var i = 0; i < Clients.Length; i++)
                 {

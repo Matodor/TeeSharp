@@ -44,7 +44,7 @@ namespace Examples.MasterServer
 
             while (true)
             {
-                while (_networkClient.Receive(out var packet))
+                while (_networkClient.Receive(ref var packet, ref TODO))
                 {
                     if (packet.ClientId == -1)
                         _masterServerBrowser.OnPacket(packet);

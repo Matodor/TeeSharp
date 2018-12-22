@@ -6,6 +6,11 @@ using TeeSharp.Network.Enums;
 
 namespace TeeSharp.Network
 {
+    public struct ConnectionConfig
+    {
+        public int Timeout;
+    }
+
     public abstract class BaseNetworkConnection : BaseInterface
     {
         public virtual ConnectionState State { get; protected set; }
@@ -13,12 +18,12 @@ namespace TeeSharp.Network
         public virtual string Error { get; protected set; }
 
         public virtual long ConnectedAt { get; protected set; }
+        public virtual long LastReceiveTime { get; protected set; }
         public virtual int Ack { get; set; }
 
         protected virtual int Sequence { get; set; }
         protected virtual int PeerAck { get; set; }
 
-        protected virtual long LastReceiveTime { get; set; }
         protected virtual long LastSendTime { get; set; }
 
         protected virtual bool RemoteClosed { get; set; }
@@ -29,8 +34,9 @@ namespace TeeSharp.Network
         protected virtual uint Token { get; set; }
         protected virtual uint PeerToken { get; set; }
         protected virtual UdpClient UdpClient { get; set; } 
+        protected virtual ConnectionConfig Config { get; set; } 
 
-        public abstract void Init(UdpClient udpClient);
+        public abstract void Init(UdpClient udpClient, ConnectionConfig config);
         public abstract bool Connect(IPEndPoint endPoint);
         public abstract void Disconnect(string reason);
         public abstract void SetToken(uint token);

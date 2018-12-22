@@ -36,25 +36,30 @@ namespace TeeSharp.Network
             NextSeedTime = Time.Get() + Time.Freq() * SeedTime;
         }
 
-        public override bool ProcessMessage(IPEndPoint endPoint, ChunkConstruct packet)
+        public override int ProcessMessage(IPEndPoint endPoint, ChunkConstruct packet)
         {
             var broadcastResponse = false;
 
             if (packet.Token != TokenHelper.TokenNone && 
                 !CheckToken(endPoint, packet.Token, packet.ResponseToken, ref broadcastResponse))
             {
-                return false;
+                return 0;
             }
 
             var verified = packet.Token != TokenHelper.TokenNone;
             var tokenMessage = packet.Flags.HasFlag(PacketFlags.Control) &&
                                packet.Data[0] == (int) ConnectionMessages.Token;
 
-            if (packet.Flags.HasFlag(PacketFlags.Connless) || !tokenMessage)
-                return verified && !broadcastResponse;
+            if (packet.Flags.HasFlag(PacketFlags.Connless))
+                return (verified && !broadcastResponse) ? 1 : 0;
+
+            if (!tokenMessage)
+            {
+                return (verified && !broadcastResponse) ? 1 : 0;
+            }
 
             if (verified)
-                return !broadcastResponse;
+                return broadcastResponse ? -1 : 1;
 
             if (packet.DataSize >= TokenHelper.TokenRequestDataSize)
             {
@@ -63,7 +68,7 @@ namespace TeeSharp.Network
                     GenerateToken(endPoint), false);
             }
 
-            return false;
+            return 0;
         }
 
         public override bool CheckToken(IPEndPoint endPoint, uint token,

@@ -49,9 +49,10 @@ namespace TeeSharp.Network
             Token = token;
         }
 
-        public override void Init(UdpClient udpClient)
+        public override void Init(UdpClient udpClient, ConnectionConfig config)
         {
             Reset();
+            Config = config;
             UdpClient = udpClient;
         }
 
@@ -330,7 +331,7 @@ namespace TeeSharp.Network
 
             if (State != ConnectionState.Offline &&
                 State != ConnectionState.Token &&
-                now - LastReceiveTime > Time.Freq() * 10)
+                now - LastReceiveTime > Time.Freq() * Config.Timeout)
             {
                 State = ConnectionState.Error;
                 Error = "Timeout";
@@ -338,10 +339,10 @@ namespace TeeSharp.Network
 
             if (ChunksForResends.Count > 0)
             {
-                if (now - ChunksForResends[0].FirstSendTime > Time.Freq() * 10)
+                if (now - ChunksForResends[0].FirstSendTime > Time.Freq() * Config.Timeout)
                 {
                     State = ConnectionState.Error;
-                    Error = "Too weak connection (not acked for 10 seconds)";
+                    Error = $"Too weak connection (not acked for {Config.Timeout} seconds)";
                 }
                 else if (now - ChunksForResends[0].LastSendTime > Time.Freq())
                 {

@@ -13,11 +13,12 @@ namespace TeeSharp.Network
         public IPEndPoint BindEndPoint;
         public int MaxClients;
         public int MaxClientsPerIp;
+        public ConnectionConfig ConnectionConfig;
     }
 
     public abstract class BaseNetworkServer : BaseInterface
     {
-        public virtual NetworkServerConfig ServerConfig { get; protected set; }
+        public virtual NetworkServerConfig Config { get; protected set; }
 
         protected virtual UdpClient UdpClient { get; set; }
         protected virtual BaseNetworkBan NetworkBan { get; set; }

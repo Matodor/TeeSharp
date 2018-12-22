@@ -26,14 +26,13 @@ namespace TeeSharp.Network
             TokenManager.Init(UdpClient);
             TokenCache.Init(UdpClient, TokenManager);
 
-            ServerConfig = CheckConfig(config);
-            // TODO
-            Connections = new BaseNetworkConnection[ServerConfig.MaxClients];
+            Config = CheckConfig(config);
+            Connections = new BaseNetworkConnection[Config.MaxClients];
 
             for (var i = 0; i < Connections.Count; i++)
             {
                 Connections[i] = Kernel.Get<BaseNetworkConnection>();
-                Connections[i].Init(UdpClient);
+                Connections[i].Init(UdpClient, Config.ConnectionConfig);
             }
 
             return true;
@@ -153,18 +152,19 @@ namespace TeeSharp.Network
                 if (foundSlot >= 0)
                     continue;
 
-                if (!TokenManager.ProcessMessage(endPoint, ChunkReceiver.ChunkConstruct))
+                var accept = TokenManager.ProcessMessage(endPoint, ChunkReceiver.ChunkConstruct);
+                if (accept <= 0)
                     continue;
 
                 if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Control))
                 {
                     if (ChunkReceiver.ChunkConstruct.Data[0] == (int) ConnectionMessages.Connect)
                     {
-                        if (sameIps >= ServerConfig.MaxClientsPerIp)
+                        if (sameIps >= Config.MaxClientsPerIp)
                         {
                             NetworkHelper.SendConnectionMsg(UdpClient, endPoint, 
                                 ChunkReceiver.ChunkConstruct.ResponseToken, 0, 
-                                ConnectionMessages.Close, $"Only {ServerConfig.MaxClientsPerIp} players with the same IP are allowed");
+                                ConnectionMessages.Close, $"Only {Config.MaxClientsPerIp} players with the same IP are allowed");
                             return false;
                         }
 
@@ -289,9 +289,9 @@ namespace TeeSharp.Network
 
         public override void SetMaxClientsPerIp(int max)
         {
-            var config = ServerConfig;
+            var config = Config;
             config.MaxClientsPerIp = Math.Clamp(max, 1, config.MaxClients);
-            ServerConfig = config;
+            Config = config;
         }
 
         public override void AddToken(IPEndPoint endPoint, uint token)
