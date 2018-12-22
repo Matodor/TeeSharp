@@ -10,27 +10,27 @@ namespace TeeSharp.Common.Snapshots
     {
         public abstract SnapshotItems Type { get; }
 
-        /// <summary>
-        /// Serialized size in bytes
-        /// </summary>
-        [MarshalAs(UnmanagedType.I4)]
-        public readonly int Size;
-
-        protected BaseSnapshotItem()
+        public static T FromArray<T>(int[] array) where T : BaseSnapshotItem, new()
         {
-            Size = SnapshotItemsInfo.GetSize(GetType());
+            var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+            var ptr = handle.AddrOfPinnedObject();
+
+            var obj = Marshal.PtrToStructure<T>(ptr);
+            handle.Free();
+
+            return obj;
         }
 
-        public Span<int> ToArray()
+        public int[] ToArray()
         {
-            var array = new int[Size / sizeof(int)];
+            var array = new int[SnapshotItemsInfo.GetSize(GetType()) / sizeof(int)];
             var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
             var ptr = handle.AddrOfPinnedObject();
 
             Marshal.StructureToPtr(this, ptr, false);
             handle.Free();
 
-            return array.AsSpan(1); // ignore Size fields
+            return array;
         }
     }
 }

@@ -34,16 +34,16 @@ namespace TeeSharp.MasterServer
         public void OnPacket(Chunk packet)
         {
             // get servers from masterserver
-            if (packet.DataSize >= MasterServerPackets.SERVERBROWSE_LIST.Length + 1 &&
+            if (packet.DataSize >= MasterServerPackets.List.Length + 1 &&
                 packet.Data.ArrayCompare(
-                    MasterServerPackets.SERVERBROWSE_LIST,
-                    MasterServerPackets.SERVERBROWSE_LIST.Length))
+                    MasterServerPackets.List,
+                    MasterServerPackets.List.Length))
             {
                 if (!IsMasterServer(packet.EndPoint))
                     return;
 
                 var list = packet.Data.ReadStructs<MasterServerAddr>(
-                    MasterServerPackets.SERVERBROWSE_LIST.Length);
+                    MasterServerPackets.List.Length);
 
                 for (var i = 0; i < list.Length; i++)
                 {
@@ -101,8 +101,8 @@ namespace TeeSharp.MasterServer
             {
                 ClientId = -1,
                 Flags = SendFlags.CONNLESS,
-                DataSize = MasterServerPackets.SERVERBROWSE_GETLIST.Length,
-                Data = MasterServerPackets.SERVERBROWSE_GETLIST,
+                DataSize = MasterServerPackets.GetList.Length,
+                Data = MasterServerPackets.GetList,
                 EndPoint = masterServer
             });
 

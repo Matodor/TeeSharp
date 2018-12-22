@@ -799,14 +799,14 @@ namespace TeeSharp.Server
             {
                 if (packet.ClientId == -1)
                 {
-                    if (packet.DataSize == MasterServerPackets.SERVERBROWSE_GETINFO.Length + 1 &&
+                    if (packet.DataSize == MasterServerPackets.GetInfo.Length + 1 &&
                         packet.Data.ArrayCompare(
-                            MasterServerPackets.SERVERBROWSE_GETINFO,
-                            MasterServerPackets.SERVERBROWSE_GETINFO.Length))
+                            MasterServerPackets.GetInfo,
+                            MasterServerPackets.GetInfo.Length))
                     {
                         SendServerInfo(
                             packet.EndPoint,
-                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO.Length],
+                            packet.Data[MasterServerPackets.GetInfo.Length],
                             false
                         );
                     }
@@ -817,7 +817,7 @@ namespace TeeSharp.Server
                     {
                         SendServerInfo(
                             packet.EndPoint,
-                            packet.Data[MasterServerPackets.SERVERBROWSE_GETINFO.Length],
+                            packet.Data[MasterServerPackets.GetInfo.Length],
                             true
                         );
                     }
@@ -1094,7 +1094,7 @@ namespace TeeSharp.Server
 
                 packer.AddRaw(showMore
                     ? MasterServerPackets.SERVERBROWSE_INFO_64_LEGACY
-                    : MasterServerPackets.SERVERBROWSE_INFO);
+                    : MasterServerPackets.Info);
 
                 packer.AddString(token.ToString(), 6);
                 packer.AddString(GameContext.GameVersion, 32);

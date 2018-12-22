@@ -149,6 +149,8 @@ namespace TeeSharp.Common.Snapshots
             for (var i = 0; i < to.ItemsCount; i++)
             {
                 var currentItem = to[i];
+                var itemSize = SnapshotItemsInfo.GetSize(currentItem.Item.GetType());
+
                 var pastIndex = pastIndecies[i];
                 
                 if (pastIndex != -1)
@@ -156,7 +158,7 @@ namespace TeeSharp.Common.Snapshots
                     var pastItem = from[pastIndex];
                     var offset = outputOffset + 3;
 
-                    if (currentItem.Item.Size != 0)
+                    if (itemSize != 0)
                         offset = outputOffset + 2;
 
                     if (DiffItem(pastItem.Item, currentItem.Item,
@@ -165,10 +167,10 @@ namespace TeeSharp.Common.Snapshots
                         outputData[outputOffset++] = (int) currentItem.Item.Type;
                         outputData[outputOffset++] = currentItem.Id;
 
-                        if (currentItem.Item.Size == 0)
-                            outputData[outputOffset++] = currentItem.Item.Size / sizeof(int);
+                        if (itemSize == 0)
+                            outputData[outputOffset++] = itemSize / sizeof(int);
 
-                        outputOffset += currentItem.Item.Size / sizeof(int); // count item int fields
+                        outputOffset += itemSize / sizeof(int); // count item int fields
                         numUpdatedItems++;
                     }
                 }
@@ -177,8 +179,8 @@ namespace TeeSharp.Common.Snapshots
                     outputData[outputOffset++] = (int) currentItem.Item.Type;
                     outputData[outputOffset++] = currentItem.Id;
 
-                    if (currentItem.Item.Size == 0)
-                        outputData[outputOffset++] = currentItem.Item.Size / sizeof(int);
+                    if (itemSize == 0)
+                        outputData[outputOffset++] = itemSize / sizeof(int);
 
                     var data = currentItem.Item.ToArray();
                     var output = outputData.AsSpan(outputOffset, data.Length);
