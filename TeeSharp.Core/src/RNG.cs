@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Core
 {
     public static class RNG
     {

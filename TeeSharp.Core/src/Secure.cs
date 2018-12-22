@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Core
 {
     public static class Secure
     {

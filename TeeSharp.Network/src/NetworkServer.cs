@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using TeeSharp.Common.Config;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
 using TeeSharp.Network.Extensions;
@@ -16,7 +15,6 @@ namespace TeeSharp.Network
 
             NetworkBan = Kernel.Get<BaseNetworkBan>();
             ChunkReceiver = Kernel.Get<BaseChunkReceiver>();
-            Config = Kernel.Get<BaseConfig>();
         }
 
         public override bool Open(NetworkServerConfig config)

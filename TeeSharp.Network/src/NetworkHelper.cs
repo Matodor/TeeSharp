@@ -2,7 +2,6 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using TeeSharp.Common;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
 

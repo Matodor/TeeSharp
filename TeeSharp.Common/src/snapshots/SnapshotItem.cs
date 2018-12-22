@@ -8,6 +8,7 @@ namespace TeeSharp.Common.Snapshots
         public readonly int Key;
         public readonly BaseSnapshotItem Item;
 
+        // TODO make cached serialize
         public SnapshotItem(int id, BaseSnapshotItem item)
         {
             Key = Snapshot.Key(id, item.Type);

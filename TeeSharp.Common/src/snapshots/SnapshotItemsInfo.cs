@@ -14,14 +14,19 @@ namespace TeeSharp.Common.Snapshots
             _sizes = new Dictionary<Type, int>((int) SnapshotItems.NumItems);
         }
 
+        public static int GetSize(Type type)
+        {
+            if (_sizes.ContainsKey(type))
+                return _sizes[type];
+
+            var size = Marshal.SizeOf(type);
+            _sizes.Add(type, size);
+            return size;
+        }
+
         public static int GetSize<T>() where T : BaseSnapshotItem
         {
-            if (_sizes.ContainsKey(typeof(T)))
-                return _sizes[typeof(T)];
-
-            var size = Marshal.SizeOf<T>();
-            _sizes.Add(typeof(T), size);
-            return size;
+            return GetSize(typeof(T));
         }
     }
 }

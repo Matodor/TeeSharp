@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using TeeSharp.Common.Config;
 using TeeSharp.Core;
 
 namespace TeeSharp.Network
@@ -25,7 +24,6 @@ namespace TeeSharp.Network
         protected virtual IList<BaseNetworkConnection> Connections { get; set; }
 
         protected virtual BaseChunkReceiver ChunkReceiver { get; set; }
-        protected virtual BaseConfig Config { get; set; }
 
         protected virtual NewClientCallback ClientConnected { get; set; }
         protected virtual DelClientCallback ClientDisconnected { get; set; }

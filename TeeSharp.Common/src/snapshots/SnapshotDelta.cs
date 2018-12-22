@@ -21,94 +21,94 @@ namespace TeeSharp.Common.Snapshots
             }
         }
 
-        public static Snapshot UnpackDelta(Snapshot from, int[] inputData, 
-            int inputOffset, int inputSize)
-        {
-            var snapshotBuilder = new SnapshotBuilder();
-            var endIndex = inputOffset + inputSize;
+        //public static Snapshot UnpackDelta(Snapshot from, int[] inputData, 
+        //    int inputOffset, int inputSize)
+        //{
+        //    var snapshotBuilder = new SnapshotBuilder();
+        //    var endIndex = inputOffset + inputSize;
 
-            var numDeletedItems = inputData[inputOffset++];
-            var numUpdatedItems = inputData[inputOffset++];
-            var numTempItems = inputData[inputOffset++];
-            var deletedOffset = inputOffset;
+        //    var numDeletedItems = inputData[inputOffset++];
+        //    var numUpdatedItems = inputData[inputOffset++];
+        //    var numTempItems = inputData[inputOffset++];
+        //    var deletedOffset = inputOffset;
 
-            inputOffset += numDeletedItems;
+        //    inputOffset += numDeletedItems;
 
-            if (inputOffset > endIndex)
-                return null;
+        //    if (inputOffset > endIndex)
+        //        return null;
             
-            snapshotBuilder.StartBuild();
+        //    snapshotBuilder.StartBuild();
 
-            for (var i = 0; i < from.ItemsCount; i++)
-            {
-                var item = from[i];
-                var keep = true;
+        //    for (var i = 0; i < from.ItemsCount; i++)
+        //    {
+        //        var item = from[i];
+        //        var keep = true;
 
-                for (var d = 0; d < numDeletedItems; d++)
-                {
-                    if (inputData[deletedOffset + d] == item.Key)
-                    {
-                        keep = false;
-                        break;
-                    }
-                }
+        //        for (var d = 0; d < numDeletedItems; d++)
+        //        {
+        //            if (inputData[deletedOffset + d] == item.Key)
+        //            {
+        //                keep = false;
+        //                break;
+        //            }
+        //        }
 
-                if (keep)
-                {
-                    snapshotBuilder.AddItem(item.Item.MakeCopy(), item.Id);
-                }
-            }
+        //        if (keep)
+        //        {
+        //            snapshotBuilder.AddItem(item.Item.MakeCopy(), item.Id);
+        //        }
+        //    }
 
-            for (var i = 0; i < numUpdatedItems; i++)
-            {
-                if (inputOffset + 2 > endIndex)
-                    return null;
+        //    for (var i = 0; i < numUpdatedItems; i++)
+        //    {
+        //        if (inputOffset + 2 > endIndex)
+        //            return null;
 
-                var type = (SnapshotItems) inputData[inputOffset++];
-                var id = inputData[inputOffset++];
-                int itemSize; // in bytes
+        //        var type = (SnapshotItems) inputData[inputOffset++];
+        //        var id = inputData[inputOffset++];
+        //        int itemSize; // in bytes
 
-                if (SnapshotItemsInfo.GetSizeByType(type) != 0)
-                    itemSize = SnapshotItemsInfo.GetSizeByType(type);
-                else
-                {
-                    if (inputOffset + 1 > endIndex)
-                        return null;
+        //        if (SnapshotItemsInfo.GetSizeByType(type) != 0)
+        //            itemSize = SnapshotItemsInfo.GetSizeByType(type);
+        //        else
+        //        {
+        //            if (inputOffset + 1 > endIndex)
+        //                return null;
 
-                    itemSize = inputData[inputOffset++] * sizeof(int);
-                }
+        //            itemSize = inputData[inputOffset++] * sizeof(int);
+        //        }
 
-                if (itemSize < 0 || !RangeCheck(endIndex, inputOffset, itemSize / sizeof(int)))
-                    return null;
+        //        if (itemSize < 0 || !RangeCheck(endIndex, inputOffset, itemSize / sizeof(int)))
+        //            return null;
 
-                var key = ((int) type << 16) | id;
-                var newItem = snapshotBuilder.FindItem(key)?.Item;
+        //        var key = ((int) type << 16) | id;
+        //        var newItem = snapshotBuilder.FindItem(key)?.Item;
 
-                if (newItem == null)
-                {
-                    var item = SnapshotItemsInfo.GetInstanceByType(type);
-                    if (snapshotBuilder.AddItem(item, id))
-                        newItem = item;
-                }
+        //        if (newItem == null)
+        //        {
+        //            var item = SnapshotItemsInfo.GetInstanceByType(type);
+        //            if (snapshotBuilder.AddItem(item, id))
+        //                newItem = item;
+        //        }
 
-                if (newItem == null)
-                    return null;
+        //        if (newItem == null)
+        //            return null;
 
-                var fromItem = from.FindItem(key);
-                if (fromItem != null)
-                {
-                    UndiffItem(fromItem.Item, inputData, inputOffset, newItem);
-                }
-                else
-                {
-                    newItem.Deserialize(inputData, inputOffset);
-                }
+        //        var fromItem = from.FindItem(key);
+        //        if (fromItem != null)
+        //        {
+        //            UndiffItem(fromItem.Item, inputData, inputOffset, newItem);
+        //        }
+        //        else
+        //        {
+        //            newItem.Deserialize(inputData, inputOffset);
+        //        }
 
-                inputOffset += itemSize / sizeof(int);
-            }
+        //        inputOffset += itemSize / sizeof(int);
+        //    }
 
-            return snapshotBuilder.EndBuild();
-        }
+        //    return snapshotBuilder.EndBuild();
+        //}
 
         public static bool RangeCheck(int endIndex, int currentIndex, int size)
         {
@@ -139,7 +139,7 @@ namespace TeeSharp.Common.Snapshots
             }
 
             GenerateHash(hashItems, from);
-            var pastIndecies = new int[SnapshotBuilder.MAX_SNAPSHOT_ITEMS];
+            var pastIndecies = new int[SnapshotBuilder.MaxItems];
 
             // fetch previous indices
             // we do this as a separate pass because it helps the cache
@@ -156,32 +156,33 @@ namespace TeeSharp.Common.Snapshots
                     var pastItem = from[pastIndex];
                     var offset = outputOffset + 3;
 
-                    if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) != 0)
+                    if (currentItem.Item.Size != 0)
                         offset = outputOffset + 2;
 
                     if (DiffItem(pastItem.Item, currentItem.Item,
                             outputData, offset) != 0)
                     {
-                        outputData[outputOffset++] = (int) currentItem.Type;
+                        outputData[outputOffset++] = (int) currentItem.Item.Type;
                         outputData[outputOffset++] = currentItem.Id;
 
-                        if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) == 0)
-                            outputData[outputOffset++] = currentItem.Item.SerializeLength;
+                        if (currentItem.Item.Size == 0)
+                            outputData[outputOffset++] = currentItem.Item.Size / sizeof(int);
 
-                        outputOffset += currentItem.Item.SerializeLength; // count item int fields
+                        outputOffset += currentItem.Item.Size / sizeof(int); // count item int fields
                         numUpdatedItems++;
                     }
                 }
                 else
                 {
-                    outputData[outputOffset++] = (int) currentItem.Type;
+                    outputData[outputOffset++] = (int) currentItem.Item.Type;
                     outputData[outputOffset++] = currentItem.Id;
 
-                    if (SnapshotItemsInfo.GetSizeByType(currentItem.Type) == 0)
-                        outputData[outputOffset++] = currentItem.Item.SerializeLength;
+                    if (currentItem.Item.Size == 0)
+                        outputData[outputOffset++] = currentItem.Item.Size / sizeof(int);
 
-                    var data = currentItem.Item.Serialize();
-                    Array.Copy(data, 0, outputData, outputOffset, data.Length);
+                    var data = currentItem.Item.ToArray();
+                    var output = outputData.AsSpan(outputOffset, data.Length);
+                    data.CopyTo(output);
 
                     outputOffset += data.Length;
                     numUpdatedItems++;
@@ -198,28 +199,29 @@ namespace TeeSharp.Common.Snapshots
             return outputOffset;
         }
 
-        private static void UndiffItem(BaseSnapshotItem past, int[] inputData, 
-            int inputOffset, BaseSnapshotItem newItem)
-        {
-            var pastData = past.Serialize();
-            var newData = new int[pastData.Length];
+        // TODO
+        //private static void UndiffItem(BaseSnapshotItem past, int[] inputData, 
+        //    int inputOffset, BaseSnapshotItem newItem)
+        //{
+        //    var pastData = past.ToArray();
+        //    var newData = new int[pastData.Length];
 
-            for (int i = 0; i < past.SerializeLength; i++)
-            {
-                newData[i] = pastData[i] + inputData[inputOffset + i];
-            }
+        //    for (int i = 0; i < pastData.Length; i++)
+        //    {
+        //        newData[i] = pastData[i] + inputData[inputOffset + i];
+        //    }
 
-            newItem.Deserialize(newData, 0);
-        }
+        //    newItem.Deserialize(newData, 0);
+        //}
 
         private static int DiffItem(BaseSnapshotItem past, BaseSnapshotItem current,
             int[] outputData, int outputOffset)
         {
             var needed = 0;
-            var pastData = past.Serialize();
-            var currentdata = current.Serialize();
+            var pastData = past.ToArray();
+            var currentdata = current.ToArray();
 
-            for (int i = 0; i < current.SerializeLength; i++)
+            for (int i = 0; i < pastData.Length; i++)
             {
                 var @out = currentdata[i] - pastData[i];
                 needed |= @out;

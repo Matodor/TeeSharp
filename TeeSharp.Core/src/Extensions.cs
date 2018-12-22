@@ -12,13 +12,15 @@ namespace TeeSharp.Core
 
         public static int[] StrToInts(this string input, int num)
         {
+            byte[] bytes;
             var ints = new int[num];
-            var bytes = new byte[0];
-            var index = 0;
 
             if (!string.IsNullOrEmpty(input))
                 bytes = Encoding.UTF8.GetBytes(input);
+            else
+                return ints;
 
+            var index = 0;
             for (var i = 0; i < ints.Length; i++)
             {
                 var buf = new int[] { 0, 0, 0, 0 };
@@ -39,9 +41,9 @@ namespace TeeSharp.Core
             return ints;
         }
 
-        public static string IntsToStr(this int[] ints)
+        public static string IntsToStr(this int[] array)
         {
-            var bytes = new byte[ints.Length * 4];
+            var bytes = new byte[array.Length * sizeof(int)];
             var count = 0;
 
             string GetString()
@@ -49,21 +51,21 @@ namespace TeeSharp.Core
                 return Encoding.UTF8.GetString(bytes, 0, count);
             }
 
-            for (var i = 0; i < ints.Length; i++)
+            for (var i = 0; i < array.Length; i++)
             {
-                bytes[i * 4 + 0] = (byte) (((ints[i] >> 24) & 0b1111_1111) - 128);
+                bytes[i * 4 + 0] = (byte) (((array[i] >> 24) & 0b1111_1111) - 128);
                 if (bytes[i * 4 + 0] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 1] = (byte) (((ints[i] >> 16) & 0b1111_1111) - 128);
+                bytes[i * 4 + 1] = (byte) (((array[i] >> 16) & 0b1111_1111) - 128);
                 if (bytes[i * 4 + 1] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 2] = (byte) (((ints[i] >> 8) & 0b1111_1111) - 128);
+                bytes[i * 4 + 2] = (byte) (((array[i] >> 8) & 0b1111_1111) - 128);
                 if (bytes[i * 4 + 2] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 3] = (byte) ((ints[i] & 0b1111_1111) - 128);
+                bytes[i * 4 + 3] = (byte) ((array[i] & 0b1111_1111) - 128);
                 if (bytes[i * 4 + 3] < 32) return GetString();
                 count++;
             }
@@ -73,9 +75,6 @@ namespace TeeSharp.Core
 
         public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit = 0)
         {
-            // Validate buffers are the same length.
-            // This also ensures that the count does not exceed the length of either buffer.  
-
             if (limit == 0)
                 return b1.Length == compareArray.Length && memcmp(b1, compareArray, b1.Length) == 0;
             return memcmp(b1, compareArray, limit) == 0;
