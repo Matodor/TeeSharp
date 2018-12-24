@@ -35,6 +35,10 @@ namespace TeeSharp.Server.Game
     {
         public virtual int ClientId { get; private set; }
 
+        public virtual string PlayerName { get; set; }
+        public virtual string PlayerClan { get; set; }
+        public virtual int PlayerCountry { get; set; }
+
         public virtual ClientVersion ClientVersion { get; set; }
         public virtual PlayerFlags PlayerFlags { get; protected set; } = 0;
         public virtual Team Team { get; protected set; }

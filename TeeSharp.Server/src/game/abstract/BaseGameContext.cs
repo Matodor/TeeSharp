@@ -33,6 +33,7 @@ namespace TeeSharp.Server.Game
         public abstract void RegisterConsoleCommands();
         public abstract bool IsClientSpectator(int clientId);
         public abstract bool IsClientReady(int clientId);
+        public abstract bool IsClientPlayer(int i);
 
         public abstract void CheckPureTuning();
         public abstract void SendTuningParams(int clientId);
@@ -46,14 +47,14 @@ namespace TeeSharp.Server.Game
         public abstract void OnTick();
         public abstract void OnShutdown();
         public abstract void OnMessage(int msgId, UnPacker unPacker, int clientId);
-        public abstract void OnBeforeSnapshots();
+        public abstract void OnBeforeSnapshot();
         public abstract void OnAfterSnapshots();
         public abstract void OnSnapshot(int snappingId);
         public abstract void OnClientConnected(int clientId);
         public abstract void OnClientEnter(int clientId);
         public abstract void OnClientDrop(int clientId, string reason);
         public abstract void OnClientPredictedInput(int clientId, SnapshotPlayerInput input);
-        public abstract void OnClientDirectInput(int clientId, SnapshotPlayerInput input);
+        public abstract void OnClientDirectInput(int clientId, int[] input);
 
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);
         public abstract void CreatePlayerSpawn(Vector2 pos);

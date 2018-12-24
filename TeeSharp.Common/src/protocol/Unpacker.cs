@@ -13,11 +13,11 @@ namespace TeeSharp.Common
         private int _index;
         private int _endIndex;
 
-        public void Reset(byte[] data, int size)
+        public void Reset(byte[] data, int size, int offset = 0)
         {
             _buffer = data;
             _endIndex = size;
-            _index = 0;
+            _index = offset;
 
             Error = false;
         }

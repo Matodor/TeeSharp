@@ -7,40 +7,35 @@ namespace TeeSharp.Server
     {
         public ServerClient()
         {
-            State = ServerClientState.EMPTY;
-            Inputs = new Input[INPUT_COUNT];
+            State = ServerClientState.Empty;
             SnapshotStorage = new SnapshotStorage();
+            Inputs = new Input[MaxInputs];
 
-            for (int i = 0; i < Inputs.Length; i++)
+            for (var i = 0; i < Inputs.Length; i++)
             {
                 Inputs[i] = new Input()
                 {
                     Tick = -1,
-                    PlayerInput = new SnapshotPlayerInput()
+                    PlayerInput = null
                 };
             }
         }
 
         public override void Reset()
         {
-            PlayerName = string.Empty;
-            PlayerClan = string.Empty;
-            PlayerCountry = -1;
-
-            Traffic = 0;
-            TrafficSince = 0;
-
-            for (int i = 0; i < Inputs.Length; i++)
+            for (var i = 0; i < Inputs.Length; i++)
             {
                 Inputs[i].Tick = -1;
             }
 
             CurrentInput = 0;
+            LatestInput = null;
 
             SnapshotStorage.PurgeAll();
             LastAckedSnapshot = -1;
             LastInputTick = -1;
-            SnapRate = SnapRate.INIT;
+            SnapshotRate = SnapshotRate.Init;
+            MapChunk = 0;
         }
     }
 }

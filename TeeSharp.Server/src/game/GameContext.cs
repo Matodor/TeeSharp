@@ -193,7 +193,7 @@ namespace TeeSharp.Server.Game
                 if (error)
                 {
                     Tuning.Reset();
-                    Console.Print(OutputLevel.STANDARD, "server", "resetting tuning due to pure server");
+                    Console.Print(OutputLevel.Standard, "server", "resetting tuning due to pure server");
                 }
             }
         }
@@ -239,7 +239,7 @@ namespace TeeSharp.Server.Game
                 debug = $"{chatterClientId}:{Players[chatterClientId].Name} {msg}";
             else
                 debug = $"*** {msg}";
-            Console.Print(OutputLevel.ADDINFO, isTeamChat ? "teamchat" : "chat", debug);
+            Console.Print(OutputLevel.AddInfo, isTeamChat ? "teamchat" : "chat", debug);
 
             if (isTeamChat)
             {
@@ -296,7 +296,7 @@ namespace TeeSharp.Server.Game
         {
             if (!GameMsgUnpacker.UnpackMessage(msgId, unPacker, out var msg, out var error))
             {
-                Console.Print(OutputLevel.DEBUG, "server", $"dropped gamemessage='{(GameMessage) msgId}' ({msgId}), failed on '{error}'");
+                Console.Print(OutputLevel.Debug, "server", $"dropped gamemessage='{(GameMessage) msgId}' ({msgId}), failed on '{error}'");
                 return;
             }
 
@@ -467,7 +467,7 @@ namespace TeeSharp.Server.Game
                 MsgFlags.Vital | MsgFlags.Flush, player.ClientId);
         }
 
-        public override void OnBeforeSnapshots()
+        public override void OnBeforeSnapshot()
         {
         }
 
@@ -514,7 +514,7 @@ namespace TeeSharp.Server.Game
             Players[clientId].Respawn();
 
             SendChat(-1, false, $"'{Players[clientId].Name}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
-            Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Players[clientId].Name}' team={Players[clientId].Team}");
+            Console.Print(OutputLevel.Debug, "game", $"team_join player='{clientId}:{Players[clientId].Name}' team={Players[clientId].Team}");
             GameController.OnClientEnter(clientId);
             // update vote
         }
@@ -545,7 +545,7 @@ namespace TeeSharp.Server.Game
                 Players[clientId].OnPredictedInput(input);
         }
 
-        public override void OnClientDirectInput(int clientId, SnapshotPlayerInput input)
+        public override void OnClientDirectInput(int clientId, int[] input)
         {
             if (!World.IsPaused)
                 Players[clientId].OnDirectInput(input);

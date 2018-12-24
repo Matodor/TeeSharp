@@ -86,7 +86,7 @@ namespace TeeSharp.Server.Game
 
             if (!string.IsNullOrEmpty(_mapWish))
             {
-                GameContext.Console.Print(OutputLevel.DEBUG, "game", $"rotating map to {_mapWish}");
+                GameContext.Console.Print(OutputLevel.Debug, "game", $"rotating map to {_mapWish}");
                 _mapWish = string.Empty;
                 
             }

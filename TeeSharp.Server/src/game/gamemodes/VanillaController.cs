@@ -74,7 +74,7 @@ namespace TeeSharp.Server.Game
             if (IsTeamplay() && UnbalancedTick != -1 &&
                 Server.Tick > UnbalancedTick + Config["SvTeambalanceTime"] * Server.TickSpeed * 60)
             {
-                GameContext.Console.Print(OutputLevel.DEBUG, "game", "Balancing teams");
+                GameContext.Console.Print(OutputLevel.Debug, "game", "Balancing teams");
 
                 var teamPlayers = new int[] { 0, 0 };
                 var teamScores = new float[] { 0, 0 };
@@ -257,7 +257,7 @@ namespace TeeSharp.Server.Game
             TeamScores[(int) Team.Red] = 0;
             TeamScores[(int) Team.Blue] = 0;
             ForceBalanced = false;
-            GameContext.Console.Print(OutputLevel.DEBUG, "game", $"start round type='{GameType}' teamplay='{GameFlags.HasFlag(GameFlags.TEAMS)}'");
+            GameContext.Console.Print(OutputLevel.Debug, "game", $"start round type='{GameType}' teamplay='{GameFlags.HasFlag(GameFlags.TEAMS)}'");
         }
 
         public override int GetPlayerScore(int clientId)
@@ -436,13 +436,13 @@ namespace TeeSharp.Server.Game
 
             if (Math.Abs(teamPlayers[0] - teamPlayers[1]) >= 2)
             {
-                GameContext.Console.Print(OutputLevel.DEBUG, "game", $"Teams are not balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
+                GameContext.Console.Print(OutputLevel.Debug, "game", $"Teams are not balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
                 if (UnbalancedTick == -1)
                     UnbalancedTick = Server.Tick;
                 return false;
             }
 
-            GameContext.Console.Print(OutputLevel.DEBUG, "game", $"Team are balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
+            GameContext.Console.Print(OutputLevel.Debug, "game", $"Team are balanced (red={teamPlayers[0]} blue={teamPlayers[1]})");
             UnbalancedTick = -1;
             return true;
         }

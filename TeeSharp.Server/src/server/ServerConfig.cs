@@ -24,11 +24,14 @@ namespace TeeSharp.Server
                 { "SvOldClientsSkip", new ConfigInt("SvOldClientsSkip", "sv_old_clients_skip", 20, 0, int.MaxValue, ConfigFlags.SERVER, "How many legacy connection attempts to ignore before sending a legacy handshake despite the rate limit being hit") },
 
                 { "SvName", new ConfigString("SvName", "sv_name", 128, "TeeSharp server", ConfigFlags.SERVER, "Server name") },
+                { "SvHostname", new ConfigString("SvHostname", "sv_hostname", 128, "", ConfigFlags.SAVE | ConfigFlags.SERVER, "Server hostname") },
+
                 { "SvPort", new ConfigInt("SvPort", "sv_port", 8303, 0, 65535, ConfigFlags.SERVER, "Port to use for the server") },
                 { "SvExternalPort", new ConfigInt("SvExternalPort", "sv_external_port", 0, 0, 0, ConfigFlags.SERVER, "External port to report to the master servers") },
                 { "SvMap", new ConfigString("SvMap", "sv_map", 128, "dm1", ConfigFlags.SERVER, "Map to use on the server") },
                 { "SvMaxClients", new ConfigInt("SvMaxClients", "sv_max_clients", 64, 1, 64, ConfigFlags.SERVER, "Maximum number of clients that are allowed on a server") },
                 { "SvMaxClientsPerIP", new ConfigInt("SvMaxClientsPerIP", "sv_max_clients_per_ip", 64, 1, 64, ConfigFlags.SERVER, "Maximum number of clients with the same IP that can connect to the server") },
+                { "SvMapDownloadSpeed", new ConfigInt("SvMapDownloadSpeed", "sv_map_download_speed", 2, 1, 16, ConfigFlags.SAVE | ConfigFlags.SERVER, "Number of map data packages a client gets on each request") },
                 { "SvHighBandwidth", new ConfigInt("SvHighBandwidth", "sv_high_bandwidth", 0, 0, 1, ConfigFlags.SERVER, "Use high bandwidth mode. Doubles the bandwidth required for the server. LAN use only") },
                 { "SvRegister", new ConfigInt("SvRegister", "sv_register", 1, 0, 1, ConfigFlags.SERVER, "Register server with master server for public listing") },
                 { "SvRconPassword", new ConfigString("SvRconPassword", "sv_rcon_password", 32, "", ConfigFlags.SERVER, "Remote console password (full access)") },
@@ -53,7 +56,9 @@ namespace TeeSharp.Server
 
                 { "SvRespawnDelayTDM", new ConfigInt("SvRespawnDelayTDM", "sv_respawn_delay_tdm", 3, 0, 10, ConfigFlags.SERVER, "Time needed to respawn after death in tdm gametype") },
 
-                { "SvSpectatorSlots", new ConfigInt("SvSpectatorSlots", "sv_spectator_slots", 0, 0, 64, ConfigFlags.SERVER, "Number of slots to reserve for spectators") },
+                //{ "SvSpectatorSlots", new ConfigInt("SvSpectatorSlots", "sv_spectator_slots", 0, 0, 64, ConfigFlags.SERVER, "Number of slots to reserve for spectators") },
+                { "SvPlayerSlots", new ConfigInt("SvPlayerSlots", "sv_player_slots", 8, 0, 64 /* TODO */, ConfigFlags.SAVE | ConfigFlags.SERVER, "Number of slots to reserve for players") },
+                { "SvSkillLevel", new ConfigInt("SvSkillLevel", "sv_skill_level", 1, 0, 2 /* TODO */, ConfigFlags.SAVE | ConfigFlags.SERVER, "Supposed player skill level") },
                 { "SvTeambalanceTime", new ConfigInt("SvTeambalanceTime", "sv_teambalance_time", 1, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before autobalancing teams") },
                 { "SvInactiveKickTime", new ConfigInt("SvInactiveKickTime", "sv_inactivekick_time", 3, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before taking care of inactive players") },
                 { "SvInactiveKick", new ConfigInt("SvInactiveKick", "sv_inactivekick", 1, 0, 2, ConfigFlags.SERVER, "How to deal with inactive players (0=move to spectator, 1=move to free spectator slot/kick, 2=kick)") },

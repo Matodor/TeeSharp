@@ -15,15 +15,15 @@ namespace TeeSharp.Server
 {
     public abstract class BaseServer : BaseInterface
     {
-        public const int
-            VANILLA_MAX_CLIENTS = 16,
-            SERVER_TICK_SPEED = 50;
+        public const int MapChunkSize = NetworkHelper.MaxPayload - NetworkHelper.MaxChunkHeaderSize - 4;
+        public const int ServerInfoFlagPassword = 1;
 
         public abstract int MaxClients { get; }
+        public abstract int MaxPlayers { get; }
         public abstract int TickSpeed { get; }
+
         public virtual int Tick { get; protected set; }
         public virtual MapContainer CurrentMap { get; protected set; }
-        public abstract int[] IdMap { get; protected set; }
 
         protected abstract SnapshotIdPool SnapshotIdPool { get; set; }
 
@@ -40,22 +40,27 @@ namespace TeeSharp.Server
         protected virtual long StartTime { get; set; }
         protected virtual bool IsRunning { get; set; }
 
-        public abstract void SetClientName(int clientId, string name);
-        public abstract void SetClientClan(int clientId, string clan);
-        public abstract void SetClientCountry(int clientId, int country);
+        public abstract string ClientName(int clientId);
+        public abstract void ClientName(int clientId, string name);
 
-        public abstract bool GetClientInfo(int clientId, out ClientInfo info);
-        public abstract string GetClientName(int clientId);
-        public abstract string GetClientClan(int clientId);
-        public abstract int GetClientCountry(int clientId);
-        public abstract int GetClientScore(int clientId);
+        public abstract string ClientClan(int clientId);
+        public abstract void ClientClan(int clientId, string clan);
+
+        public abstract int ClientCountry(int clientId);
+        public abstract void ClientCountry(int clientId, int country);
+
+        protected abstract void GenerateRconPassword();
+
+        public abstract IPEndPoint ClientEndPoint(int clientId);
+        public abstract ClientInfo ClientInfo(int clientId);
+
         public abstract bool ClientInGame(int clientId);
 
         public abstract void Init(string[] args);
         public abstract void Run();
         public abstract bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId);
-        public abstract bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system);
-        public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId) where T : BaseGameMessage;
+        public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
+            where T : BaseGameMessage;
 
         public abstract T SnapObject<T>(int id) where T : BaseSnapshotItem, new();
         public abstract bool AddSnapItem<T>(T item, int id) where T : BaseSnapshotItem;
@@ -88,16 +93,19 @@ namespace TeeSharp.Server
         protected abstract void PumpNetwork();
         protected abstract void DoSnapshot();
         protected abstract long TickStartTime(int tick);
-        protected abstract void DelClientCallback(int clientId, string reason);
-        protected abstract void NewClientCallback(int clientid, bool legacy);
+        protected abstract void ClientDisconnected(int clientId, string reason);
+        protected abstract void ClientConnected(int clientid);
 
         protected abstract bool LoadMap(string mapName);
         protected abstract void SendMap(int clientId);
-
-        protected abstract void RegisterConsoleCommands();
         protected abstract void SendRconLine(int clientId, string line);
         protected abstract void SendRconLineAuthed(string message, object data);
-        protected abstract void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0);
+        protected abstract void SendRconCommandAdd(ConsoleCommand command, int clientId);
+        protected abstract void SendRconCommandRem(ConsoleCommand command, int clientId);
+
+        protected abstract void RegisterConsoleCommands();
+        protected abstract void GenerateServerInfo(Packer packer, int token);
+        protected abstract void SendServerInfo(int clientId);
 
         protected abstract void NetMsgPing(Chunk packet, UnPacker unPacker, int clientId);
         protected abstract void NetMsgRconAuth(Chunk packet, UnPacker unPacker, int clientId);

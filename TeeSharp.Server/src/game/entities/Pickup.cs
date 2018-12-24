@@ -100,7 +100,7 @@ namespace TeeSharp.Server.Game.Entities
 
             if (respawnTime >= 0)
             {
-                GameContext.Console.Print(OutputLevel.DEBUG, "game", $"pickup player='{character.Player.ClientId}:{character.Player.Name}' item={_powerup}:{_weapon}");
+                GameContext.Console.Print(OutputLevel.Debug, "game", $"pickup player='{character.Player.ClientId}:{character.Player.Name}' item={_powerup}:{_weapon}");
                 _spawnTick = Server.Tick + Server.TickSpeed * respawnTime;
             }
         }

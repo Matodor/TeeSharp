@@ -2,10 +2,10 @@
 {
     public class MsgPacker : Packer
     {
-        public MsgPacker(int msgId)
+        public MsgPacker(int msgId, bool system)
         {
             Reset();
-            AddInt(msgId);
+            AddInt((msgId << 1) | (system ? 1 : 0));
         }
     }
 }

@@ -2,9 +2,7 @@
 {
     public class ClientInfo
     {
-        public string Name;
-        public int Latency;
-        public bool CustClt;
-        public ClientVersion ClientVersion;
+        public string Name { get; set; }
+        public int Latency { get; set; }
     }
 }

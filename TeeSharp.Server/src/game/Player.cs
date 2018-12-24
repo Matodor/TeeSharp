@@ -122,7 +122,7 @@ namespace TeeSharp.Server.Game
             LastActionTick = Server.Tick;
             SpectatorId = -1;
             RespawnTick = Server.Tick + Server.TickSpeed / 2;
-            GameContext.Console.Print(OutputLevel.DEBUG, "game",
+            GameContext.Console.Print(OutputLevel.Debug, "game",
                 $"team_join player='{ClientId}:{Name}' team={Team}");
             GameContext.GameController.OnPlayerInfoChange(this);
 
@@ -168,7 +168,7 @@ namespace TeeSharp.Server.Game
                     ? $"'{Name}' has left the game"
                     : $"'{Name}' has left the game ({reason})");
 
-            GameContext.Console.Print(OutputLevel.STANDARD, "game", $"leave_player='{ClientId}:{Name}'");
+            GameContext.Console.Print(OutputLevel.Standard, "game", $"leave_player='{ClientId}:{Name}'");
         }
 
         public override void OnSnapshot(int snappingClient)

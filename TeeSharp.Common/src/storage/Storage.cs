@@ -36,20 +36,20 @@ namespace TeeSharp.Common.Storage
             // Furthermore the top entry also defines the save path where
             // all data (settings.cfg, screenshots, ...) are stored.
 
-            var savePath = GetPath(TYPE_SAVE, null);
-            if (storageType != StorageType.BASIC && _paths.Count != 0 && !Directory.Exists(savePath))
+            var savePath = GetPath(TypeSave, null);
+            if (storageType != StorageType.Basic && _paths.Count != 0 && !Directory.Exists(savePath))
             {
-                if (storageType == StorageType.CLIENT)
+                if (storageType == StorageType.Client)
                 {
-                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "screenshots"));
-                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "screenshots/auto"));
-                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "maps"));
-                    Directory.CreateDirectory(GetPath(TYPE_SAVE, "downloadedmaps"));
+                    Directory.CreateDirectory(GetPath(TypeSave, "screenshots"));
+                    Directory.CreateDirectory(GetPath(TypeSave, "screenshots/auto"));
+                    Directory.CreateDirectory(GetPath(TypeSave, "maps"));
+                    Directory.CreateDirectory(GetPath(TypeSave, "downloadedmaps"));
                 }
 
-                Directory.CreateDirectory(GetPath(TYPE_SAVE, "dumps"));
-                Directory.CreateDirectory(GetPath(TYPE_SAVE, "demos"));
-                Directory.CreateDirectory(GetPath(TYPE_SAVE, "demos/auto"));
+                Directory.CreateDirectory(GetPath(TypeSave, "dumps"));
+                Directory.CreateDirectory(GetPath(TypeSave, "demos"));
+                Directory.CreateDirectory(GetPath(TypeSave, "demos/auto"));
             }
 
             return _paths.Count != 0;
@@ -124,24 +124,24 @@ namespace TeeSharp.Common.Storage
         {
             switch (path)
             {
-                case "$USERDIR":
+                case UserDir:
                     if (!Directory.Exists(_appStoragePath))
                         return;
                     _paths.Add(_appStoragePath);
-                    Debug.Log("storage", $"added path '$USERDIR' ('{_appStoragePath}')");
+                    Debug.Log("storage", $"added path '{UserDir}' ('{_appStoragePath}')");
                     break;
 
-                case "$DATADIR":
+                case DataDir:
                     var dataPath = Path.Combine(FS.WorkingDirectory(), "data");
                     if (!Directory.Exists(dataPath))
                         return;
                     _paths.Add(dataPath);
-                    Debug.Log("storage", $"added path '$USERDIR' ('{dataPath}')");
+                    Debug.Log("storage", $"added path '{DataDir}' ('{dataPath}')");
                     break;
 
-                case "$CURRENTDIR":
+                case CurrentDir:
                     _paths.Add(FS.WorkingDirectory());
-                    Debug.Log("storage", $"added path '$CURRENTDIR' ('{FS.WorkingDirectory()}')");
+                    Debug.Log("storage", $"added path '{CurrentDir}' ('{FS.WorkingDirectory()}')");
                     break;
 
                 default:

@@ -5,16 +5,19 @@ namespace TeeSharp.Common.Storage
 {
     public enum StorageType
     {
-        BASIC = 0,
-        SERVER = 1,
-        CLIENT = 2
+        Basic = 0,
+        Server = 1,
+        Client = 2
     }
 
     public abstract class BaseStorage : BaseInterface
     {
-        public const int
-            TYPE_SAVE = 0,
-            TYPE_ALL = -1;
+        public const string UserDir = "$USERDIR";
+        public const string DataDir = "$DATADIR";
+        public const string CurrentDir = "$CURRENTDIR";
+
+        public const int TypeSave = 0;
+        public const int TypeAll = -1;
 
         public abstract bool Init(string appName, StorageType storageType);
         public abstract FileStream OpenFile(string fileName, FileAccess fileAccess, int pathIndex = -1);
@@ -25,9 +28,9 @@ namespace TeeSharp.Common.Storage
 
         protected virtual void AddDefaultPaths()
         {
-            AddPath("$USERDIR");
-            AddPath("$DATADIR");
-            AddPath("$CURRENTDIR");
+            AddPath(UserDir);
+            AddPath(DataDir);
+            AddPath(CurrentDir);
         }
     }
 }

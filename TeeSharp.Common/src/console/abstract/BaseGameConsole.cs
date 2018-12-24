@@ -5,9 +5,9 @@ namespace TeeSharp.Common.Console
 {
     public enum OutputLevel
     {
-        STANDARD = 0,
-        ADDINFO = 1,
-        DEBUG = 2,
+        Standard = 0,
+        AddInfo,
+        Debug,
     }
 
     public delegate void ConsoleCallback(ConsoleResult result, object data);

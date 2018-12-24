@@ -175,7 +175,7 @@ namespace TeeSharp.Server.Game.Entities
             var modeSpecial = GameContext.GameController.OnCharacterDeath(this,
                 GameContext.Players[killer], weapon);
 
-            GameContext.Console.Print(OutputLevel.DEBUG, "game",
+            GameContext.Console.Print(OutputLevel.Debug, "game",
                 $"kill killer='{killer}:{GameContext.Players[killer].Name}' victim='{Player.ClientId}:{Player.Name}' weapon={weapon} special={modeSpecial}");
 
             Server.SendPackMsg(new GameMsg_SvKillMsg
