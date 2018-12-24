@@ -47,6 +47,7 @@ namespace TeeSharp.Map
             _dataObjects = new object[Header.NumData];
         }
 
+        // TODO
         public void UnloadData(int index)
         {
             _dataObjects[index] = null;
@@ -79,6 +80,7 @@ namespace TeeSharp.Map
                 inMemoryStream.CopyStream(outZStream);
                 outZStream.finish();
 
+                // TODO
                 if (typeof(T).IsArray)
                 {
                     if (typeof(T) == typeof(string[]))
@@ -93,7 +95,7 @@ namespace TeeSharp.Map
                         _dataObjects[index] = Encoding.UTF8.GetString(outMemoryStream.ToArray()).SanitizeCC();
                     }
                     else
-                        _dataObjects[index] = outMemoryStream.ToArray().ReadStructs<T>();
+                        _dataObjects[index] = outMemoryStream.ToArray().ReadStruct<T>();
                 }
             }
 

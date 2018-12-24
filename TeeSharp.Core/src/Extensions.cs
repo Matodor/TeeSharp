@@ -10,37 +10,44 @@ namespace TeeSharp.Core
         [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int memcmp(byte[] b1, byte[] b2, long count);
 
+        /// <summary>
+        /// Convert ASCII string to array of ints. Max string length (<see cref="num"/> * 4 - 1)
+        /// </summary>
+        /// <param name="input">Input ASCII string.</param>
+        /// <param name="num">Length of ints array</param>
+        /// <returns></returns>
         public static int[] StrToInts(this string input, int num)
         {
             byte[] bytes;
-            var ints = new int[num];
+            var array = new int[num];
 
             if (!string.IsNullOrEmpty(input))
                 bytes = Encoding.UTF8.GetBytes(input);
             else
-                return ints;
+                return array;
 
             var index = 0;
-            for (var i = 0; i < ints.Length; i++)
+            for (var i = 0; i < array.Length; i++)
             {
-                var buf = new int[] { 0, 0, 0, 0 };
-                for (int c = 0; c < buf.Length && index < bytes.Length; c++, index++)
-                {
-                    buf[c] = bytes[index] >= 128
-                        ? bytes[index] - 256
-                        : bytes[index];
-                }
+                var buf = new[] {0, 0, 0, 0};
+                for (var c = 0; c < buf.Length && index < bytes.Length; c++, index++)
+                    buf[c] = (sbyte) bytes[index];
 
-                ints[i] = ((buf[0] + 128) << 24) | 
-                          ((buf[1] + 128) << 16) | 
-                          ((buf[2] + 128) << 08) | 
-                          ((buf[3] + 128) << 00);  
+                array[i] = ((buf[0] + 128) << 24) | 
+                           ((buf[1] + 128) << 16) | 
+                           ((buf[2] + 128) << 08) | 
+                           ((buf[3] + 128) << 00);  
             }
 
-            ints[ints.Length - 1] = (int) (ints[ints.Length - 1] & 0xffffff00);
-            return ints;
+            array[array.Length - 1] = (int) (array[array.Length - 1] & 0xffff_ff00);
+            return array;
         }
 
+        /// <summary>
+        /// Convert array of ints to ASCII string
+        /// </summary>
+        /// <param name="array">Input array</param>
+        /// <returns></returns>
         public static string IntsToStr(this int[] array)
         {
             var bytes = new byte[array.Length * sizeof(int)];
@@ -53,23 +60,24 @@ namespace TeeSharp.Core
 
             for (var i = 0; i < array.Length; i++)
             {
-                bytes[i * 4 + 0] = (byte) (((array[i] >> 24) & 0b1111_1111) - 128);
+                bytes[i * 4 + 0] = (byte) (((array[i] >> 24) & 0xFF) - 128);
                 if (bytes[i * 4 + 0] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 1] = (byte) (((array[i] >> 16) & 0b1111_1111) - 128);
+                bytes[i * 4 + 1] = (byte) (((array[i] >> 16) & 0xFF) - 128);
                 if (bytes[i * 4 + 1] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 2] = (byte) (((array[i] >> 8) & 0b1111_1111) - 128);
+                bytes[i * 4 + 2] = (byte) (((array[i] >> 8) & 0xFF) - 128);
                 if (bytes[i * 4 + 2] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 3] = (byte) ((array[i] & 0b1111_1111) - 128);
+                bytes[i * 4 + 3] = (byte) ((array[i] & 0xFF) - 128);
                 if (bytes[i * 4 + 3] < 32) return GetString();
                 count++;
             }
 
+            count--;
             return GetString();
         }
 

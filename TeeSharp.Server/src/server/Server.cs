@@ -899,7 +899,7 @@ namespace TeeSharp.Server
                 // this client is trying to recover, don't spam snapshots
                 if (Clients[i].SnapRate == SnapRate.INIT && Tick % 10 != 0)
                     continue;
-                
+
                 SnapshotBuilder.StartBuild();
                 GameContext.OnSnapshot(i);
                 var now = Time.Get();

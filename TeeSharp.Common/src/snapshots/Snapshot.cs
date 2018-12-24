@@ -37,21 +37,21 @@ namespace TeeSharp.Common.Snapshots
             return (int) type << 16 | id;
         }
 
-        public SnapshotItem FindItem(int id, SnapshotItems type)
-        {
-            return FindItem(Key(id, type));
-        }
+        //public SnapshotItem FindItem(int id, SnapshotItems type)
+        //{
+        //    return FindItem(Key(id, type));
+        //}
 
-        public SnapshotItem FindItem(int key)
-        {
-            for (var i = 0; i < _items.Length; i++)
-            {
-                if (_items[i].Key == key)
-                    return _items[i];
-            }
+        //public SnapshotItem FindItem(int key)
+        //{
+        //    for (var i = 0; i < _items.Length; i++)
+        //    {
+        //        if (_items[i].Key == key)
+        //            return _items[i];
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         public int Crc()
         {

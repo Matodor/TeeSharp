@@ -38,7 +38,7 @@ namespace TeeSharp.Common.Snapshots
             return null;
         }
 
-        public bool AddItem<T>(T obj, int id) where T : BaseSnapshotItem
+        public bool AddItem(BaseSnapshotItem obj, int id)
         {
             if (obj == null)
             {
@@ -52,7 +52,7 @@ namespace TeeSharp.Common.Snapshots
                 return false;
             }
 
-            var itemSize = SnapshotItemsInfo.GetSize<T>();
+            var itemSize = SnapshotItemsInfo.GetSize(obj.GetType());
             if (SnapshotSize + itemSize >= Snapshot.MaxSize)
             {
                 Debug.Warning("snapshots", "too much data");
