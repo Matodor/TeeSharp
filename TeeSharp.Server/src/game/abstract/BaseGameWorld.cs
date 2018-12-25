@@ -18,15 +18,8 @@ namespace TeeSharp.Server.Game
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
-        protected virtual IList<Entity> Entities { get; set; }
 
-        protected BaseGameWorld()
-        {
-            GameContext = Kernel.Get<BaseGameContext>();
-            Server = Kernel.Get<BaseServer>();
-            Config = Kernel.Get<BaseConfig>();
-            Tuning = Kernel.Get<BaseTuningParams>();
-        }
+        protected virtual IList<Entity> Entities { get; set; }
 
         public abstract T FindEntity<T>(Predicate<Entity<T>> predicate) where T : Entity<T>;
 

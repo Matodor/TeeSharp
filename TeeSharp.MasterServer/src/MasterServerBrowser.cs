@@ -3,6 +3,7 @@ using System.Net;
 using TeeSharp.Core;
 using TeeSharp.Network;
 using TeeSharp.Network.Enums;
+using TeeSharp.Network.Extensions;
 
 namespace TeeSharp.MasterServer
 {
@@ -76,7 +77,7 @@ namespace TeeSharp.MasterServer
         {
             for (var i = 0; i < _masterServers.Length; i++)
             {
-                if (NetworkCore.CompareEndPoints(_masterServers[i], endPoint, true))
+                if (_masterServers[i].Compare(endPoint, true))
                 {
                     return true;
                 }
@@ -100,7 +101,7 @@ namespace TeeSharp.MasterServer
             _networkClient.Send(new Chunk
             {
                 ClientId = -1,
-                Flags = SendFlags.CONNLESS,
+                Flags = SendFlags.Connless,
                 DataSize = MasterServerPackets.GetList.Length,
                 Data = MasterServerPackets.GetList,
                 EndPoint = masterServer

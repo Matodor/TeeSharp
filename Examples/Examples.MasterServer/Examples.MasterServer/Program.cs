@@ -42,9 +42,12 @@ namespace Examples.MasterServer
 
             _masterServerBrowser.RequestServers();
 
+            Chunk packet = null;
+            uint token = 0;
+
             while (true)
             {
-                while (_networkClient.Receive(ref var packet, ref TODO))
+                while (_networkClient.Receive(ref packet, ref token))
                 {
                     if (packet.ClientId == -1)
                         _masterServerBrowser.OnPacket(packet);

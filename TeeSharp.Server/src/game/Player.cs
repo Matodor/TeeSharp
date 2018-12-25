@@ -156,7 +156,7 @@ namespace TeeSharp.Server.Game
             playerInfo.Latency = snappingClient == -1
                 ? Latency.Min
                 : GameContext.Players[snappingClient].ActualLatency[ClientId];
-            playerInfo.Score = GameContext.GameController.GetScore(ClientId);
+            playerInfo.Score = GameContext.GameController.Score(ClientId);
 
             if (ClientId == snappingClient && (Team == Team.Spectators || DeadSpectatorMode))
             {

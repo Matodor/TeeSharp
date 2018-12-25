@@ -16,7 +16,6 @@ namespace TeeSharp.Server
                 Inputs[i] = new Input()
                 {
                     Tick = -1,
-                    PlayerInput = null
                 };
             }
         }

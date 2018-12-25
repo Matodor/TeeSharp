@@ -39,11 +39,11 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < EventInfos.Count; i++)
             {
                 if (snappingClient == -1 || 
-                    GameContext.MaskIsSet(EventInfos[i].Mask, snappingClient))
+                    BaseGameContext.MaskIsSet(EventInfos[i].Mask, snappingClient))
                 {
                     if (snappingClient == -1 || 
                         MathHelper.Distance(GameContext.Players[snappingClient].ViewPos,
-                            EventInfos[i].EventItem.Position) < 1500f)
+                            new Vector2(EventInfos[i].EventItem.X, EventInfos[i].EventItem.Y)) < 1500f)
                     {
                         Server.SnapshotItem(EventInfos[i].EventItem, i);
                     }

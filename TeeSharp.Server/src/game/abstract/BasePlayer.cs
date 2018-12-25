@@ -34,6 +34,8 @@ namespace TeeSharp.Server.Game
 
         public virtual SpectatorMode SpectatorMode { get; set; }
         public virtual int SpectatorId { get; set; }
+        public virtual bool IsReadyToEnter { get; set; }
+        public virtual int LastActionTick { get; set; }
 
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
@@ -51,7 +53,6 @@ namespace TeeSharp.Server.Game
         protected virtual PlayerFlags PlayerFlags { get; set; }
         protected virtual int InactivityTickCounter { get; set; }
         protected virtual int TeamChangeTick { get; set; }
-        protected virtual int LastActionTick { get; set; }
         protected virtual int RespawnTick { get; set; }
         protected virtual int DieTick { get; set; }
         protected virtual Flag SpectatorFlag { get; set; }

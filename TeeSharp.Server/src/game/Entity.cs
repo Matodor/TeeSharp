@@ -17,8 +17,6 @@ namespace TeeSharp.Server.Game
         protected virtual BaseConfig Config { get; set; }
         protected virtual int[] IDs { get; set; }
 
-        public abstract void OnSnapshot(int snappingClient);
-
         protected Entity(int idsCount)
         {
             GameContext = Kernel.Get<BaseGameContext>();
@@ -39,6 +37,8 @@ namespace TeeSharp.Server.Game
         public virtual void TickPaused() { }
         public virtual void OnDestroy() { }
         public virtual void Reset() { }
+
+        public abstract void OnSnapshot(int snappingClient);
 
         public virtual void Destroy()
         {
@@ -98,8 +98,8 @@ namespace TeeSharp.Server.Game
 
         public override void OnDestroy()
         {
-            GameWorld.RemoveEntity(this);
             base.OnDestroy();
+            GameWorld.RemoveEntity(this);
         }
     }
 }
