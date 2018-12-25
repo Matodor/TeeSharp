@@ -120,23 +120,23 @@ namespace TeeSharp.Server.Game
             return closest;
         }
 
-        public override Character ClosestCharacter(Vector2 pos, float radius, Character notThis)
+        public override T ClosestEntity<T>(Vector2 pos, float radius, T notThis)
         {
             var closestRange = radius * 2f;
-            Character closest = null;
+            T closest = null;
 
-            foreach (var character in GetEntities<Character>())
+            foreach (var entity in GetEntities<T>())
             {
-                if (character == notThis)
+                if (entity == notThis)
                     continue;
 
-                var len = MathHelper.Distance(pos, character.Position);
-                if (len < character.ProximityRadius + radius)
+                var len = MathHelper.Distance(pos, entity.Position);
+                if (len < entity.ProximityRadius + radius)
                 {
                     if (len < closestRange)
                     {
                         closestRange = len;
-                        closest = character;
+                        closest = entity;
                     }
                 }
             }
@@ -172,7 +172,7 @@ namespace TeeSharp.Server.Game
             if (ResetRequested)
                 Reset();
 
-            if (!IsPaused)
+            if (!Paused)
             {
                 for (var i = Entities.Count - 1; i >= 0; i--)
                 {

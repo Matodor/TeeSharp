@@ -53,7 +53,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnClientConnected(int clientId);
         public abstract void OnClientEnter(int clientId);
         public abstract void OnClientDrop(int clientId, string reason);
-        public abstract void OnClientPredictedInput(int clientId, SnapshotPlayerInput input);
+        public abstract void OnClientPredictedInput(int clientId, int[] input1);
         public abstract void OnClientDirectInput(int clientId, int[] input);
 
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);

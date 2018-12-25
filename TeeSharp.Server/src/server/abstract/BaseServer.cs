@@ -25,8 +25,7 @@ namespace TeeSharp.Server
         public virtual int Tick { get; protected set; }
         public virtual MapContainer CurrentMap { get; protected set; }
 
-        protected abstract SnapshotIdPool SnapshotIdPool { get; set; }
-
+        protected virtual SnapshotIdPool SnapshotIdPool { get; set; }
         protected virtual SnapshotBuilder SnapshotBuilder { get; set; }
         protected virtual BaseNetworkBan NetworkBan { get; set; }
         protected virtual BaseRegister Register { get; set; }
@@ -62,31 +61,12 @@ namespace TeeSharp.Server
         public abstract bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
             where T : BaseGameMessage;
 
-        public abstract T SnapObject<T>(int id) where T : BaseSnapshotItem, new();
-        public abstract bool AddSnapItem<T>(T item, int id) where T : BaseSnapshotItem;
-
-        protected abstract bool SendPackMsgBody<T>(T msg, MsgFlags flags, 
-            int clientId) where T : BaseGameMessage;
-
-        protected abstract bool SendPackMsgTranslate(GameMsg_SvEmoticon msg,
-            MsgFlags flags, int clientId);
-
-        protected abstract bool SendPackMsgTranslate(GameMsg_SvChat msg,
-            MsgFlags flags, int clientId);
-
-        protected abstract bool SendPackMsgTranslate(GameMsg_SvKillMsg msg,
-            MsgFlags flags, int clientId);
-
-        protected abstract bool SendPackMsgTranslate(BaseGameMessage msg,
-            MsgFlags flags, int clientId);
-
-        protected abstract bool SendPackMsgOne(BaseGameMessage msg,
-            MsgFlags flags, int clientId);
-
-        public abstract bool Translate(ref int targetId, int clientId);
+        public abstract T SnapshotItem<T>(int id) where T : BaseSnapshotItem, new();
+        public abstract bool SnapshotItem<T>(T item, int id) where T : BaseSnapshotItem;
 
         public abstract int SnapshotNewId();
         public abstract void SnapshotFreeId(int id);
+        public abstract bool IsAuthed(int clientId);
 
         protected abstract bool StartNetworkServer();
         protected abstract void ProcessClientPacket(Chunk packet);
@@ -121,10 +101,5 @@ namespace TeeSharp.Server
         protected abstract void ConsoleShutdown(ConsoleResult result, object data);
         protected abstract void ConsoleStatus(ConsoleResult result, object data);
         protected abstract void ConsoleKick(ConsoleResult result, object data);
-
-        public static int GetIdMap(int clientId)
-        {
-            return VANILLA_MAX_CLIENTS * clientId;
-        }
     }
 }

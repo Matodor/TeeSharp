@@ -42,7 +42,7 @@ namespace TeeSharp.Server.Game.Entities
                 else return;
             }
 
-            var character = GameWorld.ClosestCharacter(Position, 20f, null);
+            var character = GameWorld.ClosestEntity(Position, 20f, null);
             if (character == null || !character.IsAlive)
                 return;
 
@@ -116,7 +116,7 @@ namespace TeeSharp.Server.Game.Entities
             if (_spawnTick != -1 || NetworkClipped(snappingClient))
                 return;
 
-            var pickup = Server.SnapObject<SnapshotPickup>(IDs[0]);
+            var pickup = Server.SnapshotItem<SnapshotPickup>(IDs[0]);
             if (pickup == null)
                 return;
 

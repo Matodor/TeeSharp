@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
@@ -9,45 +10,47 @@ namespace TeeSharp.Server.Game
 {
     public class Player : BasePlayer
     {
-        public override void Init(int clientId, Team startTeam)
+        public override void Init(int clientId, bool dummy)
         {
-            base.Init(clientId, startTeam);
+            Server = Kernel.Get<BaseServer>();
+            GameContext = Kernel.Get<BaseGameContext>();
+            Config = Kernel.Get<BaseConfig>();
 
-            Team = startTeam;
-            ActLatency = new int[Server.MaxClients];
-            Latency = new Latency();
-            TeeInfo = new TeeInfo();
-            LatestActivity = new Activity();
-            IsReady = false;
-            LastSetTeam = Server.Tick;
-            LastChangeInfo = -1;
+            RespawnTick = Server.Tick;
+            DieTick = Server.Tick;
+
+            Character = null;
+            Team = GameContext.GameController.StartTeam();
+            SpectatorMode = SpectatorMode.FreeView;
             SpectatorId = -1;
+            SpectatorFlag = null;
+            ActiveSpectatorSwitch = false;
+
+            LastActionTick = Server.Tick;
+            TeamChangeTick = Server.Tick;
+            InactivityTickCounter = 0;
+            IsReadyToPlay = !GameContext.GameController.IsPlayerReadyMode();
+            RespawnDisabled = GameContext.GameController.StartRespawnState();
+            DeadSpectatorMode = false;
             Spawning = false;
 
-            var idMap = BaseServer.GetIdMap(clientId);
-            for (var i = 1; i < BaseServer.VANILLA_MAX_CLIENTS; i++)
-                Server.IdMap[idMap + i] = -1;
-            Server.IdMap[idMap] = clientId;
-        }
-
-        public override Character GetCharacter()
-        {
-            if (Character != null && Character.IsAlive)
-                return Character;
-            return null;
+            ActualLatency = new int[GameContext.Players.Length];
+            Latency = new Latency();
+            LatestActivity = new Activity();
+            PlayerFlags = PlayerFlags.None;
+            TeeInfo = new TeeInfo();
         }
 
         public override void Tick()
         {
-            if (!Server.ClientInGame(ClientId))
+            if (!IsDummy && !Server.ClientInGame(ClientId))
                 return;
 
-            if (Server.GetClientInfo(ClientId, out var info))
-            {
-                Latency.Accumulate += info.Latency;
-                Latency.AccumulateMax = Math.Max(Latency.AccumulateMax, info.Latency);
-                Latency.AccumulateMin = Math.Min(Latency.AccumulateMin, info.Latency);
-            }
+
+            var info = Server.ClientInfo(ClientId);
+            Latency.Accumulate += info.Latency;
+            Latency.AccumulateMax = Math.Max(Latency.AccumulateMax, info.Latency);
+            Latency.AccumulateMin = Math.Min(Latency.AccumulateMin, info.Latency);
 
             if (Server.Tick % Server.TickSpeed == 0)
             {
@@ -55,39 +58,48 @@ namespace TeeSharp.Server.Game
                 Latency.Max = Latency.AccumulateMax;
                 Latency.Min = Latency.AccumulateMin;
                 Latency.Accumulate = 0;
-                Latency.AccumulateMax = 0;
                 Latency.AccumulateMin = 1000;
+                Latency.AccumulateMax = 0;
             }
 
-            if (GameContext.World.IsPaused)
+            if (Character != null && !Character.IsAlive)
+                Character = null;
+
+            if (GameContext.GameController.IsGamePaused())
             {
                 RespawnTick++;
+                DieTick++;
                 LastActionTick++;
                 TeamChangeTick++;
-                DieTick++;
             }
             else
             {
-                if (Character == null && Team == Team.Spectators && SpectatorId == -1)
+                if (Character == null)
                 {
-                    ViewPos -= new Vector2(
-                        Math.Clamp(ViewPos.x - LatestActivity.TargetX, -500f, 500f),
-                        Math.Clamp(ViewPos.y - LatestActivity.TargetY, -400f, 400f)
-                    );
+                    if (Team == Team.Spectators && SpectatorMode == SpectatorMode.FreeView)
+                    {
+                        ViewPos -= new Vector2(
+                            Math.Clamp(ViewPos.x - LatestActivity.TargetX, -500f, 500f),
+                            Math.Clamp(ViewPos.y - LatestActivity.TargetY, -400f, 400f)
+                        );
+                    }
+
+                    if (DieTick + Server.TickSpeed * 3 <= Server.Tick && !DeadSpectatorMode)
+                        Respawn();
+
+                    if (Team == Team.Spectators && SpectatorFlag != null)
+                        SpectatorId = SpectatorFlag.Carrier?.Player.ClientId ?? -1;
+
+                    if (Spawning && RespawnTick <= Server.Tick)
+                        TryRespawn();
+                }
+                else if (Character.IsAlive)
+                {
+                    ViewPos = Character.Position;
                 }
 
-                if (Character == null && DieTick + Server.TickSpeed * 3 <= Server.Tick)
-                    Spawning = true;
-
-                if (Character != null)
-                {
-                    if (Character.IsAlive)
-                        ViewPos = Character.Position;
-                    else
-                        Character = null;
-                }
-                else if (Spawning && RespawnTick <= Server.Tick)
-                    TryRespawn();
+                if (!DeadSpectatorMode && LastActionTick != Server.Tick)
+                    InactivityTickCounter++;
             }
         }
 
@@ -100,157 +112,131 @@ namespace TeeSharp.Server.Game
                     if (GameContext.Players[i] != null &&
                         GameContext.Players[i].Team != Team.Spectators)
                     {
-                        ActLatency[i] = GameContext.Players[i].Latency.Min;
+                        ActualLatency[i] = GameContext.Players[i].Latency.Min;
                     }
                 }
             }
 
-            if (SpectatorId >= 0 && Team == Team.Spectators && GameContext.Players[SpectatorId] != null)
-                ViewPos = GameContext.Players[SpectatorId].ViewPos;
-        }
-
-        public override void SetTeam(Team team)
-        {
-            team = GameContext.GameController.ClampTeam(team);
-            if (team == Team)
-                return;
-
-            GameContext.SendChat(-1, false, $"'{Name}' joined the {GameContext.GameController.GetTeamName(team)}");
-            KillCharacter();
-
-            Team = team;
-            LastActionTick = Server.Tick;
-            SpectatorId = -1;
-            RespawnTick = Server.Tick + Server.TickSpeed / 2;
-            GameContext.Console.Print(OutputLevel.Debug, "game",
-                $"team_join player='{ClientId}:{Name}' team={Team}");
-            GameContext.GameController.OnPlayerInfoChange(this);
-
-            if (Team == Team.Spectators)
+            if ((Team == Team.Spectators || DeadSpectatorMode) && SpectatorMode != SpectatorMode.FreeView)
             {
-                for (var i = 0; i < GameContext.Players.Length; i++)
-                {
-                    if (GameContext.Players[i] == null ||
-                        GameContext.Players[i].SpectatorId != ClientId)
-                    {
-                        continue;
-                    }
-
-                    GameContext.Players[i].SpectatorId = -1;
-                }
+                if (SpectatorFlag != null)
+                    ViewPos = SpectatorFlag.Position;
+                else if (GameContext.Players[SpectatorId] != null)
+                    ViewPos = GameContext.Players[SpectatorId].ViewPos;
             }
         }
 
-        public override void KillCharacter(Weapon weapon = Weapon.Game)
+        public override void OnSnapshot(int snappingClient, 
+            out SnapshotPlayerInfo playerInfo, 
+            out SnapshotSpectatorInfo spectatorInfo,
+            out SnapshotDemoClientInfo demoClientInfo)
         {
-            if (Character == null)
+            playerInfo = null;
+            spectatorInfo = null;
+            demoClientInfo = null;
+
+            if (!IsDummy && !Server.ClientInGame(ClientId))
                 return;
 
-            Character.Die(ClientId, weapon);
-            Character = null;
-        }
+            playerInfo = Server.SnapshotItem<SnapshotPlayerInfo>(ClientId);
+            if (playerInfo == null)
+                return;
 
-        public override void Respawn()
-        {
-            if (Team != Team.Spectators)
-                Spawning = true;
+            playerInfo.PlayerFlags = PlayerFlags & PlayerFlags.Chatting;
+
+            if (Server.IsAuthed(ClientId))
+                playerInfo.PlayerFlags |= PlayerFlags.Admin;
+            if (!GameContext.GameController.IsPlayerReadyMode() || IsReadyToPlay)
+                playerInfo.PlayerFlags |= PlayerFlags.Ready;
+            if (RespawnDisabled && (Character == null || !Character.IsAlive))
+                playerInfo.PlayerFlags |= PlayerFlags.Dead;
+            if (snappingClient != -1 && (Team == Team.Spectators || DeadSpectatorMode) && snappingClient == SpectatorId)
+                playerInfo.PlayerFlags |= PlayerFlags.Watching;
+
+            playerInfo.Latency = snappingClient == -1
+                ? Latency.Min
+                : GameContext.Players[snappingClient].ActualLatency[ClientId];
+            playerInfo.Score = GameContext.GameController.GetScore(ClientId);
+
+            if (ClientId == snappingClient && (Team == Team.Spectators || DeadSpectatorMode))
+            {
+                spectatorInfo = Server.SnapshotItem<SnapshotSpectatorInfo>(ClientId);
+                if (spectatorInfo == null)
+                    return;
+
+                spectatorInfo.SpectatorMode = SpectatorMode;
+                spectatorInfo.SpectatorId = SpectatorId;
+
+                if (SpectatorFlag != null)
+                {
+                    spectatorInfo.X = (int) SpectatorFlag.Position.x;
+                    spectatorInfo.Y = (int) SpectatorFlag.Position.y;
+                }
+                else
+                {
+                    spectatorInfo.X = (int) ViewPos.x;
+                    spectatorInfo.Y = (int) ViewPos.y;
+                }
+            }
+
+            if (snappingClient == -1)
+            {
+                demoClientInfo = Server.SnapshotItem<SnapshotDemoClientInfo>(ClientId);
+                if (demoClientInfo == null)
+                    return;
+
+                demoClientInfo.Local = 0;
+                demoClientInfo.Team = Team;
+                demoClientInfo.Name = Server.ClientName(ClientId);
+                demoClientInfo.Clan = Server.ClientClan(ClientId);
+                demoClientInfo.Country = Server.ClientCountry(ClientId);
+
+                for (var part = SkinPart.Body; part < SkinPart.NumParts; part++)
+                    demoClientInfo[part] = TeeInfo[part];
+            }
         }
 
         public override void OnDisconnect(string reason)
         {
-            KillCharacter();
+            KillCharacter(WeaponGame);
 
-            if (!Server.ClientInGame(ClientId))
-                return;
-
-            GameContext.SendChat(-1, false,
-                string.IsNullOrWhiteSpace(reason)
-                    ? $"'{Name}' has left the game"
-                    : $"'{Name}' has left the game ({reason})");
-
-            GameContext.Console.Print(OutputLevel.Standard, "game", $"leave_player='{ClientId}:{Name}'");
-        }
-
-        public override void OnSnapshot(int snappingClient)
-        {
-            if (!Server.ClientInGame(ClientId))
-                return;
-
-            var id = ClientId;
-            if (!Server.Translate(ref id, snappingClient))
-                return;
-
-            var clientInfo = Server.SnapObject<SnapObj_ClientInfo>(id);
-            if (clientInfo == null)
-                return;
-
-            clientInfo.Name = Name;
-            clientInfo.Clan = Clan;
-            clientInfo.Country = Country;
-            clientInfo.Skin = TeeInfo.SkinName;
-            clientInfo.UseCustomColor = TeeInfo.UseCustomColor;
-            clientInfo.ColorBody = TeeInfo.ColorBody;
-            clientInfo.ColorFeet = TeeInfo.ColorFeet;
-
-            var playerInfo = Server.SnapObject<SnapshotPlayerInfo>(id);
-            if (playerInfo == null)
-                return;
-
-            playerInfo.Team = Team;
-            playerInfo.Score = Server.GetClientScore(ClientId);
-            playerInfo.ClientId = id;
-            playerInfo.Local = ClientId == snappingClient;
-            playerInfo.Latency = snappingClient == -1
-                ? Latency.Min
-                : GameContext.Players[snappingClient].ActLatency[ClientId];
-
-            if (ClientId == snappingClient && Team == Team.Spectators)
+            if (Team != Team.Spectators)
             {
-                var spectatorInfo = Server.SnapObject<SnapshotSpectatorInfo>(ClientId);
-                if (spectatorInfo == null)
-                    return;
-
-                spectatorInfo.SpectatorId = SpectatorId;
-                spectatorInfo.ViewPos = ViewPos;
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] != null &&
+                        GameContext.Players[i].SpectatorMode == SpectatorMode.Player &&
+                        GameContext.Players[i].SpectatorId == ClientId)
+                    {
+                        if (GameContext.Players[i].DeadSpectatorMode)
+                            GameContext.Players[i].UpdateDeadSpecMode();
+                        else
+                        {
+                            GameContext.Players[i].SpectatorMode = SpectatorMode.FreeView;
+                            GameContext.Players[i].SpectatorId = -1;
+                        }
+                    }
+                }
             }
-        }
-
-        public override void FakeSnapshot(int snappingClient)
-        {
-            if (!Server.GetClientInfo(snappingClient, out var info))
-                return;
-
-            if (GameContext.Players[snappingClient] != null &&
-                GameContext.Players[snappingClient].ClientVersion >= ClientVersion.DDNET_OLD)
-            {
-                return;
-            }
-
-            var id = BaseServer.VANILLA_MAX_CLIENTS - 1;
-            var clientInfo = Server.SnapObject<SnapObj_ClientInfo>(id);
-
-            if (clientInfo == null)
-                return;
-
-            clientInfo.Name = " ";
-            clientInfo.Clan = Server.GetClientClan(ClientId);
-            clientInfo.Skin = TeeInfo.SkinName;
         }
 
         public override void OnPredictedInput(SnapshotPlayerInput input)
         {
             // ignore input when player chat open
-            if (PlayerFlags.HasFlag(PlayerFlags.Chatting) &&
-                input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
-            {
+            if (PlayerFlags.HasFlag(PlayerFlags.Chatting) && input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
                 return;
-            }
 
             Character?.OnPredictedInput(input);
         }
 
         public override void OnDirectInput(SnapshotPlayerInput input)
         {
+            if (GameContext.World.Paused)
+            {
+                PlayerFlags = input.PlayerFlags;
+                return;
+            }
+
             if (input.PlayerFlags.HasFlag(PlayerFlags.Chatting))
             {
                 if (PlayerFlags.HasFlag(PlayerFlags.Chatting))
@@ -265,18 +251,210 @@ namespace TeeSharp.Server.Game
             Character?.OnDirectInput(input);
 
             if (Character == null && Team != Team.Spectators && (input.Fire & 1) != 0)
-                Spawning = true;
+                Respawn();
 
-            if (input.Direction != 0 ||
-                input.Jump ||
-                input.Hook ||
+            if (Character == null && Team == Team.Spectators && (input.Fire & 1) != 0)
+            {
+                if (!ActiveSpectatorSwitch)
+                {
+                    ActiveSpectatorSwitch = true;
+                    if (SpectatorMode == SpectatorMode.FreeView)
+                    {
+                        var character = GameContext.World.ClosestEntity<Character>(ViewPos, 6 * 32f, null);
+                        var flag = GameContext.World.ClosestEntity<Flag>(ViewPos, 6 * 32f, null);
+
+                        if (character != null || flag != null)
+                        {
+                            if (character == null || flag != null && character != null &&
+                                MathHelper.Distance(ViewPos, flag.Position) <
+                                MathHelper.Distance(ViewPos, character.Position))
+                            {
+                                SpectatorMode = flag.Team == Team.Red
+                                    ? SpectatorMode.FlagRed
+                                    : SpectatorMode.FlagBlue;
+                                SpectatorFlag = flag;
+                                SpectatorId = -1;
+                            }
+                            else
+                            {
+                                SpectatorMode = SpectatorMode.Player;
+                                SpectatorFlag = null;
+                                SpectatorId = character.Player.ClientId;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        SpectatorMode = SpectatorMode.FreeView;
+                        SpectatorFlag = null;
+                        SpectatorId = -1;
+                    }
+                }
+            }
+            else if (ActiveSpectatorSwitch)
+                ActiveSpectatorSwitch = false;
+
+            if (input.Direction != 0 || 
                 LatestActivity.TargetX != input.TargetX ||
                 LatestActivity.TargetY != input.TargetY ||
-                (input.Fire & 1) != 0)
+                input.IsJump || (input.Fire & 1) != 0 || input.IsHook)
             {
                 LatestActivity.TargetX = input.TargetX;
                 LatestActivity.TargetY = input.TargetY;
                 LastActionTick = Server.Tick;
+                InactivityTickCounter = 0;
+            }
+        }
+
+        public override Character GetCharacter()
+        {
+            return Character != null && Character.IsAlive ? Character : null;
+        }
+
+        public override void KillCharacter(Weapon weapon)
+        {
+            if (Character == null)
+                return;
+
+            Character.Die(ClientId, weapon);
+            Character = null;
+        }
+
+        public override void Respawn()
+        {
+            if (RespawnDisabled && Team != Team.Spectators)
+            {
+                DeadSpectatorMode = true;
+                IsReadyToPlay = true;
+                SpectatorMode = SpectatorMode.Player;
+                UpdateDeadSpecMode();
+                return;
+            }
+
+            DeadSpectatorMode = false;
+
+            if (Team != Team.Spectators)
+                Spawning = true;
+        }
+
+        public override bool SetSpectatorID(SpectatorMode mode, int spectatorId)
+        {
+            if (SpectatorMode == mode && mode != SpectatorMode.Player ||
+                SpectatorMode == SpectatorMode.Player && mode == SpectatorMode.Player &&
+                (spectatorId == -1 || SpectatorId == spectatorId || ClientId == spectatorId))
+            {
+                return false;
+            }
+
+            if (Team == Team.Spectators)
+            {
+                if (mode != SpectatorMode.Player ||
+                    mode == SpectatorMode.Player &&
+                    GameContext.Players[SpectatorId] != null &&
+                    GameContext.Players[SpectatorId].Team != Team.Spectators)
+                {
+                    if (mode == SpectatorMode.FlagRed || mode == SpectatorMode.FlagBlue)
+                    {
+                        foreach (var flag in GameContext.World.GetEntities<Flag>())
+                        {
+                            if (flag.Team == Team.Red && mode == SpectatorMode.FlagRed ||
+                                flag.Team == Team.Blue && mode == SpectatorMode.FlagBlue)
+                            {
+                                SpectatorFlag = null;
+                                SpectatorId = flag.Carrier?.Player.ClientId ?? -1;
+                                break;
+                            }
+                        }
+
+                        if (SpectatorFlag == null)
+                            return false;
+
+                        SpectatorMode = mode;
+                        return true;
+                    }
+
+                    SpectatorFlag = null;
+                    SpectatorMode = mode;
+                    SpectatorId = spectatorId;
+                    return true;
+                }
+            } 
+            else if (DeadSpectatorMode)
+            {
+                if (mode == SpectatorMode.Player && DeadCanFollow(GameContext.Players[SpectatorId]))
+                {
+                    SpectatorMode = mode;
+                    SpectatorFlag = null;
+                    SpectatorId = spectatorId;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public override bool DeadCanFollow(BasePlayer player)
+        {
+            if (player == null)
+                return false;
+
+            return (!player.RespawnDisabled ||
+                     player.GetCharacter() != null &&
+                     player.GetCharacter().IsAlive) && player.Team == Team;
+        }
+
+        public override void UpdateDeadSpecMode()
+        {
+            if (SpectatorId != -1 && DeadCanFollow(GameContext.Players[SpectatorId]))
+                return;
+
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null)
+                    continue;
+
+                if (DeadCanFollow(GameContext.Players[i]))
+                {
+                    SpectatorId = i;
+                    return;
+                }
+            }
+
+            DeadSpectatorMode = false;
+        }
+
+        public override void SetTeam(Team team)
+        {
+            KillCharacter(WeaponGame);
+
+            Team = team;
+            LastActionTick = Server.Tick;
+            SpectatorMode = SpectatorMode.FreeView;
+            SpectatorId = -1;
+            SpectatorFlag = null;
+            DeadSpectatorMode = false;
+
+            RespawnTick = Server.Tick + Server.TickSpeed / 2;
+
+            if (Team == Team.Spectators)
+            {
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null)
+                        continue;
+
+                    if (GameContext.Players[i].SpectatorMode == SpectatorMode.Player &&
+                        GameContext.Players[i].SpectatorId == ClientId)
+                    {
+                        if (GameContext.Players[i].DeadSpectatorMode)
+                            GameContext.Players[i].UpdateDeadSpecMode();
+                        else
+                        {
+                            GameContext.Players[i].SpectatorMode = SpectatorMode.FreeView;
+                            GameContext.Players[i].SpectatorId = -1;
+                        }
+                    }
+                }
             }
         }
 

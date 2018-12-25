@@ -113,7 +113,7 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient, GetPos(currentTime)))
                 return;
 
-            var projectile = Server.SnapObject<SnapshotProjectile>(IDs[0]);
+            var projectile = Server.SnapshotItem<SnapshotProjectile>(IDs[0]);
             if (projectile == null)
                 return;
 

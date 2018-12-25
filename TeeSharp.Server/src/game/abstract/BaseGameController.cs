@@ -38,7 +38,7 @@ namespace TeeSharp.Server.Game
 
         private string _mapWish;
 
-        public abstract int GetPlayerScore(int clientId);
+        public abstract int GetScore(int clientId);
         public abstract string GetTeamName(Team team);
         public abstract Team GetAutoTeam(int clientId);
         public abstract bool CheckTeamBalance();
@@ -72,7 +72,6 @@ namespace TeeSharp.Server.Game
             Config = Kernel.Get<BaseConfig>();
             GameWorld = Kernel.Get<BaseGameWorld>();
         }
-
 
         public virtual void ChangeMap(string toMap)
         {
@@ -190,5 +189,10 @@ namespace TeeSharp.Server.Game
                 }
             }
         }
+
+        public abstract Team StartTeam();
+        public abstract bool IsPlayerReadyMode();
+        public abstract bool IsGamePaused();
+        public abstract bool StartRespawnState();
     }
 }

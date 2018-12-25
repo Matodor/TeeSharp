@@ -809,11 +809,11 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient))
                 return;
 
-            var character = Server.SnapObject<SnapshotCharacter>(id);
+            var character = Server.SnapshotItem<SnapshotCharacter>(id);
             if (character == null)
                 return;
 
-            if (ReckoningTick == 0 || GameWorld.IsPaused)
+            if (ReckoningTick == 0 || GameWorld.Paused)
             {
                 character.Tick = 0;
                 Core.Write(character);

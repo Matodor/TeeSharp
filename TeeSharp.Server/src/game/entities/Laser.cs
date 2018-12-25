@@ -109,7 +109,7 @@ namespace TeeSharp.Server.Game.Entities
             if (NetworkClipped(snappingClient))
                 return;
 
-            var laser = Server.SnapObject<SnapshotLaser>(IDs[0]);
+            var laser = Server.SnapshotItem<SnapshotLaser>(IDs[0]);
             if (laser == null)
                 return;
 

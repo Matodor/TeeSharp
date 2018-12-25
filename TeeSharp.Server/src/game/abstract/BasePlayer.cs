@@ -7,14 +7,6 @@ using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
-    public class TeeInfo
-    {
-        public string SkinName { get; set; }
-        public bool UseCustomColor { get; set; }
-        public int ColorBody { get; set; }
-        public int ColorFeet { get; set; }
-    }
-
     public class Latency
     {
         public int Accumulate;
@@ -33,65 +25,69 @@ namespace TeeSharp.Server.Game
 
     public abstract class BasePlayer : BaseInterface
     {
-        public virtual int ClientId { get; private set; }
+        public const Weapon WeaponGame = (Weapon) (-3);
+        public const Weapon WeaponSelf = (Weapon) (-2);
+        public const Weapon WeaponWorld = (Weapon) (-1);
 
-        public virtual string PlayerName { get; set; }
-        public virtual string PlayerClan { get; set; }
-        public virtual int PlayerCountry { get; set; }
+        public int ClientId { get; private set; }
+        public bool IsDummy { get; private set; }
 
-        public virtual ClientVersion ClientVersion { get; set; }
-        public virtual PlayerFlags PlayerFlags { get; protected set; } = 0;
-        public virtual Team Team { get; protected set; }
-
-        public string Name => Server.GetClientName(ClientId);
-        public string Clan => Server.GetClientClan(ClientId);
-        public int Country => Server.GetClientCountry(ClientId);
-        
-        public virtual bool IsReady { get; set; }
-        public virtual int LastSetTeam { get; set; }
-        public virtual int LastSetSpectatorMode { get; set; }
-        public virtual int LastChangeInfo { get; set; }
-        public virtual int LastChatMessage { get; set; }
-        public virtual int LastActionTick { get; set; }
-        public virtual int TeamChangeTick { get; set; }
-        public virtual int RespawnTick { get; set; }
-        public virtual int DieTick { get; set; }
+        public virtual SpectatorMode SpectatorMode { get; set; }
         public virtual int SpectatorId { get; set; }
 
-        public virtual TeeInfo TeeInfo { get; protected set; }
-        public virtual Latency Latency { get; protected set; }
+        public virtual int[] ActualLatency { get; protected set; }
+        public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
-        public virtual int[] ActLatency { get; protected set; }
+        public virtual Latency Latency { get; protected set; }
+        public virtual TeeInfo TeeInfo { get; protected set; }
+        public virtual bool DeadSpectatorMode { get; protected set; }
+        public virtual bool RespawnDisabled { get; protected set; }
 
-        protected virtual Activity LatestActivity { get; set; }
+        protected virtual Character Character { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
-        protected virtual Character Character { get; set; }
-        protected virtual bool Spawning { get; set; }
 
-        public abstract Character GetCharacter();
+        protected virtual PlayerFlags PlayerFlags { get; set; }
+        protected virtual int InactivityTickCounter { get; set; }
+        protected virtual int TeamChangeTick { get; set; }
+        protected virtual int LastActionTick { get; set; }
+        protected virtual int RespawnTick { get; set; }
+        protected virtual int DieTick { get; set; }
+        protected virtual Flag SpectatorFlag { get; set; }
+        protected virtual bool ActiveSpectatorSwitch { get; set; }
+
+        protected virtual bool IsReadyToPlay { get; set; }
+        protected virtual bool Spawning { get; set; }
+        protected virtual Activity LatestActivity { get; set; }
+
+
         public abstract void Tick();
         public abstract void PostTick();
         public abstract void Respawn();
-        public abstract void SetTeam(Team team);
-        public abstract void KillCharacter(Weapon weapon = Weapon.Game);
 
-        public abstract void FakeSnapshot(int snappingClient);
+        public abstract void OnSnapshot(int snappingClient, 
+            out SnapshotPlayerInfo playerInfo,
+            out SnapshotSpectatorInfo spectatorInfo, 
+            out SnapshotDemoClientInfo demoClientInfo);
+
         public abstract void OnDisconnect(string reason);
-        public abstract void OnSnapshot(int snappingClient);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);
         public abstract void OnDirectInput(SnapshotPlayerInput input);
+        public abstract Character GetCharacter();
+        public abstract void KillCharacter(Weapon weapon);
+        public abstract bool SetSpectatorID(SpectatorMode mode, int spectatorId);
+        public abstract bool DeadCanFollow(BasePlayer player);
+
+        public abstract void UpdateDeadSpecMode();
+        public abstract void SetTeam(Team team);
 
         protected abstract void TryRespawn();
 
-        public virtual void Init(int clientId, Team startTeam)
+        public virtual void Init(int clientId, bool dummy)
         {
             ClientId = clientId;
-            
-            Server = Kernel.Get<BaseServer>();
-            GameContext = Kernel.Get<BaseGameContext>();
-            Config = Kernel.Get<BaseConfig>();
+            IsDummy = dummy;
         }
     }
 }

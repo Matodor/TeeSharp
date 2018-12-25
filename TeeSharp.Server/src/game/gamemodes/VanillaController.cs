@@ -89,7 +89,7 @@ namespace TeeSharp.Server.Game
                     }
 
                     teamPlayers[(int)GameContext.Players[i].Team]++;
-                    playersScores[i] = GetPlayerScore(i) * Server.TickSpeed * 60f /
+                    playersScores[i] = GetScore(i) * Server.TickSpeed * 60f /
                                        (Server.Tick - ScoresStartTick[i]);
                     teamScores[(int)GameContext.Players[i].Team] += playersScores[i];
                 }
@@ -164,7 +164,7 @@ namespace TeeSharp.Server.Game
                 }
             }
 
-            if (GameWorld.IsPaused)
+            if (GameWorld.Paused)
             {
                 RoundStartTick++;
                 for (var i = 0; i < ScoresStartTick.Length; i++)
@@ -210,12 +210,12 @@ namespace TeeSharp.Server.Game
                     if (GameContext.Players[i] == null)
                         continue;
 
-                    if (GetPlayerScore(i) > topScore)
+                    if (GetScore(i) > topScore)
                     {
-                        topScore = GetPlayerScore(i);
+                        topScore = GetScore(i);
                         topScoreCount = 1;
                     }
-                    else if (GetPlayerScore(i) == topScore)
+                    else if (GetScore(i) == topScore)
                         topScore++;
                 }
 
@@ -236,7 +236,7 @@ namespace TeeSharp.Server.Game
             if (Warmup > 0)
                 return;
 
-            GameWorld.IsPaused = true;
+            GameWorld.Paused = true;
             GameOverTick = Server.Tick;
             SuddenDeath = 0;
         }
@@ -253,14 +253,14 @@ namespace TeeSharp.Server.Game
             RoundStartTick = Server.Tick;
             SuddenDeath = 0;
             GameOverTick = -1;
-            GameWorld.IsPaused = false;
+            GameWorld.Paused = false;
             TeamScores[(int) Team.Red] = 0;
             TeamScores[(int) Team.Blue] = 0;
             ForceBalanced = false;
             GameContext.Console.Print(OutputLevel.Debug, "game", $"start round type='{GameType}' teamplay='{GameFlags.HasFlag(GameFlags.TEAMS)}'");
         }
 
-        public override int GetPlayerScore(int clientId)
+        public override int GetScore(int clientId)
         {
             return Scores[clientId];
         }
@@ -561,7 +561,7 @@ namespace TeeSharp.Server.Game
 
         public override void OnSnapshot(int snappingClient)
         {
-            var gameInfo = Server.SnapObject<SnapObj_GameInfo>(0);
+            var gameInfo = Server.SnapshotItem<SnapObj_GameInfo>(0);
 
             if (gameInfo == null)
                 return;
@@ -573,7 +573,7 @@ namespace TeeSharp.Server.Game
                 gameInfo.GameStateFlags |= GameStateFlags.GAMEOVER;
             if (SuddenDeath != 0)
                 gameInfo.GameStateFlags |= GameStateFlags.SuddenDeath;
-            if (GameContext.World.IsPaused)
+            if (GameContext.World.Paused)
                 gameInfo.GameStateFlags |= GameStateFlags.PAUSED;
 
             gameInfo.RoundStartTick = (int)RoundStartTick;

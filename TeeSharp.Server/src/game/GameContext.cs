@@ -370,7 +370,7 @@ namespace TeeSharp.Server.Game
             if (msg.Team < Team.Spectators || msg.Team > Team.Blue) 
                 return;
 
-            if (World.IsPaused || player.Team == msg.Team || 
+            if (World.Paused || player.Team == msg.Team || 
                 Config["SvSpamprotection"] &&
                 player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
             {
@@ -486,7 +486,7 @@ namespace TeeSharp.Server.Game
             {
                 if (Players[i] == null)
                     continue;
-                Players[i].OnSnapshot(snappingId);
+                Players[i].OnSnapshot(snappingId, out TODO, out TODO, out TODO);
             }
 
             Players[snappingId].FakeSnapshot(snappingId);
@@ -539,15 +539,15 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnClientPredictedInput(int clientId, SnapshotPlayerInput input)
+        public override void OnClientPredictedInput(int clientId, int[] input)
         {
-            if (!World.IsPaused)
+            if (!World.Paused)
                 Players[clientId].OnPredictedInput(input);
         }
 
         public override void OnClientDirectInput(int clientId, int[] input)
         {
-            if (!World.IsPaused)
+            if (!World.Paused)
                 Players[clientId].OnDirectInput(input);
         }
     }

@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
@@ -19,7 +18,6 @@ using TeeSharp.Network;
 using TeeSharp.Network.Enums;
 using TeeSharp.Server.Game;
 using Debug = TeeSharp.Core.Debug;
-using SnapshotItem = TeeSharp.Common.Snapshots.SnapshotItem;
 
 namespace TeeSharp.Server
 {
@@ -55,6 +53,10 @@ namespace TeeSharp.Server
 
     public class Server : BaseServer
     {
+        public override int MaxClients => 64;
+        public override int MaxPlayers => 16;
+        public override int TickSpeed => 50;
+
         public override void Init(string[] args)
         {
             Tick = 0;
@@ -137,12 +139,11 @@ namespace TeeSharp.Server
 
                         for (var inputIndex = 0; inputIndex < Clients[clientId].Inputs.Length; inputIndex++)
                         {
-                            if (Clients[clientId].Inputs[inputIndex].Tick == Tick)
-                            {
-                                GameContext.OnClientPredictedInput(clientId,
-                                    Clients[clientId].Inputs[inputIndex].PlayerInput);
-                                break;
-                            }
+                            if (Clients[clientId].Inputs[inputIndex].Tick != Tick)
+                                continue;
+
+                            GameContext.OnClientPredictedInput(clientId, Clients[clientId].Inputs[inputIndex].Data);
+                            break;
                         }
                     }
 
@@ -164,7 +165,7 @@ namespace TeeSharp.Server
 
             for (var i = 0; i < Clients.Length; i++)
             {
-                if (Clients[i].State != ServerClientState.EMPTY)
+                if (Clients[i].State != ServerClientState.Empty)
                     NetworkServer.Drop(i, "Server shutdown");
             }
 
@@ -216,6 +217,11 @@ namespace TeeSharp.Server
             Clients[clientId].Country = country;
         }
 
+        protected override void GenerateRconPassword()
+        {
+            throw new NotImplementedException();
+        }
+
         public override IPEndPoint ClientEndPoint(int clientId)
         {
             return Clients[clientId].State == ServerClientState.InGame
@@ -238,6 +244,12 @@ namespace TeeSharp.Server
         public override bool ClientInGame(int clientId)
         {
             return Clients[clientId].State == ServerClientState.InGame;
+        }
+
+        public override bool IsAuthed(int clientId)
+        {
+            // TODO
+            return false;
         }
 
         public override bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId)
@@ -283,6 +295,8 @@ namespace TeeSharp.Server
             {
                 NetworkServer.Send(packet);
             }
+
+            return true;
         }
 
         //public override bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)
@@ -330,134 +344,25 @@ namespace TeeSharp.Server
 
         public override bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
         {
-            var result = true;
-
-            if (clientId == -1)
-            {
-                for (var i = 0; i < Clients.Length; i++)
-                {
-                    if (ClientInGame(i))
-                    {
-                        result &= SendPackMsgBody<T>(msg, flags, i);
-                    }
-                }
-            }
-            else
-            {
-                return SendPackMsgBody<T>(msg, flags, clientId);
-            }
-
-            return result;
-        }
-
-        public override bool AddSnapItem<T>(T item, int id)
-        {
-            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
-            return id >= 0 && SnapshotBuilder.AddItem(item, id);
-        }
-
-        public override T SnapObject<T>(int id)
-        {
-            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
-
-            return id < 0
-                ? null
-                : SnapshotBuilder.NewObject<T>(id);
-        }
-
-        protected override bool SendPackMsgBody<T>(T msg, MsgFlags flags, int clientId)
-        {
-            if (msg is GameMsg_SvEmoticon)
-                return SendPackMsgTranslate(msg as GameMsg_SvEmoticon, flags, clientId);
-            if (msg is GameMsg_SvChat)
-                return SendPackMsgTranslate(msg as GameMsg_SvChat, flags, clientId);
-            if (msg is GameMsg_SvKillMsg)
-                return SendPackMsgTranslate(msg as GameMsg_SvKillMsg, flags, clientId);
-            return SendPackMsgTranslate(msg, flags, clientId);
-        }
-
-        protected override bool SendPackMsgTranslate(GameMsg_SvEmoticon msg, MsgFlags flags, int clientId)
-        {
-            var copy = new GameMsg_SvEmoticon
-            {
-                ClientId = msg.ClientId,
-                Emoticon = msg.Emoticon
-            };
-
-            return Translate(ref copy.ClientId, clientId) && 
-                   SendPackMsgOne(copy, flags, clientId);
-        }
-
-        protected override bool SendPackMsgTranslate(GameMsg_SvChat msg, MsgFlags flags, int clientId)
-        {
-            var copy = new GameMsg_SvChat
-            {
-                ClientId = msg.ClientId,
-                Message = msg.Message,
-                IsTeam = msg.IsTeam
-            };
-
-            if (copy.ClientId >= 0 && !Translate(ref copy.ClientId, clientId))
-            {
-                copy.Message = $"{GetClientName(copy.ClientId)}: {copy.Message}";
-                copy.ClientId = VANILLA_MAX_CLIENTS - 1;
-            }
-
-            return SendPackMsgOne(copy, flags, clientId);
-        }
-
-        protected override bool SendPackMsgTranslate(GameMsg_SvKillMsg msg, 
-            MsgFlags flags, int clientId)
-        {
-            var copy = new GameMsg_SvKillMsg
-            {
-                Weapon = msg.Weapon,
-                Killer = msg.Killer,
-                ModeSpecial = msg.ModeSpecial,
-                Victim = msg.Victim
-            };
-
-            if (!Translate(ref copy.Victim, clientId)) return false;
-            if (!Translate(ref copy.Killer, clientId)) copy.Killer = copy.Victim;
-
-            return SendPackMsgOne(copy, flags, clientId);
-        }
-
-        protected override bool SendPackMsgTranslate(BaseGameMessage msg, 
-            MsgFlags flags, int clientId)
-        {
-            return SendPackMsgOne(msg, flags, clientId);
-        }
-
-        protected override bool SendPackMsgOne(BaseGameMessage msg, 
-            MsgFlags flags, int clientId)
-        {
-            var packer = new MsgPacker((int) msg.Type);
+            var packer = new MsgPacker((int) msg.Type, false);
             if (msg.PackError(packer))
                 return false;
             return SendMsg(packer, flags, clientId);
         }
 
-        public override bool Translate(ref int targetId, int clientId)
+        public override bool SnapshotItem<T>(T item, int id)
         {
-            if (!GetClientInfo(clientId, out var info))
-                return false;
+            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
+            return id >= 0 && SnapshotBuilder.AddItem(item, id);
+        }
 
-            if (info.ClientVersion >= ClientVersion.DDNET_OLD)
-                return true;
+        public override T SnapshotItem<T>(int id)
+        {
+            Debug.Assert(id >= 0 && id <= 65535, "incorrect id");
 
-            var map = GetIdMap(clientId);
-
-            for (var i = 0; i < VANILLA_MAX_CLIENTS; i++)
-            {
-                if (targetId == IdMap[map + i])
-                {
-                    targetId = i;
-                    return true;
-                }
-            }
-
-            return false;
+            return id < 0
+                ? null
+                : SnapshotBuilder.NewItem<T>(id);
         }
 
         public override int SnapshotNewId()
@@ -910,7 +815,7 @@ namespace TeeSharp.Server
 
                 if (deltaSize == 0)
                 {
-                    var msg = new MsgPacker((int) NetworkMessages.ServerSnapEmpty);
+                    var msg = new MsgPacker((int) NetworkMessages.ServerSnapEmpty, true);
                     msg.AddInt(Tick);
                     msg.AddInt(Tick - deltaTick);
                     SendMsg(msg, MsgFlags.Flush, i);
@@ -928,7 +833,7 @@ namespace TeeSharp.Server
 
                     if (numPackets == 1)
                     {
-                        var msg = new MsgPacker((int) NetworkMessages.ServerSnapSingle);
+                        var msg = new MsgPacker((int) NetworkMessages.ServerSnapSingle, true);
                         msg.AddInt(Tick);
                         msg.AddInt(Tick - deltaTick);
                         msg.AddInt(crc);
@@ -938,7 +843,7 @@ namespace TeeSharp.Server
                     }
                     else
                     {
-                        var msg = new MsgPacker((int) NetworkMessages.ServerSnap);
+                        var msg = new MsgPacker((int) NetworkMessages.ServerSnap, true);
                         msg.AddInt(Tick);
                         msg.AddInt(Tick - deltaTick);
                         msg.AddInt(numPackets);
@@ -946,7 +851,7 @@ namespace TeeSharp.Server
                         msg.AddInt(crc);
                         msg.AddInt(chunk);
                         msg.AddRaw(snapData, n * Snapshot.MaxPacketSize, chunk);
-                        SendMsg(msg, MsgFlags.Flush, i, true);
+                        SendMsg(msg, MsgFlags.Flush, i);
                     }
                 }
             }
@@ -1013,7 +918,7 @@ namespace TeeSharp.Server
 
         protected override void SendMap(int clientId)
         {
-            var msg = new MsgPacker((int) NetworkMessages.ServerMapChange);
+            var msg = new MsgPacker((int) NetworkMessages.ServerMapChange, true);
             // map name
             msg.AddString(CurrentMap.MapName);
             // map crc
@@ -1082,124 +987,6 @@ namespace TeeSharp.Server
 	            Console()->Chain("mod_command", ConchainModCommandUpdate, this);
 	            Console()->Chain("console_output_level", ConchainConsoleOutputLevelUpdate, this);
             */
-        }
-
-        protected override void SendServerInfo(IPEndPoint endPoint, int token, bool showMore, int offset = 0)
-        {
-            while (true)
-            {
-                var packer = new Packer();
-                var playersCount = 0;
-                var clientsCount = 0;
-                var maxClients = NetworkServer.Config.MaxClients;
-
-                for (var i = 0; i < Clients.Length; i++)
-                {
-                    if (Clients[i].State == ServerClientState.EMPTY)
-                        continue;
-
-                    if (!GameContext.IsClientSpectator(i))
-                        playersCount++;
-                    clientsCount++;
-                }
-
-                packer.AddRaw(showMore
-                    ? MasterServerPackets.SERVERBROWSE_INFO_64_LEGACY
-                    : MasterServerPackets.Info);
-
-                packer.AddString(token.ToString(), 6);
-                packer.AddString(GameContext.GameVersion, 32);
-
-                if (showMore)
-                {
-                    packer.AddString(Config["SvName"], 256);
-                }
-                else
-                {
-                    packer.AddString(maxClients <= VANILLA_MAX_CLIENTS
-                        ? Config["SvName"]
-                        : $"{Config["SvName"]} [{clientsCount}/{maxClients}]", 64);
-                }
-
-                packer.AddString(CurrentMap.MapName, 32);
-                packer.AddString(GameContext.GameController.GameType, 16);
-                packer.AddInt(string.IsNullOrWhiteSpace(Config["Password"])
-                    ? 0
-                    : 1);
-
-                if (!showMore)
-                {
-                    if (clientsCount >= VANILLA_MAX_CLIENTS)
-                    {
-                        if (clientsCount < maxClients)
-                            clientsCount = VANILLA_MAX_CLIENTS - 1;
-                        else
-                            clientsCount = VANILLA_MAX_CLIENTS;
-                    }
-
-                    if (maxClients > VANILLA_MAX_CLIENTS)
-                        maxClients = VANILLA_MAX_CLIENTS;
-                }
-
-                if (playersCount > clientsCount)
-                    playersCount = clientsCount;
-
-                // num players
-                packer.AddString(playersCount.ToString(), 3);
-                // max players
-                packer.AddString((maxClients - Config["SvSpectatorSlots"]).ToString(), 3);
-                // num clients
-                packer.AddString(clientsCount.ToString(), 3);
-                // max clients
-                packer.AddString(maxClients.ToString(), 3);
-
-                if (showMore)
-                    packer.AddInt(offset);
-
-                var clientsPerPacket = showMore ? 24 : VANILLA_MAX_CLIENTS;
-                var skip = offset;
-                var take = clientsPerPacket;
-
-                for (var i = 0; i < Clients.Length; i++)
-                {
-                    if (Clients[i].State == ServerClientState.EMPTY)
-                        continue;
-
-                    if (skip-- > 0)
-                        continue;
-                    if (--take < 0)
-                        break;
-
-                    // client name
-                    packer.AddString(GetClientName(i), 16);
-                    // client clan
-                    packer.AddString(GetClientClan(i), 12);
-                    // client country
-                    packer.AddString(GetClientCountry(i).ToString(), 6);
-                    // client score
-                    packer.AddString(GetClientScore(i).ToString(), 6);
-                    // client state
-                    packer.AddString(GameContext.IsClientSpectator(i)
-                        ? "0"
-                        : "1", 2);
-                }
-
-                NetworkServer.Send(new Chunk
-                {
-                    ClientId = -1,
-                    EndPoint = endPoint,
-                    DataSize = packer.Size(),
-                    Data = packer.Data(),
-                    Flags = SendFlags.CONNLESS
-                });
-
-                if (showMore && take < 0)
-                {
-                    offset = offset + clientsPerPacket;
-                    continue;
-                }
-                break;
-            }
         }
 
         protected override void ConsoleReload(ConsoleResult result, object data)

@@ -45,7 +45,7 @@ namespace TeeSharp.Server.Game
                         MathHelper.Distance(GameContext.Players[snappingClient].ViewPos,
                             EventInfos[i].EventItem.Position) < 1500f)
                     {
-                        Server.AddSnapItem(EventInfos[i].EventItem, i);
+                        Server.SnapshotItem(EventInfos[i].EventItem, i);
                     }
                 }
             }
