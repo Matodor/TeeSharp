@@ -465,7 +465,6 @@ namespace TeeSharp.Server.Game
             GameController.OnPlayerConnected(Players[clientId]);
         }
 
-
         protected override GameMsg_SvClientInfo ClientInfo(int clientId)
         {
             var clientInfo = new GameMsg_SvClientInfo()

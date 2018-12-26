@@ -639,8 +639,8 @@ namespace TeeSharp.Server
 
             Console.Print(OutputLevel.Standard, "server", $"player has entered the game. ClientID={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.InGame;
-            GameContext.OnClientEnter(clientId);
             SendServerInfo(clientId);
+            GameContext.OnClientEnter(clientId);
         }
 
         protected override void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId)

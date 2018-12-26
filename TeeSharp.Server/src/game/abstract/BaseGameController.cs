@@ -26,6 +26,14 @@ namespace TeeSharp.Server.Game
     //    }
     //}
 
+    public struct GameInfo
+    {
+        public int MatchCurrent;
+        public int MatchNum;
+        public int ScoreLimit;
+        public int TimeLimit;
+    }
+
     public abstract class BaseGameController : BaseInterface
     {
         //protected virtual IList<Vector2>[] SpawnPos { get; set; }
@@ -191,9 +199,13 @@ namespace TeeSharp.Server.Game
         public abstract string GameType { get; }
 
         public virtual GameState GameState { get; protected set; }
+        public virtual GameFlags GameFlags { get; protected set; }
 
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
+        protected virtual BaseGameConsole Console { get; set; }
+
+        protected virtual GameInfo GameInfo { get; set; }
 
         public abstract void Init();
         public abstract Team StartTeam();
@@ -210,5 +222,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnPlayerEnter(BasePlayer player);
         public abstract void OnPlayerDisconnected(BasePlayer player);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
+
+        protected abstract void UpdateGameInfo(int clientId);
     }
 }

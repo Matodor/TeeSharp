@@ -1,9 +1,11 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Server.Game
 {
+    // TODO abstract
     public class GameController : BaseGameController
     {
         public override string GameType => "Test";
@@ -12,6 +14,7 @@ namespace TeeSharp.Server.Game
         {
             GameContext = Kernel.Get<BaseGameContext>();
             Server = Kernel.Get<BaseServer>();
+            Console = Kernel.Get<BaseGameConsole>();
         }
 
         public override Team StartTeam()
@@ -66,7 +69,37 @@ namespace TeeSharp.Server.Game
 
         public override void OnPlayerEnter(BasePlayer player)
         {
-            
+            player.Respawn();
+            Console.Print(OutputLevel.Debug, "game", 
+                $"team_join player='{player.ClientId}:{Server.ClientName(player.ClientId)}' team={player.Team}");
+            UpdateGameInfo(player.ClientId);
+        }
+
+        protected override void UpdateGameInfo(int clientId)
+        {
+            var msg = new GameMsg_SvGameInfo()
+            {
+                GameFlags = GameFlags,
+                ScoreLimit = GameInfo.ScoreLimit,
+                TimeLimit = GameInfo.TimeLimit,
+                MatchCurrent = GameInfo.MatchCurrent,
+                MatchNum = GameInfo.MatchNum,
+            };
+
+            if (clientId == -1)
+            {
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null || !Server.ClientInGame(i))
+                        continue;
+
+                    Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoRecord, i);
+                }
+            }
+            else
+            {
+                Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoRecord, clientId);
+            }
         }
 
         public override void OnPlayerDisconnected(BasePlayer player)
