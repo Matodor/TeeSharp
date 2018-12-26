@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Text;
-using TeeSharp.Common.Enums;
 using TeeSharp.Core;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Network
 {
     public class UnPacker
     {

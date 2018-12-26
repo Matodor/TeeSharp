@@ -28,8 +28,10 @@ namespace TeeSharp.Network
 
             if (address != null)
             {
+                var port = address.Port;
                 address.Port = 0;
                 address.Raw().CopyTo(bytes);
+                address.Port = port;
             }
 
             BitConverter.TryWriteBytes(bytes.Slice(24), seed);

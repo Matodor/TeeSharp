@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TeeSharp.Network;
@@ -32,12 +34,23 @@ namespace TeeSharp.Tests
         }
 
         [TestMethod]
+        public void TestEndPointRaw()
+        {
+            var endPoint1 = new IPEndPoint(IPAddress.Parse("192.168.137.106"), 51850);
+            var actual = endPoint1.Raw();
+            var expected = new byte[]
+            {
+                1, 0, 0, 0, 192, 168, 137, 106, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 138, 202, 0, 0
+            };
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void TestGenerateToken()
         {
-            var endPoint1 = new IPEndPoint(IPAddress.Parse("192.168.42.5"), 65202);
-            var token = TokenHelper.GenerateToken(endPoint1, 666777888);
-
-            Assert.AreEqual(token, 2215451845u);
+            var endPoint1 = new IPEndPoint(IPAddress.Parse("192.168.137.106"), 51850);
+            var token = TokenHelper.GenerateToken(endPoint1, 65141430699971723);
+            Assert.AreEqual(token, 2189052134u);
         }
     }
 }

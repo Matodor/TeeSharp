@@ -101,8 +101,7 @@ namespace TeeSharp.Network
                 if (!NetworkHelper.UnpackPacket(data, data.Length, ChunkReceiver.ChunkConstruct))
                     continue;
 
-                string banReason;
-                if (NetworkBan.IsBanned(endPoint, out banReason))
+                if (NetworkBan.IsBanned(endPoint, out var banReason))
                 {
                     NetworkHelper.SendConnectionMsg(UdpClient, endPoint,
                         ChunkReceiver.ChunkConstruct.ResponseToken, 0, ConnectionMessages.Close, banReason);
@@ -115,7 +114,9 @@ namespace TeeSharp.Network
 
                 for (var i = 0; i < Connections.Count; i++)
                 {
-                    if (Connections[i].EndPoint.Compare(endPoint, comparePorts: false))
+                    if (
+                        Connections[i].State != ConnectionState.Offline &&
+                        Connections[i].EndPoint.Compare(endPoint, comparePorts: false))
                     {
                         sameIps++;
 
@@ -219,7 +220,9 @@ namespace TeeSharp.Network
                 {
                     for (var i = 0; i < Connections.Count; i++)
                     {
-                        if (Connections[i].EndPoint.Compare(packet.EndPoint, comparePorts: true))
+                        if (Connections[i].State != ConnectionState.Offline && 
+                            Connections[i].EndPoint != null &&
+                            Connections[i].EndPoint.Compare(packet.EndPoint, comparePorts: true))
                         {
                             packet.ClientId = i;
                             break;
@@ -280,10 +283,6 @@ namespace TeeSharp.Network
 
         protected override NetworkServerConfig CheckConfig(NetworkServerConfig config)
         {
-            config.MaxClients = 
-                Math.Clamp(config.MaxClients, 1, NetworkHelper.MaxClients);
-            config.MaxClientsPerIp = 
-                Math.Clamp(config.MaxClientsPerIp, 1, config.MaxClients);
             return config;
         }
 

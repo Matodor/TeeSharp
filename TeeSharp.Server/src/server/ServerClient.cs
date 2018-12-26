@@ -10,7 +10,8 @@ namespace TeeSharp.Server
             State = ServerClientState.Empty;
             SnapshotStorage = new SnapshotStorage();
             Inputs = new Input[MaxInputs];
-
+            LatestInput = new Input();
+            
             for (var i = 0; i < Inputs.Length; i++)
             {
                 Inputs[i] = new Input()
@@ -28,7 +29,9 @@ namespace TeeSharp.Server
             }
 
             CurrentInput = 0;
-            LatestInput = null;
+            LatestInput.Tick = 0;
+            for (var i = 0; i < LatestInput.Data.Length; i++)
+                LatestInput.Data[i] = 0;
 
             SnapshotStorage.PurgeAll();
             LastAckedSnapshot = -1;

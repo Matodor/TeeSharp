@@ -63,6 +63,8 @@ namespace TeeSharp.Server
                 { "SvInactiveKickTime", new ConfigInt("SvInactiveKickTime", "sv_inactivekick_time", 3, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before taking care of inactive players") },
                 { "SvInactiveKick", new ConfigInt("SvInactiveKick", "sv_inactivekick", 1, 0, 2, ConfigFlags.SERVER, "How to deal with inactive players (0=move to spectator, 1=move to free spectator slot/kick, 2=kick)") },
 
+                { "SvSilentSpectatorMode", new ConfigInt("SvSilentSpectatorMode", "sv_silent_spectator_mode", 1, 0, 1, ConfigFlags.SAVE | ConfigFlags.SERVER, "Mute join/leave message of spectator") },
+
                 { "SvStrictSpectateMode", new ConfigInt("SvStrictSpectateMode", "sv_strict_spectate_mode", 0, 0, 1, ConfigFlags.SERVER, "Restricts information in spectator mode") },
                 { "SvVoteSpectate", new ConfigInt("SvVoteSpectate", "sv_vote_spectate", 1, 0, 1, ConfigFlags.SERVER, "Allow voting to move players to spectators") },
                 { "SvVoteSpectateRejoindelay", new ConfigInt("SvVoteSpectateRejoindelay", "sv_vote_spectate_rejoindelay", 3, 0, 1000, ConfigFlags.SERVER, "How many minutes to wait before a player can rejoin after being moved to spectators by vote") },

@@ -27,8 +27,8 @@ namespace TeeSharp.Network
 
             for (var i = 0; i < 2; i++)
             {
-                Seed = Seed << 32;
-                Seed = Seed ^ RNG.Int();
+                Seed <<= 32;
+                Seed ^= RNG.Int();
             }
 
             PreviousGlobalToken = GlobalToken;
@@ -36,10 +36,21 @@ namespace TeeSharp.Network
             NextSeedTime = Time.Get() + Time.Freq() * SeedTime;
         }
 
+        /*
+       [5c22fc7f][unpack]: 1
+       [5c22fc7f][test]: token=4294967295 res=3569422453
+       [5c22fc7f][test]: bytes=520 accept 0 1
+       [5c22fc7f][unpack]: 8
+       [5c22fc7f][test]: token=157418043 res=4168385603
+       [5c22fc7f][check]: cur=157418043 seed=1257701721
+       [5c22fc7f][test]: bytes=22 accept 1 8
+           
+         */
         public override int ProcessMessage(IPEndPoint endPoint, ChunkConstruct packet)
         {
             var broadcastResponse = false;
 
+            // TODO ODODODO
             if (packet.Token != TokenHelper.TokenNone && 
                 !CheckToken(endPoint, packet.Token, packet.ResponseToken, ref broadcastResponse))
             {
@@ -54,9 +65,7 @@ namespace TeeSharp.Network
                 return (verified && !broadcastResponse) ? 1 : 0;
 
             if (!tokenMessage)
-            {
                 return (verified && !broadcastResponse) ? 1 : 0;
-            }
 
             if (verified)
                 return broadcastResponse ? -1 : 1;

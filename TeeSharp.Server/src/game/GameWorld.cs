@@ -199,12 +199,22 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        public override void BeforeSnapshot()
+        {
+            // TODO   
+        }
+
         public override void OnSnapshot(int snappingClient)
         {
             for (var i = 0; i < Entities.Count; i++)
             {
                 Entities[i].OnSnapshot(snappingClient);
             }
+        }
+
+        public override void AfterSnapshot()
+        {
+            // TODO   
         }
     }
 }

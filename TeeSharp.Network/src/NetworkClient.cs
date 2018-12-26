@@ -128,7 +128,7 @@ namespace TeeSharp.Network
         public override void Send(Chunk packet, uint token = TokenHelper.TokenNone,
             SendCallbackData callbackData = null)
         {
-            if (packet.Flags.HasFlag(PacketFlags.Connless))
+            if (packet.Flags.HasFlag(SendFlags.Connless))
             {
                 if (packet.DataSize > NetworkHelper.MaxPayload)
                 {
@@ -136,7 +136,8 @@ namespace TeeSharp.Network
                     return;
                 }
 
-                if (packet.ClientId == -1 && packet.EndPoint.Compare(Connection.EndPoint, true))
+                if (packet.ClientId == -1 && Connection.EndPoint != null && 
+                    packet.EndPoint.Compare(Connection.EndPoint, true))
                 {
                     packet.ClientId = 0;
                 }

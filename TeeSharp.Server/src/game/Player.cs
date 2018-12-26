@@ -196,6 +196,11 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        public override void OnChangeInfo()
+        {
+            LastChangeInfo = Server.Tick;
+        }
+
         public override void OnDisconnect(string reason)
         {
             KillCharacter(WeaponGame);
@@ -421,6 +426,12 @@ namespace TeeSharp.Server.Game
             }
 
             DeadSpectatorMode = false;
+        }
+
+        public override void ReadyToEnter()
+        {
+            IsReadyToEnter = true;
+            Server.SendPackMsg(new GameMsg_SvReadyToEnter(), MsgFlags.Vital | MsgFlags.Flush, ClientId);
         }
 
         public override void SetTeam(Team team)

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
     <ProjectReference Include="..\TeeSharp.Map\TeeSharp.Map.csproj" />
+    <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
   </ItemGroup>
 
 </Project>

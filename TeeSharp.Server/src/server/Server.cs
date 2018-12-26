@@ -27,27 +27,23 @@ namespace TeeSharp.Server
         {
             base.Load(kernel);
 
-            // singletons
-            kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
             kernel.Bind<BaseServer>().To<Server>().AsSingleton();
             kernel.Bind<BaseConfig>().To<ServerConfig>().AsSingleton();
-            kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();
             kernel.Bind<BaseGameContext>().To<GameContext>().AsSingleton();
-            kernel.Bind<BaseEvents>().To<Events>().AsSingleton();
-            kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
             kernel.Bind<BaseNetworkServer>().To<NetworkServer>().AsSingleton();
-            kernel.Bind<BaseGameConsole>().To<GameConsole>().AsSingleton();
             kernel.Bind<BaseRegister>().To<Register>().AsSingleton();
-            kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
-            kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
-            kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>().AsSingleton();
+            kernel.Bind<BaseNetworkBan>().To<NetworkBan>().AsSingleton();
+            kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
+            kernel.Bind<BaseEvents>().To<Events>().AsSingleton();
             kernel.Bind<BaseMapCollision>().To<MapCollision>().AsSingleton();
-            kernel.Bind<BaseMapLayers>().To<MapLayers>().AsSingleton();
+            kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
+            kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
 
             kernel.Bind<BaseServerClient>().To<ServerClient>();
-            kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
-            kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();
             kernel.Bind<BasePlayer>().To<Player>();
+
+            // singletons
+            //kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
         }
     }
 
@@ -82,11 +78,9 @@ namespace TeeSharp.Server
                 throw new Exception("Register components fail");
             }
 
-            Clients = new BaseServerClient[NetworkServer.Config.MaxClients];
+            Clients = new BaseServerClient[MaxClients];
             for (var i = 0; i < Clients.Length; i++)
-            {
                 Clients[i] = Kernel.Get<BaseServerClient>();
-            }
 
             Storage.Init("TeeSharp", StorageType.Server);
             Console.Init();
@@ -384,8 +378,12 @@ namespace TeeSharp.Server
             var networkConfig = new NetworkServerConfig
             {
                 BindEndPoint = new IPEndPoint(bindAddr, Config["SvPort"]),
-                MaxClientsPerIp = Config["SvMaxClientsPerIP"],
-                MaxClients = Config["SvMaxClients"]
+                MaxClientsPerIp = Math.Clamp(Config["SvMaxClientsPerIP"], 1, MaxClients),
+                MaxClients = Math.Clamp(Config["SvMaxClients"], 1, MaxClients),
+                ConnectionConfig = new ConnectionConfig
+                {
+                    Timeout = Config["ConnTimeout"]
+                }
             };
 
             if (!NetworkServer.Open(networkConfig))
@@ -449,7 +447,7 @@ namespace TeeSharp.Server
             else if (packet.Flags.HasFlag(SendFlags.Vital) && 
                      Clients[clientId].State >= ServerClientState.Ready)
             {
-                GameContext.OnMessage(msg, unpacker, clientId);
+                GameContext.OnMessage((GameMessage) msg, unpacker, clientId);
             }
         }
 
@@ -477,7 +475,7 @@ namespace TeeSharp.Server
 
             packer.AddString(GameContext.GameVersion, 32);
             packer.AddString(Config["SvName"], 64);
-            packer.AddString(Config["SvHostname"], 64);
+            packer.AddString(Config["SvHostname"], 128);
             packer.AddString(CurrentMap.MapName, 32);
             packer.AddString(GameContext.GameController.GameType, 16);
 
@@ -498,7 +496,7 @@ namespace TeeSharp.Server
                         packer.AddString(ClientName(i), BaseServerClient.MaxNameLength);
                         packer.AddString(ClientClan(i), BaseServerClient.MaxClanLength);
                         packer.AddInt(ClientCountry(i));
-                        packer.AddInt(0); // TODO client score
+                        packer.AddInt(GameContext.GameController.Score(i)); // TODO client score
                         packer.AddInt(GameContext.IsClientPlayer(i) ? 0 : 1); // flag spectator=1, bot=2 (player=0)
                     }
                 }
@@ -620,7 +618,6 @@ namespace TeeSharp.Server
             }
 
             Array.Copy(input.Data, 0, Clients[clientId].LatestInput.Data, 0, BaseServerClient.MaxInputSize);
-
 
             Clients[clientId].CurrentInput++;
             Clients[clientId].CurrentInput &= BaseServerClient.MaxInputs;
@@ -872,7 +869,7 @@ namespace TeeSharp.Server
             if (Clients[clientId].State >= ServerClientState.Ready)
             {
                 Clients[clientId].Quitting = true;
-                GameContext.OnClientDrop(clientId, reason);
+                GameContext.OnClientDisconnect(clientId, reason);
             }
 
             Clients[clientId].State = ServerClientState.Empty;
@@ -942,7 +939,7 @@ namespace TeeSharp.Server
 
         protected override void SendRconLineAuthed(string message, object data)
         {
-            throw new NotImplementedException();
+            // TODO
         }
 
         protected override void SendRconCommandAdd(ConsoleCommand command, int clientId)

@@ -10,7 +10,6 @@ namespace TeeSharp.Network
     public static class NetworkHelper
     {
         public const int ConnectionBufferSize = 1024 * 32;
-        public const int MaxClients = 64;
 
         public const int PacketVersion = 1;
         public const int PacketHeaderSize = 7;

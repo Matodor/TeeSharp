@@ -1,4 +1,6 @@
-﻿namespace TeeSharp.Common
+﻿using TeeSharp.Network;
+
+namespace TeeSharp.Common
 {
     public class MsgPacker : Packer
     {

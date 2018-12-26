@@ -34,7 +34,6 @@ namespace TeeSharp.Server.Game
 
         public virtual SpectatorMode SpectatorMode { get; set; }
         public virtual int SpectatorId { get; set; }
-        public virtual bool IsReadyToEnter { get; set; }
         public virtual int LastActionTick { get; set; }
 
         public virtual int[] ActualLatency { get; protected set; }
@@ -42,8 +41,10 @@ namespace TeeSharp.Server.Game
         public virtual Vector2 ViewPos { get; protected set; }
         public virtual Latency Latency { get; protected set; }
         public virtual TeeInfo TeeInfo { get; protected set; }
+        public virtual bool IsReadyToEnter { get; protected set; }
         public virtual bool DeadSpectatorMode { get; protected set; }
         public virtual bool RespawnDisabled { get; protected set; }
+        public virtual int LastChangeInfo { get; protected set; }
 
         protected virtual Character Character { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
@@ -72,6 +73,7 @@ namespace TeeSharp.Server.Game
             out SnapshotSpectatorInfo spectatorInfo, 
             out SnapshotDemoClientInfo demoClientInfo);
 
+        public abstract void OnChangeInfo();
         public abstract void OnDisconnect(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);
         public abstract void OnDirectInput(SnapshotPlayerInput input);
@@ -82,6 +84,7 @@ namespace TeeSharp.Server.Game
 
         public abstract void UpdateDeadSpecMode();
         public abstract void SetTeam(Team team);
+        public abstract void ReadyToEnter();
 
         protected abstract void TryRespawn();
 
@@ -90,5 +93,6 @@ namespace TeeSharp.Server.Game
             ClientId = clientId;
             IsDummy = dummy;
         }
+
     }
 }

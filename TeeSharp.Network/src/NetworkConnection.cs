@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -10,6 +11,12 @@ namespace TeeSharp.Network
 {
     public class NetworkConnection : BaseNetworkConnection
     {
+        public NetworkConnection()
+        {
+            ChunksForResends = new List<ChunkResend>();
+            ResendChunkConstruct = new ChunkConstruct(NetworkHelper.MaxPayload);
+        }
+
         protected override void Reset()
         {
             Sequence = 0;
@@ -88,6 +95,7 @@ namespace TeeSharp.Network
             ResendChunkConstruct.Token = PeerToken;
 
             NetworkHelper.SendPacket(UdpClient, EndPoint, ResendChunkConstruct);
+            LastSendTime = Time.Get();
             ResetChunkConstruct();
 
             return numChunks;
@@ -283,9 +291,11 @@ namespace TeeSharp.Network
                     {
                         if (msg == ConnectionMessages.Connect)
                         {
+                            var token = Token;
                             Reset();
                             State = ConnectionState.Pending;
                             EndPoint = endPoint;
+                            Token = token;
                             PeerToken = packet.ResponseToken;
                             LastSendTime = now;
                             LastReceiveTime = now;

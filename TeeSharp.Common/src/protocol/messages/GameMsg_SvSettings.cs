@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
@@ -8,7 +9,7 @@ namespace TeeSharp.Common.Protocol
 
         public bool KickVote { get; set; }
         public int KickMin { get; set; }
-        public bool SpecVote { get; set; }
+        public bool SpectatorsVote { get; set; }
         public bool TeamLock { get; set; }
         public bool TeamBalance { get; set; }
         public int PlayerSlots { get; set; }
@@ -17,7 +18,7 @@ namespace TeeSharp.Common.Protocol
         {
             packer.AddBool(KickVote);
             packer.AddInt(KickMin);
-            packer.AddBool(SpecVote);
+            packer.AddBool(SpectatorsVote);
             packer.AddBool(TeamLock);
             packer.AddBool(TeamBalance);
             packer.AddInt(PlayerSlots);
@@ -28,7 +29,7 @@ namespace TeeSharp.Common.Protocol
         {
             KickVote = unpacker.GetBool();
             KickMin = unpacker.GetInt();
-            SpecVote = unpacker.GetBool();
+            SpectatorsVote = unpacker.GetBool();
             TeamLock = unpacker.GetBool();
             TeamBalance = unpacker.GetBool();
             PlayerSlots = unpacker.GetInt();

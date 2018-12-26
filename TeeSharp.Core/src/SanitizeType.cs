@@ -1,7 +1,7 @@
 ﻿using System;
 
-namespace TeeSharp.Common.Enums
-{
+namespace TeeSharp.Core
+{ 
     [Flags]
     public enum SanitizeType
     {

@@ -1,5 +1,6 @@
 ﻿using TeeSharp.Common.Enums;
 using TeeSharp.Core;
+using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {

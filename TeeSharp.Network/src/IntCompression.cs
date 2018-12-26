@@ -1,4 +1,4 @@
-﻿namespace TeeSharp.Common
+﻿namespace TeeSharp.Network
 {
     public static class IntCompression
     {

@@ -2,7 +2,7 @@
 using System.Text;
 using TeeSharp.Core;
 
-namespace TeeSharp.Common
+namespace TeeSharp.Network
 {
     public class Packer
     {

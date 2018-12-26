@@ -4,6 +4,7 @@ using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
+using TeeSharp.Network;
 
 namespace TeeSharp.Server.Game
 {
@@ -37,7 +38,8 @@ namespace TeeSharp.Server.Game
 
         public abstract void CheckPureTuning();
         public abstract void SendTuningParams(int clientId);
-
+        public abstract void SendMotd(int clientId);
+        public abstract void SendSettings(int clientId);
         public abstract void SendChat(int chatterClientId, bool isTeamChat, string msg);
         public abstract void SendChatTarget(int clientId, string msg);
         public abstract void SendBroadcast(int clientId, string msg);
@@ -46,15 +48,19 @@ namespace TeeSharp.Server.Game
         public abstract void OnInit();
         public abstract void OnTick();
         public abstract void OnShutdown();
-        public abstract void OnMessage(int msgId, UnPacker unPacker, int clientId);
+        public abstract void OnMessage(GameMessage msg, UnPacker unPacker, int clientId);
         public abstract void OnBeforeSnapshot();
         public abstract void OnAfterSnapshots();
         public abstract void OnSnapshot(int snappingId);
-        public abstract void OnClientConnected(int clientId);
+        public abstract void OnClientConnected(int clientId, bool dummy = false);
         public abstract void OnClientEnter(int clientId);
-        public abstract void OnClientDrop(int clientId, string reason);
+        public abstract void OnClientDisconnect(int clientId, string reason);
         public abstract void OnClientPredictedInput(int clientId, int[] input1);
         public abstract void OnClientDirectInput(int clientId, int[] input);
+
+        protected abstract void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo);
+        protected abstract void OnMsgClientSay(BasePlayer player, GameMsg_ClSay message);
+        protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
 
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);
         public abstract void CreatePlayerSpawn(Vector2 pos);

@@ -5,6 +5,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Server.Game.Entities;
 
@@ -27,13 +28,10 @@ namespace TeeSharp.Server.Game
 
     public abstract class BaseGameController : BaseInterface
     {
-        public abstract string GameType { get; }
-
         //protected virtual IList<Vector2>[] SpawnPos { get; set; }
 
         //protected virtual BaseGameWorld GameWorld { get; set; }
-        //protected virtual BaseGameContext GameContext { get; set; }
-        //protected virtual BaseServer Server { get; set; }
+        //
         //protected virtual BaseConfig Config { get; set; }
 
         //private string _mapWish;
@@ -87,7 +85,7 @@ namespace TeeSharp.Server.Game
         //    {
         //        GameContext.Console.Print(OutputLevel.Debug, "game", $"rotating map to {_mapWish}");
         //        _mapWish = string.Empty;
-                
+
         //    }
         //}
 
@@ -190,6 +188,14 @@ namespace TeeSharp.Server.Game
         //    }
         //}
 
+        public abstract string GameType { get; }
+
+        public virtual GameState GameState { get; protected set; }
+
+        protected virtual BaseGameContext GameContext { get; set; }
+        protected virtual BaseServer Server { get; set; }
+
+        public abstract void Init();
         public abstract Team StartTeam();
         public abstract bool IsPlayerReadyMode();
         public abstract bool IsGamePaused();
@@ -199,5 +205,10 @@ namespace TeeSharp.Server.Game
         public abstract int Score(int clientId);
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 pos);
         public abstract void OnReset();
+        public abstract void OnPlayerInfoChange(BasePlayer player);
+        public abstract void OnPlayerConnected(BasePlayer player);
+        public abstract void OnPlayerEnter(BasePlayer player);
+        public abstract void OnPlayerDisconnected(BasePlayer player);
+        public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
     }
 }

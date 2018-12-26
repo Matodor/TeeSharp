@@ -36,6 +36,8 @@ namespace TeeSharp.Server.Game
         public abstract void RemoveEntities();
 
         public abstract void Tick();
+        public abstract void BeforeSnapshot();
         public abstract void OnSnapshot(int snappingClient);
+        public abstract void AfterSnapshot();
     }
 }
