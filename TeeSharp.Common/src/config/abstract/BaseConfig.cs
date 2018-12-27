@@ -16,7 +16,7 @@ namespace TeeSharp.Common.Config
 
             AppendVariables(new Dictionary<string, ConfigVariable>()
             {
-                { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 10, 5, 1000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout") },
+                { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 100, 5, 1000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout") },
                 { "ConnTimeoutProtection", new ConfigInt("ConnTimeoutProtection", "conn_timeout_protection", 1000, 5, 10000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout protection") },
                 { "Password", new ConfigString("Password", "password", 32, "", ConfigFlags.CLIENT|ConfigFlags.SERVER, "Password to the server") },
                 { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },

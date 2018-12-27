@@ -71,8 +71,14 @@ namespace TeeSharp.Network
 
         public void AddString(string value, int limit = 0)
         {
-            if (value == null || Error)
+            if (Error)
                 return;
+
+            if (string.IsNullOrEmpty(value))
+            {
+                _buffer[_index++] = 0;
+                return;
+            }
 
             var strBytes = Encoding.UTF8.GetBytes(value.Limit(limit));
             if (strBytes.Length > 0)
