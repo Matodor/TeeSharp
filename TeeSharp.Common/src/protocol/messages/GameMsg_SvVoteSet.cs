@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvVoteSet : BaseGameMessage
+    public class GameMsg_SvVoteSet : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerVoteSet;
 
@@ -37,6 +37,12 @@ namespace TeeSharp.Common.Protocol
                 failedOn = nameof(Timeout);
 
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (ClientID < -1 || ClientID >= maxClients)
+                failedOn = nameof(ClientID);
         }
     }
 }

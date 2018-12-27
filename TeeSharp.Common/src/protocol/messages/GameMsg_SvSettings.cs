@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvSettings : BaseGameMessage
+    public class GameMsg_SvSettings : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerSettings;
 
@@ -33,13 +33,16 @@ namespace TeeSharp.Common.Protocol
             TeamLock = unpacker.GetBool();
             TeamBalance = unpacker.GetBool();
             PlayerSlots = unpacker.GetInt();
-
-            if (KickMin < 0)
-                failedOn = nameof(KickMin);
-            if (PlayerSlots < 0)
-                failedOn = nameof(PlayerSlots);
-
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (KickMin < 0 || KickMin > maxClients)
+                failedOn = nameof(KickMin);
+
+            if (PlayerSlots < 0 || PlayerSlots > maxClients)
+                failedOn = nameof(PlayerSlots);
         }
     }
 }

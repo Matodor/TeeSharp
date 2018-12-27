@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvVoteStatus : BaseGameMessage
+    public class GameMsg_SvVoteStatus : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerVoteStatus;
 
@@ -27,17 +27,19 @@ namespace TeeSharp.Common.Protocol
             No = unpacker.GetInt();
             Pass = unpacker.GetInt();
             Total = unpacker.GetInt();
-
-            if (Yes < 0)
-                failedOn = nameof(Yes);
-            if (No < 0)
-                failedOn = nameof(No);
-            if (Pass < 0)
-                failedOn = nameof(Pass);
-            if (Total < 0)
-                failedOn = nameof(Total);
-
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (Yes < 0 || Yes > maxClients)
+                failedOn = nameof(Yes);
+            if (No < 0 || No > maxClients)
+                failedOn = nameof(No);
+            if (Pass < 0 || Pass > maxClients)
+                failedOn = nameof(Pass);
+            if (Total < 0 || Total > maxClients)
+                failedOn = nameof(Total);
         }
     }
 }

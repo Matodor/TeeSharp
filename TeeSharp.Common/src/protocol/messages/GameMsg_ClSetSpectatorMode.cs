@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_ClSetSpectatorMode : BaseGameMessage
+    public class GameMsg_ClSetSpectatorMode : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ClientSetSpectatorMode;
 
@@ -26,6 +26,12 @@ namespace TeeSharp.Common.Protocol
                 failedOn = nameof(SpectatorMode);
 
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (SpectatorId < -1 || SpectatorId >= maxClients)
+                failedOn = nameof(SpectatorId);
         }
     }
 }

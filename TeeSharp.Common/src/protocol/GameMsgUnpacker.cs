@@ -146,7 +146,12 @@ namespace TeeSharp.Common.Protocol
 
             failedOn = null;
             if (!value.UnPackError(unPacker, ref failedOn))
+            {
+                if (value is IClampedMaxClients validator)
+                    validator.Validate(MaxClients, ref failedOn);
+
                 return failedOn == null;
+            }
 
             value = null;
             return false;

@@ -10,7 +10,6 @@ namespace TeeSharp.Common.Protocol
             SanitizeType.SanitizeCC | 
             SanitizeType.SkipStartWhitespaces;
 
-
         public abstract GameMessage Type { get; }
 
         public abstract bool PackError(MsgPacker packer);

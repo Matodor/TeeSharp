@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvClientInfo : BaseGameMessage
+    public class GameMsg_SvClientInfo : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerClientInfo;
 
@@ -58,12 +58,17 @@ namespace TeeSharp.Common.Protocol
 
             Silent = unpacker.GetBool();
 
-            if (ClientID < 0)
-                failedOn = nameof(ClientID);
+            
             if (Team < Team.Spectators || Team > Team.Blue)
                 failedOn = nameof(Team);
 
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (ClientID < 0 || ClientID >= maxClients)
+                failedOn = nameof(ClientID);
         }
     }
 }

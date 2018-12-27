@@ -960,11 +960,11 @@ namespace TeeSharp.Server
 
         protected override void RegisterConsoleCommands()
         {
-            Console.RegisterCommand("kick", "i?s", ConsoleKick, ConfigFlags.SERVER, "Kick player with specified id for any reason");
-            Console.RegisterCommand("status", "", ConsoleStatus, ConfigFlags.SERVER, "List players");
-            Console.RegisterCommand("shutdown", "", ConsoleShutdown, ConfigFlags.SERVER, "Shut down");
-            Console.RegisterCommand("logout", "", ConsoleLogout, ConfigFlags.SERVER, "Logout of rcon");
-            Console.RegisterCommand("reload", "", ConsoleReload, ConfigFlags.SERVER, "Reload the map");
+            Console.RegisterCommand("kick", "i?s", ConsoleKick, ConfigFlags.Server, "Kick player with specified id for any reason");
+            Console.RegisterCommand("status", "", ConsoleStatus, ConfigFlags.Server, "List players");
+            Console.RegisterCommand("shutdown", "", ConsoleShutdown, ConfigFlags.Server, "Shut down");
+            Console.RegisterCommand("logout", "", ConsoleLogout, ConfigFlags.Server, "Logout of rcon");
+            Console.RegisterCommand("reload", "", ConsoleReload, ConfigFlags.Server, "Reload the map");
 
             /*
                 Console()->Register("kick", "i?r", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");

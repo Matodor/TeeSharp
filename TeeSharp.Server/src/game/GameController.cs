@@ -27,11 +27,6 @@ namespace TeeSharp.Server.Game
             return false;
         }
 
-        public override bool IsGamePaused()
-        {
-            return false;
-        }
-
         public override bool StartRespawnState()
         {
             return true;

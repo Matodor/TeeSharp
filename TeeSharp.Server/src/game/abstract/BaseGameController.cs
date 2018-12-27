@@ -198,6 +198,8 @@ namespace TeeSharp.Server.Game
 
         public abstract string GameType { get; }
 
+        public virtual bool GameRunning { get; protected set; }
+        public virtual bool GamePaused { get; protected set; }
         public virtual GameState GameState { get; protected set; }
         public virtual GameFlags GameFlags { get; protected set; }
 
@@ -210,7 +212,6 @@ namespace TeeSharp.Server.Game
         public abstract void Init();
         public abstract Team StartTeam();
         public abstract bool IsPlayerReadyMode();
-        public abstract bool IsGamePaused();
         public abstract bool StartRespawnState();
 
         public abstract void Tick();

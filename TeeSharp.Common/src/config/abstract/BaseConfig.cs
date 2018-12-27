@@ -16,22 +16,22 @@ namespace TeeSharp.Common.Config
 
             AppendVariables(new Dictionary<string, ConfigVariable>()
             {
-                { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 100, 5, 1000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout") },
-                { "ConnTimeoutProtection", new ConfigInt("ConnTimeoutProtection", "conn_timeout_protection", 1000, 5, 10000, ConfigFlags.SAVE | ConfigFlags.CLIENT | ConfigFlags.SERVER, "Network timeout protection") },
-                { "Password", new ConfigString("Password", "password", 32, "", ConfigFlags.CLIENT|ConfigFlags.SERVER, "Password to the server") },
-                { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.SAVE|ConfigFlags.CLIENT|ConfigFlags.SERVER, "Filename to log all output to") },
-                { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Adjusts the amount of information in the console") },
-                { "Bindaddr", new ConfigString("Bindaddr", "bindaddr", 128, "", ConfigFlags.CLIENT|ConfigFlags.SERVER|ConfigFlags.MASTER, "Address to bind the client/server to") },
+                { "ConnTimeout", new ConfigInt("ConnTimeout", "conn_timeout", 100, 5, 1000, ConfigFlags.Save | ConfigFlags.Client | ConfigFlags.Server, "Network timeout") },
+                { "ConnTimeoutProtection", new ConfigInt("ConnTimeoutProtection", "conn_timeout_protection", 1000, 5, 10000, ConfigFlags.Save | ConfigFlags.Client | ConfigFlags.Server, "Network timeout protection") },
+                { "Password", new ConfigString("Password", "password", 32, "", ConfigFlags.Client|ConfigFlags.Server, "Password to the server") },
+                { "Logfile", new ConfigString("Logfile", "logfile", 128, "", ConfigFlags.Save|ConfigFlags.Client|ConfigFlags.Server, "Filename to log all output to") },
+                { "ConsoleOutputLevel", new ConfigInt("ConsoleOutputLevel", "console_output_level", 0, 0, 2, ConfigFlags.Client|ConfigFlags.Server, "Adjusts the amount of information in the console") },
+                { "Bindaddr", new ConfigString("Bindaddr", "bindaddr", 128, "", ConfigFlags.Client|ConfigFlags.Server|ConfigFlags.Master, "Address to bind the client/server to") },
 
-                { "EcBindaddr", new ConfigString("EcBindaddr", "ec_bindaddr", 128, "localhost", ConfigFlags.ECON, "Address to bind the external console to. Anything but 'localhost' is dangerous") },
-                { "EcPort", new ConfigInt("EcPort", "ec_port", 0, 0, 0, ConfigFlags.ECON, "Port to use for the external console") },
-                { "EcPassword", new ConfigString("EcPassword", "ec_password", 32, "", ConfigFlags.ECON, "External console password") },
-                { "EcBantime", new ConfigInt("EcBantime", "ec_bantime", 0, 0, 1440, ConfigFlags.ECON, "The time a client gets banned if econ authentication fails. 0 just closes the connection") },
-                { "EcAuthTimeout", new ConfigInt("EcAuthTimeout", "ec_auth_timeout", 30, 1, 120, ConfigFlags.ECON, "Time in seconds before the the econ authentification times out ") },
-                { "EcOutputLevel", new ConfigInt("EcOutputLevel", "ec_output_level", 1, 0, 2, ConfigFlags.ECON, "Adjusts the amount of information in the external console") },
+                { "EcBindaddr", new ConfigString("EcBindaddr", "ec_bindaddr", 128, "localhost", ConfigFlags.Econ, "Address to bind the external console to. Anything but 'localhost' is dangerous") },
+                { "EcPort", new ConfigInt("EcPort", "ec_port", 0, 0, 0, ConfigFlags.Econ, "Port to use for the external console") },
+                { "EcPassword", new ConfigString("EcPassword", "ec_password", 32, "", ConfigFlags.Econ, "External console password") },
+                { "EcBantime", new ConfigInt("EcBantime", "ec_bantime", 0, 0, 1440, ConfigFlags.Econ, "The time a client gets banned if econ authentication fails. 0 just closes the connection") },
+                { "EcAuthTimeout", new ConfigInt("EcAuthTimeout", "ec_auth_timeout", 30, 1, 120, ConfigFlags.Econ, "Time in seconds before the the econ authentification times out ") },
+                { "EcOutputLevel", new ConfigInt("EcOutputLevel", "ec_output_level", 1, 0, 2, ConfigFlags.Econ, "Adjusts the amount of information in the external console") },
 
-                { "ClAllowOldServers", new ConfigInt("ClAllowOldServers", "cl_allow_old_servers", 1, 0, 1, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Allow connecting to servers that do not furtherly secure the connection") },
-                { "Debug", new ConfigInt("Debug", "debug", 1, 0, 1, ConfigFlags.CLIENT|ConfigFlags.SERVER, "Debug mode") },
+                { "ClAllowOldServers", new ConfigInt("ClAllowOldServers", "cl_allow_old_servers", 1, 0, 1, ConfigFlags.Client|ConfigFlags.Server, "Allow connecting to servers that do not furtherly secure the connection") },
+                { "Debug", new ConfigInt("Debug", "debug", 1, 0, 1, ConfigFlags.Client|ConfigFlags.Server, "Debug mode") },
             });
         }
 

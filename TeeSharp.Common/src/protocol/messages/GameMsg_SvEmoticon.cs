@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvEmoticon : BaseGameMessage
+    public class GameMsg_SvEmoticon : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerEmoticon;
 
@@ -29,6 +29,12 @@ namespace TeeSharp.Common.Protocol
                 failedOn = nameof(Emoticon);
 
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (ClientId < 0 || ClientId >= maxClients)
+                failedOn = nameof(ClientId);
         }
     }
 }

@@ -33,8 +33,9 @@ namespace TeeSharp.Server.Game
             MapLayers.Init(Server.CurrentMap);
             MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
-            
+
             // TODO
+            GameMsgUnpacker.MaxClients = Players.Length;
             GameController = new GameController();
             GameController.Init();
 
@@ -344,53 +345,27 @@ namespace TeeSharp.Server.Game
             {
                 OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
             }
-
-            //if (!GameMsgUnpacker.UnpackMessage(msgId, unPacker, out var msg, out var error))
-            //{
-            //    Console.Print(OutputLevel.Debug, "server", $"dropped gamemessage='{(GameMessage) msgId}' ({msgId}), failed on '{error}'");
-            //    return;
-            //}
-
-            //var player = Players[clientId];
-
-            //if (!Server.ClientInGame(clientId))
-            //{
-            //    if (msg.Type == GameMessage.CL_STARTINFO) 
-            //        OnMsgStartInfo(player, (GameMsg_ClStartInfo) msg);
-            //}
-            //else
-            //{
-            //    switch (msg.Type)
-            //    {
-            //        case GameMessage.CL_SAY:
-            //            OnMsgSay(player, (GameMsg_ClSay)msg);
-            //            break;
-
-            //        case GameMessage.CL_SETTEAM:
-            //            OnMsgSetTeam(player, (GameMsg_ClSetTeam) msg);
-            //            break;
-
-            //        case GameMessage.CL_SETSPECTATORMODE:
-            //            OnMsgSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) msg);
-            //            break;
-
-            //        case GameMessage.CL_CHANGEINFO:
-            //            break;
-            //        case GameMessage.CL_KILL:
-            //            break;
-            //        case GameMessage.CL_EMOTICON:
-            //            break;
-            //        case GameMessage.CL_VOTE:
-            //            break;
-            //        case GameMessage.CL_CALLVOTE:
-            //            break;
-            //    }
-            //}
         }
 
         protected override void OnMsgClientSay(BasePlayer player, GameMsg_ClSay message)
         {
-            
+            if (string.IsNullOrEmpty(message.Message))
+                return;
+
+            if (Config["SvSpamprotection"] && player.LastChat + Server.TickSpeed > Server.Tick)
+                return;
+
+            message.Message = message.Message.Limit(128);
+
+            if (Config["SvTournamentMode"] == 2 && player.Team == Team.Spectators &&
+                GameController.GameRunning && Server.IsAuthed(player.ClientId))
+            {
+                if (message.ChatMode != ChatMode.Whisper)
+                    message.ChatMode = ChatMode.Team;
+                else if ()
+
+            }
+            player.OnChat();
         }
 
         protected override void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo)

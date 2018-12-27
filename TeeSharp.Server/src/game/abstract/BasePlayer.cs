@@ -36,6 +36,7 @@ namespace TeeSharp.Server.Game
         public virtual int SpectatorId { get; set; }
         public virtual int LastActionTick { get; set; }
 
+        public virtual int LastChat { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
@@ -73,6 +74,7 @@ namespace TeeSharp.Server.Game
             out SnapshotSpectatorInfo spectatorInfo, 
             out SnapshotDemoClientInfo demoClientInfo);
 
+        public abstract void OnChat();
         public abstract void OnChangeInfo();
         public abstract void OnDisconnect(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);

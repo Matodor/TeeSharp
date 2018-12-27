@@ -225,6 +225,11 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        public override void OnChat()
+        {
+            LastChat = Server.Tick;
+        }
+
         public override void OnPredictedInput(SnapshotPlayerInput input)
         {
             // ignore input when player chat open

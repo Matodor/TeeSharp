@@ -1,9 +1,10 @@
 ﻿using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvChat : BaseGameMessage
+    public class GameMsg_SvChat : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerChat;
 
@@ -32,6 +33,14 @@ namespace TeeSharp.Common.Protocol
                 failedOn = nameof(ChatMode);
 
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (ClientId < -1 || ClientId >= maxClients)
+                failedOn = nameof(ClientId);
+            if (TargetId < -1 || TargetId >= maxClients)
+                failedOn = nameof(TargetId);
         }
     }
 }

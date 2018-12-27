@@ -3,7 +3,7 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Common.Protocol
 {
-    public class GameMsg_SvClientDrop : BaseGameMessage
+    public class GameMsg_SvClientDrop : BaseGameMessage, IClampedMaxClients
     {
         public override GameMessage Type => GameMessage.ServerClientDrop;
 
@@ -25,10 +25,13 @@ namespace TeeSharp.Common.Protocol
             Reason = unpacker.GetString(Sanitize);
             Silent = unpacker.GetBool();
 
-            if (ClientID < 0)
-                failedOn = nameof(ClientID);
-
             return unpacker.Error;
+        }
+
+        public void Validate(int maxClients, ref string failedOn)
+        {
+            if (ClientID < 0 || ClientID >= maxClients)
+                failedOn = nameof(ClientID);
         }
     }
 }
