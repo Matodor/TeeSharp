@@ -65,7 +65,7 @@ namespace TeeSharp.Server.Game
             if (Character != null && !Character.IsAlive)
                 Character = null;
 
-            if (GameContext.GameController.IsGamePaused())
+            if (GameContext.GameController.GamePaused)
             {
                 RespawnTick++;
                 DieTick++;

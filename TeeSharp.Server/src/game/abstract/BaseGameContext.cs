@@ -40,7 +40,7 @@ namespace TeeSharp.Server.Game
         public abstract void SendTuningParams(int clientId);
         public abstract void SendMotd(int clientId);
         public abstract void SendSettings(int clientId);
-        public abstract void SendChat(int chatterClientId, bool isTeamChat, string msg);
+        public abstract void SendChat(int from, ChatMode mode, int target, string message);
         public abstract void SendChatTarget(int clientId, string msg);
         public abstract void SendBroadcast(int clientId, string msg);
         public abstract void SendWeaponPickup(int clientId, Weapon weapon);

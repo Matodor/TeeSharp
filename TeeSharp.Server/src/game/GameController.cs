@@ -52,6 +52,11 @@ namespace TeeSharp.Server.Game
             
         }
 
+        public override void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend)
+        {
+            isSend = true;
+        }
+
         public override void OnPlayerInfoChange(BasePlayer player)
         {
             

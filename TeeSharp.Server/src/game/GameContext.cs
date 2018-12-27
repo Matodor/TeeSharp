@@ -244,42 +244,42 @@ namespace TeeSharp.Server.Game
             //}, MsgFlags.Vital, clientId);
         }
 
-        public override void SendChat(int chatterClientId, bool isTeamChat, string msg)
+        public override void SendChat(int from, ChatMode mode, int target, string message)
         {
-            //string debug;
-            //if (chatterClientId >= 0 && chatterClientId < Players.Length)
-            //    debug = $"{chatterClientId}:{Players[chatterClientId].Name} {msg}";
-            //else
-            //    debug = $"*** {msg}";
-            //Console.Print(OutputLevel.AddInfo, isTeamChat ? "teamchat" : "chat", debug);
+            if (mode == ChatMode.None)
+                return;
 
-            //if (isTeamChat)
-            //{
-            //    var p = new GameMsg_SvChat
-            //    {
-            //        IsTeam = true,
-            //        ClientId = chatterClientId,
-            //        Message = msg
-            //    };
+            var log = from < 0 ? $"*** {message}" : $"{@from}:{Server.ClientName(@from)}: {message}";
+            Console.Print(OutputLevel.AddInfo, mode.ToString(), log);
 
-            //    // pack one for the recording only
-            //    Server.SendPackMsg(p, MsgFlags.Vital | MsgFlags.NoSend, -1);
+            var msg = new GameMsg_SvChat()
+            {
+                ChatMode = mode,
+                ClientId = from,
+                TargetId = -1,
+                Message = message,
+            };
 
-            //    for (var i = 0; i < Players.Length; i++)
-            //    {
-            //        if (Players[i] != null && Players[i].Team == Players[chatterClientId].Team)
-            //            Server.SendPackMsg(p, MsgFlags.Vital | MsgFlags.NoRecord, i);
-            //    }
-            //}
-            //else
-            //{
-            //    Server.SendPackMsg(new GameMsg_SvChat
-            //    {
-            //        ClientId = chatterClientId,
-            //        Message = msg,
-            //        IsTeam = false
-            //    }, MsgFlags.Vital, -1);
-            //}
+            if (mode == ChatMode.All)
+                Server.SendPackMsg(msg, MsgFlags.Vital, -1);
+            else if (mode == ChatMode.Team)
+            {
+                Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoSend, -1);
+
+                var team = Players[from].Team;
+
+                for (var i = 0; i < Players.Length; i++)
+                {
+                    if (Players[i] != null && Players[i].Team == team)
+                        Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoRecord, i);
+                }
+            }
+            else
+            {
+                msg.TargetId = target;
+                Server.SendPackMsg(msg, MsgFlags.Vital, from);
+                Server.SendPackMsg(msg, MsgFlags.Vital, target);
+            }
         }
 
         public override void OnTick()
@@ -362,10 +362,17 @@ namespace TeeSharp.Server.Game
             {
                 if (message.ChatMode != ChatMode.Whisper)
                     message.ChatMode = ChatMode.Team;
-                else if ()
-
+                else if (Players[message.TargetId] != null && Players[message.TargetId].Team != Team.Spectators)
+                    message.ChatMode = ChatMode.None;
             }
+
             player.OnChat();
+            GameController.OnPlayerChat(player, message, out var isSend);
+
+            if (isSend)
+            {
+                SendChat(player.ClientId, message.ChatMode, message.TargetId, message.Message);
+            }
         }
 
         protected override void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo)
