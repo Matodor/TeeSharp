@@ -4,6 +4,7 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 using TeeSharp.Network;
 using TeeSharp.Server.Game.Entities;
@@ -534,7 +535,7 @@ namespace TeeSharp.Server.Game
         public override void OnClientDisconnect(int clientId, string reason)
         {
             Votes.PlayerDisconnected(clientId);
-            GameController.OnPlayerDisconnected(Players[clientId]);
+            GameController.OnPlayerDisconnected(Players[clientId], reason);
 
             if (Server.ClientInGame(clientId))
             {
@@ -556,19 +557,29 @@ namespace TeeSharp.Server.Game
                 }, MsgFlags.Vital | MsgFlags.NoRecord, -1);
             }
 
+            Players[clientId].OnDisconnect(reason);
             Players[clientId] = null;
         }
 
         public override void OnClientPredictedInput(int clientId, int[] input)
         {
-            //if (!World.Paused)
-            //    Players[clientId].OnPredictedInput(input);
+            if (!World.Paused)
+            {
+                var playerInput = BaseSnapshotItem.FromArray<SnapshotPlayerInput>(input);
+                if (playerInput.IsValid())
+                    Players[clientId].OnPredictedInput(playerInput);
+                else 
+                    Console.Print(OutputLevel.Debug, "server", "SnapshotPlayerInput not valid");
+            }
         }
 
         public override void OnClientDirectInput(int clientId, int[] input)
         {
-            //if (!World.Paused)
-            //    Players[clientId].OnDirectInput(input);
+            var playerInput = BaseSnapshotItem.FromArray<SnapshotPlayerInput>(input);
+            if (playerInput.IsValid())
+                Players[clientId].OnDirectInput(playerInput);
+            else
+                Console.Print(OutputLevel.Debug, "server", "SnapshotPlayerInput not valid");
         }
 
         public override void SendSettings(int clientId)

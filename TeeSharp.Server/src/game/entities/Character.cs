@@ -135,6 +135,12 @@ namespace TeeSharp.Server.Game.Entities
             IsAlive = false;
         }
 
+        public override void Reset()
+        {
+            base.Reset();
+            Destroy();
+        }
+
         public virtual void SetWeapon(Weapon weapon)
         {
             //if (weapon == ActiveWeapon)
@@ -176,26 +182,27 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual void Die(int killer, Weapon weapon)
         {
-            //Player.RespawnTick = Server.Tick + Server.TickSpeed / 2;
-            //var modeSpecial = GameContext.GameController.OnCharacterDeath(this,
-            //    GameContext.Players[killer], weapon);
+            IsAlive = false;
+            Player.RespawnTick = Server.Tick + Server.TickSpeed / 2;
+            var modeSpecial = GameContext.GameController.OnCharacterDeath(this,
+                              GameContext.Players[killer], weapon);
 
-            //GameContext.Console.Print(OutputLevel.Debug, "game",
-            //    $"kill killer='{killer}:{GameContext.Players[killer].Name}' victim='{Player.ClientId}:{Player.Name}' weapon={weapon} special={modeSpecial}");
+            Console.Print(OutputLevel.Debug, "game",
+                $"kill killer='{killer}:{Server.ClientName(killer)}' victim='{Player.ClientId}:{Server.ClientName(Player.ClientId)}' weapon={weapon} special={modeSpecial}");
 
-            //Server.SendPackMsg(new GameMsg_SvKillMsg
-            //{
-            //    Killer = killer,
-            //    Victim = Player.ClientId,
-            //    Weapon = weapon,
-            //    ModeSpecial = modeSpecial
-            //}, MsgFlags.Vital, -1);
+            Server.SendPackMsg(new GameMsg_SvKillMsg
+            {
+                Killer = killer,
+                Victim = Player.ClientId,
+                Weapon = (int) weapon,
+                ModeSpecial = modeSpecial
+            }, MsgFlags.Vital, -1);
 
-            //GameContext.CreateSound(Position, Sound.PlayerDie);
-            //Player.DieTick = Server.Tick;
-            //IsAlive = false;
-            //GameContext.CreateDeath(Position, Player.ClientId);
-            //Destroy();
+            GameContext.CreateSound(Position, Sound.PlayerDie);
+            Player.DieTick = Server.Tick;
+            GameContext.CreateDeath(Position, Player.ClientId);
+
+            Destroy();
         }
 
         public virtual  void OnPredictedInput(SnapshotPlayerInput newInput)

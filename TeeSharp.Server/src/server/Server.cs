@@ -582,7 +582,7 @@ namespace TeeSharp.Server
             var size = unPacker.GetInt();
             var now = Time.Get();
 
-            if (unPacker.Error || size / sizeof(int) > BaseServerClient.MaxInputSize)
+            if (unPacker.Error)
                 return;
 
             if (Clients[clientId].LastAckedSnapshot > 0)
@@ -605,7 +605,7 @@ namespace TeeSharp.Server
             var input = Clients[clientId].Inputs[Clients[clientId].CurrentInput];
             input.Tick = intendedTick;
 
-            for (var i = 0; i < size / sizeof(int); i++)
+            for (var i = 0; i < size / sizeof(int) && i < BaseServerClient.MaxInputSize; i++)
                 input.Data[i] = unPacker.GetInt();
 
             var pingCorrection = Math.Clamp(unPacker.GetInt(), 0, 50);

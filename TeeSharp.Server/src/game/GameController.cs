@@ -3,6 +3,7 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -186,9 +187,34 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnPlayerDisconnected(BasePlayer player)
+        public override void OnPlayerDisconnected(BasePlayer player, string reason)
         {
-            
+            if (Server.ClientInGame(player.ClientId))
+            {
+                Console.Print(OutputLevel.Standard, "game", $"leave player={player.ClientId}:{Server.ClientName(player.ClientId)}");
+            }
+        }
+
+        public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)
+        {
+            if (killer == null || weapon == BasePlayer.WeaponGame)
+                return 0;
+
+            // TODO
+
+            if (weapon == BasePlayer.WeaponSelf)
+                victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
+
+            if (GameFlags.HasFlag(GameFlags.Survival))
+            {
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] != null && GameContext.Players[i].DeadSpectatorMode)
+                        GameContext.Players[i].UpdateDeadSpecMode();
+                }
+            }
+
+            return 0;
         }
 
         public override void OnSnapshot(int snappingId, out SnapshotGameData gameData)

@@ -235,10 +235,11 @@ namespace TeeSharp.Server.Game
         public abstract void TeamChange(BasePlayer player, Team team);
 
         public abstract void OnReset();
+        public abstract int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon);
         public abstract void OnPlayerInfoChange(BasePlayer player);
         public abstract void OnPlayerConnected(BasePlayer player);
         public abstract void OnPlayerEnter(BasePlayer player);
-        public abstract void OnPlayerDisconnected(BasePlayer player);
+        public abstract void OnPlayerDisconnected(BasePlayer player, string reason);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
 

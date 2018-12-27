@@ -6,9 +6,9 @@ namespace TeeSharp.Server
 {
     public abstract class BaseServerClient : BaseInterface
     {
+        public static readonly int MaxInputSize = SnapshotItemsInfo.GetSize<SnapshotPlayerInput>() / sizeof(int);
         public const int MaxNameLength = 16;
         public const int MaxClanLength = 12;
-        public const int MaxInputSize = 128;
         public const int MaxInputs = 200;
             
         public class Input

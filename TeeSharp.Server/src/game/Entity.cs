@@ -1,5 +1,6 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
+using TeeSharp.Common.Console;
 using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game
@@ -44,6 +45,8 @@ namespace TeeSharp.Server.Game
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
+        protected virtual BaseGameConsole Console { get; set; }
+
         protected virtual int[] IDs { get; set; }
 
         private BidirectionalList<Entity>.Node _node;
@@ -62,6 +65,7 @@ namespace TeeSharp.Server.Game
             GameWorld = Kernel.Get<BaseGameWorld>();
             Config = Kernel.Get<BaseConfig>();
             Tuning = Kernel.Get<BaseTuningParams>();
+            Console = Kernel.Get<BaseGameConsole>();
 
             IDs = new int[idsCount];
             for (var i = 0; i < IDs.Length; i++)

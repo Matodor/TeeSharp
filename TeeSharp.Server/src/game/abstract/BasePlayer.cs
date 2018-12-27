@@ -37,6 +37,8 @@ namespace TeeSharp.Server.Game
         public virtual int LastActionTick { get; set; }
         public virtual bool RespawnDisabled { get; set; }
         public virtual bool IsReadyToPlay { get; set; }
+        public virtual int RespawnTick { get; set; }
+        public virtual int DieTick { get; set; }
 
         public virtual int TeamChangeTick { get; protected set; }
         public virtual int LastChat { get; protected set; }
@@ -57,8 +59,6 @@ namespace TeeSharp.Server.Game
 
         protected virtual PlayerFlags PlayerFlags { get; set; }
         protected virtual int InactivityTickCounter { get; set; }
-        protected virtual int RespawnTick { get; set; }
-        protected virtual int DieTick { get; set; }
         protected virtual Flag SpectatorFlag { get; set; }
         protected virtual bool ActiveSpectatorSwitch { get; set; }
 

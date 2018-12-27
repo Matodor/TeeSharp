@@ -13,5 +13,15 @@ namespace TeeSharp.Common.Enums
         Dead = 1 << 4,
         Watching = 1 << 5,
         Bot = 1 << 6,
+
+        All =
+            None |
+            Admin | 
+            Chatting | 
+            Scoreboard | 
+            Ready | 
+            Dead | 
+            Watching | 
+            Bot,
     }
 }

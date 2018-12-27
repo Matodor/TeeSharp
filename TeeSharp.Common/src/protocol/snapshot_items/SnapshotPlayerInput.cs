@@ -31,5 +31,20 @@ namespace TeeSharp.Common.Protocol
         [MarshalAs(UnmanagedType.I4)] public Weapon WantedWeapon;
         [MarshalAs(UnmanagedType.I4)] public Weapon NextWeapon;
         [MarshalAs(UnmanagedType.I4)] public Weapon PreviousWeapon;
+
+        public bool IsValid()
+        {
+            if (Direction < -1 || Direction > 1)
+                return false;
+            if (Jump < 0 || Jump > 1)
+                return false;
+            if (Hook < 0 || Hook > 1)
+                return false;
+            if ((PlayerFlags & PlayerFlags.All) != PlayerFlags)
+                return false;
+            if (WantedWeapon < 0 || WantedWeapon >= Weapon.NumWeapons)
+                return false;
+            return true;
+        }
     }
 }
