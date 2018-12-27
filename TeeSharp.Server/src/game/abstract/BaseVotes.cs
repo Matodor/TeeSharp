@@ -1,4 +1,5 @@
-﻿using TeeSharp.Core;
+﻿using TeeSharp.Common.Enums;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game
 {
@@ -14,5 +15,6 @@ namespace TeeSharp.Server.Game
         public abstract void SendActiveVote(int clientId);
         public abstract void PlayerConnected(int clientId);
         public abstract void PlayerDisconnected(int clientId);
+        public abstract void PlayerChangeTeam(int clientId, Team prev, Team next);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using TeeSharp.Common;
+using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
@@ -15,6 +16,38 @@ namespace TeeSharp.Server.Game
             GameContext = Kernel.Get<BaseGameContext>();
             Server = Kernel.Get<BaseServer>();
             Console = Kernel.Get<BaseGameConsole>();
+            Config = Kernel.Get<BaseConfig>();
+
+            GameState = GameState.GameRunning;
+            GameStateTimer = TimerInfinite;
+            GameStartTick = Server.Tick;
+
+            MatchCount = 0;
+            RoundCount = 0;
+            SuddenDeath = false;
+
+            TeamScore = new int[2];
+
+            if (Config["SvWarmup"])
+                SetGameState(GameState.WarmupUser, Config["SvWarmup"]);
+            else
+                SetGameState(GameState.WarmupGame, TimerInfinite);
+
+            GameFlags = GameFlags.None;
+            GameInfo = new GameInfo
+            {
+                MatchCurrent = MatchCount + 1,
+                MatchNum = !string.IsNullOrEmpty(Config["SvMaprotation"]) && Config["SvMatchesPerMap"] != 0 
+                    ? Config["SvMatchesPerMap"] 
+                    : 0,
+                ScoreLimit = Config["SvScorelimit"],
+                TimeLimit = Config["SvTimelimit"],
+            };
+        }
+
+        protected override void SetGameState(GameState state, int timer)
+        {
+
         }
 
         public override Team StartTeam()
@@ -22,14 +55,65 @@ namespace TeeSharp.Server.Game
             return Team.Spectators;
         }
 
+        public override bool IsTeamChangeAllowed(BasePlayer player)
+        {
+            return true;
+        }
+
+        public override void TeamChange(BasePlayer player, Team team)
+        {
+            if (player.Team == team)
+                return;
+
+            var prevTeam = player.Team;
+            player.SetTeam(team);
+
+            Console.Print(OutputLevel.Debug, "game", $"team join player={player.ClientId}:{Server.ClientName(player.ClientId)} team={team}");
+
+            if (team != Team.Spectators)
+            {
+                player.IsReadyToPlay = !IsPlayerReadyMode();
+                if (GameFlags.HasFlag(GameFlags.Survival))
+                    player.RespawnDisabled = GetRespawnDisabled(player);
+            }
+
+            OnPlayerTeamChange(player, prevTeam, team);
+        }
+
+        protected override void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team)
+        {
+        }
+
+        public override bool CanChangeTeam(BasePlayer player, Team team)
+        {
+            return true;
+        }
+
+        public override bool CanJoinTeam(BasePlayer player, Team team)
+        {
+            return true;
+        }
+
         public override bool IsPlayerReadyMode()
         {
             return false;
         }
 
-        public override bool StartRespawnState()
+        public override bool GetRespawnDisabled(BasePlayer player)
         {
-            return true;
+            if (GameFlags.HasFlag(GameFlags.Survival))
+            {
+                if (GameState == GameState.WarmupGame ||
+                    GameState == GameState.WarmupUser ||
+                    GameState == GameState.StartCountdown && GameStartTick == Server.Tick)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         public override void Tick()

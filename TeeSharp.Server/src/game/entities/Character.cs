@@ -51,42 +51,69 @@ namespace TeeSharp.Server.Game.Entities
 
     public class Character : Entity<Character>
     {
+        public readonly BasePlayer Player;
+
         public override float ProximityRadius { get; protected set; } = 28f;
 
+        public virtual bool IsAlive { get; protected set; }
         public virtual int Health { get; protected set; }
         public virtual int Armor { get; protected set; }
 
-        public virtual bool IsAlive { get; protected set; }
-        public virtual BasePlayer Player { get; protected set; }
 
         protected virtual CharacterCore Core { get; set; }
         protected virtual CharacterCore SendCore { get; set; }
         protected virtual CharacterCore ReckoningCore { get; set; }
 
-        protected virtual int NumInputs { get; set; }
-        protected virtual int LastAction { get; set; }
-        protected virtual int EmoteStopTick { get; set; }
         protected virtual int ReckoningTick { get; set; }
-        protected virtual int AttackTick { get; set; }
-        protected virtual int ReloadTimer { get; set; }
-        protected virtual int LastNoAmmoSound { get; set; }
-        protected virtual int DamageTaken { get; set; }
-        protected virtual int DamageTakenTick { get; set; }
+        protected virtual int EmoteStopTick { get; set; }
         protected virtual Emote Emote { get; set; }
-        protected virtual Weapon ActiveWeapon { get; set; }
-        protected virtual Weapon LastWeapon { get; set; }
-        protected virtual Weapon QueuedWeapon { get; set; }
 
-        protected virtual SnapshotPlayerInput Input { get; set; }
-        protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
-        protected virtual SnapshotPlayerInput LatestInput { get; set; }
+        //protected virtual int NumInputs { get; set; }
+        //protected virtual int LastAction { get; set; }
+        //protected virtual int AttackTick { get; set; }
+        //protected virtual int ReloadTimer { get; set; }
+        //protected virtual int LastNoAmmoSound { get; set; }
+        //protected virtual int DamageTaken { get; set; }
+        //protected virtual int DamageTakenTick { get; set; }
+        //protected virtual Weapon ActiveWeapon { get; set; }
+        //protected virtual Weapon LastWeapon { get; set; }
+        //protected virtual Weapon QueuedWeapon { get; set; }
 
-        protected virtual NinjaStat NinjaStat { get; set; }
-        protected virtual WeaponStat[] Weapons { get; set; }
-        protected virtual IList<Entity> HitObjects { get; set; }
+        //protected virtual SnapshotPlayerInput Input { get; set; }
+        //protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
+        //protected virtual SnapshotPlayerInput LatestInput { get; set; }
+
+        //protected virtual NinjaStat NinjaStat { get; set; }
+        //protected virtual WeaponStat[] Weapons { get; set; }
+        //protected virtual IList<Entity> HitObjects { get; set; }
 
         public Character(BasePlayer player, Vector2 spawnPos) : base(1)
         {
+            Player = player;
+            Position = spawnPos;
+
+            IsAlive = true;
+            Health = 0;
+            Armor = 0;
+            EmoteStopTick = -1;
+            Emote = Emote.Normal;
+
+            Core = new CharacterCore();
+            SendCore = new CharacterCore();
+            ReckoningCore = new CharacterCore();
+
+            Core.Reset();
+            Core.Init(GameWorld.WorldCore, GameContext.MapCollision);
+            Core.Position = Position;
+
+            var worldCore = new WorldCore(
+                GameWorld.WorldCore.CharacterCores.Length,
+                GameWorld.WorldCore.Tuning);
+            ReckoningCore.Init(worldCore, GameContext.MapCollision);
+
+            GameContext.CreatePlayerSpawn(spawnPos);
+            GameWorld.WorldCore.CharacterCores[player.ClientId] = Core;
+
             //HitObjects = new List<Entity>();
             //Weapons = new WeaponStat[(int) Weapon.NumWeapons];
             //NinjaStat = new NinjaStat();
@@ -94,80 +121,57 @@ namespace TeeSharp.Server.Game.Entities
             //ActiveWeapon = Weapon.Gun;
             //LastWeapon = Weapon.Hammer;
             //QueuedWeapon = (Weapon) (-1);
-
-            //Position = spawnPos;
-            //Health = 0;
-            //Armor = 0;
-            //EmoteStopTick = -1;
             //LastAction = -1;
-            //Player = player;
-            //IsAlive = true;
-
             //Input = new SnapshotPlayerInput();
             //LatestPrevInput = new SnapshotPlayerInput();
             //LatestInput = new SnapshotPlayerInput();
-
-            //Core = new CharacterCore();
-            //SendCore = new CharacterCore();
-            //ReckoningCore = new CharacterCore();
-
-            //Core.Reset();
-            //Core.Init(GameWorld.WorldCore, GameContext.MapCollision);
-            //Core.Position = Position;
-
-            //var worldCore = new WorldCore(
-            //    GameWorld.WorldCore.CharacterCores.Length,
-            //    GameWorld.WorldCore.Tuning);
-            //ReckoningCore.Init(worldCore, GameContext.MapCollision);
-
-            //GameWorld.WorldCore.CharacterCores[player.ClientId] = Core;
-            //GameContext.GameController.OnCharacterSpawn(this);
         }
-        
-        public override void OnDestroy()
+
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             GameWorld.WorldCore.CharacterCores[Player.ClientId] = null;
             IsAlive = false;
-            base.OnDestroy();
         }
 
         public virtual void SetWeapon(Weapon weapon)
         {
-            if (weapon == ActiveWeapon)
-                return;
+            //if (weapon == ActiveWeapon)
+            //    return;
 
-            LastWeapon = ActiveWeapon;
-            QueuedWeapon = (Weapon) (-1);
-            ActiveWeapon = weapon;
-            GameContext.CreateSound(Position, Sound.WeaponSwitch);
+            //LastWeapon = ActiveWeapon;
+            //QueuedWeapon = (Weapon) (-1);
+            //ActiveWeapon = weapon;
+            //GameContext.CreateSound(Position, Sound.WeaponSwitch);
 
-            if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NumWeapons)
-                ActiveWeapon = Weapon.Hammer;
+            //if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NumWeapons)
+            //    ActiveWeapon = Weapon.Hammer;
         }
 
         public bool IsGrounded()
         {
-            if (GameContext.MapCollision.IsTileSolid(
-                Position.x + ProximityRadius / 2,
-                Position.y + ProximityRadius / 2 + 2))
-            {
-                return true;
-            }
+            //if (GameContext.MapCollision.IsTileSolid(
+            //    Position.x + ProximityRadius / 2,
+            //    Position.y + ProximityRadius / 2 + 2))
+            //{
+            //    return true;
+            //}
 
-            if (GameContext.MapCollision.IsTileSolid(
-                Position.x - ProximityRadius / 2,
-                Position.y + ProximityRadius / 2 + 2))
-            {
-                return true;
-            }
+            //if (GameContext.MapCollision.IsTileSolid(
+            //    Position.x - ProximityRadius / 2,
+            //    Position.y + ProximityRadius / 2 + 2))
+            //{
+            //    return true;
+            //}
 
             return false;
         }
 
         public virtual void SetEmote(Emote emote, int stopTick)
         {
-            Emote = emote;
-            EmoteStopTick = stopTick;
+            //Emote = emote;
+            //EmoteStopTick = stopTick;
         }
 
         public virtual void Die(int killer, Weapon weapon)
@@ -225,10 +229,10 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponSwitch()
         {
-            if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
-                return;
+            //if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
+            //    return;
 
-            SetWeapon(QueuedWeapon);
+            //SetWeapon(QueuedWeapon);
         }
 
         protected virtual void HandleWeaponSwitch()
@@ -278,26 +282,26 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual bool CanFire()
         {
-            var fullAuto = ActiveWeapon == Weapon.Grenade ||
-                           ActiveWeapon == Weapon.Shotgun ||
-                           ActiveWeapon == Weapon.Laser;
+            //var fullAuto = ActiveWeapon == Weapon.Grenade ||
+            //               ActiveWeapon == Weapon.Shotgun ||
+            //               ActiveWeapon == Weapon.Laser;
 
-            var willFire = InputCount.Count(LatestPrevInput.Fire, LatestInput.Fire).Presses != 0 ||
-                           fullAuto && (LatestInput.Fire & 1) != 0 && Weapons[(int)ActiveWeapon].Ammo != 0;
+            //var willFire = InputCount.Count(LatestPrevInput.Fire, LatestInput.Fire).Presses != 0 ||
+            //               fullAuto && (LatestInput.Fire & 1) != 0 && Weapons[(int)ActiveWeapon].Ammo != 0;
 
-            if (!willFire)
-                return false;
+            //if (!willFire)
+            //    return false;
 
-            if (Weapons[(int)ActiveWeapon].Ammo == 0)
-            {
-                ReloadTimer = 125 * Server.TickSpeed / 1000;
-                if (LastNoAmmoSound + Server.TickSpeed <= Server.Tick)
-                {
-                    GameContext.CreateSound(Position, Sound.WeaponNoAmmo);
-                    LastNoAmmoSound = Server.Tick;
-                }
-                return false;
-            }
+            //if (Weapons[(int)ActiveWeapon].Ammo == 0)
+            //{
+            //    ReloadTimer = 125 * Server.TickSpeed / 1000;
+            //    if (LastNoAmmoSound + Server.TickSpeed <= Server.Tick)
+            //    {
+            //        GameContext.CreateSound(Position, Sound.WeaponNoAmmo);
+            //        LastNoAmmoSound = Server.Tick;
+            //    }
+            //    return false;
+            //}
 
             return true;
         }
@@ -420,58 +424,58 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponFire(Weapon weapon, Vector2 projStartPos, Vector2 direction)
         {
-            switch (weapon)
-            {
-                case Weapon.Hammer:
-                    DoWeaponFireHammer(projStartPos, direction);
-                    break;
+            //switch (weapon)
+            //{
+            //    case Weapon.Hammer:
+            //        DoWeaponFireHammer(projStartPos, direction);
+            //        break;
 
-                case Weapon.Gun:
-                    DoWeaponFireGun(projStartPos, direction);
-                    break;
+            //    case Weapon.Gun:
+            //        DoWeaponFireGun(projStartPos, direction);
+            //        break;
 
-                case Weapon.Shotgun:
-                    DoWeaponFireShotgun(projStartPos, direction);
-                    break;
+            //    case Weapon.Shotgun:
+            //        DoWeaponFireShotgun(projStartPos, direction);
+            //        break;
 
-                case Weapon.Grenade:
-                    DoWeaponFireGrenade(projStartPos, direction);
-                    break;
+            //    case Weapon.Grenade:
+            //        DoWeaponFireGrenade(projStartPos, direction);
+            //        break;
 
-                case Weapon.Ninja:
-                    DoWeaponFireNinja(projStartPos, direction);
-                    break;
+            //    case Weapon.Ninja:
+            //        DoWeaponFireNinja(projStartPos, direction);
+            //        break;
 
-                case Weapon.Laser:
-                    DoWeaponFireRifle(direction);
-                    break;
-            }
+            //    case Weapon.Laser:
+            //        DoWeaponFireRifle(direction);
+            //        break;
+            //}
         }
 
         protected virtual void FireWeapon()
         {
-            if (ReloadTimer != 0)
-                return;
+            //if (ReloadTimer != 0)
+            //    return;
 
-            DoWeaponSwitch();
+            //DoWeaponSwitch();
              
-            if (!CanFire()) 
-                return;
+            //if (!CanFire()) 
+            //    return;
             
-            var direction = new Vector2(LatestInput.TargetX, LatestInput.TargetY).Normalized;
-            var projStartPos = Position + direction * ProximityRadius * 0.75f;
+            //var direction = new Vector2(LatestInput.TargetX, LatestInput.TargetY).Normalized;
+            //var projStartPos = Position + direction * ProximityRadius * 0.75f;
 
-            DoWeaponFire(ActiveWeapon, projStartPos, direction);
+            //DoWeaponFire(ActiveWeapon, projStartPos, direction);
 
-            AttackTick = Server.Tick;
-            if (Weapons[(int) ActiveWeapon].Ammo > 0)
-                Weapons[(int) ActiveWeapon].Ammo--;
+            //AttackTick = Server.Tick;
+            //if (Weapons[(int) ActiveWeapon].Ammo > 0)
+            //    Weapons[(int) ActiveWeapon].Ammo--;
 
-            if (ReloadTimer == 0)
-            {
-                ReloadTimer = ServerData.Data.Weapons.Info[(int) ActiveWeapon]
-                                  .FireDelay * Server.TickSpeed / 1000;
-            }
+            //if (ReloadTimer == 0)
+            //{
+            //    ReloadTimer = ServerData.Data.Weapons.Info[(int) ActiveWeapon]
+            //                      .FireDelay * Server.TickSpeed / 1000;
+            //}
         }
 
         public virtual bool TakeDamage(Vector2 force, int damage, int from, Weapon weapon)
@@ -564,129 +568,129 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void HandleNinja()
         {
-            if (ActiveWeapon != Weapon.Ninja)
-                return;
+            //if (ActiveWeapon != Weapon.Ninja)
+            //    return;
 
-            if (Server.Tick - NinjaStat.ActivationTick > 
-                ServerData.Data.Weapons.Ninja.Duration * Server.Tick / 1000)
-            {
-                Weapons[(int) Weapon.Ninja].Got = false;
-                ActiveWeapon = LastWeapon;
+            //if (Server.Tick - NinjaStat.ActivationTick > 
+            //    ServerData.Data.Weapons.Ninja.Duration * Server.Tick / 1000)
+            //{
+            //    Weapons[(int) Weapon.Ninja].Got = false;
+            //    ActiveWeapon = LastWeapon;
 
-                SetWeapon(ActiveWeapon);
-                return;
-            }
+            //    SetWeapon(ActiveWeapon);
+            //    return;
+            //}
 
-            NinjaStat.CurrentMoveTime--;
-            if (NinjaStat.CurrentMoveTime == 0)
-            {
-                Core.Velocity = NinjaStat.ActivationDir * NinjaStat.OldVelAmount;
-            }
+            //NinjaStat.CurrentMoveTime--;
+            //if (NinjaStat.CurrentMoveTime == 0)
+            //{
+            //    Core.Velocity = NinjaStat.ActivationDir * NinjaStat.OldVelAmount;
+            //}
 
-            if (NinjaStat.CurrentMoveTime <= 0)
-                return;
+            //if (NinjaStat.CurrentMoveTime <= 0)
+            //    return;
 
-            Core.Velocity = NinjaStat.ActivationDir * ServerData.Data.Weapons.Ninja.Velocity;
-            var oldPos = Position;
-            var vel = Core.Velocity;
-            var pos = Core.Position;
+            //Core.Velocity = NinjaStat.ActivationDir * ServerData.Data.Weapons.Ninja.Velocity;
+            //var oldPos = Position;
+            //var vel = Core.Velocity;
+            //var pos = Core.Position;
 
-            GameContext.MapCollision.MoveBox(ref pos, ref vel, new Vector2(ProximityRadius, ProximityRadius), 0f);
-            Core.Velocity = Vector2.zero;
-            Core.Position = pos;
+            //GameContext.MapCollision.MoveBox(ref pos, ref vel, new Vector2(ProximityRadius, ProximityRadius), 0f);
+            //Core.Velocity = Vector2.zero;
+            //Core.Position = pos;
 
-            var dir = Position - oldPos;
-            var radius = ProximityRadius * 2f;
-            var center = oldPos + dir * 0.5f;
+            //var dir = Position - oldPos;
+            //var radius = ProximityRadius * 2f;
+            //var center = oldPos + dir * 0.5f;
 
-            foreach (var character in GameWorld.FindEntities<Character>(center, radius))
-            {
-                if (character == this)
-                    continue;
+            //foreach (var character in GameWorld.FindEntities<Character>(center, radius))
+            //{
+            //    if (character == this)
+            //        continue;
 
-                var alreadyHit = false;
-                for (var i = 0; i < HitObjects.Count; i++)
-                {
-                    if (HitObjects[i] == character)
-                        alreadyHit = true;
-                }
+            //    var alreadyHit = false;
+            //    for (var i = 0; i < HitObjects.Count; i++)
+            //    {
+            //        if (HitObjects[i] == character)
+            //            alreadyHit = true;
+            //    }
 
-                if (alreadyHit)
-                    continue;
+            //    if (alreadyHit)
+            //        continue;
                 
-                if (MathHelper.Distance(character.Position, Position) > ProximityRadius * 2f)
-                    continue;
+            //    if (MathHelper.Distance(character.Position, Position) > ProximityRadius * 2f)
+            //        continue;
 
-                GameContext.CreateSound(character.Position, Sound.NinjaHit);
-                if (HitObjects.Count < 10)
-                    HitObjects.Add(character);
+            //    GameContext.CreateSound(character.Position, Sound.NinjaHit);
+            //    if (HitObjects.Count < 10)
+            //        HitObjects.Add(character);
 
-                character.TakeDamage(new Vector2(0, -10.0f), ServerData.Data.Weapons.Ninja.Damage, 
-                    Player.ClientId, Weapon.Ninja);
-            }
+            //    character.TakeDamage(new Vector2(0, -10.0f), ServerData.Data.Weapons.Ninja.Damage, 
+            //        Player.ClientId, Weapon.Ninja);
+            //}
         }
 
         protected virtual void HandleWeapons()
         {
-            HandleNinja();
+            //HandleNinja();
 
-            if (ReloadTimer != 0)
-            {
-                ReloadTimer--;
-                return;
-            }
+            //if (ReloadTimer != 0)
+            //{
+            //    ReloadTimer--;
+            //    return;
+            //}
 
-            FireWeapon();
-            var ammoRegenTime = ServerData.Data.Weapons.Info[(int) ActiveWeapon].AmmoRegenTime;
-            if (ammoRegenTime != 0)
-            {
-                if (ReloadTimer <= 0)
-                {
-                    if (Weapons[(int) ActiveWeapon].AmmoRegenStart < 0)
-                        Weapons[(int) ActiveWeapon].AmmoRegenStart = Server.Tick;
+            //FireWeapon();
+            //var ammoRegenTime = ServerData.Data.Weapons.Info[(int) ActiveWeapon].AmmoRegenTime;
+            //if (ammoRegenTime != 0)
+            //{
+            //    if (ReloadTimer <= 0)
+            //    {
+            //        if (Weapons[(int) ActiveWeapon].AmmoRegenStart < 0)
+            //            Weapons[(int) ActiveWeapon].AmmoRegenStart = Server.Tick;
 
-                    if (Server.Tick - Weapons[(int) ActiveWeapon].AmmoRegenStart >=
-                        ammoRegenTime * Server.TickSpeed / 1000)
-                    {
-                        Weapons[(int) ActiveWeapon].Ammo = System.Math.Clamp(
-                            Weapons[(int) ActiveWeapon].Ammo + 1, 
-                            1,
-                            ServerData.Data.Weapons.Info[(int) ActiveWeapon].MaxAmmo
-                        );
-                        Weapons[(int) ActiveWeapon].AmmoRegenStart = -1;
-                    }
-                }
-                else
-                {
-                    Weapons[(int) ActiveWeapon].AmmoRegenStart = -1;
-                }
-            }
+            //        if (Server.Tick - Weapons[(int) ActiveWeapon].AmmoRegenStart >=
+            //            ammoRegenTime * Server.TickSpeed / 1000)
+            //        {
+            //            Weapons[(int) ActiveWeapon].Ammo = System.Math.Clamp(
+            //                Weapons[(int) ActiveWeapon].Ammo + 1, 
+            //                1,
+            //                ServerData.Data.Weapons.Info[(int) ActiveWeapon].MaxAmmo
+            //            );
+            //            Weapons[(int) ActiveWeapon].AmmoRegenStart = -1;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        Weapons[(int) ActiveWeapon].AmmoRegenStart = -1;
+            //    }
+            //}
 
         }
 
         public virtual void GiveNinja()
         {
-            NinjaStat.ActivationTick = Server.Tick;
-            Weapons[(int) Weapon.Ninja].Got = true;
-            Weapons[(int) Weapon.Ninja].Ammo = -1;
+            //NinjaStat.ActivationTick = Server.Tick;
+            //Weapons[(int) Weapon.Ninja].Got = true;
+            //Weapons[(int) Weapon.Ninja].Ammo = -1;
 
-            if (ActiveWeapon != Weapon.Ninja)
-                LastWeapon = ActiveWeapon;
+            //if (ActiveWeapon != Weapon.Ninja)
+            //    LastWeapon = ActiveWeapon;
 
-            ActiveWeapon = Weapon.Ninja;
-            GameContext.CreateSound(Position, Sound.PickupNinja);
+            //ActiveWeapon = Weapon.Ninja;
+            //GameContext.CreateSound(Position, Sound.PickupNinja);
         }
 
         public virtual bool GiveWeapon(Weapon weapon, int ammo)
         {
-            if (Weapons[(int) weapon].Ammo < ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo ||
-                !Weapons[(int) weapon].Got)
-            {
-                Weapons[(int) weapon].Got = true;
-                Weapons[(int) weapon].Ammo = System.Math.Min(
-                    ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo, ammo);
-                return true;
-            }
+            //if (Weapons[(int) weapon].Ammo < ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo ||
+            //    !Weapons[(int) weapon].Got)
+            //{
+            //    Weapons[(int) weapon].Got = true;
+            //    Weapons[(int) weapon].Ammo = System.Math.Min(
+            //        ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo, ammo);
+            //    return true;
+            //}
 
             return false;
         }
@@ -725,7 +729,7 @@ namespace TeeSharp.Server.Game.Entities
             //HandleWeapons();
         }
 
-        public override void TickDefered()
+        public override void LateTick()
         {
             //ReckoningCore.Tick(false);
             //ReckoningCore.Move();
@@ -771,71 +775,67 @@ namespace TeeSharp.Server.Game.Entities
 
         public override void TickPaused()
         {
-            AttackTick++;
-            ReckoningTick++;
-            DamageTakenTick++;
+            //AttackTick++;
+            //ReckoningTick++;
+            //DamageTakenTick++;
 
-            if (LastAction != -1)
-                LastAction++;
+            //if (LastAction != -1)
+            //    LastAction++;
 
-            if (EmoteStopTick > -1)
-                EmoteStopTick++;
+            //if (EmoteStopTick > -1)
+            //    EmoteStopTick++;
 
-            if (Weapons[(int) ActiveWeapon].AmmoRegenStart > -1)
-                Weapons[(int) ActiveWeapon].AmmoRegenStart++;
+            //if (Weapons[(int) ActiveWeapon].AmmoRegenStart > -1)
+            //    Weapons[(int) ActiveWeapon].AmmoRegenStart++;
         }
 
         public virtual bool IncreaseHealth(int amount)
         {
-            if (Health >= 10)
-                return false;
-            Health = System.Math.Clamp(Health + amount, 0, 10);
+            //if (Health >= 10)
+            //    return false;
+            //Health = System.Math.Clamp(Health + amount, 0, 10);
             return true;
         }
 
         public virtual bool IncreaseArmor(int amount)
         {
-            if (Armor >= 10)
-                return false;
-            Armor = System.Math.Clamp(Armor + amount, 0, 10);
+            //if (Armor >= 10)
+            //    return false;
+            //Armor = System.Math.Clamp(Armor + amount, 0, 10);
             return true;
         }
 
         public override void OnSnapshot(int snappingClient)
         {
-            //var id = Player.ClientId;
+            if (NetworkClipped(snappingClient))
+                return;
 
-            //if (!Server.Translate(ref id, snappingClient))
-            //    return;
+            var character = Server.SnapshotItem<SnapshotCharacter>(Player.ClientId);
+            if (character == null)
+                return;
 
-            //if (NetworkClipped(snappingClient))
-            //    return;
+            if (ReckoningTick == 0 || GameWorld.Paused)
+            {
+                character.Tick = 0;
+                Core.Write(character);
+            }
+            else
+            {
+                character.Tick = ReckoningTick;
+                SendCore.Write(character);
+            }
 
-            //var character = Server.SnapshotItem<SnapshotCharacter>(id);
-            //if (character == null)
-            //    return;
+            if (EmoteStopTick < Server.Tick)
+            {
+                EmoteStopTick = -1;
+                Emote = Emote.Normal;
+            }
 
-            //if (ReckoningTick == 0 || GameWorld.Paused)
-            //{
-            //    character.Tick = 0;
-            //    Core.Write(character);
-            //}
-            //else
-            //{
-            //    character.Tick = ReckoningTick;
-            //    SendCore.Write(character);
-            //}
-
-            //if (EmoteStopTick < Server.Tick)
-            //{
-            //    EmoteStopTick = -1;
-            //    Emote = Emote.Normal;
-            //}
-
-            //character.Emote = Emote;
-            //character.AmmoCount = 0;
-            //character.Health = 0;
-            //character.Armor = 0;
+            character.Emote = Emote;
+            character.AmmoCount = 0;
+            character.Health = 0;
+            character.Armor = 0;
+            character.TriggeredEvents = Core.TriggeredEvents;
 
             //character.Weapon = ActiveWeapon;
             //character.AttackTick = AttackTick;

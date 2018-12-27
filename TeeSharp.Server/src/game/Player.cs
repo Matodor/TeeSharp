@@ -30,7 +30,7 @@ namespace TeeSharp.Server.Game
             TeamChangeTick = Server.Tick;
             InactivityTickCounter = 0;
             IsReadyToPlay = !GameContext.GameController.IsPlayerReadyMode();
-            RespawnDisabled = GameContext.GameController.StartRespawnState();
+            RespawnDisabled = GameContext.GameController.GetRespawnDisabled(this);
             DeadSpectatorMode = false;
             Spawning = false;
 
@@ -223,6 +223,11 @@ namespace TeeSharp.Server.Game
                     }
                 }
             }
+        }
+
+        public override void OnSetTeam()
+        {
+            LastSetTeam = Server.Tick;
         }
 
         public override void OnChat()
@@ -441,16 +446,32 @@ namespace TeeSharp.Server.Game
 
         public override void SetTeam(Team team)
         {
+            if (Team == team)
+                return;
+
+            var prevTeam = Team;
+
             KillCharacter(WeaponGame);
 
             Team = team;
             LastActionTick = Server.Tick;
+            TeamChangeTick = Server.Tick;
             SpectatorMode = SpectatorMode.FreeView;
             SpectatorId = -1;
             SpectatorFlag = null;
             DeadSpectatorMode = false;
-
             RespawnTick = Server.Tick + Server.TickSpeed / 2;
+
+            Server.SendPackMsg(new GameMsg_SvTeam()
+            {
+                ClientId = ClientId,
+                Team = team,
+                Silent = true, // TODO
+                CooldownTick = TeamChangeTick,
+            }, MsgFlags.Vital, -1);
+
+            if (prevTeam == Team.Spectators)
+                InactivityTickCounter = 0;
 
             if (Team == Team.Spectators)
             {
@@ -481,7 +502,6 @@ namespace TeeSharp.Server.Game
 
             Spawning = false;
             Character = new Character(this, spawnPos);
-            GameContext.CreatePlayerSpawn(spawnPos);
         }
     }
 }

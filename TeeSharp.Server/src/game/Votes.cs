@@ -48,6 +48,11 @@ namespace TeeSharp.Server.Game
             
         }
 
+        public override void PlayerChangeTeam(int clientId, Team prev, Team next)
+        {
+            
+        }
+
         public override void Tick()
         {
         }

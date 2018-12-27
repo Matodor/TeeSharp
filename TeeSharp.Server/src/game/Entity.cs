@@ -4,11 +4,40 @@ using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game
 {
+    public abstract class Entity<T> : Entity where T : Entity<T>
+    {
+        public static readonly BidirectionalList<T> Entities;
+
+        private BidirectionalList<T>.Node _node;
+
+        static Entity()
+        {
+            Entities = BidirectionalList<T>.New();
+        }
+
+        protected Entity(int idsCount) : base(idsCount)
+        {
+            _node = Entities.Add((T) this);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if (_node == null)
+                return;
+
+            Entities.RemoveFast(_node);
+            _node = null;
+        }
+    }
+
     public abstract class Entity : BaseInterface
     {
+        public static readonly BidirectionalList<Entity> All;
+
         public abstract float ProximityRadius { get; protected set; }
         public virtual Vector2 Position { get; set; }
-        public virtual bool MarkedForDestroy { get; private set; }
 
         protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseGameWorld GameWorld { get; set; }
@@ -17,8 +46,17 @@ namespace TeeSharp.Server.Game
         protected virtual BaseConfig Config { get; set; }
         protected virtual int[] IDs { get; set; }
 
+        private BidirectionalList<Entity>.Node _node;
+
+        static Entity()
+        {
+            All = BidirectionalList<Entity>.New();
+        }
+
         protected Entity(int idsCount)
         {
+            _node = All.Add(this);
+
             GameContext = Kernel.Get<BaseGameContext>();
             Server = Kernel.Get<BaseServer>();
             GameWorld = Kernel.Get<BaseGameWorld>();
@@ -32,24 +70,26 @@ namespace TeeSharp.Server.Game
             Position = Vector2.zero;
         }
 
+        public abstract void OnSnapshot(int snappingClient);
         public virtual void Tick() { }
-        public virtual void TickDefered() { }
+        public virtual void LateTick() { }
         public virtual void TickPaused() { }
-        public virtual void OnDestroy() { }
         public virtual void Reset() { }
 
-        public abstract void OnSnapshot(int snappingClient);
+        protected virtual void OnDestroy() { }
 
-        public virtual void Destroy()
+        public void Destroy()
         {
-            if (MarkedForDestroy)
+            if (_node == null)
                 return;
 
-            MarkedForDestroy = true;
             OnDestroy();
 
             for (var i = 0; i < IDs.Length; i++)
                 Server.SnapshotFreeId(IDs[i]);
+
+            All.RemoveFast(_node);
+            _node = null;
         }
 
         public virtual bool NetworkClipped(int snappingClient)
@@ -80,26 +120,6 @@ namespace TeeSharp.Server.Game
                    MathHelper.RoundToInt(checkPos.x) / 32 > GameContext.MapCollision.Width + 200 ||
                    MathHelper.RoundToInt(checkPos.y) / 32 < -200 ||
                    MathHelper.RoundToInt(checkPos.y) / 32 > GameContext.MapCollision.Height + 200;
-        }
-    }
-
-    public abstract class Entity<T> : Entity where T : Entity<T>
-    {
-        public static Entity<T> FirstTypeEntity { get; set; }
-        public virtual Entity<T> NextTypeEntity { get; set; } 
-        public virtual Entity<T> PrevTypeEntity { get; set; } 
-
-        protected Entity(int idsCount) : base(idsCount)
-        {
-            NextTypeEntity = null;
-            PrevTypeEntity = null;
-            GameWorld.AddEntity(this);
-        }
-
-        public override void OnDestroy()
-        {
-            base.OnDestroy();
-            GameWorld.RemoveEntity(this);
         }
     }
 }

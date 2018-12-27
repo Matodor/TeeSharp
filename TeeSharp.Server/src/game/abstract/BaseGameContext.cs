@@ -60,6 +60,8 @@ namespace TeeSharp.Server.Game
 
         protected abstract void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo);
         protected abstract void OnMsgClientSay(BasePlayer player, GameMsg_ClSay message);
+        protected abstract void OnMsgClientSetTeam(BasePlayer player, GameMsg_ClSetTeam message);
+
         protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
 
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage);

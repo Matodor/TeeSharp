@@ -35,8 +35,12 @@ namespace TeeSharp.Server.Game
         public virtual SpectatorMode SpectatorMode { get; set; }
         public virtual int SpectatorId { get; set; }
         public virtual int LastActionTick { get; set; }
+        public virtual bool RespawnDisabled { get; set; }
+        public virtual bool IsReadyToPlay { get; set; }
 
+        public virtual int TeamChangeTick { get; protected set; }
         public virtual int LastChat { get; protected set; }
+        public virtual int LastSetTeam { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
@@ -44,7 +48,6 @@ namespace TeeSharp.Server.Game
         public virtual TeeInfo TeeInfo { get; protected set; }
         public virtual bool IsReadyToEnter { get; protected set; }
         public virtual bool DeadSpectatorMode { get; protected set; }
-        public virtual bool RespawnDisabled { get; protected set; }
         public virtual int LastChangeInfo { get; protected set; }
 
         protected virtual Character Character { get; set; }
@@ -54,13 +57,11 @@ namespace TeeSharp.Server.Game
 
         protected virtual PlayerFlags PlayerFlags { get; set; }
         protected virtual int InactivityTickCounter { get; set; }
-        protected virtual int TeamChangeTick { get; set; }
         protected virtual int RespawnTick { get; set; }
         protected virtual int DieTick { get; set; }
         protected virtual Flag SpectatorFlag { get; set; }
         protected virtual bool ActiveSpectatorSwitch { get; set; }
 
-        protected virtual bool IsReadyToPlay { get; set; }
         protected virtual bool Spawning { get; set; }
         protected virtual Activity LatestActivity { get; set; }
 
@@ -74,6 +75,7 @@ namespace TeeSharp.Server.Game
             out SnapshotSpectatorInfo spectatorInfo, 
             out SnapshotDemoClientInfo demoClientInfo);
 
+        public abstract void OnSetTeam();
         public abstract void OnChat();
         public abstract void OnChangeInfo();
         public abstract void OnDisconnect(string reason);

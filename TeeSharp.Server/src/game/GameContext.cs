@@ -324,6 +324,7 @@ namespace TeeSharp.Server.Game
                         OnMsgClientSay(player, (GameMsg_ClSay) message);
                         break;
                     case GameMessage.ClientSetTeam:
+                        OnMsgClientSetTeam(player, (GameMsg_ClSetTeam) message);
                         break;
                     case GameMessage.ClientSetSpectatorMode:
                         break;
@@ -344,6 +345,31 @@ namespace TeeSharp.Server.Game
             else if (msg == GameMessage.ClientStartInfo)
             {
                 OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
+            }
+        }
+
+        protected override void OnMsgClientSetTeam(BasePlayer player, GameMsg_ClSetTeam message)
+        {
+            if (!GameController.IsTeamChangeAllowed(player))
+                return;
+
+            if (player.Team == message.Team)
+                return;
+
+            if (Config["SvSpamprotection"] && player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
+                return;
+
+            if (message.Team != Team.Spectators && LockTeams || player.TeamChangeTick > Server.Tick)
+                return;
+
+            player.OnSetTeam();
+
+            if (GameController.CanJoinTeam(player, message.Team) &&
+                GameController.CanChangeTeam(player, message.Team))
+            {
+                var prevTeam = player.Team;
+                GameController.TeamChange(player, message.Team);
+                Votes.PlayerChangeTeam(player.ClientId, prevTeam, player.Team);
             }
         }
 

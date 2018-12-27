@@ -45,13 +45,15 @@ namespace TeeSharp.Server
                 { "SvMotd", new ConfigString("SvMotd", "sv_motd", 900, "", ConfigFlags.Server, "Message of the day to display for the clients") },
                 { "SvTeamdamage", new ConfigInt("SvTeamdamage", "sv_teamdamage", 0, 0, 1, ConfigFlags.Server, "Team damage") },
                 { "SvMaprotation", new ConfigString("SvMaprotation", "sv_maprotation", 768, "", ConfigFlags.Server, "Maps to rotate between") },
-                { "SvRoundsPerMap", new ConfigInt("SvRoundsPerMap", "sv_rounds_per_map", 1, 1, 100, ConfigFlags.Server, "Number of rounds on each map before rotating") },
-                { "SvRoundSwap", new ConfigInt("SvRoundSwap", "sv_round_swap", 1, 0, 1, ConfigFlags.Server, "Swap teams between rounds") },
+
+                { "SvMatchesPerMap", new ConfigInt("SvMatchesPerMap", "sv_matches_per_map", 1, 1, 100, ConfigFlags.Save | ConfigFlags.Server, "Number of matches on each map before rotating") },
+                { "SvMatchSwap", new ConfigInt("SvMatchSwap", "sv_match_swap", 1, 0, 1, ConfigFlags.Server, "Swap teams between matches") },
                 { "SvPowerups", new ConfigInt("SvPowerups", "sv_powerups", 1, 0, 1, ConfigFlags.Server, "Allow powerups like ninja") },
-                { "SvScorelimit", new ConfigInt("SvScorelimit", "sv_scorelimit", 20, 0, 1000, ConfigFlags.Server, "Score limit (0 disables)") },
+                { "SvScorelimit", new ConfigInt("SvScorelimit", "sv_scorelimit", 20, 0, 1000, ConfigFlags.Save | ConfigFlags.Server, "Score limit (0 disables)") },
                 { "SvTimelimit", new ConfigInt("SvTimelimit", "sv_timelimit", 0, 0, 1000, ConfigFlags.Server, "Time limit in minutes (0 disables)") },
                 { "SvGametype", new ConfigString("SvGametype", "sv_gametype", 32, "dm", ConfigFlags.Server, "Game type (dm, tdm, ctf)") },
                 { "SvTournamentMode", new ConfigInt("SvTournamentMode", "sv_tournament_mode", 0, 0, 2, ConfigFlags.Save | ConfigFlags.Server, "Tournament mode. When enabled, players joins the server as spectator (2=additional restricted spectator chat)") },
+                { "SvPlayerReadyMode", new ConfigInt("SvPlayerReadyMode", "sv_player_ready_mode", 0, 0, 1, ConfigFlags.Save | ConfigFlags.Server, "When enabled, players can pause/unpause the game and start the game on warmup via their ready state") },
                 { "SvSpamprotection", new ConfigInt("SvSpamprotection", "sv_spamprotection", 1, 0, 1, ConfigFlags.Server, "Spam protection") },
 
                 { "SvRespawnDelayTDM", new ConfigInt("SvRespawnDelayTDM", "sv_respawn_delay_tdm", 3, 0, 10, ConfigFlags.Server, "Time needed to respawn after death in tdm gametype") },

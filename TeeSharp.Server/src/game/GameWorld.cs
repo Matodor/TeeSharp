@@ -4,6 +4,7 @@ using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
+using TeeSharp.Core;
 using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
@@ -16,80 +17,43 @@ namespace TeeSharp.Server.Game
             Server = Kernel.Get<BaseServer>();
             Config = Kernel.Get<BaseConfig>();
             Tuning = Kernel.Get<BaseTuningParams>();
-
-            Entities = new List<Entity>();
             WorldCore = new WorldCore(Server.MaxClients, Tuning);
         }
 
-        public override T FindEntity<T>(Predicate<Entity<T>> predicate)
+        public override T FindEntity<T>(Predicate<T> predicate)
         {
-            var current = Entity<T>.FirstTypeEntity;
-            while (current != null)
+            foreach (var entity in Entity<T>.Entities)
             {
-                if (predicate(current))
-                    return (T)current;
-                current = current.NextTypeEntity;
+                if (predicate(entity))
+                    return entity;
             }
-
             return null; 
         }
 
         public override IEnumerable<T> GetEntities<T>()
         {
-            var current = Entity<T>.FirstTypeEntity;
-            while (current != null)
+            foreach (var entity in Entity<T>.Entities)
             {
-                yield return (T) current;
-                current = current.NextTypeEntity;
+                yield return entity;
             }
         }
 
         public override IEnumerable<T> FindEntities<T>(Vector2 pos, float radius)
         {
-            var current = Entity<T>.FirstTypeEntity;
-            while (current != null)
+            foreach (var entity in Entity<T>.Entities)
             {
-                if (MathHelper.Distance(current.Position, pos) < radius + current.ProximityRadius)
-                    yield return (T) current;
-                current = current.NextTypeEntity;
+                if (MathHelper.Distance(entity.Position, pos) < radius + entity.ProximityRadius)
+                    yield return entity;
             }
         }
 
-        public override IEnumerable<T> FindEntities<T>(Predicate<Entity<T>> predicate)
+        public override IEnumerable<T> FindEntities<T>(Predicate<T> predicate)
         {
-            var current = Entity<T>.FirstTypeEntity;
-            while (current != null)
+            foreach (var entity in Entity<T>.Entities)
             {
-                if (predicate(current))
-                    yield return (T)current;
-                current = current.NextTypeEntity;
+                if (predicate(entity))
+                    yield return entity;
             }
-        }
-
-        public override void AddEntity<T>(Entity<T> entity)
-        {
-            if (Entity<T>.FirstTypeEntity != null)
-                Entity<T>.FirstTypeEntity.PrevTypeEntity = entity;
-
-            entity.NextTypeEntity = Entity<T>.FirstTypeEntity;
-            entity.PrevTypeEntity = null;
-
-            Entity<T>.FirstTypeEntity = entity;
-            Entities.Add(entity);
-        }
-
-        public override void RemoveEntity<T>(Entity<T> entity)
-        {
-            if (entity.PrevTypeEntity == null)
-                Entity<T>.FirstTypeEntity = entity.NextTypeEntity;
-            else
-                entity.PrevTypeEntity.NextTypeEntity = entity.NextTypeEntity;
-
-            if (entity.NextTypeEntity != null)
-                entity.NextTypeEntity.PrevTypeEntity = entity.PrevTypeEntity;
-
-            entity.NextTypeEntity = null;
-            entity.PrevTypeEntity = null;
         }
 
         public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
@@ -146,75 +110,46 @@ namespace TeeSharp.Server.Game
 
         public override void Reset()
         {
-            for (var i = Entities.Count - 1; i >= 0; i--)
-            {
-                Entities[i].Reset();
-            }
-
-            RemoveEntities();
-            GameContext.GameController.OnReset();
-            RemoveEntities();
-
-            ResetRequested = false;
-        }
-
-        public override void RemoveEntities()
-        {
-            for (var i = Entities.Count - 1; i >= 0; i--)
-            {
-                if (Entities[i].MarkedForDestroy)
-                    Entities.RemoveAt(i);
-            }
+            // TODO
         }
 
         public override void Tick()
         {
-            if (ResetRequested)
-                Reset();
-
             if (!Paused)
             {
-                for (var i = Entities.Count - 1; i >= 0; i--)
+                foreach (var entity in Entity.All)
                 {
-                    Entities[i].Tick();
+                    entity.Tick();
                 }
 
-                for (var i = Entities.Count - 1; i >= 0; i--)
+                foreach (var entity in Entity.All)
                 {
-                    Entities[i].TickDefered();
-
-                    if (Entities[i].MarkedForDestroy)
-                        Entities.RemoveAt(i);
+                    entity.LateTick();
                 }
             }
             else
             {
-                for (var i = Entities.Count - 1; i >= 0; i--)
+                foreach (var entity in Entity.All)
                 {
-                    Entities[i].TickPaused();
-
-                    if (Entities[i].MarkedForDestroy)
-                        Entities.RemoveAt(i);
+                    entity.TickPaused();
                 }
             }
         }
 
         public override void BeforeSnapshot()
         {
-            // TODO   
         }
 
         public override void OnSnapshot(int snappingClient)
         {
-            for (var i = 0; i < Entities.Count; i++)
+            foreach (var entity in Entity.All)
             {
-                Entities[i].OnSnapshot(snappingClient);
+                entity.OnSnapshot(snappingClient);
             }
         }
 
         public override void AfterSnapshot()
         {
-            // TODO   
         }
     }
 }

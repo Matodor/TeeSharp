@@ -26,7 +26,7 @@ namespace TeeSharp.Server.Game
     //    }
     //}
 
-    public struct GameInfo
+    public class GameInfo
     {
         public int MatchCurrent;
         public int MatchNum;
@@ -196,8 +196,16 @@ namespace TeeSharp.Server.Game
         //    }
         //}
 
+        public const int TimerInfinite = -1;
+        public const int TimerEnd = 10;
+
         public abstract string GameType { get; }
 
+        public virtual int MatchCount { get; protected set; }
+        public virtual int RoundCount { get; protected set; }
+
+        public virtual int GameStartTick { get; protected set; }
+        public virtual bool SuddenDeath { get; protected set; }
         public virtual bool GameRunning { get; protected set; }
         public virtual bool GamePaused { get; protected set; }
         public virtual GameState GameState { get; protected set; }
@@ -206,17 +214,26 @@ namespace TeeSharp.Server.Game
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseGameConsole Console { get; set; }
+        protected virtual BaseConfig Config { get; set; }
 
+        protected virtual int GameStateTimer { get; set; }
         protected virtual GameInfo GameInfo { get; set; }
+
+        protected virtual int[] TeamScore { get; set; }
 
         public abstract void Init();
         public abstract Team StartTeam();
+        public abstract bool GetRespawnDisabled(BasePlayer player);
         public abstract bool IsPlayerReadyMode();
-        public abstract bool StartRespawnState();
+        public abstract bool IsTeamChangeAllowed(BasePlayer player);
+        public abstract int Score(int clientId);
 
         public abstract void Tick();
-        public abstract int Score(int clientId);
+        public abstract bool CanJoinTeam(BasePlayer player, Team team);
+        public abstract bool CanChangeTeam(BasePlayer player, Team team);
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 pos);
+        public abstract void TeamChange(BasePlayer player, Team team);
+
         public abstract void OnReset();
         public abstract void OnPlayerInfoChange(BasePlayer player);
         public abstract void OnPlayerConnected(BasePlayer player);
@@ -226,5 +243,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
 
         protected abstract void UpdateGameInfo(int clientId);
+        protected abstract void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team);
+        protected abstract void SetGameState(GameState state, int timer);
     }
 }
