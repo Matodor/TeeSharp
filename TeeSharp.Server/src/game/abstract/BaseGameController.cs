@@ -7,6 +7,7 @@ using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
+using TeeSharp.Map.MapItems;
 using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
@@ -242,6 +243,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnPlayerDisconnected(BasePlayer player, string reason);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
+        public abstract void OnEntity(Tile tile, Vector2 pos);
 
         protected abstract void UpdateGameInfo(int clientId);
         protected abstract void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team);

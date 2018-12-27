@@ -82,7 +82,6 @@ namespace TeeSharp.Common
                 last = pos;
             }
 
-
             outCollision = pos1;
             outBeforeCollision = pos1;
             return CollisionFlags.None;

@@ -1,9 +1,12 @@
-﻿using TeeSharp.Common;
+﻿using System;
+using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Map.MapItems;
 using TeeSharp.Server.Game.Entities;
+using Pickup = TeeSharp.Common.Enums.Pickup;
 
 namespace TeeSharp.Server.Game
 {
@@ -158,6 +161,48 @@ namespace TeeSharp.Server.Game
             Console.Print(OutputLevel.Debug, "game", 
                 $"team_join player='{player.ClientId}:{Server.ClientName(player.ClientId)}' team={player.Team}");
             UpdateGameInfo(player.ClientId);
+        }
+
+        public override void OnEntity(Tile tile, Vector2 pos)
+        {
+            if (tile.Index < (int) MapEntities.EntityOffset)
+                return;
+
+            var entity = tile.Index - MapEntities.EntityOffset;
+            Pickup? pickup = null;
+
+            switch (entity)
+            {
+                case MapEntities.Spawn:
+                    break;
+                case MapEntities.SpawnRed:
+                    break;
+                case MapEntities.SpawnBlue:
+                    break;
+                case MapEntities.Armor:
+                    pickup = Pickup.Armor;
+                    break;
+                case MapEntities.Health:
+                    pickup = Pickup.Health;
+                    break;
+                case MapEntities.WeaponShotgun:
+                    pickup = Pickup.Shotgun;
+                    break;
+                case MapEntities.WeaponGrenade:
+                    pickup = Pickup.Grenade;
+                    break;
+                case MapEntities.PowerupNinja:
+                    pickup = Pickup.Ninja;
+                    break;
+                case MapEntities.WeaponLaser:
+                    pickup = Pickup.Laser;
+                    break;
+            }
+
+            if (pickup.HasValue)
+            {
+                new Entities.Pickup(pickup.Value).Position = pos;
+            }
         }
 
         protected override void UpdateGameInfo(int clientId)

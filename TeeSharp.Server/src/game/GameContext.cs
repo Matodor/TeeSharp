@@ -35,23 +35,22 @@ namespace TeeSharp.Server.Game
             MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
 
-            // TODO
             GameMsgUnpacker.MaxClients = Players.Length;
-            GameController = new GameController();
+            
+            GameController = new GameController(); // TODO
             GameController.Init();
 
-            // TODO
-            //for (var y = 0; y < MapLayers.GameLayer.Height; y++)
-            //{
-            //    for (var x = 0; x < MapLayers.GameLayer.Width; x++)
-            //    {
-            //        var tile = MapCollision.GetTile(y * MapLayers.GameLayer.Width + x);
-            //        var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 
-            //        if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
-            //            GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
-            //    }
-            //}
+            for (var y = 0; y < MapLayers.GameLayer.Height; y++)
+            {
+                for (var x = 0; x < MapLayers.GameLayer.Width; x++)
+                {
+                    var tile = MapCollision.GetTile(y * MapLayers.GameLayer.Width + x);
+                    var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+                    
+                    GameController.OnEntity(tile, pos);
+                }
+            }
 
             CheckPureTuning();
         }
