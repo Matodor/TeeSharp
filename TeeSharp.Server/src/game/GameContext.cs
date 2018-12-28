@@ -234,6 +234,15 @@ namespace TeeSharp.Server.Game
             //}, MsgFlags.Vital, clientId);
         }
 
+        public override void SendEmoticon(int clientId, Emoticon emote)
+        {
+            Server.SendPackMsg(new GameMsg_SvEmoticon()
+            {
+                ClientId = clientId,
+                Emoticon = emote
+            }, MsgFlags.Vital, -1);
+        }
+
         public override void SendChatTarget(int clientId, string msg)
         {
             //Server.SendPackMsg(new GameMsg_SvChat
@@ -331,10 +340,12 @@ namespace TeeSharp.Server.Game
                     case GameMessage.ClientStartInfo:
                         break;
                     case GameMessage.ClientKill:
+                        OnMsgClientKill(player, (GameMsg_ClKill) message);
                         break;
                     case GameMessage.ClientReadyChange:
                         break;
                     case GameMessage.ClientEmoticon:
+                        OnMsgClientEmoticon(player, (GameMsg_ClEmoticon) message);
                         break;
                     case GameMessage.ClientVote:
                         break;
@@ -348,6 +359,24 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        protected override void OnMsgClientKill(BasePlayer player, GameMsg_ClKill message)
+        {
+            if (GameController.CanSelfKill(player) && player.LastKillTick + Server.TickSpeed * 3 > Server.Tick)
+                return;
+
+            player.LastKillTick = Server.Tick;
+            player.KillCharacter(BasePlayer.WeaponSelf);
+        }
+
+        protected override void OnMsgClientEmoticon(BasePlayer player, GameMsg_ClEmoticon message)
+        {
+            if (Config["SvSpamprotection"] && player.LastEmoteTick + Server.TickSpeed * 3 > Server.Tick)
+                return;
+
+            player.LastEmoteTick = Server.Tick;
+            SendEmoticon(player.ClientId, message.Emoticon);
+        }
+
         protected override void OnMsgClientSetTeam(BasePlayer player, GameMsg_ClSetTeam message)
         {
             if (!GameController.IsTeamChangeAllowed(player))
@@ -356,13 +385,13 @@ namespace TeeSharp.Server.Game
             if (player.Team == message.Team)
                 return;
 
-            if (Config["SvSpamprotection"] && player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
+            if (Config["SvSpamprotection"] && player.LastSetTeamTick + Server.TickSpeed * 3 > Server.Tick)
                 return;
 
             if (message.Team != Team.Spectators && LockTeams || player.TeamChangeTick > Server.Tick)
                 return;
 
-            player.OnSetTeam();
+            player.LastSetTeamTick = Server.Tick;
 
             if (GameController.CanJoinTeam(player, message.Team) &&
                 GameController.CanChangeTeam(player, message.Team))
@@ -378,7 +407,7 @@ namespace TeeSharp.Server.Game
             if (string.IsNullOrEmpty(message.Message))
                 return;
 
-            if (Config["SvSpamprotection"] && player.LastChat + Server.TickSpeed > Server.Tick)
+            if (Config["SvSpamprotection"] && player.LastChatTick + Server.TickSpeed > Server.Tick)
                 return;
 
             message.Message = message.Message.Limit(128);
@@ -392,7 +421,7 @@ namespace TeeSharp.Server.Game
                     message.ChatMode = ChatMode.None;
             }
 
-            player.OnChat();
+            player.LastChatTick = Server.Tick;
             GameController.OnPlayerChat(player, message, out var isSend);
 
             if (isSend)

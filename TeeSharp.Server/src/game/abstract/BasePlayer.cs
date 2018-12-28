@@ -34,15 +34,17 @@ namespace TeeSharp.Server.Game
 
         public virtual SpectatorMode SpectatorMode { get; set; }
         public virtual int SpectatorId { get; set; }
+        public virtual int LastEmoteTick { get; set; }
+        public virtual int LastChatTick { get; set; }
         public virtual int LastActionTick { get; set; }
+        public virtual int LastSetTeamTick { get; set; }
+        public virtual int LastKillTick { get; set; }
         public virtual bool RespawnDisabled { get; set; }
         public virtual bool IsReadyToPlay { get; set; }
         public virtual int RespawnTick { get; set; }
         public virtual int DieTick { get; set; }
 
         public virtual int TeamChangeTick { get; protected set; }
-        public virtual int LastChat { get; protected set; }
-        public virtual int LastSetTeam { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
@@ -75,8 +77,6 @@ namespace TeeSharp.Server.Game
             out SnapshotSpectatorInfo spectatorInfo, 
             out SnapshotDemoClientInfo demoClientInfo);
 
-        public abstract void OnSetTeam();
-        public abstract void OnChat();
         public abstract void OnChangeInfo();
         public abstract void OnDisconnect(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);

@@ -7,7 +7,7 @@ namespace TeeSharp.Common.Protocol
     {
         public override GameMessage Type => GameMessage.ClientEmoticon;
 
-        public Emoticons Emoticon { get; set; }
+        public Emoticon Emoticon { get; set; }
 
         public override bool PackError(MsgPacker packer)
         {
@@ -17,9 +17,9 @@ namespace TeeSharp.Common.Protocol
 
         public override bool UnPackError(UnPacker unpacker, ref string failedOn)
         {
-            Emoticon = (Emoticons) unpacker.GetInt();
+            Emoticon = (Emoticon) unpacker.GetInt();
 
-            if (Emoticon < 0 || Emoticon >= Emoticons.NumEmoticons)
+            if (Emoticon < 0 || Emoticon >= Emoticon.NumEmoticons)
                 failedOn = nameof(Emoticon);
 
             return unpacker.Error;

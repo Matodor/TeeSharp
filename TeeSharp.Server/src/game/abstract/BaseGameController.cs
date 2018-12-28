@@ -163,6 +163,7 @@ namespace TeeSharp.Server.Game
         public abstract bool CanJoinTeam(BasePlayer player, Team team);
         public abstract bool CanChangeTeam(BasePlayer player, Team team);
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 spawnPos);
+        public abstract bool CanSelfKill(BasePlayer player);
         public abstract void TeamChange(BasePlayer player, Team team);
 
         public abstract void OnReset();

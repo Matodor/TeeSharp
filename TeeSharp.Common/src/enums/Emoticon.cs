@@ -1,6 +1,6 @@
 ﻿namespace TeeSharp.Common.Enums
 {
-    public enum Emoticons
+    public enum Emoticon
     {
         Oop = 0,
         Exclamation,

@@ -102,6 +102,11 @@ namespace TeeSharp.Server.Game
         {
         }
 
+        public override bool CanSelfKill(BasePlayer player)
+        {
+            return true;
+        }
+
         public override bool CanChangeTeam(BasePlayer player, Team team)
         {
             return true;
