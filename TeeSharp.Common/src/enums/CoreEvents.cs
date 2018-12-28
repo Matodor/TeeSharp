@@ -3,7 +3,7 @@
 namespace TeeSharp.Common.Enums
 {
     [Flags]
-    public enum CoreEventFlags
+    public enum CoreEvents
     {
         None = 0,
         GroundJump = 1 << 0,

@@ -28,14 +28,14 @@ namespace TeeSharp.Common.Game
             Jumped = 0;
             Direction = 0;
             Angle = 0;
-            TriggeredEvents = CoreEventFlags.None;
+            TriggeredEvents = CoreEvents.None;
 
             // TODO reset input
         }
 
         public override void Tick(SnapshotPlayerInput input)
         {
-            TriggeredEvents = CoreEventFlags.None;
+            TriggeredEvents = CoreEvents.None;
 
             var isGrounded = false;
             if (MapCollision.IsTileSolid(Position.x + TeeSize / 2, Position.y + TeeSize / 2 + 5))
@@ -57,13 +57,13 @@ namespace TeeSharp.Common.Game
                     {
                         if (isGrounded)
                         {
-                            TriggeredEvents |= CoreEventFlags.GroundJump;
+                            TriggeredEvents |= CoreEvents.GroundJump;
                             vel.y = -World.Tuning["GroundJumpImpulse"];
                             Jumped |= 1;
                         }
                         else if ((Jumped & 2) == 0)
                         {
-                            TriggeredEvents |= CoreEventFlags.AirJump;
+                            TriggeredEvents |= CoreEvents.AirJump;
                             vel.y = -World.Tuning["AirJumpImpulse"];
                             Jumped |= 3;
                         }
@@ -81,7 +81,7 @@ namespace TeeSharp.Common.Game
                         HookDirection = targetDirection;
                         HookedPlayer = -1;
                         HookTick = 0;
-                        //TriggeredEvents |= CoreEventFlags.HookLaunch;
+                        //TriggeredEvents |= CoreEvents.HookLaunch;
                     }
                 }
                 else
@@ -118,7 +118,7 @@ namespace TeeSharp.Common.Game
             else if (HookState == HookState.RetractEnd)
             {
                 HookState = HookState.Retracted;
-                //TriggeredEvents |= CoreEventFlags.HOOK_RETRACT;
+                //TriggeredEvents |= CoreEvents.HOOK_RETRACT;
             }
             else if (HookState == HookState.Flying)
             {
@@ -157,7 +157,7 @@ namespace TeeSharp.Common.Game
                         {
                             if (HookedPlayer == -1 || MathHelper.Distance(HookPosition, characterCore.Position) < distance)
                             {
-                                TriggeredEvents |= CoreEventFlags.HookAttachPlayer;
+                                TriggeredEvents |= CoreEvents.HookAttachPlayer;
                                 HookState = HookState.Grabbed;
                                 HookedPlayer = i;
                                 distance = MathHelper.Distance(HookPosition, characterCore.Position);
@@ -171,12 +171,12 @@ namespace TeeSharp.Common.Game
                 {
                     if (goingToHitGround)
                     {
-                        TriggeredEvents |= CoreEventFlags.HookAttachGround;
+                        TriggeredEvents |= CoreEvents.HookAttachGround;
                         HookState = HookState.Grabbed;
                     }
                     else if (goingToRetract)
                     {
-                        TriggeredEvents |= CoreEventFlags.HookHitNoHook;
+                        TriggeredEvents |= CoreEvents.HookHitNoHook;
                         HookState = HookState.RetractStart;
                     }
 

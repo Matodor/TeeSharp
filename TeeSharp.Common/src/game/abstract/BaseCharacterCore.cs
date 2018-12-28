@@ -21,8 +21,7 @@ namespace TeeSharp.Common
         public virtual int Jumped { get; set; }
         public virtual int Direction { get; set; }
         public virtual int Angle { get; set; }
-        public virtual CoreEventFlags TriggeredEvents { get; set; }
-        //public virtual SnapshotPlayerInput Input { get; set; }
+        public virtual CoreEvents TriggeredEvents { get; set; }
 
         protected virtual WorldCore World { get; set; }
         protected virtual BaseMapCollision MapCollision { get; set; }

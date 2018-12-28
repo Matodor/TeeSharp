@@ -750,16 +750,16 @@ namespace TeeSharp.Server.Game.Entities
             //var events = Core.TriggeredEvents;
             //var mask = GameContext.MaskAllExceptOne(Player.ClientId);
 
-            //if (events.HasFlag(CoreEventFlags.GroundJump))
+            //if (events.HasFlag(CoreEvents.GroundJump))
             //    GameContext.CreateSound(Position, Sound.PlayerJump, mask);
 
-            //if (events.HasFlag(CoreEventFlags.HookAttachPlayer))
+            //if (events.HasFlag(CoreEvents.HookAttachPlayer))
             //    GameContext.CreateSound(Position, Sound.HookAttachPlayer, GameContext.MaskAll());
 
-            //if (events.HasFlag(CoreEventFlags.HookAttachGround))
+            //if (events.HasFlag(CoreEvents.HookAttachGround))
             //    GameContext.CreateSound(Position, Sound.HookAttachGround, mask);
 
-            //if (events.HasFlag(CoreEventFlags.HookHitNoHook))
+            //if (events.HasFlag(CoreEvents.HookHitNoHook))
             //    GameContext.CreateSound(Position, Sound.HookNoAttach, mask);
 
             if (Player.Team == Team.Spectators)

@@ -15,7 +15,7 @@ namespace TeeSharp.Common.Protocol
         [MarshalAs(UnmanagedType.I4)] public Weapon Weapon;
         [MarshalAs(UnmanagedType.I4)] public Emote Emote;
         [MarshalAs(UnmanagedType.I4)] public int AttackTick;
-        [MarshalAs(UnmanagedType.I4)] public CoreEventFlags TriggeredEvents;
+        [MarshalAs(UnmanagedType.I4)] public CoreEvents TriggeredEvents;
 
         public bool Equals(SnapshotCharacter other)
         {

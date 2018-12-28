@@ -71,7 +71,7 @@ namespace TeeSharp.Tests
                 Weapon = Weapon.Ninja,
                 Emote = Emote.Pain,
                 AttackTick = 8888,
-                TriggeredEvents = CoreEventFlags.HookAttachGround | CoreEventFlags.AirJump,
+                TriggeredEvents = CoreEvents.HookAttachGround | CoreEvents.AirJump,
             };
         }
 
@@ -104,7 +104,7 @@ namespace TeeSharp.Tests
                 Weapon = Weapon.Ninja,
                 Emote = Emote.Pain,
                 AttackTick = 8888,
-                TriggeredEvents = CoreEventFlags.HookAttachGround | CoreEventFlags.AirJump,
+                TriggeredEvents = CoreEvents.HookAttachGround | CoreEvents.AirJump,
             };
 
             var actual = item.ToArray();
