@@ -275,8 +275,8 @@ namespace TeeSharp.Server.Game
                     ActiveSpectatorSwitch = true;
                     if (SpectatorMode == SpectatorMode.FreeView)
                     {
-                        var character = GameContext.World.ClosestEntity<Character>(ViewPos, 6 * 32f, null);
-                        var flag = GameContext.World.ClosestEntity<Flag>(ViewPos, 6 * 32f, null);
+                        var character = Character.Entities.Closest(ViewPos, 6 * 32f, null);
+                        var flag = Flag.Entities.Closest(ViewPos, 6 * 32f, null);
 
                         if (character != null || flag != null)
                         {
@@ -370,7 +370,7 @@ namespace TeeSharp.Server.Game
                 {
                     if (mode == SpectatorMode.FlagRed || mode == SpectatorMode.FlagBlue)
                     {
-                        foreach (var flag in GameContext.World.GetEntities<Flag>())
+                        foreach (var flag in Flag.Entities)
                         {
                             if (flag.Team == Team.Red && mode == SpectatorMode.FlagRed ||
                                 flag.Team == Team.Blue && mode == SpectatorMode.FlagBlue)

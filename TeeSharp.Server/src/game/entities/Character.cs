@@ -68,8 +68,12 @@ namespace TeeSharp.Server.Game.Entities
         protected virtual int EmoteStopTick { get; set; }
         protected virtual Emote Emote { get; set; }
 
-        //protected virtual int NumInputs { get; set; }
-        //protected virtual int LastAction { get; set; }
+        protected virtual SnapshotPlayerInput Input { get; set; }
+        protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
+        protected virtual SnapshotPlayerInput LatestInput { get; set; }
+        protected virtual int LastAction { get; set; }
+        protected virtual int NumInputs { get; set; }
+
         //protected virtual int AttackTick { get; set; }
         //protected virtual int ReloadTimer { get; set; }
         //protected virtual int LastNoAmmoSound { get; set; }
@@ -79,9 +83,6 @@ namespace TeeSharp.Server.Game.Entities
         //protected virtual Weapon LastWeapon { get; set; }
         //protected virtual Weapon QueuedWeapon { get; set; }
 
-        //protected virtual SnapshotPlayerInput Input { get; set; }
-        //protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
-        //protected virtual SnapshotPlayerInput LatestInput { get; set; }
 
         //protected virtual NinjaStat NinjaStat { get; set; }
         //protected virtual WeaponStat[] Weapons { get; set; }
@@ -114,6 +115,11 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreatePlayerSpawn(spawnPos);
             GameWorld.WorldCore.CharacterCores[player.ClientId] = Core;
 
+            Input = new SnapshotPlayerInput();
+            LatestPrevInput = new SnapshotPlayerInput();
+            LatestInput = new SnapshotPlayerInput();
+            LastAction = -1;
+
             //HitObjects = new List<Entity>();
             //Weapons = new WeaponStat[(int) Weapon.NumWeapons];
             //NinjaStat = new NinjaStat();
@@ -121,10 +127,6 @@ namespace TeeSharp.Server.Game.Entities
             //ActiveWeapon = Weapon.Gun;
             //LastWeapon = Weapon.Hammer;
             //QueuedWeapon = (Weapon) (-1);
-            //LastAction = -1;
-            //Input = new SnapshotPlayerInput();
-            //LatestPrevInput = new SnapshotPlayerInput();
-            //LatestInput = new SnapshotPlayerInput();
         }
 
         protected override void OnDestroy()
@@ -207,31 +209,31 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual  void OnPredictedInput(SnapshotPlayerInput newInput)
         {
-            //if (!Input.Compare(newInput))
-            //    LastAction = Server.Tick;
+            if (!Input.Equals(newInput))
+                LastAction = Server.Tick;
 
-            //Input.FillFrom(newInput);
-            //NumInputs++;
+            Input.Fill(newInput);
+            NumInputs++;
 
-            //if (Input.TargetX == 0 && Input.TargetY == 0)
-            //    Input.TargetY = -1;
+            if (Input.TargetX == 0 && Input.TargetY == 0)
+                Input.TargetY = -1;
         }
 
         public virtual void OnDirectInput(SnapshotPlayerInput newInput)
         {
-            //LatestPrevInput.FillFrom(LatestInput);
-            //LatestInput.FillFrom(newInput);
+            LatestPrevInput.Fill(LatestInput);
+            LatestInput.Fill(newInput);
 
-            //if (LatestInput.TargetX == 0 && LatestInput.TargetY == 0)
-            //    LatestInput.TargetY = -1;
+            if (LatestInput.TargetX == 0 && LatestInput.TargetY == 0)
+                LatestInput.TargetY = -1;
 
-            //if (NumInputs > 2 && Player.Team != Team.Spectators)
-            //{
-            //    HandleWeaponSwitch();
-            //    FireWeapon();
-            //}
+            if (NumInputs > 2 && Player.Team != Team.Spectators)
+            {
+                HandleWeaponSwitch();
+                FireWeapon();
+            }
 
-            //LatestPrevInput.FillFrom(LatestInput);
+            LatestPrevInput.Fill(LatestInput);
         }
 
         protected virtual void DoWeaponSwitch()
@@ -704,47 +706,46 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual void ResetInput()
         {
-            //Input.Direction = 0;
-            //Input.Hook = false;
+            Input.Direction = 0;
+            Input.IsHook = false;
 
-            //if ((Input.Fire & 1) != 0)
-            //    Input.Fire++;
+            if ((Input.Fire & 1) != 0)
+                Input.Fire++;
 
-            //Input.Fire &= SnapshotPlayerInput.INPUT_STATE_MASK;
-            //Input.Jump = false;
+            Input.Fire &= SnapshotPlayerInput.StateMask;
+            Input.IsJump = false;
             
-            //LatestInput.FillFrom(Input);
-            //LatestPrevInput.FillFrom(Input);
+            LatestInput.Fill(Input);
+            LatestPrevInput.Fill(Input);
         }
 
         public override void Tick()
         {
-            //Core.Input.FillFrom(Input);
-            //Core.Tick(true);
+            Core.Tick(Input);
 
-            //var rDiv3 = ProximityRadius / 3.0f;
+            var rDiv3 = ProximityRadius / 3.0f;
 
-            //if (GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.DEATH) ||
-            //    GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.DEATH) ||
-            //    GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.DEATH) ||
-            //    GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.DEATH) ||
-            //    GameLayerClipped(Position))
-            //{
-            //    Die(Player.ClientId, Weapon.World);
-            //}
+            if (GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.Death) ||
+                GameContext.MapCollision.GetTileFlags(Position.x + rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.Death) ||
+                GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y - rDiv3).HasFlag(CollisionFlags.Death) ||
+                GameContext.MapCollision.GetTileFlags(Position.x - rDiv3, Position.y + rDiv3).HasFlag(CollisionFlags.Death) ||
+                GameLayerClipped(Position))
+            {
+                Die(Player.ClientId, BasePlayer.WeaponWorld);
+            }
 
-            //HandleWeapons();
+            HandleWeapons();
         }
 
         public override void LateTick()
         {
-            //ReckoningCore.Tick(false);
-            //ReckoningCore.Move();
-            //ReckoningCore.Quantize();
+            ReckoningCore.Tick(null);
+            ReckoningCore.Move();
+            ReckoningCore.Quantize();
 
-            //Core.Move();
-            //Core.Quantize();
-            //Position = Core.Position;
+            Core.Move();
+            Core.Quantize();
+            Position = Core.Position;
 
             //var events = Core.TriggeredEvents;
             //var mask = GameContext.MaskAllExceptOne(Player.ClientId);
@@ -761,33 +762,33 @@ namespace TeeSharp.Server.Game.Entities
             //if (events.HasFlag(CoreEventFlags.HookHitNoHook))
             //    GameContext.CreateSound(Position, Sound.HookNoAttach, mask);
 
-            //if (Player.Team == Team.Spectators)
-            //    Position = new Vector2(Input.TargetX, Input.TargetY);
+            if (Player.Team == Team.Spectators)
+                Position = new Vector2(Input.TargetX, Input.TargetY);
 
-            //{
-            //    var predicted = new SnapshotCharacter();
-            //    var current = new SnapshotCharacter();
+            {
+                var predicted = new SnapshotCharacter();
+                var current = new SnapshotCharacter();
 
-            //    ReckoningCore.Write(predicted);
-            //    Core.Write(current);
+                ReckoningCore.Write(predicted);
+                Core.Write(current);
 
-            //    if (ReckoningTick + Server.TickSpeed * 3 < Server.Tick || !predicted.Compare(current))
-            //    {
-            //        ReckoningTick = Server.Tick;
-            //        Core.FillTo(SendCore);
-            //        Core.FillTo(ReckoningCore);
-            //    }
-            //}
+                if (ReckoningTick + Server.TickSpeed * 3 < Server.Tick || !current.Equals(predicted))
+                {
+                    ReckoningTick = Server.Tick;
+                    SendCore.Fill(Core);
+                    ReckoningCore.Fill(Core);
+                }
+            }
         }
 
         public override void TickPaused()
         {
             //AttackTick++;
-            //ReckoningTick++;
+            ReckoningTick++;
             //DamageTakenTick++;
 
-            //if (LastAction != -1)
-            //    LastAction++;
+            if (LastAction != -1)
+                LastAction++;
 
             //if (EmoteStopTick > -1)
             //    EmoteStopTick++;
@@ -846,7 +847,7 @@ namespace TeeSharp.Server.Game.Entities
 
             //character.Weapon = ActiveWeapon;
             //character.AttackTick = AttackTick;
-            //character.Direction = Input.Direction;
+            character.Direction = Input.Direction;
 
             //if (snappingClient == Player.ClientId || snappingClient == -1 ||
             //    !Config["SvStrictSpectateMode"] && Player.ClientId == GameContext.Players[snappingClient].SpectatorId)

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
@@ -21,6 +23,7 @@ namespace TeeSharp.Server.Game
             Server = Kernel.Get<BaseServer>();
             Console = Kernel.Get<BaseGameConsole>();
             Config = Kernel.Get<BaseConfig>();
+            World = Kernel.Get<BaseGameWorld>();
 
             GameState = GameState.GameRunning;
             GameStateTimer = TimerInfinite;
@@ -31,6 +34,12 @@ namespace TeeSharp.Server.Game
             SuddenDeath = false;
 
             TeamScore = new int[2];
+            SpawnPos = new IList<Vector2>[3]
+            {
+                new List<Vector2>(), // dm
+                new List<Vector2>(), // red
+                new List<Vector2>(), // blue
+            };
 
             if (Config["SvWarmup"])
                 SetGameState(GameState.WarmupUser, Config["SvWarmup"]);
@@ -62,6 +71,11 @@ namespace TeeSharp.Server.Game
         public override bool IsTeamChangeAllowed(BasePlayer player)
         {
             return true;
+        }
+
+        public override bool IsTeamplay()
+        {
+            return GameFlags.HasFlag(GameFlags.Teams);
         }
 
         public override void TeamChange(BasePlayer player, Team team)
@@ -129,10 +143,98 @@ namespace TeeSharp.Server.Game
             return 0;
         }
 
-        public override bool CanSpawn(Team team, int clientId, out Vector2 pos)
+        public override bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)
         {
-            pos = Vector2.zero;
-            return true;
+            if (team == Team.Spectators || World.Paused)
+            {
+                spawnPos = Vector2.zero;
+                return false;
+            }
+
+            var eval = new SpawnEval();
+            if (IsTeamplay())
+            {
+                eval.FriendlyTeam = team;
+
+                EvaluateSpawnType(eval, SpawnPos[1 + ((int)team & 1)]);
+                if (!eval.Got)
+                {
+                    EvaluateSpawnType(eval, SpawnPos[0]);
+                    if (!eval.Got)
+                        EvaluateSpawnType(eval, SpawnPos[1 + (((int)team + 1) & 1)]);
+                }
+            }
+            else
+            {
+                EvaluateSpawnType(eval, SpawnPos[0]);
+                EvaluateSpawnType(eval, SpawnPos[1]);
+                EvaluateSpawnType(eval, SpawnPos[2]);
+            }
+
+            spawnPos = eval.Position;
+            return eval.Got;
+        }
+
+        protected virtual float EvaluateSpawnPos(SpawnEval eval, Vector2 pos)
+        {
+            var score = 0f;
+
+            foreach (var character in Character.Entities)
+            {
+                var scoremod = 1f;
+                if (eval.FriendlyTeam != Team.Spectators && character.Player.Team == eval.FriendlyTeam)
+                    scoremod = 0.5f;
+
+                var d = MathHelper.Distance(pos, character.Position);
+                score += scoremod * (System.Math.Abs(d) < 0.00001 ? 1000000000.0f : 1.0f / d);
+            }
+
+            return score;
+        }
+
+        protected virtual void EvaluateSpawnType(SpawnEval eval, IList<Vector2> spawnPos)
+        {
+            for (var i = 0; i < spawnPos.Count; i++)
+            {
+                var positions = new[]
+                {
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(-32.0f, 0.0f),
+                    new Vector2(0.0f, -32.0f),
+                    new Vector2(32.0f, 0.0f),
+                    new Vector2(0.0f, 32.0f)
+                };  // start, left, up, right, down
+
+                var result = -1;
+                for (var index = 0; index < 5 && result == -1; ++index)
+                {
+                    result = index;
+
+                    foreach (var character in Character.Entities.Find(spawnPos[i], 64f))
+                    {
+                        if (GameContext.MapCollision.IsTileSolid(spawnPos[i] + positions[index]) ||
+                            MathHelper.Distance(character.Position, spawnPos[i] + positions[index]) <=
+                            character.ProximityRadius)
+                        {
+                            result = -1;
+                            break;
+                        }
+                    }
+
+                    if (result == -1)
+                        continue;
+
+                    var p = spawnPos[i] + positions[index];
+                    var s = EvaluateSpawnPos(eval, p);
+
+                    if (!eval.Got || eval.Score > s)
+                    {
+                        eval.Got = true;
+                        eval.Score = s;
+                        eval.Position = p;
+                    }
+                }
+            }
         }
 
         public override void OnReset()
@@ -174,10 +276,13 @@ namespace TeeSharp.Server.Game
             switch (entity)
             {
                 case MapEntities.Spawn:
+                    SpawnPos[0].Add(pos);
                     break;
                 case MapEntities.SpawnRed:
+                    SpawnPos[1].Add(pos);
                     break;
                 case MapEntities.SpawnBlue:
+                    SpawnPos[2].Add(pos);
                     break;
                 case MapEntities.Armor:
                     pickup = Pickup.Armor;

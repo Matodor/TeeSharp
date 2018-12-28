@@ -8,16 +8,15 @@ namespace TeeSharp.Common.Game
         public CharacterCore()
         {
             QuantizeCore = new SnapshotCharacter();
-            Input = new SnapshotPlayerInput();
         }
 
-        public virtual void Init(WorldCore worldCore, BaseMapCollision mapCollision)
+        public override void Init(WorldCore worldCore, BaseMapCollision mapCollision)
         {
             World = worldCore;
             MapCollision = mapCollision;
         }
 
-        public virtual void Reset()
+        public override void Reset()
         {
             Position = Vector2.zero;
             Velocity = Vector2.zero;
@@ -34,7 +33,7 @@ namespace TeeSharp.Common.Game
             // TODO reset input
         }
 
-        public virtual void Tick(bool useInput)
+        public override void Tick(SnapshotPlayerInput input)
         {
             TriggeredEvents = CoreEventFlags.None;
 
@@ -44,16 +43,15 @@ namespace TeeSharp.Common.Game
             else if (MapCollision.IsTileSolid(Position.x - TeeSize / 2, Position.y + TeeSize / 2 + 5))
                 isGrounded = true;
 
-            var targetDirection = new Vector2(Input.TargetX, Input.TargetY).Normalized;
             var vel = Velocity;
             vel.y += World.Tuning["Gravity"];
 
-            if (useInput)
+            if (input != null)
             {
-                Direction = Input.Direction;
-                Angle = (int) (MathHelper.Angle(new Vector2(Input.TargetX, Input.TargetY)) * 256f);
+                Direction = input.Direction;
+                Angle = (int) (MathHelper.Angle(new Vector2(input.TargetX, input.TargetY)) * 256f);
 
-                if (Input.IsJump)
+                if (input.IsJump)
                 {
                     if ((Jumped & 1) == 0)
                     {
@@ -73,10 +71,11 @@ namespace TeeSharp.Common.Game
                 }
                 else Jumped &= ~1;
 
-                if (Input.IsHook)
+                if (input.IsHook)
                 {
                     if (HookState == HookState.Idle)
                     {
+                        var targetDirection = new Vector2(input.TargetX, input.TargetY).Normalized;
                         HookState = HookState.Flying;
                         HookPosition = Position + targetDirection * TeeSize * 1.5f;
                         HookDirection = targetDirection;
@@ -283,23 +282,22 @@ namespace TeeSharp.Common.Game
             Velocity = vel;
         }
 
-        //public virtual void FillTo(CharacterCore output)
-        //{
-        //    output.Position = Position;
-        //    output.Velocity = Velocity;
-        //    output.HookPosition = HookPosition;
-        //    output.HookDirection = HookDirection;
-        //    output.HookTick = HookTick;
-        //    output.HookState = HookState;
-        //    output.Jumped = Jumped;
-        //    output.Direction = Direction;
-        //    output.Angle = Angle;
-        //    output.HookedPlayer = HookedPlayer;
-        //    output.TriggeredEvents = TriggeredEvents;
-        //    output.Input.FillFrom(Input);
-        //}
+        public virtual void Fill(CharacterCore from)
+        {
+            Position = from.Position;
+            Velocity = from.Velocity;
+            HookPosition = from.HookPosition;
+            HookDirection = from.HookDirection;
+            HookTick = from.HookTick;
+            HookState = from.HookState;
+            Jumped = from.Jumped;
+            Direction = from.Direction;
+            Angle = from.Angle;
+            HookedPlayer = from.HookedPlayer;
+            TriggeredEvents = from.TriggeredEvents;
+        }
 
-        public virtual void Move()
+        public override void Move()
         {
             var vel = Velocity;
             var rampValue = MathHelper.VelocityRamp(vel.Length * 50,
@@ -351,13 +349,13 @@ namespace TeeSharp.Common.Game
             Velocity = vel;
         }
 
-        public virtual void Quantize()
+        public override void Quantize()
         {
             Write(QuantizeCore);
             Read(QuantizeCore);
         }
 
-        public virtual void Write(SnapshotCharacter core)
+        public override void Write(SnapshotCharacterCore core)
         {
             core.X = MathHelper.RoundToInt(Position.x);
             core.Y = MathHelper.RoundToInt(Position.y);
@@ -380,7 +378,7 @@ namespace TeeSharp.Common.Game
             core.Angle = Angle;
         }
 
-        public virtual void Read(SnapshotCharacter core)
+        public override void Read(SnapshotCharacter core)
         {
             Position = new Vector2(core.X, core.Y);
             Velocity = new Vector2(core.VelX / 256.0f, core.VelY / 256.0f);

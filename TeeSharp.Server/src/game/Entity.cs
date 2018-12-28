@@ -8,6 +8,9 @@ namespace TeeSharp.Server.Game
 {
     public abstract class Entity<T> : Entity where T : Entity<T>
     {
+        /// <summary>
+        /// Entities of type <see cref="T"/>
+        /// </summary>
         public static readonly BidirectionalList<T> Entities;
 
         private BidirectionalList<T>.Node _node;
@@ -36,6 +39,9 @@ namespace TeeSharp.Server.Game
 
     public abstract class Entity : BaseInterface
     {
+        /// <summary>
+        /// All entities on map
+        /// </summary>
         public static readonly BidirectionalList<Entity> All;
 
         public abstract float ProximityRadius { get; protected set; }

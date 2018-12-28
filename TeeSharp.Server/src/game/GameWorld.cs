@@ -20,49 +20,13 @@ namespace TeeSharp.Server.Game
             WorldCore = new WorldCore(Server.MaxClients, Tuning);
         }
 
-        public override T FindEntity<T>(Predicate<T> predicate)
-        {
-            foreach (var entity in Entity<T>.Entities)
-            {
-                if (predicate(entity))
-                    return entity;
-            }
-            return null; 
-        }
-
-        public override IEnumerable<T> GetEntities<T>()
-        {
-            foreach (var entity in Entity<T>.Entities)
-            {
-                yield return entity;
-            }
-        }
-
-        public override IEnumerable<T> FindEntities<T>(Vector2 pos, float radius)
-        {
-            foreach (var entity in Entity<T>.Entities)
-            {
-                if (MathHelper.Distance(entity.Position, pos) < radius + entity.ProximityRadius)
-                    yield return entity;
-            }
-        }
-
-        public override IEnumerable<T> FindEntities<T>(Predicate<T> predicate)
-        {
-            foreach (var entity in Entity<T>.Entities)
-            {
-                if (predicate(entity))
-                    yield return entity;
-            }
-        }
-
         public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
             float radius, ref Vector2 newPos, Character notThis)
         {
             var closestLength = MathHelper.Distance(pos1, pos2) * 100f;
             Character closest = null;
 
-            foreach (var character in GetEntities<Character>())
+            foreach (var character in Character.Entities)
             {
                 if (character == notThis)
                     continue;
@@ -77,30 +41,6 @@ namespace TeeSharp.Server.Game
                         newPos = intersectPos;
                         closestLength = length;
                         closest = character;
-                    }
-                }
-            }
-
-            return closest;
-        }
-
-        public override T ClosestEntity<T>(Vector2 pos, float radius, T notThis)
-        {
-            var closestRange = radius * 2f;
-            T closest = null;
-
-            foreach (var entity in GetEntities<T>())
-            {
-                if (entity == notThis)
-                    continue;
-
-                var len = MathHelper.Distance(pos, entity.Position);
-                if (len < entity.ProximityRadius + radius)
-                {
-                    if (len < closestRange)
-                    {
-                        closestRange = len;
-                        closest = entity;
                     }
                 }
             }
