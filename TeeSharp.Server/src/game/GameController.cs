@@ -328,6 +328,11 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        protected override void CheckReadyStates()
+        {
+            // TODO
+        }
+
         protected override void UpdateGameInfo(int clientId)
         {
             var msg = new GameMsg_SvGameInfo()

@@ -799,17 +799,17 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual bool IncreaseHealth(int amount)
         {
-            //if (Health >= 10)
-            //    return false;
-            //Health = System.Math.Clamp(Health + amount, 0, 10);
+            if (Health >= 10)
+                return false;
+            Health = System.Math.Clamp(Health + amount, 0, 10);
             return true;
         }
 
         public virtual bool IncreaseArmor(int amount)
         {
-            //if (Armor >= 10)
-            //    return false;
-            //Armor = System.Math.Clamp(Armor + amount, 0, 10);
+            if (Armor >= 10)
+                return false;
+            Armor = System.Math.Clamp(Armor + amount, 0, 10);
             return true;
         }
 
@@ -849,15 +849,15 @@ namespace TeeSharp.Server.Game.Entities
             //character.AttackTick = AttackTick;
             character.Direction = Input.Direction;
 
-            //if (snappingClient == Player.ClientId || snappingClient == -1 ||
-            //    !Config["SvStrictSpectateMode"] && Player.ClientId == GameContext.Players[snappingClient].SpectatorId)
-            //{
-            //    character.Health = Health;
-            //    character.Armor = Armor;
+            if (snappingClient == Player.ClientId || 
+                snappingClient == -1 || !Config["SvStrictSpectateMode"] && 
+                Player.ClientId == GameContext.Players[snappingClient].SpectatorId)
+            {
+                character.Health = Health;
+                character.Armor = Armor;
 
-            //    if (Weapons[(int) ActiveWeapon].Ammo > 0)
-            //        character.AmmoCount = Weapons[(int) ActiveWeapon].Ammo;
-            //}
+                // TODO
+            }
 
             //if (character.Emote == Emote.Normal)
             //{

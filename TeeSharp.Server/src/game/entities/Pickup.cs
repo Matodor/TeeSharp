@@ -6,137 +6,129 @@ namespace TeeSharp.Server.Game.Entities
 {
     public class Pickup : Entity<Pickup>
     {
-        //        public override float ProximityRadius { get; protected set; } = 14f;
-
-        //        private int _spawnTick;
-        //        private readonly Powerup _powerup;
-        //        private readonly Weapon _weapon;
-
-        //        public Pickup(Powerup powerup, Weapon weapon) : base(1)
-        //        {
-        //            _powerup = powerup;
-        //            _weapon = weapon;
-
-        //            Reset();
-        //        }
-
-        //        public override void Reset()
-        //        {
-        //            if (ServerData.Data.Pickups[(int) _powerup].SpawnDelay > 0)
-        //                _spawnTick = Server.Tick + Server.TickSpeed * ServerData.Data.Pickups[(int) _powerup].SpawnDelay;
-        //            else
-        //                _spawnTick = -1;
-        //        }
-
-        //        public override void Tick()
-        //        {
-        //            if (_spawnTick > 0)
-        //            {
-        //                if (Server.Tick > _spawnTick)
-        //                {
-        //                    _spawnTick = -1;
-
-        //                    if (_powerup == Powerup.Weapon)
-        //                        GameContext.CreateSound(Position, Sound.WeaponSpawn);
-        //                }
-        //                else return;
-        //            }
-
-        //            var character = GameWorld.ClosestEntity(Position, 20f, null);
-        //            if (character == null || !character.IsAlive)
-        //                return;
-
-        //            var respawnTime = -1;
-        //            switch (_powerup)
-        //            {
-        //                case Powerup.Health:
-        //                    if (character.IncreaseHealth(1))
-        //                    {
-        //                        GameContext.CreateSound(Position, Sound.PickupHealth);
-        //                        respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
-        //                    }
-        //                    break;
-
-        //                case Powerup.Armor:
-        //                    if (character.IncreaseArmor(1))
-        //                    {
-        //                        GameContext.CreateSound(Position, Sound.PickupArmor);
-        //                        respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
-        //                    }
-        //                    break;
-
-        //                case Powerup.Weapon:
-        //                    if (_weapon >= 0 && _weapon < Weapon.NumWeapons)
-        //                    {
-        //                        if (character.GiveWeapon(_weapon, 10))
-        //                        {
-        //                            respawnTime = ServerData.Data.Pickups[(int) _powerup].RespawnTime;
-
-        //                            if (_weapon == Weapon.Grenade)
-        //                                GameContext.CreateSound(Position, Sound.PickupGrenade);
-        //                            else if (_weapon == Weapon.Shotgun)
-        //                                GameContext.CreateSound(Position, Sound.PickupShotgun);
-        //                            else if (_weapon == Weapon.Laser)
-        //                                GameContext.CreateSound(Position, Sound.PickupShotgun);
-
-        //                            GameContext.SendWeaponPickup(character.Player.ClientId, _weapon);
-        //                        }
-        //                    }
-        //                    break;
-
-        //                case Powerup.Ninja:
-        //                    character.GiveNinja();
-        //                    respawnTime = ServerData.Data.Pickups[(int)_powerup].RespawnTime;
-
-        //                    foreach (var chr in GameWorld.GetEntities<Character>())
-        //                    {
-        //                        if (chr != character)
-        //                            chr.SetEmote(Emote.Surprise, Server.Tick + Server.TickSpeed);
-        //                    }
-
-        //                    character.SetEmote(Emote.Angry, Server.Tick + 1200 * Server.TickSpeed / 1000);
-        //                    break;
-        //            }
-
-        //            if (respawnTime >= 0)
-        //            {
-        //                GameContext.Console.Print(OutputLevel.Debug, "game", $"pickup player='{character.Player.ClientId}:{character.Player.Name}' item={_powerup}:{_weapon}");
-        //                _spawnTick = Server.Tick + Server.TickSpeed * respawnTime;
-        //            }
-        //        }
-
-        //        public override void TickPaused()
-        //        {
-        //            if (_spawnTick != -1)
-        //                _spawnTick++;
-        //        }
-
-        //        public override void OnSnapshot(int snappingClient)
-        //        {
-        //            if (_spawnTick != -1 || NetworkClipped(snappingClient))
-        //                return;
-
-        //            var pickup = Server.SnapshotItem<SnapshotPickup>(IDs[0]);
-        //            if (pickup == null)
-        //                return;
-
-        //            pickup.Position = Position;
-        //            pickup.Powerup = _powerup;
-        //            pickup.Weapon = _weapon;
-        //        }
-
-        public override float ProximityRadius { get; protected set; } = 28f;
+        public override float ProximityRadius { get; protected set; } = 14f;
 
         public readonly Common.Enums.Pickup Type;
 
+        protected virtual int SpawnTick { get; set; }
+
         public Pickup(Common.Enums.Pickup type) : base(1)
         {
+            SpawnTick = -1;
             Type = type;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            if (ServerData.Pickups[Type].SpawnDelay > 0)
+                SpawnTick = Server.Tick + Server.TickSpeed * ServerData.Pickups[Type].SpawnDelay;
+            else
+                SpawnTick = -1;
+        }
+
+        public override void Tick()
+        {
+            base.Tick();
+
+            if (SpawnTick > 0)
+            {
+                if (Server.Tick >= SpawnTick)
+                {
+                    SpawnTick = -1;
+
+                    if (Type == Common.Enums.Pickup.Grenade ||
+                        Type == Common.Enums.Pickup.Shotgun ||
+                        Type == Common.Enums.Pickup.Laser)
+                    {
+                        GameContext.CreateSound(Position, Sound.WeaponSpawn);
+                    }
+                }
+                else return;
+            }
+
+            var character = Character.Entities.Closest(Position, 20f, null);
+            if (character == null || !character.IsAlive)
+                return;
+
+            void Picked(Sound sound)
+            {
+                GameContext.CreateSound(Position, sound);
+                Console.Print(OutputLevel.Debug, "game", $"pickup player='{character.Player.ClientId}:{Server.ClientName(character.Player.ClientId)}' item={Type}");
+                var respawnTime = ServerData.Pickups[Type].RespawnTime;
+                if (respawnTime >= 0)
+                    SpawnTick = Server.Tick + Server.TickSpeed * respawnTime;
+            }
+
+            switch (Type)
+            {
+                case Common.Enums.Pickup.Health:
+                    if (character.IncreaseHealth(1))
+                    {
+                        Picked(Sound.PickupHealth);
+                    }
+                    break;
+
+                case Common.Enums.Pickup.Armor:
+                    if (character.IncreaseArmor(1))
+                    {
+                        Picked(Sound.PickupArmor);
+                    }
+                    break;
+
+                case Common.Enums.Pickup.Grenade:
+                    if (character.GiveWeapon(Weapon.Grenade, ServerData.Weapons[Weapon.Grenade].MaxAmmo))
+                    {
+                        Picked(Sound.PickupGrenade);
+                        GameContext.SendWeaponPickup(character.Player.ClientId, Weapon.Grenade);
+                    }
+                    break;
+
+                case Common.Enums.Pickup.Shotgun:
+                    if (character.GiveWeapon(Weapon.Shotgun, ServerData.Weapons[Weapon.Shotgun].MaxAmmo))
+                    {
+                        Picked(Sound.PickupShotgun);
+                        GameContext.SendWeaponPickup(character.Player.ClientId, Weapon.Shotgun);
+                    }
+                    break;
+
+                case Common.Enums.Pickup.Laser:
+                    if (character.GiveWeapon(Weapon.Laser, ServerData.Weapons[Weapon.Laser].MaxAmmo))
+                    {
+                        Picked(Sound.PickupShotgun);
+                        GameContext.SendWeaponPickup(character.Player.ClientId, Weapon.Laser);
+                    }
+                    break;
+
+                case Common.Enums.Pickup.Ninja:
+                    Picked((Sound) (-1));
+                    character.GiveNinja();
+                    character.SetEmote(Emote.Angry,
+                        Server.Tick + Server.TickSpeed * ServerData.Weapons.Ninja.Duration / 1000);
+
+                    foreach (var entity in Character.Entities)
+                    {
+                        if (entity == character)
+                            continue;
+
+                        entity.SetEmote(Emote.Surprise, Server.Tick + Server.TickSpeed);
+                    }
+                    break;
+            }
+        }
+
+        public override void TickPaused()
+        {
+            base.TickPaused();
+
+            if (SpawnTick != -1)
+                SpawnTick++;
         }
 
         public override void OnSnapshot(int snappingClient)
         {
-            if (NetworkClipped(snappingClient))
+            if (SpawnTick != -1 || NetworkClipped(snappingClient))
                 return;
 
             var pickup = Server.SnapshotItem<SnapshotPickup>(IDs[0]);
