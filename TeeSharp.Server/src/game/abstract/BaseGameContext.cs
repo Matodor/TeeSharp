@@ -45,6 +45,8 @@ namespace TeeSharp.Server.Game
         public abstract void SendBroadcast(int clientId, string msg);
         public abstract void SendWeaponPickup(int clientId, Weapon weapon);
         public abstract void SendEmoticon(int clientId, Emoticon emote);
+        public abstract void SendGameMessage(int clientId, GameplayMessage message, 
+            int? param1 = null, int? param2 = null, int? param3 = null);
 
         public abstract void OnInit();
         public abstract void OnTick();
@@ -64,6 +66,8 @@ namespace TeeSharp.Server.Game
         protected abstract void OnMsgClientSetTeam(BasePlayer player, GameMsg_ClSetTeam message);
         protected abstract void OnMsgClientEmoticon(BasePlayer player, GameMsg_ClEmoticon message);
         protected abstract void OnMsgClientKill(BasePlayer player, GameMsg_ClKill message);
+        protected abstract void OnMsgClientReadyChange(BasePlayer player, GameMsg_ClReadyChange message);
+        protected abstract void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message);
 
         protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
 

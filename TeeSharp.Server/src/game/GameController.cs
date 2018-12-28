@@ -97,11 +97,7 @@ namespace TeeSharp.Server.Game
 
             OnPlayerTeamChange(player, prevTeam, team);
         }
-
-        protected override void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team)
-        {
-        }
-
+        
         public override bool CanSelfKill(BasePlayer player)
         {
             return true;
@@ -262,6 +258,23 @@ namespace TeeSharp.Server.Game
             
         }
 
+        protected override void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team)
+        {
+        }
+
+        public override void OnPlayerReadyChange(BasePlayer player)
+        {
+            if (Config["SvPlayerReadyMode"] && player.Team != Team.Spectators && !player.DeadSpectatorMode)
+            {
+                player.IsReadyToPlay ^= true;
+
+                if (GameState == GameState.GameRunning && !player.IsReadyToPlay)
+                    SetGameState(GameState.GamePaused, TimerInfinite);
+
+                CheckReadyStates();
+            }   
+        }
+        
         public override void OnPlayerEnter(BasePlayer player)
         {
             player.Respawn();

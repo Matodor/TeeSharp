@@ -336,6 +336,7 @@ namespace TeeSharp.Server.Game
                         OnMsgClientSetTeam(player, (GameMsg_ClSetTeam) message);
                         break;
                     case GameMessage.ClientSetSpectatorMode:
+                        OnMsgClientSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) message);
                         break;
                     case GameMessage.ClientStartInfo:
                         break;
@@ -343,6 +344,7 @@ namespace TeeSharp.Server.Game
                         OnMsgClientKill(player, (GameMsg_ClKill) message);
                         break;
                     case GameMessage.ClientReadyChange:
+                        OnMsgClientReadyChange(player, (GameMsg_ClReadyChange) message);
                         break;
                     case GameMessage.ClientEmoticon:
                         OnMsgClientEmoticon(player, (GameMsg_ClEmoticon) message);
@@ -357,6 +359,25 @@ namespace TeeSharp.Server.Game
             {
                 OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
             }
+        }
+
+        protected override void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message)
+        {
+            if (Config["SvSpamprotection"] && player.LastSetSpectatorMode + Server.TickSpeed > Server.Tick)
+                return;
+
+            player.LastSetSpectatorMode = Server.Tick;
+            if (!player.SetSpectatorID(message.SpectatorMode, message.SpectatorId))
+                SendGameMessage(player.ClientId, GameplayMessage.SpectatorInvalidId);
+        }
+
+        protected override void OnMsgClientReadyChange(BasePlayer player, GameMsg_ClReadyChange message)
+        {
+            if (player.LastReadyChangeTick + Server.TickSpeed > Server.Tick)
+                return;
+
+            player.LastReadyChangeTick = Server.Tick;
+            GameController.OnPlayerReadyChange(player);
         }
 
         protected override void OnMsgClientKill(BasePlayer player, GameMsg_ClKill message)
@@ -621,6 +642,20 @@ namespace TeeSharp.Server.Game
                 TeamBalance = Config["SvTeambalanceTime"],
                 PlayerSlots = Config["SvPlayerSlots"],
             };
+            Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
+        }
+
+        public override void SendGameMessage(int clientId, GameplayMessage message, 
+            int? param1 = null, int? param2 = null, int? param3 = null)
+        {
+            var msg = new GameMsg_SvGameMsg()
+            {
+                Message = message,
+                Param1 = param1,
+                Param2 = param2,
+                Param3 = param3
+            };
+
             Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
         }
 

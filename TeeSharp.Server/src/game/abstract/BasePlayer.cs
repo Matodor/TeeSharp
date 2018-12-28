@@ -39,6 +39,8 @@ namespace TeeSharp.Server.Game
         public virtual int LastActionTick { get; set; }
         public virtual int LastSetTeamTick { get; set; }
         public virtual int LastKillTick { get; set; }
+        public virtual int LastReadyChangeTick { get; set; }
+        public virtual int LastSetSpectatorMode { get; set; }
         public virtual bool RespawnDisabled { get; set; }
         public virtual bool IsReadyToPlay { get; set; }
         public virtual int RespawnTick { get; set; }

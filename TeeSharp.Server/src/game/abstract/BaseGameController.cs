@@ -173,9 +173,11 @@ namespace TeeSharp.Server.Game
         public abstract void OnPlayerEnter(BasePlayer player);
         public abstract void OnPlayerDisconnected(BasePlayer player, string reason);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
+        public abstract void OnPlayerReadyChange(BasePlayer player);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
         public abstract void OnEntity(Tile tile, Vector2 pos);
 
+        protected abstract void CheckReadyStates();
         protected abstract void UpdateGameInfo(int clientId);
         protected abstract void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team);
         protected abstract void SetGameState(GameState state, int timer);
