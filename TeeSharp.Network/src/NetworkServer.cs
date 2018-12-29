@@ -108,35 +108,40 @@ namespace TeeSharp.Network
 
                 for (var i = 0; i < Connections.Count; i++)
                 {
-                    if (
-                        Connections[i].State != ConnectionState.Offline &&
+                    if (Connections[i].State != ConnectionState.Offline &&
                         Connections[i].EndPoint.Compare(endPoint, comparePorts: false))
                     {
                         sameIps++;
 
                         if (Connections[i].EndPoint.Port == endPoint.Port)
                         {
-                            foundSlot = i;
-
                             if (Connections[i].Feed(ChunkReceiver.ChunkConstruct, endPoint))
                             {
-                                if (!ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Connless))
-                                    ChunkReceiver.Start(endPoint, Connections[i], i);
-                                else
+                                if (ChunkReceiver.ChunkConstruct.DataSize > 0)
                                 {
-                                    packet = new Chunk()
+                                    if (!ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Connless))
                                     {
-                                        Flags = SendFlags.Connless,
-                                        EndPoint = endPoint,
-                                        ClientId = i,
-                                        DataSize = ChunkReceiver.ChunkConstruct.DataSize,
-                                        Data = ChunkReceiver.ChunkConstruct.Data
-                                    };
+                                        ChunkReceiver.Start(endPoint, Connections[i], i);
+                                    }
+                                    else
+                                    {
+                                        packet = new Chunk()
+                                        {
+                                            Flags = SendFlags.Connless,
+                                            EndPoint = endPoint,
+                                            ClientId = i,
+                                            DataSize = ChunkReceiver.ChunkConstruct.DataSize,
+                                            Data = ChunkReceiver.ChunkConstruct.Data
+                                        };
 
-                                    responseToken = TokenHelper.TokenNone;
-                                    return true;
+                                        responseToken = TokenHelper.TokenNone;
+                                        return true;
+                                    }
                                 }
                             }
+
+                            foundSlot = i;
+                            break;
                         }
                     }
 

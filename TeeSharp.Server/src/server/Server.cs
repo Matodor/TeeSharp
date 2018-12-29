@@ -414,6 +414,12 @@ namespace TeeSharp.Server
             if (system)
             {
                 var networkMsg = (NetworkMessages) msg;
+
+                // TODO bug with more than 1 client
+                // TODO bug with more than 1 client
+                // TODO bug with more than 1 client
+                Debug.Warning("tst", $"cl={clientId} msg={networkMsg} end={packet.EndPoint}");
+
                 switch (networkMsg)
                 {
                     case NetworkMessages.ClientInfo:

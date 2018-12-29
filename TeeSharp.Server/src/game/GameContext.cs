@@ -149,7 +149,7 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].Team != Team.Spectators;
         }
 
-        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage)
+        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, int damage)
         {
             //var e = Events.Create<SnapshotEventExplosion>();
             //if (e != null)
