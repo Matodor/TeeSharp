@@ -7,9 +7,6 @@ namespace TeeSharp.Core
 {
     public static class Extensions
     {
-        [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int memcmp(byte[] b1, byte[] b2, long count);
-
         public static int[] StrToInts(this string input, int num)
         {
             var ints = new int[num];
@@ -71,14 +68,20 @@ namespace TeeSharp.Core
             return GetString();
         }
 
-        public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit = 0)
+        public static bool ArrayCompare(this byte[] b1, byte[] compareArray)
         {
-            // Validate buffers are the same length.
-            // This also ensures that the count does not exceed the length of either buffer.  
+            if (b1.Equals(compareArray))
+                return true;
 
-            if (limit == 0)
-                return b1.Length == compareArray.Length && memcmp(b1, compareArray, b1.Length) == 0;
-            return memcmp(b1, compareArray, limit) == 0;
+            return b1.AsSpan().SequenceEqual(compareArray);    
+        }
+
+        public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit)
+        {
+            if (b1.Equals(compareArray))
+                return true;
+
+            return b1.AsSpan(limit).SequenceEqual(compareArray);
         }
 
         public static object ReadStructs(this byte[] buffer, Type type, int offset = 0)
