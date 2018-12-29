@@ -180,11 +180,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreatePlayerSpawn(Vector2 pos)
         {
-            //var e = Events.Create<SnapshotEventSpawn>();
-            //if (e == null)
-            //    return;
-
-            //e.Position = pos;
+            Events.Create<SnapshotEventSpawn>(pos);
         }
 
         public override void CreateDeath(Vector2 pos, int clientId)
@@ -443,7 +439,7 @@ namespace TeeSharp.Server.Game
 
             player.LastSetSpectatorMode = Server.Tick;
             if (!player.SetSpectatorID(message.SpectatorMode, message.SpectatorId))
-                SendGameMessage(player.ClientId, GameplayMessage.SpectatorInvalidId);
+                SendGameplayMessage(player.ClientId, GameplayMessage.SpectatorInvalidId);
         }
 
         protected override void OnMsgClientReadyChange(BasePlayer player, GameMsg_ClReadyChange message)
@@ -639,7 +635,7 @@ namespace TeeSharp.Server.Game
             Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
         }
 
-        public override void SendGameMessage(int clientId, GameplayMessage message, 
+        public override void SendGameplayMessage(int clientId, GameplayMessage message, 
             int? param1 = null, int? param2 = null, int? param3 = null)
         {
             var msg = new GameMsg_SvGameMsg()

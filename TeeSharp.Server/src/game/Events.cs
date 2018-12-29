@@ -13,17 +13,20 @@ namespace TeeSharp.Server.Game
             EventInfos = new List<EventInfo>(128);
         }
         
-        public override T Create<T>(int mask = -1)
+        public override T Create<T>(Vector2 position, int mask = -1)
         {
             if (EventInfos.Count == MaxEvents)
                 return null;
 
             var info = new EventInfo
             {
-                EventItem = new T(),
+                EventItem = new T()
+                {
+                    X = (int) position.x,
+                    Y = (int) position.y
+                },
                 Mask = mask
             };
-
             EventInfos.Add(info);
 
             return (T) info.EventItem;
@@ -38,8 +41,7 @@ namespace TeeSharp.Server.Game
         {
             for (var i = 0; i < EventInfos.Count; i++)
             {
-                if (snappingClient == -1 || 
-                    BaseGameContext.MaskIsSet(EventInfos[i].Mask, snappingClient))
+                if (snappingClient == -1 || BaseGameContext.MaskIsSet(EventInfos[i].Mask, snappingClient))
                 {
                     if (snappingClient == -1 || 
                         MathHelper.Distance(GameContext.Players[snappingClient].ViewPos,

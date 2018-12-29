@@ -52,7 +52,7 @@ namespace TeeSharp.Server.Game
         public abstract void SendBroadcast(int clientId, string msg);
         public abstract void SendWeaponPickup(int clientId, Weapon weapon);
         public abstract void SendEmoticon(int clientId, Emoticon emote);
-        public abstract void SendGameMessage(int clientId, GameplayMessage message, 
+        public abstract void SendGameplayMessage(int clientId, GameplayMessage message, 
             int? param1 = null, int? param2 = null, int? param3 = null);
 
         public abstract void OnInit();
