@@ -38,16 +38,10 @@ namespace TeeSharp.Network
             return true;
         }
 
-        public override void SetCallbacks(NewClientCallback newClientCB, DelClientCallback delClientCB)
-        {
-            ClientConnected = newClientCB;
-            ClientDisconnected = delClientCB;
-        }
-
         public override void Drop(int clientId, string reason)
         {
-            ClientDisconnected?.Invoke(clientId, reason);
             Connections[clientId].Disconnect(reason);
+            OnClientDisconnected(clientId, reason);
         }
 
         public override void Update()
@@ -173,7 +167,7 @@ namespace TeeSharp.Network
                         {
                             Connections[freeSlot].SetToken(ChunkReceiver.ChunkConstruct.Token);
                             Connections[freeSlot].Feed(ChunkReceiver.ChunkConstruct, endPoint);
-                            ClientConnected?.Invoke(freeSlot);
+                            OnClientConnected(freeSlot);
                             return false;
                         }
                         

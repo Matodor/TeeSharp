@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace TeeSharp.Core
@@ -50,6 +51,9 @@ namespace TeeSharp.Core
 
         public void RemoveFast(Node node)
         {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
+
             if (node.Prev != null)
                 node.Prev.Next = node.Next;
             else

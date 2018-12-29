@@ -56,6 +56,21 @@ namespace TeeSharp.Server.Game
                 ScoreLimit = Config["SvScorelimit"],
                 TimeLimit = Config["SvTimelimit"],
             };
+
+            GameContext.PlayerReady += OnPlayerReady;
+            GameContext.PlayerEnter += OnPlayerEnter;
+            GameContext.PlayerLeave += OnPlayerLeave;
+        }
+
+        private void OnPlayerLeave(BasePlayer player, string reason)
+        {
+            if (Server.ClientInGame(player.ClientId))
+            {
+                Console.Print(OutputLevel.Standard, "game", $"leave player={player.ClientId}:{Server.ClientName(player.ClientId)}");
+            }
+
+            player.CharacterSpawned -= OnCharacterSpawn;
+            player.TeamChanged -= OnPlayerTeamChanged;
         }
 
         protected override void SetGameState(GameState state, int timer)
@@ -76,26 +91,6 @@ namespace TeeSharp.Server.Game
         public override bool IsTeamplay()
         {
             return GameFlags.HasFlag(GameFlags.Teams);
-        }
-
-        public override void TeamChange(BasePlayer player, Team team)
-        {
-            if (player.Team == team)
-                return;
-
-            var prevTeam = player.Team;
-            player.SetTeam(team);
-
-            Console.Print(OutputLevel.Debug, "game", $"team join player={player.ClientId}:{Server.ClientName(player.ClientId)} team={team}");
-
-            if (team != Team.Spectators)
-            {
-                player.IsReadyToPlay = !IsPlayerReadyMode();
-                if (GameFlags.HasFlag(GameFlags.Survival))
-                    player.RespawnDisabled = GetRespawnDisabled(player);
-            }
-
-            OnPlayerTeamChange(player, prevTeam, team);
         }
         
         public override bool CanSelfKill(BasePlayer player)
@@ -253,13 +248,75 @@ namespace TeeSharp.Server.Game
             
         }
 
-        public override void OnPlayerConnected(BasePlayer player)
+        protected override void OnPlayerReady(BasePlayer player)
         {
-            
+            player.CharacterSpawned += OnCharacterSpawn;
+            player.TeamChanged += OnPlayerTeamChanged;
         }
 
-        protected override void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team)
+        protected override void OnPlayerEnter(BasePlayer player)
         {
+            player.Respawn();
+            Console.Print(OutputLevel.Debug, "game",
+                $"team_join player='{player.ClientId}:{Server.ClientName(player.ClientId)}' team={player.Team}");
+            UpdateGameInfo(player.ClientId);
+        }
+
+        protected override void OnPlayerTeamChanged(BasePlayer player, Team prevteam, Team newteam)
+        {
+            Console.Print(OutputLevel.Debug, "game", $"team join player={player.ClientId}:{Server.ClientName(player.ClientId)} team={newteam}");
+
+            if (newteam != Team.Spectators)
+            {
+                player.IsReadyToPlay = !IsPlayerReadyMode();
+                if (GameFlags.HasFlag(GameFlags.Survival))
+                    player.RespawnDisabled = GetRespawnDisabled(player);
+            }
+        }
+
+        protected override void OnCharacterSpawn(BasePlayer player, Character character)
+        {
+            character.Died += OnCharacterDied;
+
+            if (GameFlags.HasFlag(GameFlags.Survival))
+            {
+                character.IncreaseHealth(10);
+                character.IncreaseArmor(5);
+
+                character.GiveWeapon(Weapon.Gun, 10);
+                character.GiveWeapon(Weapon.Grenade, 10);
+                character.GiveWeapon(Weapon.Shotgun, 10);
+                character.GiveWeapon(Weapon.Laser, 5);
+
+                player.RespawnDisabled = GetRespawnDisabled(player);
+            }
+            else
+            {
+                character.IncreaseHealth(10);
+                character.GiveWeapon(Weapon.Gun, 10);
+            }
+        }
+
+        protected override void OnCharacterDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial)
+        {
+            victim.Died -= OnCharacterDied;
+
+            if (killer == null || weapon == BasePlayer.WeaponGame)
+                return;
+
+            // TODO
+
+            if (weapon == BasePlayer.WeaponSelf)
+                victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
+
+            if (GameFlags.HasFlag(GameFlags.Survival))
+            {
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] != null && GameContext.Players[i].DeadSpectatorMode)
+                        GameContext.Players[i].UpdateDeadSpecMode();
+                }
+            }
         }
 
         public override void OnPlayerReadyChange(BasePlayer player)
@@ -275,14 +332,6 @@ namespace TeeSharp.Server.Game
             }   
         }
         
-        public override void OnPlayerEnter(BasePlayer player)
-        {
-            player.Respawn();
-            Console.Print(OutputLevel.Debug, "game", 
-                $"team_join player='{player.ClientId}:{Server.ClientName(player.ClientId)}' team={player.Team}");
-            UpdateGameInfo(player.ClientId);
-        }
-
         public override void OnEntity(Tile tile, Vector2 pos)
         {
             if (tile.Index < (int) MapEntities.EntityOffset)
@@ -359,37 +408,7 @@ namespace TeeSharp.Server.Game
                 Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoRecord, clientId);
             }
         }
-
-        public override void OnPlayerDisconnected(BasePlayer player, string reason)
-        {
-            if (Server.ClientInGame(player.ClientId))
-            {
-                Console.Print(OutputLevel.Standard, "game", $"leave player={player.ClientId}:{Server.ClientName(player.ClientId)}");
-            }
-        }
-
-        public override int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon)
-        {
-            if (killer == null || weapon == BasePlayer.WeaponGame)
-                return 0;
-
-            // TODO
-
-            if (weapon == BasePlayer.WeaponSelf)
-                victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
-
-            if (GameFlags.HasFlag(GameFlags.Survival))
-            {
-                for (var i = 0; i < GameContext.Players.Length; i++)
-                {
-                    if (GameContext.Players[i] != null && GameContext.Players[i].DeadSpectatorMode)
-                        GameContext.Players[i].UpdateDeadSpecMode();
-                }
-            }
-
-            return 0;
-        }
-
+        
         public override void OnSnapshot(int snappingId, out SnapshotGameData gameData)
         {
             gameData = Server.SnapshotItem<SnapshotGameData>(0);

@@ -9,10 +9,10 @@ namespace TeeSharp.Server.Game.Entities
 {
     public struct WeaponStat
     {
-        public int AmmoRegenStart;
-        public int Ammo;
-        public int AmmoCost;
-        public bool Got;
+        public int AmmoRegenStart { get; set; }
+        public int Ammo { get; set; }
+        public int AmmoCost { get; set; }
+        public bool Got { get; set; }
     }
 
     public class NinjaStat
@@ -30,27 +30,31 @@ namespace TeeSharp.Server.Game.Entities
 
         public static InputCount Count(int prev, int cur)
         {
-            return  new InputCount();
-            //var c = new InputCount() {Presses = 0, Releases = 0};
-            //prev &= SnapshotPlayerInput.INPUT_STATE_MASK;
-            //cur &= SnapshotPlayerInput.INPUT_STATE_MASK;
-            //var i = prev;
+            var c = new InputCount() {Presses = 0, Releases = 0};
+            prev &= SnapshotPlayerInput.StateMask;
+            cur &= SnapshotPlayerInput.StateMask;
+            var i = prev;
 
-            //while (i != cur)
-            //{
-            //    i = (i + 1) & SnapshotPlayerInput.INPUT_STATE_MASK;
-            //    if ((i & 1) != 0)
-            //        c.Presses++;
-            //    else
-            //        c.Releases++;
-            //}
+            while (i != cur)
+            {
+                i = (i + 1) & SnapshotPlayerInput.StateMask;
+                if ((i & 1) != 0)
+                    c.Presses++;
+                else
+                    c.Releases++;
+            }
 
-            //return c;
+            return c;
         }
     }
 
+    public delegate void CharacterDeadEvent(Character victim, 
+        BasePlayer killer, Weapon weapon, ref int modeSpecial);
+
     public class Character : Entity<Character>
     {
+        public event CharacterDeadEvent Died;
+
         public readonly BasePlayer Player;
 
         public override float ProximityRadius { get; protected set; } = 28f;
@@ -74,18 +78,19 @@ namespace TeeSharp.Server.Game.Entities
         protected virtual int LastAction { get; set; }
         protected virtual int NumInputs { get; set; }
 
-        //protected virtual int AttackTick { get; set; }
-        //protected virtual int ReloadTimer { get; set; }
+        protected virtual Weapon ActiveWeapon { get; set; }
+        protected virtual Weapon LastWeapon { get; set; }
+        protected virtual Weapon QueuedWeapon { get; set; }
+        protected virtual WeaponStat[] Weapons { get; set; }
+
+        protected virtual int AttackTick { get; set; }
+        protected virtual int ReloadTimer { get; set; }
         //protected virtual int LastNoAmmoSound { get; set; }
         //protected virtual int DamageTaken { get; set; }
         //protected virtual int DamageTakenTick { get; set; }
-        //protected virtual Weapon ActiveWeapon { get; set; }
-        //protected virtual Weapon LastWeapon { get; set; }
-        //protected virtual Weapon QueuedWeapon { get; set; }
 
 
         //protected virtual NinjaStat NinjaStat { get; set; }
-        //protected virtual WeaponStat[] Weapons { get; set; }
         //protected virtual IList<Entity> HitObjects { get; set; }
 
         public Character(BasePlayer player, Vector2 spawnPos) : base(1)
@@ -121,40 +126,44 @@ namespace TeeSharp.Server.Game.Entities
             LastAction = -1;
 
             //HitObjects = new List<Entity>();
-            //Weapons = new WeaponStat[(int) Weapon.NumWeapons];
             //NinjaStat = new NinjaStat();
 
-            //ActiveWeapon = Weapon.Gun;
-            //LastWeapon = Weapon.Hammer;
-            //QueuedWeapon = (Weapon) (-1);
+            ActiveWeapon = Weapon.Hammer;
+            LastWeapon = Weapon.Gun;
+            QueuedWeapon = (Weapon) (-1);
+            Weapons = new WeaponStat[(int) Weapon.NumWeapons];
+            Weapons[(int) Weapon.Hammer].Got = true;
+            Weapons[(int) Weapon.Hammer].Ammo = -1;
+
+            Destroyed += OnDestroyed;
+            Reseted += OnReseted;
         }
 
-        protected override void OnDestroy()
+        private void OnReseted(Entity character)
         {
-            base.OnDestroy();
+            Destroy();
+        }
 
+        private void OnDestroyed(Entity character)
+        {
             GameWorld.WorldCore.CharacterCores[Player.ClientId] = null;
             IsAlive = false;
         }
 
-        public override void Reset()
-        {
-            base.Reset();
-            Destroy();
-        }
-
         public virtual void SetWeapon(Weapon weapon)
         {
-            //if (weapon == ActiveWeapon)
-            //    return;
+            if (weapon == ActiveWeapon)
+                return;
 
-            //LastWeapon = ActiveWeapon;
-            //QueuedWeapon = (Weapon) (-1);
-            //ActiveWeapon = weapon;
-            //GameContext.CreateSound(Position, Sound.WeaponSwitch);
+            LastWeapon = ActiveWeapon;
+            QueuedWeapon = (Weapon)(-1);
+            ActiveWeapon = weapon;
+            GameContext.CreateSound(Position, Sound.WeaponSwitch);
 
-            //if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NumWeapons)
-            //    ActiveWeapon = Weapon.Hammer;
+            if (ActiveWeapon < 0 || ActiveWeapon >= Weapon.NumWeapons)
+                ActiveWeapon = Weapon.Hammer;
+
+            Weapons[(int) ActiveWeapon].AmmoRegenStart = 0;
         }
 
         public bool IsGrounded()
@@ -178,16 +187,16 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual void SetEmote(Emote emote, int stopTick)
         {
-            //Emote = emote;
-            //EmoteStopTick = stopTick;
+            Emote = emote;
+            EmoteStopTick = stopTick;
         }
 
         public virtual void Die(int killer, Weapon weapon)
         {
             IsAlive = false;
             Player.RespawnTick = Server.Tick + Server.TickSpeed / 2;
-            var modeSpecial = GameContext.GameController.OnCharacterDeath(this,
-                              GameContext.Players[killer], weapon);
+            var modeSpecial = 0;
+            Died?.Invoke(this, GameContext.Players[killer], weapon, ref modeSpecial);
 
             Console.Print(OutputLevel.Debug, "game",
                 $"kill killer='{killer}:{Server.ClientName(killer)}' victim='{Player.ClientId}:{Server.ClientName(Player.ClientId)}' weapon={weapon} special={modeSpecial}");
@@ -201,8 +210,8 @@ namespace TeeSharp.Server.Game.Entities
             }, MsgFlags.Vital, -1);
 
             GameContext.CreateSound(Position, Sound.PlayerDie);
-            Player.DieTick = Server.Tick;
             GameContext.CreateDeath(Position, Player.ClientId);
+            Player.DieTick = Server.Tick;
 
             Destroy();
         }
@@ -238,55 +247,57 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponSwitch()
         {
-            //if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
-            //    return;
+            if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
+                return;
 
-            //SetWeapon(QueuedWeapon);
+            SetWeapon(QueuedWeapon);
         }
 
         protected virtual void HandleWeaponSwitch()
         {
-            //var wantedWeapon = ActiveWeapon;
-            //if (QueuedWeapon != (Weapon) (-1))
-            //    wantedWeapon = QueuedWeapon;
+            var wantedWeapon = ActiveWeapon;
+            if (QueuedWeapon != (Weapon) (-1))
+                wantedWeapon = QueuedWeapon;
 
-            //var next = InputCount.Count(LatestPrevInput.NextWeapon, LatestInput.NextWeapon).Presses;
-            //var prev = InputCount.Count(LatestPrevInput.PrevWeapon, LatestInput.PrevWeapon).Presses;
+            var next = InputCount.Count((int) LatestPrevInput.NextWeapon,
+                (int) LatestInput.NextWeapon).Presses;
+            var prev = InputCount.Count((int) LatestPrevInput.PreviousWeapon,
+                (int) LatestInput.PreviousWeapon).Presses;
 
-            //if (next < 128)
-            //{
-            //    while (next != 0)
-            //    {
-            //        wantedWeapon = (Weapon) ((int) (wantedWeapon + 1) % (int) Weapon.NumWeapons);
-            //        if (Weapons[(int) wantedWeapon].Got)
-            //            next--;
-            //    }
-            //}
+            if (next < 128)
+            {
+                while (next != 0)
+                {
+                    wantedWeapon = (Weapon) ((int) (wantedWeapon + 1) % (int) Weapon.NumWeapons);
+                    if (Weapons[(int) wantedWeapon].Got)
+                        next--;
+                }
+            }
 
-            //if (prev < 128)
-            //{
-            //    while (prev != 0)
-            //    {
-            //        wantedWeapon = wantedWeapon - 1 < 0
-            //            ? Weapon.NumWeapons - 1
-            //            : wantedWeapon - 1;
-            //        if (Weapons[(int) wantedWeapon].Got)
-            //            prev--;
-            //    }
-            //}
+            if (prev < 128)
+            {
+                while (prev != 0)
+                {
+                    wantedWeapon = wantedWeapon - 1 < 0
+                        ? Weapon.NumWeapons - 1
+                        : wantedWeapon - 1;
+                    if (Weapons[(int) wantedWeapon].Got)
+                        prev--;
+                }
+            }
 
-            //if (LatestInput.WantedWeapon != 0)
-            //    wantedWeapon = (Weapon) (Input.WantedWeapon - 1);
+            if (LatestInput.WantedWeapon != 0)
+                wantedWeapon = (Weapon) (Input.WantedWeapon - 1);
 
-            //if (wantedWeapon >= 0 &&
-            //    wantedWeapon < Weapon.NumWeapons &&
-            //    wantedWeapon != ActiveWeapon &&
-            //    Weapons[(int) wantedWeapon].Got)
-            //{
-            //    QueuedWeapon = wantedWeapon;
-            //}
+            if (wantedWeapon >= 0 &&
+                wantedWeapon < Weapon.NumWeapons &&
+                wantedWeapon != ActiveWeapon &&
+                Weapons[(int) wantedWeapon].Got)
+            {
+                QueuedWeapon = wantedWeapon;
+            }
 
-            //DoWeaponSwitch();
+            DoWeaponSwitch();
         }
 
         protected virtual bool CanFire()
@@ -692,14 +703,12 @@ namespace TeeSharp.Server.Game.Entities
 
         public virtual bool GiveWeapon(Weapon weapon, int ammo)
         {
-            //if (Weapons[(int) weapon].Ammo < ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo ||
-            //    !Weapons[(int) weapon].Got)
-            //{
-            //    Weapons[(int) weapon].Got = true;
-            //    Weapons[(int) weapon].Ammo = System.Math.Min(
-            //        ServerData.Data.Weapons.Info[(int) weapon].MaxAmmo, ammo);
-            //    return true;
-            //}
+            if (!Weapons[(int) weapon].Got || Weapons[(int) weapon].Ammo < ServerData.Weapons[weapon].MaxAmmo)
+            {
+                Weapons[(int) weapon].Got = true;
+                Weapons[(int) weapon].Ammo = System.Math.Min(ServerData.Weapons[weapon].MaxAmmo, ammo);
+                return true;
+            }
 
             return false;
         }
@@ -845,8 +854,8 @@ namespace TeeSharp.Server.Game.Entities
             character.Armor = 0;
             character.TriggeredEvents = Core.TriggeredEvents;
 
-            //character.Weapon = ActiveWeapon;
-            //character.AttackTick = AttackTick;
+            character.Weapon = ActiveWeapon;
+            character.AttackTick = AttackTick;
             character.Direction = Input.Direction;
 
             if (snappingClient == Player.ClientId || 
@@ -856,23 +865,19 @@ namespace TeeSharp.Server.Game.Entities
                 character.Health = Health;
                 character.Armor = Armor;
 
-                // TODO
+                if (ActiveWeapon == Weapon.Ninja)
+                {
+                    // todo
+                }
+                else if (Weapons[(int) ActiveWeapon].Ammo > 0)
+                    character.AmmoCount = Weapons[(int) ActiveWeapon].Ammo;
             }
 
-            //if (character.Emote == Emote.Normal)
-            //{
-            //    if (250 - ((Server.Tick - LastAction) % 250) < 5)
-            //        character.Emote = Emote.Blink;
-            //}
-
-
-            //if (character.HookedPlayer != -1)
-            //{
-            //    if (!Server.Translate(ref character.HookedPlayer, snappingClient))
-            //        character.HookedPlayer = -1;
-            //}
-
-            //character.PlayerFlags = Player.PlayerFlags;
+            if (character.Emote == Emote.Normal)
+            {
+                if (250 - ((Server.Tick - LastAction) % 250) < 5)
+                    character.Emote = Emote.Blink;
+            }
         }
     }
 }

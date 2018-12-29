@@ -55,7 +55,7 @@
 //        {
 //        }
 
-//        public override void OnClientConnected(int clientId)
+//        public override void OnPlayerReady(int clientId)
 //        {
 //            Scores[clientId] = 0;
 //            ScoresStartTick[clientId] = Server.Tick;

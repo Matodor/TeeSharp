@@ -53,7 +53,7 @@ namespace TeeSharp.Server.Game
         //public abstract void Tick();
 
         //public abstract void OnClientEnter(int clientId);
-        //public abstract void OnClientConnected(int clientId);
+        //public abstract void OnPlayerReady(int clientId);
 
         //public abstract void OnCharacterSpawn(Character character);
         //public abstract void OnSnapshot(int snappingClient);
@@ -164,14 +164,16 @@ namespace TeeSharp.Server.Game
         public abstract bool CanChangeTeam(BasePlayer player, Team team);
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 spawnPos);
         public abstract bool CanSelfKill(BasePlayer player);
-        public abstract void TeamChange(BasePlayer player, Team team);
 
         public abstract void OnReset();
-        public abstract int OnCharacterDeath(Character victim, BasePlayer killer, Weapon weapon);
+
+        protected abstract void OnCharacterSpawn(BasePlayer player, Character character);
+        protected abstract void OnCharacterDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial);
+        protected abstract void OnPlayerTeamChanged(BasePlayer player, Team prevteam, Team newteam);
+        protected abstract void OnPlayerReady(BasePlayer player);
+        protected abstract void OnPlayerEnter(BasePlayer player);
+
         public abstract void OnPlayerInfoChange(BasePlayer player);
-        public abstract void OnPlayerConnected(BasePlayer player);
-        public abstract void OnPlayerEnter(BasePlayer player);
-        public abstract void OnPlayerDisconnected(BasePlayer player, string reason);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
         public abstract void OnPlayerReadyChange(BasePlayer player);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
@@ -179,7 +181,6 @@ namespace TeeSharp.Server.Game
 
         protected abstract void CheckReadyStates();
         protected abstract void UpdateGameInfo(int clientId);
-        protected abstract void OnPlayerTeamChange(BasePlayer player, Team prevTeam, Team team);
         protected abstract void SetGameState(GameState state, int timer);
     }
 }

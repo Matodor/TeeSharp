@@ -201,7 +201,7 @@ namespace TeeSharp.Server.Game
             LastChangeInfo = Server.Tick;
         }
 
-        public override void OnDisconnect(string reason)
+        public override void OnPlayerLeave(string reason)
         {
             KillCharacter(WeaponGame);
 
@@ -483,6 +483,8 @@ namespace TeeSharp.Server.Game
                     }
                 }
             }
+
+            OnTeamChanged(prevTeam, team);
         }
 
         protected override void TryRespawn()
@@ -492,6 +494,7 @@ namespace TeeSharp.Server.Game
 
             Spawning = false;
             Character = new Character(this, spawnPos);
+            OnCharacterSpawn(Character);
         }
     }
 }

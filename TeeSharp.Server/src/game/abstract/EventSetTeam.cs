@@ -23,8 +23,14 @@ namespace TeeSharp.Server.Game
         public int TargetY;
     }
 
+    public delegate void EventSetTeam(BasePlayer player, Team prevTeam, Team newTeam);
+    public delegate void EventPlayerCharacter(BasePlayer player, Character character);
+
     public abstract class BasePlayer : BaseInterface
     {
+        public event EventPlayerCharacter CharacterSpawned;
+        public event EventSetTeam TeamChanged;
+
         public const Weapon WeaponGame = (Weapon) (-3);
         public const Weapon WeaponSelf = (Weapon) (-2);
         public const Weapon WeaponWorld = (Weapon) (-1);
@@ -80,7 +86,7 @@ namespace TeeSharp.Server.Game
             out SnapshotDemoClientInfo demoClientInfo);
 
         public abstract void OnChangeInfo();
-        public abstract void OnDisconnect(string reason);
+        public abstract void OnPlayerLeave(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);
         public abstract void OnDirectInput(SnapshotPlayerInput input);
         public abstract Character GetCharacter();
@@ -100,5 +106,14 @@ namespace TeeSharp.Server.Game
             IsDummy = dummy;
         }
 
+        protected void OnTeamChanged(Team prevTeam, Team newTeam)
+        {
+            TeamChanged?.Invoke(this, prevTeam, newTeam);
+        }
+
+        protected void OnCharacterSpawn(Character character)
+        {
+            CharacterSpawned?.Invoke(this, character);
+        }
     }
 }

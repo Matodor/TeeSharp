@@ -40,7 +40,9 @@ namespace TeeSharp.Server.Game
             GameController = new GameController(); // TODO
             GameController.Init();
 
-
+            Server.PlayerReady += ServerOnPlayerReady;
+            Server.PlayerEnter += ServerOnPlayerEnter;
+            Server.PlayerDisconnected += ServerOnPlayerDisconnected;
             for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
                 for (var x = 0; x < MapLayers.GameLayer.Width; x++)
@@ -53,6 +55,79 @@ namespace TeeSharp.Server.Game
             }
 
             CheckPureTuning();
+        }
+
+        protected override void ServerOnPlayerDisconnected(int clientId, string reason)
+        {
+            OnPlayerLeave(Players[clientId], reason);
+
+            if (Server.ClientInGame(clientId))
+            {
+                if (false) // TODO DEMO
+                {
+                    Server.SendPackMsg(new GameMsg_DeClientLeave()
+                    {
+                        Name = Server.ClientName(clientId),
+                        Reason = reason,
+                        ClientId = clientId,
+                    }, MsgFlags.NoSend, -1);
+                }
+
+                Server.SendPackMsg(new GameMsg_SvClientDrop()
+                    {
+                        ClientID = clientId,
+                        Reason = reason,
+                        Silent = Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators,
+                    }, MsgFlags.Vital | MsgFlags.NoRecord, -1);
+            }
+
+            Players[clientId].OnPlayerLeave(reason);
+            Players[clientId] = null;
+        }
+
+        protected override void ServerOnPlayerEnter(int clientId)
+        {
+            var clientInfo = ClientInfo(clientId);
+            if (Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators)
+                clientInfo.Silent = true;
+
+            for (var i = 0; i < Players.Length; i++)
+            {
+                if (i == clientId || Players[i] == null || !Server.ClientInGame(i) && !Players[i].IsDummy)
+                    continue;
+
+                if (Server.ClientInGame(i))
+                    Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, i);
+
+                Server.SendPackMsg(ClientInfo(i), MsgFlags.Vital | MsgFlags.NoRecord, clientId);
+            }
+
+            clientInfo.Local = true;
+            Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, clientId);
+
+            if (false) // TODO DEMO 
+            {
+                var msg = new GameMsg_DeClientEnter()
+                {
+                    Name = clientInfo.Name,
+                    Team = clientInfo.Team,
+                    ClientId = clientId
+                };
+                Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
+            }
+
+            OnPlayerEnter(Players[clientId]);
+        }
+
+        protected override void ServerOnPlayerReady(int clientId)
+        {
+            Players[clientId] = Kernel.Get<BasePlayer>();
+            Players[clientId].Init(clientId, false);
+
+            SendMotd(clientId);
+            SendSettings(clientId);
+
+            OnPlayerReady(Players[clientId]);
         }
 
         public override void RegisterConsoleCommands()
@@ -417,9 +492,7 @@ namespace TeeSharp.Server.Game
             if (GameController.CanJoinTeam(player, message.Team) &&
                 GameController.CanChangeTeam(player, message.Team))
             {
-                var prevTeam = player.Team;
-                GameController.TeamChange(player, message.Team);
-                Votes.PlayerChangeTeam(player.ClientId, prevTeam, player.Team);
+                player.SetTeam(message.Team);
             }
         }
 
@@ -471,8 +544,8 @@ namespace TeeSharp.Server.Game
 
             GameController.OnPlayerInfoChange(player);
 
-            Votes.SendClearMsg(player.ClientId);
-            Votes.SendVotes(player.ClientId);
+            Votes.SendClearMsg(player);
+            Votes.SendVotes(player);
 
             SendTuningParams(player.ClientId);
             player.ReadyToEnter();
@@ -508,21 +581,6 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnClientConnected(int clientId, bool dummy = false)
-        {
-            Players[clientId] = Kernel.Get<BasePlayer>();
-            Players[clientId].Init(clientId, dummy);
-
-            if (dummy)
-                return;
-
-            Votes.SendActiveVote(clientId);
-            SendMotd(clientId);
-            SendSettings(clientId);
-
-            GameController.OnPlayerConnected(Players[clientId]);
-        }
-
         protected override GameMsg_SvClientInfo ClientInfo(int clientId)
         {
             var clientInfo = new GameMsg_SvClientInfo()
@@ -544,70 +602,6 @@ namespace TeeSharp.Server.Game
             }
 
             return clientInfo;
-        }
-
-        public override void OnClientEnter(int clientId)
-        {
-            GameController.OnPlayerEnter(Players[clientId]);
-            Votes.PlayerConnected(clientId);
-
-            var clientInfo = ClientInfo(clientId);
-            if (Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators)
-                clientInfo.Silent = true;
-
-            for (var i = 0; i < Players.Length; i++)
-            {
-                if (i == clientId || Players[i] == null || !Server.ClientInGame(i) && !Players[i].IsDummy)
-                    continue;
-
-                if (Server.ClientInGame(i))
-                    Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, i);
-
-                Server.SendPackMsg(ClientInfo(i), MsgFlags.Vital | MsgFlags.NoRecord, clientId);
-            }
-
-            clientInfo.Local = true;
-            Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, clientId);
-            
-            if (false) // TODO DEMO 
-            {
-                var msg = new GameMsg_DeClientEnter()
-                {
-                    Name = clientInfo.Name,
-                    Team = clientInfo.Team,
-                    ClientId = clientId
-                };
-                Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
-            }
-        }
-
-        public override void OnClientDisconnect(int clientId, string reason)
-        {
-            Votes.PlayerDisconnected(clientId);
-            GameController.OnPlayerDisconnected(Players[clientId], reason);
-
-            if (Server.ClientInGame(clientId))
-            {
-                if (false) // TODO DEMO
-                {
-                    Server.SendPackMsg(new GameMsg_DeClientLeave()
-                    {
-                        Name = Server.ClientName(clientId),
-                        Reason = reason,
-                        ClientId = clientId,
-                    }, MsgFlags.NoSend, -1);
-                }
-
-                Server.SendPackMsg(new GameMsg_SvClientDrop()
-                {
-                    ClientID = clientId,
-                    Reason = reason,
-                    Silent = Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators,
-                }, MsgFlags.Vital | MsgFlags.NoRecord, -1);
-            }
-
-            Players[clientId].OnDisconnect(reason);
-            Players[clientId] = null;
         }
 
         public override void OnClientPredictedInput(int clientId, int[] input)

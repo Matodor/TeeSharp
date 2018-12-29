@@ -23,22 +23,22 @@ namespace TeeSharp.Server.Game
         protected Entity(int idsCount) : base(idsCount)
         {
             _node = Entities.Add((T) this);
+            Destroyed += OnDestroyed;
         }
 
-        protected override void OnDestroy()
+        private void OnDestroyed(Entity obj)
         {
-            base.OnDestroy();
-
-            if (_node == null)
-                return;
-
             Entities.RemoveFast(_node);
             _node = null;
         }
     }
 
+    public delegate void EntityEvent(Entity entity);
     public abstract class Entity : BaseInterface
     {
+        public event EntityEvent Destroyed;
+        public event EntityEvent Reseted;
+
         /// <summary>
         /// All entities on map
         /// </summary>
@@ -85,16 +85,18 @@ namespace TeeSharp.Server.Game
         public virtual void Tick() { }
         public virtual void LateTick() { }
         public virtual void TickPaused() { }
-        public virtual void Reset() { }
 
-        protected virtual void OnDestroy() { }
+        public void Reset()
+        {
+            Reseted?.Invoke(this);
+        }
 
         public void Destroy()
         {
             if (_node == null)
                 return;
 
-            OnDestroy();
+            Destroyed?.Invoke(this);
 
             for (var i = 0; i < IDs.Length; i++)
                 Server.SnapshotFreeId(IDs[i]);

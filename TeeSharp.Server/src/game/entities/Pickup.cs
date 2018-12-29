@@ -16,12 +16,11 @@ namespace TeeSharp.Server.Game.Entities
         {
             SpawnTick = -1;
             Type = type;
+            Reseted += OnReseted;
         }
 
-        public override void Reset()
+        private void OnReseted(Entity pickup)
         {
-            base.Reset();
-
             if (ServerData.Pickups[Type].SpawnDelay > 0)
                 SpawnTick = Server.Tick + Server.TickSpeed * ServerData.Pickups[Type].SpawnDelay;
             else

@@ -8,8 +8,15 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Server.Game
 {
+    public delegate void PlayerEvent(BasePlayer player);
+    public delegate void PlayerLeaveEvent(BasePlayer player, string reason);
+
     public abstract class BaseGameContext : BaseInterface
     {
+        public event PlayerEvent PlayerReady;
+        public event PlayerEvent PlayerEnter;
+        public event PlayerLeaveEvent PlayerLeave;
+
         public abstract string GameVersion { get; }
         public abstract string NetVersion { get; }
         public abstract string ReleaseVersion { get; }
@@ -55,11 +62,12 @@ namespace TeeSharp.Server.Game
         public abstract void OnBeforeSnapshot();
         public abstract void OnAfterSnapshots();
         public abstract void OnSnapshot(int snappingId);
-        public abstract void OnClientConnected(int clientId, bool dummy = false);
-        public abstract void OnClientEnter(int clientId);
-        public abstract void OnClientDisconnect(int clientId, string reason);
         public abstract void OnClientPredictedInput(int clientId, int[] input1);
         public abstract void OnClientDirectInput(int clientId, int[] input);
+
+        protected abstract void ServerOnPlayerReady(int clientId);
+        protected abstract void ServerOnPlayerEnter(int clientId);
+        protected abstract void ServerOnPlayerDisconnected(int clientId, string reason);
 
         protected abstract void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo);
         protected abstract void OnMsgClientSay(BasePlayer player, GameMsg_ClSay message);
@@ -97,6 +105,21 @@ namespace TeeSharp.Server.Game
         public static bool MaskIsSet(int mask, int clientID)
         {
             return (mask & MaskOne(clientID)) != 0;
+        }
+
+        protected void OnPlayerReady(BasePlayer player)
+        {
+            PlayerReady?.Invoke(player);
+        }
+
+        protected void OnPlayerEnter(BasePlayer player)
+        {
+            PlayerEnter?.Invoke(player);
+        }
+
+        protected void OnPlayerLeave(BasePlayer player, string reason)
+        {
+            PlayerLeave?.Invoke(player, reason);
         }
     }
 }

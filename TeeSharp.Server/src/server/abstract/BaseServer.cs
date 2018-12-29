@@ -13,8 +13,15 @@ using TeeSharp.Server.Game;
 
 namespace TeeSharp.Server
 {
+    public delegate void ClientEvent(int clientId);
+    public delegate void ClientDisconnectEvent(int clientId, string reason);
+
     public abstract class BaseServer : BaseInterface
     {
+        public event ClientEvent PlayerReady;
+        public event ClientEvent PlayerEnter;
+        public event ClientDisconnectEvent PlayerDisconnected;
+
         public const int MapChunkSize = NetworkHelper.MaxPayload - NetworkHelper.MaxChunkHeaderSize - 4;
         public const int ServerInfoFlagPassword = 1;
 
@@ -101,5 +108,20 @@ namespace TeeSharp.Server
         protected abstract void ConsoleShutdown(ConsoleResult result, object data);
         protected abstract void ConsoleStatus(ConsoleResult result, object data);
         protected abstract void ConsoleKick(ConsoleResult result, object data);
+
+        protected void OnPlayerReady(int clientId)
+        {
+            PlayerReady?.Invoke(clientId);
+        }
+
+        protected void OnPlayerEnter(int clientId)
+        {
+            PlayerEnter?.Invoke(clientId);
+        }
+
+        protected void OnPlayerDisconnected(int clientId, string reason)
+        {
+            PlayerDisconnected?.Invoke(clientId, reason);
+        }
     }
 }

@@ -5,8 +5,8 @@ using TeeSharp.Core;
 
 namespace TeeSharp.Network
 {
-    public delegate void NewClientCallback(int clientId);
-    public delegate void DelClientCallback(int clientId, string reason);
+    public delegate void ClientConnectedEvent(int clientId);
+    public delegate void ClientDisconnectedEvent(int clientId, string reason);
 
     public struct NetworkServerConfig
     {
@@ -18,6 +18,9 @@ namespace TeeSharp.Network
 
     public abstract class BaseNetworkServer : BaseInterface
     {
+        public virtual event ClientConnectedEvent ClientConnected;
+        public virtual event ClientDisconnectedEvent ClientDisconnected;
+
         public virtual NetworkServerConfig Config { get; protected set; }
 
         protected virtual UdpClient UdpClient { get; set; }
@@ -26,9 +29,6 @@ namespace TeeSharp.Network
 
         protected virtual BaseChunkReceiver ChunkReceiver { get; set; }
 
-        protected virtual NewClientCallback ClientConnected { get; set; }
-        protected virtual DelClientCallback ClientDisconnected { get; set; }
-        
         protected virtual BaseTokenManager TokenManager { get; set; }
         protected virtual BaseTokenCache TokenCache { get; set; }
 
@@ -36,8 +36,6 @@ namespace TeeSharp.Network
         public abstract bool Open(NetworkServerConfig config);
 
         public abstract void SetMaxClientsPerIp(int max);
-        public abstract void SetCallbacks(NewClientCallback newClientCB,
-            DelClientCallback delClientCB);
 
         public abstract IPEndPoint ClientEndPoint(int clientId);
         public abstract void Update();
@@ -48,5 +46,15 @@ namespace TeeSharp.Network
         
         protected abstract NetworkServerConfig CheckConfig(
             NetworkServerConfig config);
+
+        protected void OnClientConnected(int clientId)
+        {
+            ClientConnected?.Invoke(clientId);
+        }
+
+        protected void OnClientDisconnected(int clientId, string reason)
+        {
+            ClientDisconnected?.Invoke(clientId, reason);
+        }
     }
 }

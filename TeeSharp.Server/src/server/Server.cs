@@ -392,7 +392,8 @@ namespace TeeSharp.Server
                 return false;
             }
 
-            NetworkServer.SetCallbacks(ClientConnected, ClientDisconnected);
+            NetworkServer.ClientConnected += ClientConnected;
+            NetworkServer.ClientDisconnected += ClientDisconnected;
             Debug.Log("server", $"network server running at: {networkConfig.BindEndPoint}");
             return true;
         }
@@ -640,7 +641,7 @@ namespace TeeSharp.Server
             Console.Print(OutputLevel.Standard, "server", $"player has entered the game. ClientID={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.InGame;
             SendServerInfo(clientId);
-            GameContext.OnClientEnter(clientId);
+            OnPlayerEnter(clientId);
         }
 
         protected override void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId)
@@ -653,7 +654,7 @@ namespace TeeSharp.Server
 
             Console.Print(OutputLevel.AddInfo, "server", $"player is ready. ClientID={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.Ready;
-            GameContext.OnClientConnected(clientId);
+            OnPlayerReady(clientId);
 
             var msg = new MsgPacker((int) NetworkMessages.ServerConnectionReady, true);
             SendMsg(msg, MsgFlags.Vital | MsgFlags.Flush, clientId);
@@ -869,7 +870,7 @@ namespace TeeSharp.Server
             if (Clients[clientId].State >= ServerClientState.Ready)
             {
                 Clients[clientId].Quitting = true;
-                GameContext.OnClientDisconnect(clientId, reason);
+                OnPlayerDisconnected(clientId, reason);
             }
 
             Clients[clientId].State = ServerClientState.Empty;

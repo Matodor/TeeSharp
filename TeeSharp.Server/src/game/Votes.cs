@@ -9,16 +9,22 @@ namespace TeeSharp.Server.Game
         public override void Init()
         {
             GameContext = Kernel.Get<BaseGameContext>();
+            GameContext.PlayerReady += OnPlayerReady;
             Server = Kernel.Get<BaseServer>();
         }
 
-        public override void SendClearMsg(int clientId)
+        protected override void OnPlayerReady(BasePlayer player)
         {
-            var msg = new GameMsg_SvVoteClearOptions();
-            Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
+            SendActiveVote(player);
         }
 
-        public override void SendVotes(int clientId)
+        public override void SendClearMsg(BasePlayer player)
+        {
+            var msg = new GameMsg_SvVoteClearOptions();
+            Server.SendPackMsg(msg, MsgFlags.Vital, player.ClientId);
+        }
+
+        public override void SendVotes(BasePlayer player)
         {
             var msg = new MsgPacker((int) GameMessage.ServerVoteOptionListAdd, false);
             // num options
@@ -30,27 +36,12 @@ namespace TeeSharp.Server.Game
                 msg.AddString("Test vote");
             }
 
-            Server.SendMsg(msg, MsgFlags.Vital, clientId);
+            Server.SendMsg(msg, MsgFlags.Vital, player.ClientId);
         }
 
-        public override void SendActiveVote(int clientId)
+        public override void SendActiveVote(BasePlayer player)
         {
             // if (vote close time != 0)
-        }
-
-        public override void PlayerConnected(int clientId)
-        {
-            
-        }
-
-        public override void PlayerDisconnected(int clientId)
-        {
-            
-        }
-
-        public override void PlayerChangeTeam(int clientId, Team prev, Team next)
-        {
-            
         }
 
         public override void Tick()
