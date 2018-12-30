@@ -9,7 +9,7 @@ namespace TeeSharp.Map.MapItems
         public int Version;
 
         [MarshalAs(UnmanagedType.I4)]
-        public int Type;
+        public LayerType Type;
 
         [MarshalAs(UnmanagedType.I4)]
         public int Flags;

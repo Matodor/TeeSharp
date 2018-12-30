@@ -2,12 +2,12 @@
 {
     public enum MapItemTypes
     {
-        VERSION = 0,
-        INFO,
-        IMAGE,
-        ENVELOPE,
-        GROUP,
-        LAYER,
-        ENVPOINTS
+        Version = 0,
+        Info,
+        Image,
+        Envelope,
+        Group,
+        Layer,
+        EnvelopePoints
     }
 }

@@ -1,19 +1,22 @@
 ﻿using System;
 using System.IO;
-using System.Net.Mime;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using TeeSharp.Core;
 using TeeSharp.Map;
 using TeeSharp.Map.MapItems;
 
 namespace Examples.MapParser
 {
-    class Program
+    internal class Program
     {
         private const string MAP_NAME = "Kobra 4";
 
         static void Main(string[] args)
         {
-            using (var stream = File.OpenRead($"{MAP_NAME}.map"))
+            using (var stream = File.OpenRead($"maps/{MAP_NAME}.map"))
             {
                 if (stream == null)
                 {
@@ -21,7 +24,6 @@ namespace Examples.MapParser
                 }
                 else
                 {
-
                     var mapContainer = MapContainer.Load(stream, out var error);
                     if (mapContainer == null)
                     {
@@ -32,6 +34,7 @@ namespace Examples.MapParser
                         Debug.Log("map", $"successful load map='{MAP_NAME}' ({error})");
                         ShowMapInfo(mapContainer);
                         ExportImages(mapContainer);
+                        Debug.Log("map", "succesful parsed");
                     }
                 }
             }
@@ -41,7 +44,7 @@ namespace Examples.MapParser
 
         private static void ExportImages(MapContainer mapContainer)
         {
-            mapContainer.GetType(MapItemTypes.IMAGE, out var imagesStart, out var imagesNum);
+            mapContainer.GetType(MapItemTypes.Image, out var imagesStart, out var imagesNum);
             Debug.Log("map", imagesNum > 0 ? "images:" : "images not found");
 
             for (var i = 0; i < imagesNum; i++)
@@ -57,8 +60,13 @@ namespace Examples.MapParser
                     $"external={image.External}"
                 }));
 
-                //var imageData = mapContainer.GetData<byte>(image.ImageData);
-                //File.WriteAllBytes($"{image.ImageName}.png", imageData);
+                //var imageData = mapContainer.GetData<byte[]>(image.ImageData);
+                //var format = Image.DetectFormat(imageData);
+
+                //using (var image32 = Image.Load<Rgba32>(imageData))
+                //{
+                //    image32.Save($"{image.ImageName}.png");
+                //}
 
                 mapContainer.UnloadData(image.ImageName);
             }

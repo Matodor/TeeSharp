@@ -85,7 +85,7 @@ namespace TeeSharp.Common.Console
             if (result.NumArguments != 0)
                 ((ConfigString) data).Value = (string) result[0];
             else
-                Print(OutputLevel.STANDARD, "console", $"Value: {((ConfigString) data).Value}");
+                Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
         }
 
         protected override void IntVariableCommand(ConsoleResult result, object data)
@@ -93,7 +93,7 @@ namespace TeeSharp.Common.Console
             if (result.NumArguments != 0)
                 ((ConfigInt) data).Value = (int) result[0];
             else
-                Print(OutputLevel.STANDARD, "console", $"Value: {((ConfigInt) data).Value}");
+                Print(OutputLevel.Standard, "console", $"Value: {((ConfigInt) data).Value}");
         }
 
         protected override bool ParseLine(string line, out ConsoleResult result, out ConsoleCommand command, out string parsedCmd)
@@ -135,14 +135,14 @@ namespace TeeSharp.Common.Console
             {
                 if (file == null)
                 {
-                    Print(OutputLevel.STANDARD, "console", $"failed to open '{fileName}'");
+                    Print(OutputLevel.Standard, "console", $"failed to open '{fileName}'");
                     return;
                 }
 
                 ExecutedFiles.Add(fileName);
                 using (var reader = new StreamReader(file))
                 {
-                    Print(OutputLevel.STANDARD, "console", $"executing '{fileName}'");
+                    Print(OutputLevel.Standard, "console", $"executing '{fileName}'");
                     string currentLine;
 
                     while (!string.IsNullOrWhiteSpace(currentLine = reader.ReadLine()))
@@ -178,7 +178,7 @@ namespace TeeSharp.Common.Console
                 }
                 else
                 {
-                    Print(OutputLevel.STANDARD, "console", 
+                    Print(OutputLevel.Standard, "console", 
                         $"Invalid arguments... Usage: {command.Cmd} {command.Format}");
                 }
             }
@@ -187,7 +187,7 @@ namespace TeeSharp.Common.Console
                 if (string.IsNullOrWhiteSpace(parsedCmd))
                     return;
 
-                Print(OutputLevel.STANDARD, "console", $"No such command: {parsedCmd}.");
+                Print(OutputLevel.Standard, "console", $"No such command: {parsedCmd}.");
             }
         }
 

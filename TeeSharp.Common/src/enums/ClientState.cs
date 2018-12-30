@@ -2,11 +2,11 @@
 {
     public enum ClientState
     {
-        OFFLINE = 0,
-        CONNECTING,
-        LOADING,
-        ONLINE,
-        DEMOPLAYBACK,
-        QUITING,
+        Offline = 0,
+        Connecting,
+        Loading,
+        Online,
+        Demoplayback,
+        Quiting,
     }
 }

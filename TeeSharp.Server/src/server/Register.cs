@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using TeeSharp.Network;
 
 namespace TeeSharp.Server
 {
@@ -8,6 +9,11 @@ namespace TeeSharp.Server
         {
             // ipv4 type == AddressFamily.InterNetwork
             // ipv6 type == AddressFamily.InterNetworkV6
+        }
+
+        public override bool RegisterProcessPacket(Chunk packet, uint token)
+        {
+            return false;
         }
     }
 }

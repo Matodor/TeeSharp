@@ -4,6 +4,10 @@ namespace TeeSharp.Common.Console
 {
     public class ConsoleCommand
     {
+        public const int MaxCmdLength = 32;
+        public const int MaxDescLength = 96;
+        public const int MaxParamsLength = 16;
+
         public const string ARGUMENTS_TYPES = "sfi?"; // s - string, f - float, i - integer
 
         public readonly string Cmd;

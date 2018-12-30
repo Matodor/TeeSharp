@@ -2,8 +2,8 @@
 {
     public enum Team
     {
-        SPECTATORS = -1,
-        RED,
-        BLUE,
+        Spectators = -1,
+        Red,
+        Blue,
     }
 }

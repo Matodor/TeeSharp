@@ -9,36 +9,39 @@ namespace TeeSharp.Core
     {
         public static int[] StrToInts(this string input, int num)
         {
-            var ints = new int[num];
-            var bytes = new byte[0];
-            var index = 0;
+            byte[] bytes;
+            var array = new int[num];
 
             if (!string.IsNullOrEmpty(input))
                 bytes = Encoding.UTF8.GetBytes(input);
+            else
+                return array;
 
-            for (var i = 0; i < ints.Length; i++)
+            var index = 0;
+            for (var i = 0; i < array.Length; i++)
             {
-                var buf = new int[] { 0, 0, 0, 0 };
-                for (int c = 0; c < buf.Length && index < bytes.Length; c++, index++)
-                {
-                    buf[c] = bytes[index] >= 128
-                        ? bytes[index] - 256
-                        : bytes[index];
-                }
+                var buf = new[] {0, 0, 0, 0};
+                for (var c = 0; c < buf.Length && index < bytes.Length; c++, index++)
+                    buf[c] = (sbyte) bytes[index];
 
-                ints[i] = ((buf[0] + 128) << 24) | 
-                          ((buf[1] + 128) << 16) | 
-                          ((buf[2] + 128) << 08) | 
-                          ((buf[3] + 128) << 00);  
+                array[i] = ((buf[0] + 128) << 24) | 
+                           ((buf[1] + 128) << 16) | 
+                           ((buf[2] + 128) << 08) | 
+                           ((buf[3] + 128) << 00);  
             }
 
-            ints[ints.Length - 1] = (int) (ints[ints.Length - 1] & 0xffffff00);
-            return ints;
+            array[array.Length - 1] = (int) (array[array.Length - 1] & 0xffff_ff00);
+            return array;
         }
 
-        public static string IntsToStr(this int[] ints)
+        /// <summary>
+        /// Convert array of ints to ASCII string
+        /// </summary>
+        /// <param name="array">Input array</param>
+        /// <returns></returns>
+        public static string IntsToStr(this int[] array)
         {
-            var bytes = new byte[ints.Length * 4];
+            var bytes = new byte[array.Length * sizeof(int)];
             var count = 0;
 
             string GetString()
@@ -46,25 +49,26 @@ namespace TeeSharp.Core
                 return Encoding.UTF8.GetString(bytes, 0, count);
             }
 
-            for (var i = 0; i < ints.Length; i++)
+            for (var i = 0; i < array.Length; i++)
             {
-                bytes[i * 4 + 0] = (byte) (((ints[i] >> 24) & 0b1111_1111) - 128);
+                bytes[i * 4 + 0] = (byte) (((array[i] >> 24) & 0xFF) - 128);
                 if (bytes[i * 4 + 0] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 1] = (byte) (((ints[i] >> 16) & 0b1111_1111) - 128);
+                bytes[i * 4 + 1] = (byte) (((array[i] >> 16) & 0xFF) - 128);
                 if (bytes[i * 4 + 1] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 2] = (byte) (((ints[i] >> 8) & 0b1111_1111) - 128);
+                bytes[i * 4 + 2] = (byte) (((array[i] >> 8) & 0xFF) - 128);
                 if (bytes[i * 4 + 2] < 32) return GetString();
                 count++;
 
-                bytes[i * 4 + 3] = (byte) ((ints[i] & 0b1111_1111) - 128);
+                bytes[i * 4 + 3] = (byte) ((array[i] & 0xFF) - 128);
                 if (bytes[i * 4 + 3] < 32) return GetString();
                 count++;
             }
 
+            count--;
             return GetString();
         }
 
@@ -81,7 +85,7 @@ namespace TeeSharp.Core
             if (b1.Equals(compareArray))
                 return true;
 
-            return b1.AsSpan(limit).SequenceEqual(compareArray);
+            return b1.AsSpan(0, limit).SequenceEqual(compareArray);
         }
 
         public static object ReadStructs(this byte[] buffer, Type type, int offset = 0)
@@ -154,6 +158,23 @@ namespace TeeSharp.Core
             return source.Substring(0, maxLength);
         }
 
+        public static string SkipWhitespaces(this string str)
+        {
+            return str.TrimStart(' ', '\t', '\n', '\r');
+        }
+
+        public static string SanitizeStrong(this string str)
+        {
+            var tmp = new StringBuilder(str);
+            for (var i = 0; i < tmp.Length; i++)
+            {
+                tmp[i] = (char) (tmp[i] & 0x7f);
+                if (tmp[i] < 32)
+                    tmp[i] = (char) 32;
+            }
+            return tmp.ToString();
+        }
+
         public static string SanitizeCC(this string str)
         {
             var tmp = new StringBuilder(str.Length);
@@ -186,23 +207,23 @@ namespace TeeSharp.Core
             return tmp.ToString();
         }
 
-        public static uint ToUInt32(this byte[] array, int offset = 0)
-        {
-            return (uint) (
-               (array[0 + offset] << 24) | 
-               (array[1 + offset] << 16) | 
-               (array[2 + offset] << 8) |
-               (array[3 + offset])
-            );
-        }
+        //public static uint ToUInt32(this byte[] array, int offset = 0)
+        //{
+        //    return (uint) (
+        //       (array[0 + offset] << 24) | 
+        //       (array[1 + offset] << 16) | 
+        //       (array[2 + offset] << 8) |
+        //       (array[3 + offset])
+        //    );
+        //}
 
-        public static void ToByteArray(this uint value, byte[] dstArray, 
-            int offset)
-        {
-            dstArray[0 + offset] = (byte) ((value & 0xff000000) >> 24);
-            dstArray[1 + offset] = (byte) ((value & 0x00ff0000) >> 16);
-            dstArray[2 + offset] = (byte) ((value & 0x0000ff00) >> 8);
-            dstArray[3 + offset] = (byte) ((value & 0x000000ff) >> 0);
-        }
+        //public static void ToByteArray(this uint value, byte[] dstArray, 
+        //    int offset)
+        //{
+        //    dstArray[0 + offset] = (byte) ((value & 0xff000000) >> 24);
+        //    dstArray[1 + offset] = (byte) ((value & 0x00ff0000) >> 16);
+        //    dstArray[2 + offset] = (byte) ((value & 0x0000ff00) >> 8);
+        //    dstArray[3 + offset] = (byte) ((value & 0x000000ff) >> 0);
+        //}
     }
 }

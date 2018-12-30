@@ -5,9 +5,9 @@ namespace TeeSharp.Network.Enums
     [Flags]
     public enum SendFlags
     {
-        NONE = 0,
-        VITAL = 1 << 0,
-        CONNLESS = 1 << 1,
-        FLUSH = 1 << 2,
+        None = 0,
+        Vital = 1,
+        Connless = 2,
+        Flush = 4,
     }
 }

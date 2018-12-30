@@ -6,11 +6,9 @@ namespace TeeSharp.Server.Game.Entities
 {
     public class Projectile : Entity<Projectile>
     {
-        public override float ProximityRadius { get; protected set; }
-
         private readonly Weapon _weapon;
         private readonly int _ownerId;
-        private readonly Vector2 _dir;
+        private readonly Vector2 _direction;
         private readonly int _damage;
         private readonly bool _explosive;
         private readonly float _force;
@@ -18,24 +16,72 @@ namespace TeeSharp.Server.Game.Entities
         private int _startTick;
         private int _lifeSpan;
 
-        public Projectile(Weapon weapon, int ownerId, Vector2 pos, Vector2 dir,
+        public override float ProximityRadius { get; protected set; }
+
+        public Projectile(Weapon weapon, int ownerId, Vector2 direction,
             int lifeSpan, int damage, bool explosive, float force, Sound soundImpact) : base(1)
         {
-            Position = pos;
             _weapon = weapon;
             _ownerId = ownerId;
-            _dir = dir;
+            _direction = direction;
             _lifeSpan = lifeSpan;
             _damage = damage;
             _explosive = explosive;
             _force = force;
             _soundImpact = soundImpact;
             _startTick = Server.Tick;
+
+            Reseted += OnReseted;
         }
 
-        public override void Reset()
+        private void OnReseted(Entity entity)
         {
             Destroy();
+        }
+
+        public override void Tick()
+        {
+            base.Tick();
+
+            var prevTime = (Server.Tick - _startTick - 1) / (float)Server.TickSpeed;
+            var currentTime = (Server.Tick - _startTick) / (float)Server.TickSpeed;
+            var prevPos = GetPos(prevTime);
+            var currentPos = GetPos(currentTime);
+
+            var collideFlags = GameContext.MapCollision.IntersectLine(prevPos, currentPos, out var collisionPos, out _);
+            var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
+            var targetCharacter = GameWorld.IntersectCharacter(prevPos, currentPos, 6.0f, ref currentPos, ownerCharacter);
+
+            _lifeSpan--;
+
+            if (_lifeSpan < 0 || 
+                targetCharacter != null || 
+                collideFlags.HasFlag(CollisionFlags.Solid) || 
+                GameLayerClipped(currentPos))
+            {
+                if (_lifeSpan >= 0 || _weapon == Weapon.Grenade)
+                    GameContext.CreateSound(currentPos, _soundImpact);
+
+                if (_explosive)
+                    GameContext.CreateExplosion(currentPos, _ownerId, _weapon, _damage);
+                else
+                {
+                    targetCharacter?.TakeDamage(
+                        force: _direction * System.Math.Max(0.001f, _force), 
+                        damage: _damage, 
+                        from: _ownerId,
+                        weapon: _weapon);
+                }
+
+                Destroy();
+            }
+        }
+
+        public override void TickPaused()
+        {
+            base.TickPaused();
+
+            _startTick++;
         }
 
         protected Vector2 GetPos(float t)
@@ -45,79 +91,43 @@ namespace TeeSharp.Server.Game.Entities
 
             switch (_weapon)
             {
-                case Weapon.GUN:
+                case Weapon.Gun:
                     curvature = Tuning["GunCurvature"];
                     speed = Tuning["GunSpeed"];
                     break;
 
-                case Weapon.SHOTGUN:
+                case Weapon.Shotgun:
                     curvature = Tuning["ShotgunCurvature"];
                     speed = Tuning["ShotgunSpeed"];
                     break;
 
-                case Weapon.GRENADE:
+                case Weapon.Grenade:
                     curvature = Tuning["GrenadeCurvature"];
                     speed = Tuning["GrenadeSpeed"];
                     break;
             }
 
-            return Math.CalcPos(Position, _dir, curvature, speed, t);
+            return MathHelper.CalcPos(Position, _direction, curvature, speed, t);
         }
 
-        public override void Tick()
-        {
-            var prevTime = (Server.Tick - _startTick - 1) / (float) Server.TickSpeed;
-            var currentTime = (Server.Tick - _startTick) / (float) Server.TickSpeed;
-            var prevPos = GetPos(prevTime);
-            var currentPos = GetPos(currentTime);
-
-            var collide = GameContext.Collision.IntersectLine(prevPos, currentPos, out currentPos, out _);
-            var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
-            var targetCharacter = GameWorld.IntersectCharacter(prevPos, currentPos, 6f, ref currentPos, ownerCharacter);
-
-            _lifeSpan--;
-
-            if (targetCharacter != null || collide != TileFlags.NONE ||
-                _lifeSpan < 0 || GameLayerClipped(currentPos))
-            {
-                if (_lifeSpan >= 0 || _weapon == Weapon.GRENADE)
-                    GameContext.CreateSound(currentPos, _soundImpact);
-
-                if (_explosive)
-                    GameContext.CreateExplosion(currentPos, _ownerId, _weapon, false);
-                else
-                {
-                    targetCharacter?.TakeDamage(_dir * System.Math.Max(0.001f, _force), _damage, _ownerId, _weapon);
-                }
-
-                Destroy();
-            }
-        }
-
-        public override void TickPaused()
-        {
-            _startTick++;
-        }
-
-        public void FillInfo(SnapObj_Projectile projectile)
-        {
-            projectile.Position = Position;
-            projectile.Velocity = _dir * 100f;
-            projectile.StartTick = _startTick;
-            projectile.Weapon = _weapon;
-        }
 
         public override void OnSnapshot(int snappingClient)
         {
             var currentTime = (Server.Tick - _startTick) / (float) Server.TickSpeed;
+
             if (NetworkClipped(snappingClient, GetPos(currentTime)))
                 return;
 
-            var projectile = Server.SnapObject<SnapObj_Projectile>(IDs[0]);
+            var projectile = Server.SnapshotItem<SnapshotProjectile>(IDs[0]);
             if (projectile == null)
                 return;
 
-            FillInfo(projectile);
+            projectile.X = (int) Position.x;
+            projectile.Y = (int)Position.y;
+            projectile.Weapon = _weapon;
+            projectile.StartTick = _startTick;
+            projectile.VelX = (int) (_direction.x * 100f);
+            projectile.VelY = (int) (_direction.y * 100f);
         }
     }
 }

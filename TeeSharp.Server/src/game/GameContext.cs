@@ -4,50 +4,130 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
+using TeeSharp.Network;
 using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
     public class GameContext : BaseGameContext
     {
-        public override string GameVersion { get; } = "0.6";
-        public override string NetVersion { get; } = "0.6";
-        public override string ReleaseVersion { get; } = "0.63";
+        public override string GameVersion { get; } = "0.7.2";
+        public override string NetVersion { get; } = "0.7";
+        public override string ReleaseVersion { get; } = "0.7.2";
 
         public override void OnInit()
         {
             Votes = Kernel.Get<BaseVotes>();
             Events = Kernel.Get<BaseEvents>();
             Server = Kernel.Get<BaseServer>();
-            Layers = Kernel.Get<BaseLayers>();
+            MapLayers = Kernel.Get<BaseMapLayers>();
             GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
-            Collision = Kernel.Get<BaseCollision>();
+            MapCollision = Kernel.Get<BaseMapCollision>();
             Config = Kernel.Get<BaseConfig>();
             Console = Kernel.Get<BaseGameConsole>();
             Tuning = Kernel.Get<BaseTuningParams>();
             World = Kernel.Get<BaseGameWorld>();
 
-            Layers.Init(Server.CurrentMap);
-            Collision.Init(Layers);
+            Votes.Init();
+            MapLayers.Init(Server.CurrentMap);
+            MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
+
+            GameMsgUnpacker.MaxClients = Players.Length;
             
-            // TODO
-            GameController = new GameControllerDM();
+            GameController = new GameController(); // TODO
+            GameController.Init();
 
-            for (var y = 0; y < Layers.GameLayer.Height; y++)
+            Server.PlayerReady += ServerOnPlayerReady;
+            Server.PlayerEnter += ServerOnPlayerEnter;
+            Server.PlayerDisconnected += ServerOnPlayerDisconnected;
+            for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
-                for (var x = 0; x < Layers.GameLayer.Width; x++)
+                for (var x = 0; x < MapLayers.GameLayer.Width; x++)
                 {
-                    var tile = Collision.GetTileAtIndex(y * Layers.GameLayer.Width + x);
+                    var tile = MapCollision.GetTile(y * MapLayers.GameLayer.Width + x);
                     var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-
-                    if (tile.Index >= (int) MapItems.ENTITY_OFFSET)
-                        GameController.OnEntity(tile.Index - (int) MapItems.ENTITY_OFFSET, pos);
+                    
+                    GameController.OnEntity(tile, pos);
                 }
             }
 
             CheckPureTuning();
+        }
+
+        protected override void ServerOnPlayerDisconnected(int clientId, string reason)
+        {
+            OnPlayerLeave(Players[clientId], reason);
+
+            if (Server.ClientInGame(clientId))
+            {
+                if (false) // TODO DEMO
+                {
+                    Server.SendPackMsg(new GameMsg_DeClientLeave()
+                    {
+                        Name = Server.ClientName(clientId),
+                        Reason = reason,
+                        ClientId = clientId,
+                    }, MsgFlags.NoSend, -1);
+                }
+
+                Server.SendPackMsg(new GameMsg_SvClientDrop()
+                    {
+                        ClientID = clientId,
+                        Reason = reason,
+                        Silent = Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators,
+                    }, MsgFlags.Vital | MsgFlags.NoRecord, -1);
+            }
+
+            Players[clientId].OnPlayerLeave(reason);
+            Players[clientId] = null;
+        }
+
+        protected override void ServerOnPlayerEnter(int clientId)
+        {
+            var clientInfo = ClientInfo(clientId);
+            if (Config["SvSilentSpectatorMode"] && Players[clientId].Team == Team.Spectators)
+                clientInfo.Silent = true;
+
+            for (var i = 0; i < Players.Length; i++)
+            {
+                if (i == clientId || Players[i] == null || !Server.ClientInGame(i) && !Players[i].IsDummy)
+                    continue;
+
+                if (Server.ClientInGame(i))
+                    Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, i);
+
+                Server.SendPackMsg(ClientInfo(i), MsgFlags.Vital | MsgFlags.NoRecord, clientId);
+            }
+
+            clientInfo.Local = true;
+            Server.SendPackMsg(clientInfo, MsgFlags.Vital | MsgFlags.NoRecord, clientId);
+
+            if (false) // TODO DEMO 
+            {
+                var msg = new GameMsg_DeClientEnter()
+                {
+                    Name = clientInfo.Name,
+                    Team = clientInfo.Team,
+                    ClientId = clientId
+                };
+                Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
+            }
+
+            OnPlayerEnter(Players[clientId]);
+        }
+
+        protected override void ServerOnPlayerReady(int clientId)
+        {
+            Players[clientId] = Kernel.Get<BasePlayer>();
+            Players[clientId].Init(clientId, false);
+
+            SendMotd(clientId);
+            SendSettings(clientId);
+
+            OnPlayerReady(Players[clientId]);
         }
 
         public override void RegisterConsoleCommands()
@@ -56,222 +136,236 @@ namespace TeeSharp.Server.Game
 
         public override bool IsClientSpectator(int clientId)
         {
-            return Players[clientId] != null && Players[clientId].Team == Team.SPECTATORS;
+            return Players[clientId] != null && Players[clientId].Team == Team.Spectators;
         }
 
         public override bool IsClientReady(int clientId)
         {
-            return Players[clientId] != null && Players[clientId].IsReady;
+            return Players[clientId] != null && Players[clientId].IsReadyToEnter;
         }
 
-        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, bool noDamage)
+        public override bool IsClientPlayer(int clientId)
         {
-            var e = Events.Create<SnapEvent_Explosion>();
-            if (e != null)
-                e.Position = pos;
+            return Players[clientId] != null && Players[clientId].Team != Team.Spectators;
+        }
 
-            if (noDamage)
-                return;
+        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, int damage)
+        {
+            //var e = Events.Create<SnapshotEventExplosion>();
+            //if (e != null)
+            //    e.Position = pos;
 
-            const float radius = 135.0f;
-            const float innerRadius = 48.0f;
+            //if (noDamage)
+            //    return;
 
-            var characters = World.FindEntities<Character>(pos, radius);
-            foreach (var character in characters)
-            {
-                var diff = character.Position - pos;
-                var forceDir = new Vector2(0, 1);
-                var l = diff.Length;
+            //const float radius = 135.0f;
+            //const float innerRadius = 48.0f;
 
-                if (l > 0)
-                    forceDir = diff.Normalized;
-                l = 1 - System.Math.Clamp((l - innerRadius) / (radius - innerRadius), 0f, 1f);
-                var dmg = (int) (6 * l);
+            //var characters = World.FindEntities<Character>(pos, radius);
+            //foreach (var character in characters)
+            //{
+            //    var diff = character.Position - pos;
+            //    var forceDir = new Vector2(0, 1);
+            //    var l = diff.Length;
 
-                if (dmg != 0)
-                    character.TakeDamage(forceDir * dmg * 2, dmg, owner, weapon);
-            }
+            //    if (l > 0)
+            //        forceDir = diff.Normalized;
+            //    l = 1 - System.Math.Clamp((l - innerRadius) / (radius - innerRadius), 0f, 1f);
+            //    var dmg = (int) (6 * l);
+
+            //    if (dmg != 0)
+            //        character.TakeDamage(forceDir * dmg * 2, dmg, owner, weapon);
+            //}
         }
 
         public override void CreatePlayerSpawn(Vector2 pos)
         {
-            var e = Events.Create<SnapEvent_Spawn>();
-            if (e == null)
-                return;
-
-            e.Position = pos;
+            Events.Create<SnapshotEventSpawn>(pos);
         }
 
         public override void CreateDeath(Vector2 pos, int clientId)
         {
-            var e = Events.Create<SnapEvent_Death>();
-            if (e == null)
-                return;
+            //var e = Events.Create<SnapshotEventDeath>();
+            //if (e == null)
+            //    return;
 
-            e.ClientId = clientId;
-            e.Position = pos;
+            //e.ClientId = clientId;
+            //e.Position = pos;
         }
 
         public override void CreateDamageInd(Vector2 pos, float a, int amount)
         {
-            a = 3 * 3.14159f / 2 + a;
-            var s = a - System.Math.PI / 3;
-            var e = a + System.Math.PI / 3;
+            //a = 3 * 3.14159f / 2 + a;
+            //var s = a - System.Math.PI / 3;
+            //var e = a + System.Math.PI / 3;
 
-            for (var i = 0; i < amount; i++)
-            {
-                var f = Common.Math.Mix(s, e, (float) (i + 1) / (amount + 2));
-                var @event = Events.Create<SnapEvent_DamageInd>();
-                if (@event == null)
-                    continue;
+            //for (var i = 0; i < amount; i++)
+            //{
+            //    var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
+            //    var @event = Events.Create<SnapshotEventDamage>();
+            //    if (@event == null)
+            //        continue;
 
-                @event.Position = pos;
-                @event.Angle = (int)(f * 256.0f);
-            }
+            //    @event.Position = pos;
+            //    @event.Angle = (int)(f * 256.0f);
+            //}
         }
 
         public override void CreateHammerHit(Vector2 pos)
         {
-            var e = Events.Create<SnapEvent_HammerHit>();
-            if (e == null)
-                return;
+            //var e = Events.Create<SnapshotEventHammerHit>();
+            //if (e == null)
+            //    return;
 
-            e.Position = pos;
+            //e.Position = pos;
         }
 
         public override void CreateSound(Vector2 pos, Sound sound, int mask = -1)
         {
-            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
-                return;
+            //if (sound < 0 || sound >= Sound.NumSounds)
+            //    return;
 
-            var e = Events.Create<SnapEvent_SoundWorld>();
-            if (e == null)
-                return;
+            //var e = Events.Create<SnapshotEventSoundWorld>();
+            //if (e == null)
+            //    return;
 
-            e.Position = pos;
-            e.Sound = sound;
+            //e.Position = pos;
+            //e.Sound = sound;
         }
 
         public override void CreaetSoundGlobal(Sound sound, int targetId = -1)
         {
-            if (sound < 0 || sound >= Sound.NUM_SOUNDS)
-                return;
+            //if (sound < 0 || sound >= Sound.NumSounds)
+            //    return;
 
-            var msg = new GameMsg_SvSoundGlobal
-            {
-                Sound = sound
-            };
+            //var msg = new GameMsg_SvSoundGlobal
+            //{
+            //    Sound = sound
+            //};
 
-            if (targetId == -2)
-                Server.SendPackMsg(msg, MsgFlags.NOSEND, -1);
-            else
-            {
-                var flags = MsgFlags.VITAL;
-                if (targetId != -1)
-                    flags |= MsgFlags.NORECORD;
-                Server.SendPackMsg(msg, flags, targetId);
-            }
+            //if (targetId == -2)
+            //    Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
+            //else
+            //{
+            //    var flags = MsgFlags.Vital;
+            //    if (targetId != -1)
+            //        flags |= MsgFlags.NoRecord;
+            //    Server.SendPackMsg(msg, flags, targetId);
+            //}
         }
 
         public override void CheckPureTuning()
         {
-            if (GameController == null)
-                return;
+            //if (GameController == null)
+            //    return;
 
-            if (new[] {"DM", "TDM", "CTF"}.Contains(GameController.GameType))
-            {
-                var error = false;
-                foreach (var pair in Tuning)
-                {
-                    if (pair.Value.Value != pair.Value.DefaultValue)
-                    {
-                        error = true;
-                        break;
-                    }
-                }
+            //if (new[] {"DM", "TDM", "CTF"}.Contains(GameController.GameType))
+            //{
+            //    var error = false;
+            //    foreach (var pair in Tuning)
+            //    {
+            //        if (pair.Value.Value != pair.Value.DefaultValue)
+            //        {
+            //            error = true;
+            //            break;
+            //        }
+            //    }
 
-                if (error)
-                {
-                    Tuning.Reset();
-                    Console.Print(OutputLevel.STANDARD, "server", "resetting tuning due to pure server");
-                }
-            }
+            //    if (error)
+            //    {
+            //        Tuning.Reset();
+            //        Console.Print(OutputLevel.Standard, "server", "resetting tuning due to pure server");
+            //    }
+            //}
         }
 
         public override void SendTuningParams(int clientId)
         {
-            var msg = new MsgPacker((int) GameMessages.SV_TUNEPARAMS);
+            CheckPureTuning();
+
+            var msg = new MsgPacker((int) GameMessage.ServerTuneParams, false);
             foreach (var pair in Tuning)
                 msg.AddInt(pair.Value.Value);
-            Server.SendMsg(msg, MsgFlags.VITAL, clientId);
+            Server.SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
         public override void SendBroadcast(int clientId, string msg)
         {
-            Server.SendPackMsg(new GameMsg_SvBroadcast
-            {
-                Message = msg
-            }, MsgFlags.VITAL, clientId);
+            //Server.SendPackMsg(new GameMsg_SvBroadcast
+            //{
+            //    Message = msg
+            //}, MsgFlags.Vital, clientId);
         }
 
         public override void SendWeaponPickup(int clientId, Weapon weapon)
         {
-            Server.SendPackMsg(new GameMsg_SvWeaponPickup
+            //Server.SendPackMsg(new GameMsg_SvWeaponPickup
+            //{
+            //    Weapon = weapon
+            //}, MsgFlags.Vital, clientId);
+        }
+
+        public override void SendEmoticon(int clientId, Emoticon emote)
+        {
+            Server.SendPackMsg(new GameMsg_SvEmoticon()
             {
-                Weapon = weapon
-            }, MsgFlags.VITAL, clientId);
+                ClientId = clientId,
+                Emoticon = emote
+            }, MsgFlags.Vital, -1);
         }
 
         public override void SendChatTarget(int clientId, string msg)
         {
-            Server.SendPackMsg(new GameMsg_SvChat
-            {
-                IsTeam = false,
-                ClientId = -1,
-                Message = msg
-            }, MsgFlags.VITAL, clientId);
+            //Server.SendPackMsg(new GameMsg_SvChat
+            //{
+            //    IsTeam = false,
+            //    ClientId = -1,
+            //    Message = msg
+            //}, MsgFlags.Vital, clientId);
         }
 
-        public override void SendChat(int chatterClientId, bool isTeamChat, string msg)
+        public override void SendChat(int from, ChatMode mode, int target, string message)
         {
-            string debug;
-            if (chatterClientId >= 0 && chatterClientId < Players.Length)
-                debug = $"{chatterClientId}:{Players[chatterClientId].Name} {msg}";
-            else
-                debug = $"*** {msg}";
-            Console.Print(OutputLevel.ADDINFO, isTeamChat ? "teamchat" : "chat", debug);
+            if (mode == ChatMode.None)
+                return;
 
-            if (isTeamChat)
+            var log = from < 0 ? $"*** {message}" : $"{@from}:{Server.ClientName(@from)}: {message}";
+            Console.Print(OutputLevel.AddInfo, mode.ToString(), log);
+
+            var msg = new GameMsg_SvChat()
             {
-                var p = new GameMsg_SvChat
-                {
-                    IsTeam = true,
-                    ClientId = chatterClientId,
-                    Message = msg
-                };
+                ChatMode = mode,
+                ClientId = from,
+                TargetId = -1,
+                Message = message,
+            };
 
-                // pack one for the recording only
-                Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NOSEND, -1);
+            if (mode == ChatMode.All)
+                Server.SendPackMsg(msg, MsgFlags.Vital, -1);
+            else if (mode == ChatMode.Team)
+            {
+                Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoSend, -1);
+
+                var team = Players[from].Team;
 
                 for (var i = 0; i < Players.Length; i++)
                 {
-                    if (Players[i] != null && Players[i].Team == Players[chatterClientId].Team)
-                        Server.SendPackMsg(p, MsgFlags.VITAL | MsgFlags.NORECORD, i);
+                    if (Players[i] != null && Players[i].Team == team)
+                        Server.SendPackMsg(msg, MsgFlags.Vital | MsgFlags.NoRecord, i);
                 }
             }
             else
             {
-                Server.SendPackMsg(new GameMsg_SvChat
-                {
-                    ClientId = chatterClientId,
-                    Message = msg,
-                    IsTeam = false
-                }, MsgFlags.VITAL, -1);
+                msg.TargetId = target;
+                Server.SendPackMsg(msg, MsgFlags.Vital, from);
+                Server.SendPackMsg(msg, MsgFlags.Vital, target);
             }
         }
 
         public override void OnTick()
         {
+            CheckPureTuning();
+
             World.Tick();
             GameController.Tick();
 
@@ -292,263 +386,276 @@ namespace TeeSharp.Server.Game
             throw new System.NotImplementedException();
         }
 
-        public override void OnMessage(int msgId, Unpacker unpacker, int clientId)
+        public override void OnMessage(GameMessage msg, UnPacker unPacker, int clientId)
         {
-            if (!GameMsgUnpacker.Unpack(msgId, unpacker, out var msg, out var error))
+            if (!GameMsgUnpacker.UnpackMessage(msg, unPacker, out var message, out string failedOn))
             {
-                Console.Print(OutputLevel.DEBUG, "server", $"dropped gamemessage='{(GameMessages) msgId}' ({msgId}), failed on '{error}'");
+                Console.Print(OutputLevel.Debug, "server", $"dropped message={msg} failed on={failedOn}");
                 return;
             }
 
             var player = Players[clientId];
-            
-            if (!Server.ClientInGame(clientId))
+
+            if (Server.ClientInGame(clientId))
             {
-                if (msg.MsgId == GameMessages.CL_STARTINFO) 
-                    OnMsgStartInfo(player, (GameMsg_ClStartInfo) msg);
-            }
-            else
-            {
-                switch (msg.MsgId)
+                switch (msg)
                 {
-                    case GameMessages.CL_SAY:
-                        OnMsgSay(player, (GameMsg_ClSay)msg);
+                    case GameMessage.ClientSay:
+                        OnMsgClientSay(player, (GameMsg_ClSay) message);
                         break;
-
-                    case GameMessages.CL_SETTEAM:
-                        OnMsgSetTeam(player, (GameMsg_ClSetTeam) msg);
+                    case GameMessage.ClientSetTeam:
+                        OnMsgClientSetTeam(player, (GameMsg_ClSetTeam) message);
                         break;
-
-                    case GameMessages.CL_SETSPECTATORMODE:
-                        OnMsgSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) msg);
+                    case GameMessage.ClientSetSpectatorMode:
+                        OnMsgClientSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) message);
                         break;
-
-                    case GameMessages.CL_CHANGEINFO:
+                    case GameMessage.ClientStartInfo:
                         break;
-                    case GameMessages.CL_KILL:
+                    case GameMessage.ClientKill:
+                        OnMsgClientKill(player, (GameMsg_ClKill) message);
                         break;
-                    case GameMessages.CL_EMOTICON:
+                    case GameMessage.ClientReadyChange:
+                        OnMsgClientReadyChange(player, (GameMsg_ClReadyChange) message);
                         break;
-                    case GameMessages.CL_VOTE:
+                    case GameMessage.ClientEmoticon:
+                        OnMsgClientEmoticon(player, (GameMsg_ClEmoticon) message);
                         break;
-                    case GameMessages.CL_CALLVOTE:
+                    case GameMessage.ClientVote:
                         break;
-                    case GameMessages.CL_ISDDNET:
-                        OnMsgIsDDNet(unpacker, player, (GameMsg_ClIsDDNet) msg);
+                    case GameMessage.ClientCallVote:
                         break;
                 }
             }
+            else if (msg == GameMessage.ClientStartInfo)
+            {
+                OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
+            }
         }
 
-        protected virtual void OnMsgSetSpectatorMode(BasePlayer player,
-            GameMsg_ClSetSpectatorMode msg)
+        protected override void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message)
         {
-            if (player.Team != Team.SPECTATORS ||
-                player.SpectatorId == msg.SpectatorId ||
-                player.ClientId == msg.SpectatorId ||
-                Config["SvSpamprotection"] && 
-                    player.LastSetSpectatorMode + Server.TickSpeed * 3 > Server.Tick)
-            {
+            if (Config["SvSpamprotection"] && player.LastSetSpectatorMode + Server.TickSpeed > Server.Tick)
                 return;
-            }
 
             player.LastSetSpectatorMode = Server.Tick;
-            if (msg.SpectatorId != -1 &&
-                (msg.SpectatorId < -1 || msg.SpectatorId >= Players.Length ||
-                 Players[msg.SpectatorId] == null ||
-                 Players[msg.SpectatorId].Team == Team.SPECTATORS))
-            {
-                SendChatTarget(player.ClientId, "Invalid spectator id");
-                return;
-            }
-
-            player.SpectatorId = msg.SpectatorId;
+            if (!player.SetSpectatorID(message.SpectatorMode, message.SpectatorId))
+                SendGameplayMessage(player.ClientId, GameplayMessage.SpectatorInvalidId);
         }
 
-        protected virtual void OnMsgSetTeam(BasePlayer player, GameMsg_ClSetTeam msg)
+        protected override void OnMsgClientReadyChange(BasePlayer player, GameMsg_ClReadyChange message)
         {
-            if (msg.Team < Team.SPECTATORS || msg.Team > Team.BLUE) 
+            if (player.LastReadyChangeTick + Server.TickSpeed > Server.Tick)
                 return;
 
-            if (World.IsPaused || player.Team == msg.Team || 
-                Config["SvSpamprotection"] &&
-                player.LastSetTeam + Server.TickSpeed * 3 > Server.Tick)
-            {
+            player.LastReadyChangeTick = Server.Tick;
+            GameController.OnPlayerReadyChange(player);
+        }
+
+        protected override void OnMsgClientKill(BasePlayer player, GameMsg_ClKill message)
+        {
+            if (GameController.CanSelfKill(player) && player.LastKillTick + Server.TickSpeed * 3 > Server.Tick)
                 return;
-            }
 
-            if (msg.Team != Team.SPECTATORS && LockTeams)
-            {
-                player.LastSetTeam = Server.Tick;
-                SendBroadcast(player.ClientId, "Teams are locked");
+            player.LastKillTick = Server.Tick;
+            player.KillCharacter(BasePlayer.WeaponSelf);
+        }
+
+        protected override void OnMsgClientEmoticon(BasePlayer player, GameMsg_ClEmoticon message)
+        {
+            if (Config["SvSpamprotection"] && player.LastEmoteTick + Server.TickSpeed * 3 > Server.Tick)
                 return;
-            }
 
-            if (player.TeamChangeTick > Server.Tick)
-            {
-                player.LastSetTeam = Server.Tick;
-                var timeLeft = (player.TeamChangeTick - Server.Tick) / Server.TickSpeed;
-                SendBroadcast(player.ClientId, $"Time to wait before changing team: {timeLeft/60}:{timeLeft%60}");
+            player.LastEmoteTick = Server.Tick;
+            SendEmoticon(player.ClientId, message.Emoticon);
+        }
+
+        protected override void OnMsgClientSetTeam(BasePlayer player, GameMsg_ClSetTeam message)
+        {
+            if (!GameController.IsTeamChangeAllowed(player))
                 return;
-            }
 
-            if (GameController.CanJoinTeam(player.ClientId, msg.Team))
+            if (player.Team == message.Team)
+                return;
+
+            if (Config["SvSpamprotection"] && player.LastSetTeamTick + Server.TickSpeed * 3 > Server.Tick)
+                return;
+
+            if (message.Team != Team.Spectators && LockTeams || player.TeamChangeTick > Server.Tick)
+                return;
+
+            player.LastSetTeamTick = Server.Tick;
+
+            if (GameController.CanJoinTeam(player, message.Team) &&
+                GameController.CanChangeTeam(player, message.Team))
             {
-                if (!GameController.CanChangeTeam(player, msg.Team))
-                    return;
-
-                player.LastSetTeam = Server.Tick;
-                player.TeamChangeTick = Server.Tick;
-                    
-                player.SetTeam(msg.Team);
-                GameController.CheckTeamBalance();
-
-                if (player.Team == Team.SPECTATORS || msg.Team == Team.SPECTATORS)
-                {
-                    // vote update
-                }
-            }
-            else
-            {
-                SendBroadcast(player.ClientId, $"Only {Players.Length - Config["SvSpectatorSlots"]}active players are allowed");
+                player.SetTeam(message.Team);
             }
         }
 
-        protected virtual void OnMsgIsDDNet(Unpacker unpacker, BasePlayer player, GameMsg_ClIsDDNet msg)
+        protected override void OnMsgClientSay(BasePlayer player, GameMsg_ClSay message)
         {
-            var version = unpacker.GetInt();
-            if (unpacker.Error)
-            {
-                if (player.ClientVersion < ClientVersion.DDRACE)
-                    player.ClientVersion = ClientVersion.DDRACE;
-            }
-            else player.ClientVersion = (ClientVersion) version;
-
-            Debug.Warning("ddnet", $"{player.ClientId} using ddnet client ({player.ClientVersion})");
-        }
-
-        protected virtual void OnMsgSay(BasePlayer player, GameMsg_ClSay msg)
-        {
-            if (string.IsNullOrEmpty(msg.Message) ||
-                Config["SvSpamprotection"] && player.LastChatMessage + Server.TickSpeed > Server.Tick)
-            {
-                return;
-            }
-
-            msg.Message = msg.Message.Limit(128);
-            player.LastChatMessage = Server.Tick;
-            SendChat(player.ClientId, msg.IsTeam, msg.Message);
-        }
-
-        protected virtual void OnMsgStartInfo(BasePlayer player, 
-            GameMsg_ClStartInfo msg)
-        {
-            if (player.IsReady)
+            if (string.IsNullOrEmpty(message.Message))
                 return;
 
-            player.IsReady = true;
-            player.LastChangeInfo = Server.Tick;
+            if (Config["SvSpamprotection"] && player.LastChatTick + Server.TickSpeed > Server.Tick)
+                return;
 
-            Server.SetClientName(player.ClientId, msg.Name);
-            Server.SetClientClan(player.ClientId, msg.Clan);
-            Server.SetClientCountry(player.ClientId, msg.Country);
+            message.Message = message.Message.Limit(128);
 
-            player.TeeInfo.SkinName = msg.Skin;
-            player.TeeInfo.UseCustomColor = msg.UseCustomColor;
-            player.TeeInfo.ColorBody = msg.ColorBody;
-            player.TeeInfo.ColorFeet = msg.ColorFeet;
+            if (Config["SvTournamentMode"] == 2 && player.Team == Team.Spectators &&
+                GameController.GameRunning && Server.IsAuthed(player.ClientId))
+            {
+                if (message.ChatMode != ChatMode.Whisper)
+                    message.ChatMode = ChatMode.Team;
+                else if (Players[message.TargetId] != null && Players[message.TargetId].Team != Team.Spectators)
+                    message.ChatMode = ChatMode.None;
+            }
+
+            player.LastChatTick = Server.Tick;
+            GameController.OnPlayerChat(player, message, out var isSend);
+
+            if (isSend)
+            {
+                SendChat(player.ClientId, message.ChatMode, message.TargetId, message.Message);
+            }
+        }
+
+        protected override void OnMsgClientStartInfo(BasePlayer player, GameMsg_ClStartInfo startInfo)
+        {
+            if (player.IsReadyToEnter)
+                return;
+
+            Server.ClientName(player.ClientId, startInfo.Name.Limit(BaseServerClient.MaxNameLength));
+            Server.ClientClan(player.ClientId, startInfo.Clan.Limit(BaseServerClient.MaxClanLength));
+            Server.ClientCountry(player.ClientId, startInfo.Country);
+
+            for (var i = SkinPart.Body; i < SkinPart.NumParts; i++)
+            {
+                player.TeeInfo[i].Name = startInfo.SkinPartNames[(int)i];
+                player.TeeInfo[i].Color = startInfo.SkinPartColors[(int)i];
+                player.TeeInfo[i].UseCustomColor = startInfo.UseCustomColors[(int)i];
+            }
+
+            player.OnChangeInfo();
 
             GameController.OnPlayerInfoChange(player);
 
-            // send all votes
+            Votes.SendClearMsg(player);
+            Votes.SendVotes(player);
 
             SendTuningParams(player.ClientId);
-            Server.SendPackMsg(new GameMsg_SvReadyToEnter(),
-                MsgFlags.VITAL | MsgFlags.FLUSH, player.ClientId);
+            player.ReadyToEnter();
         }
 
-        public override void OnBeforeSnapshots()
+        public override void OnBeforeSnapshot()
         {
+            World.BeforeSnapshot();
         }
 
         public override void OnAfterSnapshots()
         {
+            World.AfterSnapshot();
             Events.Clear();
         }
 
         public override void OnSnapshot(int snappingId)
         {
+            // TODO DEMO TUNING PARAMS 
+            {
+
+            }
+
             World.OnSnapshot(snappingId);
-            GameController.OnSnapshot(snappingId);
+            GameController.OnSnapshot(snappingId, out _);
             Events.OnSnapshot(snappingId);
 
             for (var i = 0; i < Players.Length; i++)
             {
                 if (Players[i] == null)
                     continue;
-                Players[i].OnSnapshot(snappingId);
+                Players[i].OnSnapshot(snappingId, out _, out _, out _);
             }
-
-            Players[snappingId].FakeSnapshot(snappingId);
         }
 
-        public override void OnClientConnected(int clientId)
+        protected override GameMsg_SvClientInfo ClientInfo(int clientId)
         {
-            var startTeam = Config["SvTournamentMode"]
-                ? Team.SPECTATORS
-                : GameController.GetAutoTeam(clientId);
-
-            Players[clientId] = Kernel.Get<BasePlayer>();
-            Players[clientId].Init(clientId, startTeam);
-
-            GameController.CheckTeamBalance();
-            GameController.OnClientConnected(clientId);
-            // send active vote
-
-            Server.SendPackMsg(new GameMsg_SvMotd {Message = Config["SvMotd"]},
-                MsgFlags.VITAL | MsgFlags.FLUSH, clientId);
-        }
-
-        public override void OnClientEnter(int clientId)
-        {
-            Players[clientId].Respawn();
-
-            SendChat(-1, false, $"'{Players[clientId].Name}' entered and joined the {GameController.GetTeamName(Players[clientId].Team)}");
-            Console.Print(OutputLevel.DEBUG, "game", $"team_join player='{clientId}:{Players[clientId].Name}' team={Players[clientId].Team}");
-            GameController.OnClientEnter(clientId);
-            // update vote
-        }
-
-        public override void OnClientDrop(int clientId, string reason)
-        {
-            Players[clientId].OnDisconnect(reason);
-            Players[clientId] = null;
-
-            GameController.CheckTeamBalance();
-            // update vote
-
-            for (var i = 0; i < Players.Length; i++)
+            var clientInfo = new GameMsg_SvClientInfo()
             {
-                if (Players[i] == null ||
-                    Players[i].SpectatorId != clientId)
-                {
-                    continue;
-                }
+                ClientID = clientId,
+                Local = false,
+                Team = Players[clientId].Team,
+                Name = Server.ClientName(clientId),
+                Clan = Server.ClientClan(clientId),
+                Country = Server.ClientCountry(clientId),
+                Silent = false,
+            };
 
-                Players[i].SpectatorId = -1;
+            for (var i = SkinPart.Body; i < SkinPart.NumParts; i++)
+            {
+                clientInfo.SkinPartNames[(int)i] = Players[clientId].TeeInfo[i].Name;
+                clientInfo.SkinPartColors[(int)i] = Players[clientId].TeeInfo[i].Color;
+                clientInfo.UseCustomColors[(int)i] = Players[clientId].TeeInfo[i].UseCustomColor;
+            }
+
+            return clientInfo;
+        }
+
+        public override void OnClientPredictedInput(int clientId, int[] input)
+        {
+            if (!World.Paused)
+            {
+                var playerInput = BaseSnapshotItem.FromArray<SnapshotPlayerInput>(input);
+                if (playerInput.IsValid())
+                    Players[clientId].OnPredictedInput(playerInput);
+                else 
+                    Console.Print(OutputLevel.Debug, "server", "SnapshotPlayerInput not valid");
             }
         }
 
-        public override void OnClientPredictedInput(int clientId, SnapObj_PlayerInput input)
+        public override void OnClientDirectInput(int clientId, int[] input)
         {
-            if (!World.IsPaused)
-                Players[clientId].OnPredictedInput(input);
+            var playerInput = BaseSnapshotItem.FromArray<SnapshotPlayerInput>(input);
+            if (playerInput.IsValid())
+                Players[clientId].OnDirectInput(playerInput);
+            else
+                Console.Print(OutputLevel.Debug, "server", "SnapshotPlayerInput not valid");
         }
 
-        public override void OnClientDirectInput(int clientId, SnapObj_PlayerInput input)
+        public override void SendSettings(int clientId)
         {
-            if (!World.IsPaused)
-                Players[clientId].OnDirectInput(input);
+            var msg = new GameMsg_SvSettings()
+            {
+                KickVote = Config["SvVoteKick"],
+                KickMin = Config["SvVoteKickMin"],
+                SpectatorsVote = Config["SvVoteSpectate"],
+                TeamLock = false, // TODO
+                TeamBalance = Config["SvTeambalanceTime"],
+                PlayerSlots = Config["SvPlayerSlots"],
+            };
+            Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
+        }
+
+        public override void SendGameplayMessage(int clientId, GameplayMessage message, 
+            int? param1 = null, int? param2 = null, int? param3 = null)
+        {
+            var msg = new GameMsg_SvGameMsg()
+            {
+                Message = message,
+                Param1 = param1,
+                Param2 = param2,
+                Param3 = param3
+            };
+
+            Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
+        }
+
+        public override void SendMotd(int clientId)
+        {
+            var msg = new GameMsg_SvMotd()
+            {
+                Message = Config["SvMotd"]
+            };
+            Server.SendPackMsg(msg, MsgFlags.Vital, clientId);
         }
     }
 }

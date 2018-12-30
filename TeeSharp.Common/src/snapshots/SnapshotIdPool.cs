@@ -4,32 +4,32 @@ namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotIdPool
     {
-        public const int MAX_IDS = 32 * 1024;
+        private const int MaxIds = 32 * 1024;
 
-        private enum CIDState
+        private enum IDState
         {
-            FREE = 0,
-            ALLOCATED,
-            TIMEOUTED
+            Free = 0,
+            Allocated,
+            TimeOuted
         }
 
-        private class CID
+        private class ID
         {
             public int Next;
-            public CIDState State;
+            public IDState State;
             public long Timeout;
         }
 
-        private CID[] _ids;
+        private ID[] _ids;
         private int _firstFree;
         private int _firstTimed;
         private int _lastTimed;
 
         public SnapshotIdPool()
         {
-            _ids = new CID[MAX_IDS];
+            _ids = new ID[MaxIds];
             for (var i = 0; i < _ids.Length; i++)
-                _ids[i] = new CID();
+                _ids[i] = new ID();
 
             Reset();
         }
@@ -39,7 +39,7 @@ namespace TeeSharp.Common.Snapshots
             for (var i = 0; i < _ids.Length; i++)
             {
                 _ids[i].Next = i + 1;
-                _ids[i].State = CIDState.FREE;
+                _ids[i].State = IDState.Free;
             }
 
             _ids[_ids.Length - 1].Next = -1;
@@ -53,8 +53,8 @@ namespace TeeSharp.Common.Snapshots
             var nextTimed = _ids[_firstTimed].Next;
 
             _ids[_firstTimed].Next = _firstFree;
-            _ids[_firstTimed].State = CIDState.FREE;
-            _firstFree = _firstTimed;
+            _ids[_firstTimed].State = IDState.Free;
+            _firstFree = _firstTimed;   
 
             _firstTimed = nextTimed;
             if (_firstTimed == -1)
@@ -64,7 +64,6 @@ namespace TeeSharp.Common.Snapshots
         public int NewId()
         {
             var now = Time.Get();
-
             while (_firstTimed != -1 && _ids[_firstTimed].Timeout < now)
                 RemoveFirstTimeout();
 
@@ -76,7 +75,7 @@ namespace TeeSharp.Common.Snapshots
             }
 
             _firstFree = _ids[_firstFree].Next;
-            _ids[id].State = CIDState.ALLOCATED;
+            _ids[id].State = IDState.Allocated;
 
             return id;
         }
@@ -92,7 +91,7 @@ namespace TeeSharp.Common.Snapshots
             if (id < 0)
                 return;
 
-            _ids[id].State = CIDState.TIMEOUTED;
+            _ids[id].State = IDState.TimeOuted;
             _ids[id].Timeout = Time.Get() + Time.Freq() * 5;
             _ids[id].Next = -1;
 

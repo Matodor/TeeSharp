@@ -2,7 +2,7 @@
 {
     public class TuningParameter
     {
-        public readonly string Key;
+        public readonly string ScriptName;
         public readonly int DefaultValue;
 
         public int Value { get; set; }
@@ -13,9 +13,9 @@
             set => Value = (int) System.Math.Round(value * 100f);
         }
 
-        public TuningParameter(string key, string scriptName, float defaultValue)
+        public TuningParameter(string scriptName, float defaultValue)
         {
-            Key = key;
+            ScriptName = scriptName;
             DefaultValue = (int) System.Math.Round(defaultValue * 100f);
             Value = DefaultValue;
         }
