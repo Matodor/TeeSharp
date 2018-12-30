@@ -7,15 +7,6 @@ namespace TeeSharp.Core
 {
     public static class Extensions
     {
-        [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int memcmp(byte[] b1, byte[] b2, long count);
-
-        /// <summary>
-        /// Convert ASCII string to array of ints. Max string length (<see cref="num"/> * 4 - 1)
-        /// </summary>
-        /// <param name="input">Input ASCII string.</param>
-        /// <param name="num">Length of ints array</param>
-        /// <returns></returns>
         public static int[] StrToInts(this string input, int num)
         {
             byte[] bytes;
@@ -81,11 +72,20 @@ namespace TeeSharp.Core
             return GetString();
         }
 
-        public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit = 0)
+        public static bool ArrayCompare(this byte[] b1, byte[] compareArray)
         {
-            if (limit == 0)
-                return b1.Length == compareArray.Length && memcmp(b1, compareArray, b1.Length) == 0;
-            return memcmp(b1, compareArray, limit) == 0;
+            if (b1.Equals(compareArray))
+                return true;
+
+            return b1.AsSpan().SequenceEqual(compareArray);    
+        }
+
+        public static bool ArrayCompare(this byte[] b1, byte[] compareArray, int limit)
+        {
+            if (b1.Equals(compareArray))
+                return true;
+
+            return b1.AsSpan(0, limit).SequenceEqual(compareArray);
         }
 
         public static object ReadStructs(this byte[] buffer, Type type, int offset = 0)
