@@ -77,21 +77,12 @@ namespace TeeSharp.Network
                 if (UdpClient.Available <= 0)
                     return false;
 
-                IPEndPoint endPoint = null;
-                byte[] data;
-
-                try
-                {
-                    data = UdpClient.Receive(ref endPoint);
-                }
-                catch
-                {
-                    continue;
-                }
+                var endPoint = default(IPEndPoint);
+                var data = UdpClient.Receive(ref endPoint);
 
                 if (data.Length == 0)
                     continue;
-
+                
                 if (!NetworkHelper.UnpackPacket(data, data.Length, ChunkReceiver.ChunkConstruct))
                     continue;
 
@@ -108,45 +99,43 @@ namespace TeeSharp.Network
 
                 for (var i = 0; i < Connections.Count; i++)
                 {
+                    if (Connections[i].State == ConnectionState.Offline && freeSlot < 0)
+                        freeSlot = i;
+
                     if (Connections[i].State != ConnectionState.Offline &&
                         Connections[i].EndPoint.Compare(endPoint, comparePorts: false))
                     {
                         sameIps++;
 
-                        if (Connections[i].EndPoint.Port == endPoint.Port)
+                        if (Connections[i].EndPoint.Port != endPoint.Port)
+                            continue;
+
+                        if (Connections[i].Feed(ChunkReceiver.ChunkConstruct, endPoint))
                         {
-                            if (Connections[i].Feed(ChunkReceiver.ChunkConstruct, endPoint))
+                            if (ChunkReceiver.ChunkConstruct.DataSize > 0)
                             {
-                                if (ChunkReceiver.ChunkConstruct.DataSize > 0)
+                                if (ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Connless))
                                 {
-                                    if (!ChunkReceiver.ChunkConstruct.Flags.HasFlag(PacketFlags.Connless))
+                                    packet = new Chunk()
                                     {
-                                        ChunkReceiver.Start(endPoint, Connections[i], i);
-                                    }
-                                    else
-                                    {
-                                        packet = new Chunk()
-                                        {
-                                            Flags = SendFlags.Connless,
-                                            EndPoint = endPoint,
-                                            ClientId = i,
-                                            DataSize = ChunkReceiver.ChunkConstruct.DataSize,
-                                            Data = ChunkReceiver.ChunkConstruct.Data
-                                        };
+                                        Flags = SendFlags.Connless,
+                                        EndPoint = endPoint,
+                                        ClientId = i,
+                                        DataSize = ChunkReceiver.ChunkConstruct.DataSize,
+                                        Data = ChunkReceiver.ChunkConstruct.Data
+                                    };
 
-                                        responseToken = TokenHelper.TokenNone;
-                                        return true;
-                                    }
+                                    responseToken = TokenHelper.TokenNone;
+                                    return true;
                                 }
+
+                                ChunkReceiver.Start(endPoint, Connections[i], i);
                             }
-
-                            foundSlot = i;
-                            break;
                         }
-                    }
 
-                    if (Connections[i].State == ConnectionState.Offline && freeSlot < 0)
-                        freeSlot = i;
+                        foundSlot = i;
+                        break;
+                    }
                 }
 
                 if (foundSlot >= 0)
@@ -173,7 +162,7 @@ namespace TeeSharp.Network
                             Connections[freeSlot].SetToken(ChunkReceiver.ChunkConstruct.Token);
                             Connections[freeSlot].Feed(ChunkReceiver.ChunkConstruct, endPoint);
                             OnClientConnected(freeSlot);
-                            return false;
+                            continue;
                         }
                         
                         NetworkHelper.SendConnectionMsg(UdpClient, endPoint,
@@ -240,8 +229,8 @@ namespace TeeSharp.Network
                         TokenCache.SendPacketConnless(packet.EndPoint, packet.Data, packet.DataSize);
                     else
                     {
-                        Debug.Assert(packet.ClientId >= 0 && packet.ClientId < Connections.Count, 
-                            "errornous client id");
+                        Debug.Assert(packet.ClientId >= 0 && 
+                                     packet.ClientId < Connections.Count, "errornous client id");
                         Connections[packet.ClientId].SendPacketConnless(packet.Data, packet.DataSize);
                     }
                 }
@@ -254,8 +243,8 @@ namespace TeeSharp.Network
                     return false;
                 }
 
-                Debug.Assert(packet.ClientId >= 0 && packet.ClientId < Connections.Count,
-                    "errornous client id");
+                Debug.Assert(packet.ClientId >= 0 && 
+                             packet.ClientId < Connections.Count, "errornous client id");
 
                 var flags = packet.Flags.HasFlag(SendFlags.Vital)
                     ? ChunkFlags.Vital

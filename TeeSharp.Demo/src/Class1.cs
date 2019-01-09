@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TeeSharp.Demo
+﻿namespace TeeSharp.Demo
 {
     public class Class1
     {

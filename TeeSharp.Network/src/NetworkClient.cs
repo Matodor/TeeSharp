@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Sockets;
 using TeeSharp.Core;
 using TeeSharp.Network.Enums;
 using TeeSharp.Network.Extensions;

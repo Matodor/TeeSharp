@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using TeeSharp.Common.Enums;
 
 namespace TeeSharp.Common.Snapshots
 {

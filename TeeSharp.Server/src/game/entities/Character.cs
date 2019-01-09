@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;

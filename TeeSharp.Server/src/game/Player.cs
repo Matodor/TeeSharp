@@ -1,6 +1,5 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
-using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Server.Game.Entities;
@@ -12,6 +11,8 @@ namespace TeeSharp.Server.Game
     {
         public override void Init(int clientId, bool dummy)
         {
+            base.Init(clientId, dummy);
+
             Server = Kernel.Get<BaseServer>();
             GameContext = Kernel.Get<BaseGameContext>();
             Config = Kernel.Get<BaseConfig>();
@@ -45,7 +46,6 @@ namespace TeeSharp.Server.Game
         {
             if (!IsDummy && !Server.ClientInGame(ClientId))
                 return;
-
 
             var info = Server.ClientInfo(ClientId);
             Latency.Accumulate += info.Latency;

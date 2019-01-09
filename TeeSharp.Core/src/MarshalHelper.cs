@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace TeeSharp.Core
+﻿namespace TeeSharp.Core
 {
     public static class MarshalHelper
     {

@@ -1,4 +1,6 @@
-﻿namespace TeeSharp.Core
+﻿using System;
+
+namespace TeeSharp.Core
 {
     public static class Debug
     {
@@ -28,6 +30,11 @@
         public static void Warning(string sys, string format)
         {
             Logger.LogFormat(LogType.Warning, $"[{sys}] {format}");
+        }
+
+        public static void Exception(string sys, Exception exception)
+        {
+            Logger.LogFormat(LogType.Exception, $"[{sys}] {exception}");
         }
 
         public static void Exception(string sys, string format)
