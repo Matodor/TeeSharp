@@ -7,6 +7,13 @@ namespace TeeSharp.Server
     {
         public static readonly DataPickupsContainer Pickups = new DataPickupsContainer();
         public static readonly DataWeaponsContainer Weapons = new DataWeaponsContainer();
+        public static readonly DataExplosion Explosion = new DataExplosion();
+    }
+
+    public class DataExplosion
+    {
+        public float Radius { get; set; } = 135f;
+        public float MaxForce { get; set; } = 12f;
     }
 
     public class DataPickupsContainer
