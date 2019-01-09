@@ -83,7 +83,7 @@ namespace TeeSharp.Server
         public DataWeaponInfoGun Gun => (DataWeaponInfoGun) Info[1];
         public DataWeaponInfoShotgun Shotgun => (DataWeaponInfoShotgun) Info[2];
         public DataWeaponInfoGrenade Grenade => (DataWeaponInfoGrenade) Info[3];
-        public DataWeaponInfoRifle Rifle => (DataWeaponInfoRifle) Info[4];
+        public DataWeaponInfoRifle Laser => (DataWeaponInfoRifle) Info[4];
         public DataWeaponInfoNinja Ninja => (DataWeaponInfoNinja) Info[5];
 
         public readonly DataWeaponInfo[] Info = 

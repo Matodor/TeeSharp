@@ -90,7 +90,7 @@ namespace TeeSharp.Server.Game
         //{
         //    if (team == Team.Spectators)
         //    {
-        //        spawnPos = Vector2.zero;
+        //        spawnPos = Vector2.Zero;
         //        return false;
         //    }
 

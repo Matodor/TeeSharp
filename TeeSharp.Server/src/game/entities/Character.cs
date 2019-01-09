@@ -329,6 +329,8 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
         {
+            var laser = new Laser(direction, Tuning["LaserReach"], Player.ClientId) {Position = Position};
+            GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
         protected virtual void DoWeaponFireNinja(Vector2 startPos, Vector2 direction)
