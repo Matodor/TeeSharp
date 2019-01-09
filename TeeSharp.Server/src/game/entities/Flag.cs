@@ -9,7 +9,7 @@ namespace TeeSharp.Server.Game.Entities
         public Character Carrier { get; protected set; }
         public Team Team { get; protected set; }
 
-        public Flag(int idsCount) : base(idsCount)
+        public Flag() : base(idsCount: 1)
         {
         }
 

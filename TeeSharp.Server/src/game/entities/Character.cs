@@ -62,7 +62,6 @@ namespace TeeSharp.Server.Game.Entities
         public virtual int Health { get; protected set; }
         public virtual int Armor { get; protected set; }
 
-
         protected virtual CharacterCore Core { get; set; }
         protected virtual CharacterCore SendCore { get; set; }
         protected virtual CharacterCore ReckoningCore { get; set; }
@@ -165,24 +164,24 @@ namespace TeeSharp.Server.Game.Entities
             Weapons[(int) ActiveWeapon].AmmoRegenStart = 0;
         }
 
-        public bool IsGrounded()
-        {
-            //if (GameContext.MapCollision.IsTileSolid(
-            //    Position.x + ProximityRadius / 2,
-            //    Position.y + ProximityRadius / 2 + 2))
-            //{
-            //    return true;
-            //}
+        //public bool IsGrounded()
+        //{
+        //    if (GameContext.MapCollision.IsTileSolid(
+        //        Position.x + ProximityRadius / 2,
+        //        Position.y + ProximityRadius / 2 + 2))
+        //    {
+        //        return true;
+        //    }
 
-            //if (GameContext.MapCollision.IsTileSolid(
-            //    Position.x - ProximityRadius / 2,
-            //    Position.y + ProximityRadius / 2 + 2))
-            //{
-            //    return true;
-            //}
+        //    if (GameContext.MapCollision.IsTileSolid(
+        //        Position.x - ProximityRadius / 2,
+        //        Position.y + ProximityRadius / 2 + 2))
+        //    {
+        //        return true;
+        //    }
 
-            return false;
-        }
+        //    return false;
+        //}
 
         public virtual void SetEmote(Emote emote, int stopTick)
         {
@@ -198,7 +197,9 @@ namespace TeeSharp.Server.Game.Entities
             Died?.Invoke(this, GameContext.Players[killer], weapon, ref modeSpecial);
 
             Console.Print(OutputLevel.Debug, "game",
-                $"kill killer='{killer}:{Server.ClientName(killer)}' victim='{Player.ClientId}:{Server.ClientName(Player.ClientId)}' weapon={weapon} special={modeSpecial}");
+                $"kill killer='{killer}:{Server.ClientName(killer)}' " +
+                $"victim='{Player.ClientId}:{Server.ClientName(Player.ClientId)}' " +
+                $"weapon={weapon} special={modeSpecial}");
 
             Server.SendPackMsg(new GameMsg_SvKillMsg
             {
@@ -405,40 +406,40 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreateSound(Position, Sound.GunFire);
         }
 
-        protected virtual void DoWeaponFireHammer(Vector2 projStartPos, Vector2 direction)
+        protected virtual void DoWeaponFireHammer(Vector2 startPos, Vector2 direction)
         {
-            //GameContext.CreateSound(Position, Sound.HammerFire);
-            //var targets = GameWorld.FindEntities<Character>(startPos, ProximityRadius * 0.5f);
-            //var hits = 0;
+            GameContext.CreateSound(Position, Sound.HammerFire);
 
-            //foreach (var target in targets)
-            //{
-            //    if (target == this || GameContext.MapCollision.IntersectLine(
-            //            startPos, target.Position, out var _, out var _) != CollisionFlags.NONE)
-            //    {
-            //        continue;
-            //    }
+            foreach (var target in Entities.Find(startPos, ProximityRadius * 0.5f))
+            {
+                if (target == this)
+                    continue;
 
-            //    if ((target.Position - startPos).Length > 0)
-            //    {
-            //        GameContext.CreateHammerHit(
-            //            target.Position - (target.Position - startPos)
-            //            .Normalized * ProximityRadius * 0.5f);
-            //    }
-            //    else
-            //        GameContext.CreateHammerHit(startPos);
+                var collision = GameContext.MapCollision.IntersectLine(startPos, target.Position, out _, out _);
+                if (collision.HasFlag(CollisionFlags.Solid))
+                    continue;
 
-            //    var dir = (target.Position - Position).Length > 0
-            //        ? (target.Position - Position).Normalized
-            //        : new Vector2(0, -1f);
+                if ((target.Position - startPos).Length > 0f)
+                {
+                    GameContext.CreateHammerHit(target.Position - 
+                                               (target.Position - startPos).Normalized * ProximityRadius * 0.5f);
+                }
+                else
+                    GameContext.CreateHammerHit(startPos);
 
-            //    target.TakeDamage(new Vector2(0f, -1f) + (dir + new Vector2(0f, -1f)).Normalized * 10f,
-            //        ServerData.Data.Weapons.Hammer.Damage, Player.ClientId, Weapon.Hammer);
-            //    hits++;
-            //}
+                var forceDirection = (target.Position - Position).Length > 0f 
+                                   ? (target.Position - Position).Normalized 
+                                   : new Vector2(0f, -1f);
 
-            //if (hits > 0)
-            //    ReloadTimer = Server.TickSpeed / 3;
+                target.TakeDamage(
+                    force: new Vector2(0, -1f) + (forceDirection + new Vector2(0f, -1.1f)).Normalized * 10f,
+                    source: forceDirection * -1,
+                    damage: ServerData.Weapons.Hammer.Damage,
+                    from: Player.ClientId,
+                    weapon: Weapon.Hammer);
+
+                ReloadTimer = Server.TickSpeed / 3;
+            }
         }
 
         protected virtual void DoWeaponFire(Weapon weapon, Vector2 startPos, Vector2 direction)
@@ -494,156 +495,16 @@ namespace TeeSharp.Server.Game.Entities
                 ReloadTimer = ServerData.Weapons[ActiveWeapon].FireDelay * Server.TickSpeed / 1000;
         }
 
-        public virtual bool TakeDamage(Vector2 force, int damage, int from, Weapon weapon)
+        public virtual bool TakeDamage(Vector2 force, Vector2 source, int damage, int from, Weapon weapon)
         {
-            return false;
-            //Core.Velocity += force;
+            Core.Velocity += force;
 
-            //if (GameContext.GameController.IsFriendlyFire(Player.ClientId, from) && !Config["SvTeamdamage"])
-            //    return false;
-
-            //if (from == Player.ClientId)
-            //    damage = System.Math.Max(1, damage / 2);
-
-            //DamageTaken++;
-
-            //if (Server.Tick < DamageTakenTick + 25)
-            //{
-            //    GameContext.CreateDamageInd(Position, DamageTaken * 0.25f, damage);
-            //}
-            //else
-            //{
-            //    DamageTaken = 0;
-            //    GameContext.CreateDamageInd(Position, 0, damage);
-            //}
-
-            //if (damage != 0)
-            //{
-            //    if (Armor != 0)
-            //    {
-            //        if (damage > 1)
-            //        {
-            //            Health--;
-            //            damage--;
-            //        }
-
-            //        if (damage > Armor)
-            //        {
-            //            damage -= Armor;
-            //            Armor = 0;
-            //        }
-            //        else
-            //        {
-            //            Armor -= damage;
-            //            damage = 0;
-            //        }
-            //    }
-
-            //    Health -= damage;
-            //}
-
-            //DamageTakenTick = Server.Tick;
-
-            //if (from >= 0 && from != Player.ClientId && GameContext.Players[from] != null)
-            //{
-            //    var mask = GameContext.MaskOne(from);
-            //    for (var i = 0; i < GameContext.Players.Length; i++)
-            //    {
-            //        if (GameContext.Players[i] == null)
-            //            continue;
-
-            //        if (GameContext.Players[i].Team == Team.Spectators &&
-            //            GameContext.Players[i].SpectatorId == from)
-            //        {
-            //            mask |= GameContext.MaskOne(i);
-            //        }
-            //    }
-            //    GameContext.CreateSound(GameContext.Players[from].ViewPos, Sound.Hit, mask);
-            //}
-
-            //if (Health <= 0)
-            //{
-            //    Die(from, weapon);
-
-            //    if (from >= 0 && from != Player.ClientId && GameContext.Players[from] != null)
-            //    {
-            //        var chr = GameContext.Players[from].GetCharacter();
-            //        chr?.SetEmote(Emote.Happy, Server.Tick + Server.TickSpeed);
-            //    }
-
-            //    return false;
-            //}
-
-            //GameContext.CreateSound(Position, damage > 2 
-            //    ? Sound.PlayerPainLong 
-            //    : Sound.PlayerPainShort);
-
-            //SetEmote(Emote.Pain, Server.Tick + 500 * Server.TickSpeed / 1000);
-            //return true;
+            SetEmote(Emote.Pain, Server.Tick + Server.TickSpeed / 2);
+            return true;
         }
 
         protected virtual void HandleNinja()
         {
-            //if (ActiveWeapon != Weapon.Ninja)
-            //    return;
-
-            //if (Server.Tick - NinjaStat.ActivationTick > 
-            //    ServerData.Data.Weapons.Ninja.Duration * Server.Tick / 1000)
-            //{
-            //    Weapons[(int) Weapon.Ninja].Got = false;
-            //    ActiveWeapon = LastWeapon;
-
-            //    SetWeapon(ActiveWeapon);
-            //    return;
-            //}
-
-            //NinjaStat.CurrentMoveTime--;
-            //if (NinjaStat.CurrentMoveTime == 0)
-            //{
-            //    Core.Velocity = NinjaStat.ActivationDir * NinjaStat.OldVelAmount;
-            //}
-
-            //if (NinjaStat.CurrentMoveTime <= 0)
-            //    return;
-
-            //Core.Velocity = NinjaStat.ActivationDir * ServerData.Data.Weapons.Ninja.Velocity;
-            //var oldPos = Position;
-            //var vel = Core.Velocity;
-            //var pos = Core.Position;
-
-            //GameContext.MapCollision.MoveBox(ref pos, ref vel, new Vector2(ProximityRadius, ProximityRadius), 0f);
-            //Core.Velocity = Vector2.zero;
-            //Core.Position = pos;
-
-            //var dir = Position - oldPos;
-            //var radius = ProximityRadius * 2f;
-            //var center = oldPos + dir * 0.5f;
-
-            //foreach (var character in GameWorld.FindEntities<Character>(center, radius))
-            //{
-            //    if (character == this)
-            //        continue;
-
-            //    var alreadyHit = false;
-            //    for (var i = 0; i < HitObjects.Count; i++)
-            //    {
-            //        if (HitObjects[i] == character)
-            //            alreadyHit = true;
-            //    }
-
-            //    if (alreadyHit)
-            //        continue;
-                
-            //    if (MathHelper.Distance(character.Position, Position) > ProximityRadius * 2f)
-            //        continue;
-
-            //    GameContext.CreateSound(character.Position, Sound.NinjaHit);
-            //    if (HitObjects.Count < 10)
-            //        HitObjects.Add(character);
-
-            //    character.TakeDamage(new Vector2(0, -10.0f), ServerData.Data.Weapons.Ninja.Damage, 
-            //        Player.ClientId, Weapon.Ninja);
-            //}
         }
 
         protected virtual void HandleWeapons()

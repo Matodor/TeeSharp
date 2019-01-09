@@ -636,7 +636,7 @@ namespace TeeSharp.Server
             if (!GameContext.IsClientReady(clientId))
                 return;
 
-            Console.Print(OutputLevel.Standard, "server", $"player has entered the game. ClientID={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
+            Console.Print(OutputLevel.Standard, "server", $"player has entered the game. ClientId={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.InGame;
             SendServerInfo(clientId);
             OnPlayerEnter(clientId);
@@ -650,7 +650,7 @@ namespace TeeSharp.Server
             if (Clients[clientId].State != ServerClientState.Connecting)
                 return;
 
-            Console.Print(OutputLevel.AddInfo, "server", $"player is ready. ClientID={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
+            Console.Print(OutputLevel.AddInfo, "server", $"player is ready. ClientId={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.Ready;
             OnPlayerReady(clientId);
 
