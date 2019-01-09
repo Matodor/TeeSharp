@@ -1,34 +1,35 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game.Entities
 {
     public class Projectile : Entity<Projectile>
     {
-        private readonly Weapon _weapon;
-        private readonly int _ownerId;
-        private readonly Vector2 _direction;
-        private readonly int _damage;
-        private readonly bool _explosive;
-        private readonly float _force;
-        private readonly Sound _soundImpact;
+        public readonly Weapon Weapon;
+        public readonly int OwnerId;
+        public readonly Vector2 Direction;
+        public readonly int Damage;
+        public readonly bool Explosive;
+        public readonly float Force;
+        public readonly Sound SoundImpact;
         private int _startTick;
         private int _lifeSpan;
 
         public override float ProximityRadius { get; protected set; }
 
         public Projectile(Weapon weapon, int ownerId, Vector2 direction,
-            int lifeSpan, int damage, bool explosive, float force, Sound soundImpact) : base(1)
+            int lifeSpan, int damage, bool explosive, float force, Sound soundImpact) : base(idsCount: 1)
         {
-            _weapon = weapon;
-            _ownerId = ownerId;
-            _direction = direction;
+            Weapon = weapon;
+            OwnerId = ownerId;
+            Direction = direction;
+            Damage = damage;
+            Explosive = explosive;
+            Force = force;
+            SoundImpact = soundImpact;
             _lifeSpan = lifeSpan;
-            _damage = damage;
-            _explosive = explosive;
-            _force = force;
-            _soundImpact = soundImpact;
             _startTick = Server.Tick;
 
             Reseted += OnReseted;
@@ -43,34 +44,36 @@ namespace TeeSharp.Server.Game.Entities
         {
             base.Tick();
 
-            var prevTime = (Server.Tick - _startTick - 1) / (float)Server.TickSpeed;
-            var currentTime = (Server.Tick - _startTick) / (float)Server.TickSpeed;
+            var prevTime = (Server.Tick - _startTick - 1) / (float) Server.TickSpeed;
+            var currentTime = (Server.Tick - _startTick) / (float) Server.TickSpeed;
             var prevPos = GetPos(prevTime);
             var currentPos = GetPos(currentTime);
 
-            var collideFlags = GameContext.MapCollision.IntersectLine(prevPos, currentPos, out var collisionPos, out _);
-            var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
-            var targetCharacter = GameWorld.IntersectCharacter(prevPos, currentPos, 6.0f, ref currentPos, ownerCharacter);
+            var collideFlags = GameContext.MapCollision.IntersectLine(prevPos, currentPos, out _, out _);
+            var ownerCharacter = GameContext.Players[OwnerId]?.GetCharacter();
+            var targetCharacter =
+                GameWorld.IntersectCharacter(prevPos, currentPos, 6.0f, ref currentPos, ownerCharacter);
 
             _lifeSpan--;
 
-            if (_lifeSpan < 0 || 
-                targetCharacter != null || 
-                collideFlags.HasFlag(CollisionFlags.Solid) || 
+            if (_lifeSpan < 0 ||
+                targetCharacter != null ||
+                collideFlags.HasFlag(CollisionFlags.Solid) ||
                 GameLayerClipped(currentPos))
             {
-                if (_lifeSpan >= 0 || _weapon == Weapon.Grenade)
-                    GameContext.CreateSound(currentPos, _soundImpact);
+                if (_lifeSpan >= 0 || Weapon == Weapon.Grenade)
+                    GameContext.CreateSound(currentPos, SoundImpact);
 
-                if (_explosive)
-                    GameContext.CreateExplosion(currentPos, _ownerId, _weapon, _damage);
+                if (Explosive)
+                    GameContext.CreateExplosion(currentPos, OwnerId, Weapon, Damage);
                 else
                 {
                     targetCharacter?.TakeDamage(
-                        force: _direction * System.Math.Max(0.001f, _force), 
-                        damage: _damage, 
-                        from: _ownerId,
-                        weapon: _weapon);
+                        force: Direction * System.Math.Max(0.001f, Force),
+                        source: Direction * -1,
+                        damage: Damage,
+                        from: OwnerId,
+                        weapon: Weapon);
                 }
 
                 Destroy();
@@ -84,12 +87,12 @@ namespace TeeSharp.Server.Game.Entities
             _startTick++;
         }
 
-        protected Vector2 GetPos(float t)
+        private Vector2 GetPos(float t)
         {
             var curvature = 0f;
             var speed = 0f;
 
-            switch (_weapon)
+            switch (Weapon)
             {
                 case Weapon.Gun:
                     curvature = Tuning["GunCurvature"];
@@ -107,7 +110,7 @@ namespace TeeSharp.Server.Game.Entities
                     break;
             }
 
-            return MathHelper.CalcPos(Position, _direction, curvature, speed, t);
+            return MathHelper.CalcPos(Position, Direction, curvature, speed, t);
         }
 
 
@@ -123,11 +126,11 @@ namespace TeeSharp.Server.Game.Entities
                 return;
 
             projectile.X = (int) Position.x;
-            projectile.Y = (int)Position.y;
-            projectile.Weapon = _weapon;
+            projectile.Y = (int) Position.y;
+            projectile.Weapon = Weapon;
             projectile.StartTick = _startTick;
-            projectile.VelX = (int) (_direction.x * 100f);
-            projectile.VelY = (int) (_direction.y * 100f);
+            projectile.VelX = (int) (Direction.x * 100f);
+            projectile.VelY = (int) (Direction.y * 100f);
         }
     }
 }

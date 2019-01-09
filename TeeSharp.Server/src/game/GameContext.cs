@@ -151,7 +151,7 @@ namespace TeeSharp.Server.Game
         {
             //var e = Events.Create<SnapshotEventExplosion>();
             //if (e != null)
-            //    e.Position = pos;
+            //    e.Position = position;
 
             //if (noDamage)
             //    return;
@@ -159,10 +159,10 @@ namespace TeeSharp.Server.Game
             //const float radius = 135.0f;
             //const float innerRadius = 48.0f;
 
-            //var characters = World.FindEntities<Character>(pos, radius);
+            //var characters = World.FindEntities<Character>(position, radius);
             //foreach (var character in characters)
             //{
-            //    var diff = character.Position - pos;
+            //    var diff = character.Position - position;
             //    var forceDir = new Vector2(0, 1);
             //    var l = diff.Length;
 
@@ -181,57 +181,47 @@ namespace TeeSharp.Server.Game
             Events.Create<SnapshotEventSpawn>(pos);
         }
 
-        public override void CreateDeath(Vector2 pos, int clientId)
+        public override void CreateDeath(Vector2 position, int clientId)
         {
-            //var e = Events.Create<SnapshotEventDeath>();
-            //if (e == null)
-            //    return;
+            var e = Events.Create<SnapshotEventDeath>(position);
+            if (e == null)
+                return;
 
-            //e.ClientId = clientId;
-            //e.Position = pos;
+            e.ClientId = clientId;
         }
 
-        public override void CreateDamageInd(Vector2 pos, float a, int amount)
+        public override void CreateDamage(Vector2 pos, Vector2 source, 
+            int clientId, int healthAmount, int armorAmount, bool self)
         {
-            //a = 3 * 3.14159f / 2 + a;
-            //var s = a - System.Math.PI / 3;
-            //var e = a + System.Math.PI / 3;
+            var e = Events.Create<SnapshotEventDamage>(pos);
+            if (e == null)
+                return;
 
-            //for (var i = 0; i < amount; i++)
-            //{
-            //    var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
-            //    var @event = Events.Create<SnapshotEventDamage>();
-            //    if (@event == null)
-            //        continue;
-
-            //    @event.Position = pos;
-            //    @event.Angle = (int)(f * 256.0f);
-            //}
+            e.ClientId = clientId;
+            e.Angle = (int) (MathHelper.Angle(source) * 256f);
+            e.ArmorAmount = armorAmount;
+            e.HealthAmount = healthAmount;
+            e.IsSelf = self;
         }
 
         public override void CreateHammerHit(Vector2 pos)
         {
-            //var e = Events.Create<SnapshotEventHammerHit>();
-            //if (e == null)
-            //    return;
-
-            //e.Position = pos;
+            Events.Create<SnapshotEventHammerHit>(pos);
         }
 
-        public override void CreateSound(Vector2 pos, Sound sound, int mask = -1)
+        public override void CreateSound(Vector2 position, Sound sound, int mask = -1)
         {
-            //if (sound < 0 || sound >= Sound.NumSounds)
-            //    return;
+            if (sound < 0 || sound >= Sound.NumSounds)
+                return;
 
-            //var e = Events.Create<SnapshotEventSoundWorld>();
-            //if (e == null)
-            //    return;
+            var e = Events.Create<SnapshotEventSoundWorld>(position, mask);
+            if (e == null)
+                return;
 
-            //e.Position = pos;
-            //e.Sound = sound;
+            e.Sound = sound;
         }
 
-        public override void CreaetSoundGlobal(Sound sound, int targetId = -1)
+        public override void CreateSoundGlobal(Sound sound, int targetId = -1)
         {
             //if (sound < 0 || sound >= Sound.NumSounds)
             //    return;

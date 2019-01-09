@@ -45,7 +45,6 @@ namespace TeeSharp.Common
                 { "LaserBounceDelay", new TuningParameter("laser_bounce_delay", 150) },
                 { "LaserBounceNum", new TuningParameter("laser_bounce_num", 1) },
                 { "LaserBounceCost", new TuningParameter("laser_bounce_cost", 0) },
-                { "LaserDamage", new TuningParameter("laser_damage", 5) },
 
                 { "PlayerCollision", new TuningParameter("player_collision", 1) },
                 { "PlayerHooking", new TuningParameter("player_hooking", 1) },

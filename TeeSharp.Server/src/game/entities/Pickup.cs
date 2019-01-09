@@ -12,7 +12,7 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual int SpawnTick { get; set; }
 
-        public Pickup(Common.Enums.Pickup type) : base(1)
+        public Pickup(Common.Enums.Pickup type) : base(idsCount: 1)
         {
             SpawnTick = -1;
             Type = type;

@@ -9,7 +9,13 @@ namespace TeeSharp.Common.Protocol
     {
         public override SnapshotItems Type => SnapshotItems.EventDamage;
 
-        [MarshalAs(UnmanagedType.I4)] public int ClientID;
+        public bool IsSelf
+        {
+            get => Self != 0;
+            set => Self = value ? 1 : 0;
+        }
+
+        [MarshalAs(UnmanagedType.I4)] public int ClientId;
         [MarshalAs(UnmanagedType.I4)] public int Angle;
         [MarshalAs(UnmanagedType.I4)] public int HealthAmount;
         [MarshalAs(UnmanagedType.I4)] public int ArmorAmount;

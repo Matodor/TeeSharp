@@ -110,11 +110,10 @@ namespace TeeSharp.Common
         public static Vector2 CalcPos(Vector2 pos, Vector2 velocity, float curvature, 
             float speed, float time)
         {
-            Vector2 n;
             time *= speed;
-            n.x = pos.x + velocity.x * time;
-            n.y = pos.y + velocity.y * time + curvature / 10000 * (time * time);
-            return n;
+            return new Vector2(
+                pos.x + velocity.x * time,
+                pos.y + velocity.y * time + curvature / 10000 * (time * time));
         }
 
         public static Vector2 ClosestPointOnLine(Vector2 linePoint0, Vector2 linePoint1,

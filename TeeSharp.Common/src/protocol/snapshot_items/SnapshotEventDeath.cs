@@ -9,6 +9,6 @@ namespace TeeSharp.Common.Protocol
     {
         public override SnapshotItems Type => SnapshotItems.EventDeath;
 
-        [MarshalAs(UnmanagedType.I4)] public int ClientID;
+        [MarshalAs(UnmanagedType.I4)] public int ClientId;
     }
 }
