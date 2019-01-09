@@ -190,22 +190,18 @@ namespace TeeSharp.Server.Game
             e.ClientId = clientId;
         }
 
-        public override void CreateDamageInd(Vector2 pos, float a, int amount)
+        public override void CreateDamage(Vector2 pos, Vector2 source, 
+            int clientId, int healthAmount, int armorAmount, bool self)
         {
-            //a = 3 * 3.14159f / 2 + a;
-            //var s = a - System.Math.PI / 3;
-            //var e = a + System.Math.PI / 3;
+            var e = Events.Create<SnapshotEventDamage>(pos);
+            if (e == null)
+                return;
 
-            //for (var i = 0; i < amount; i++)
-            //{
-            //    var f = Common.MathHelper.Mix(s, e, (float) (i + 1) / (amount + 2));
-            //    var @event = Events.Create<SnapshotEventDamage>();
-            //    if (@event == null)
-            //        continue;
-
-            //    @event.Position = position;
-            //    @event.Angle = (int)(f * 256.0f);
-            //}
+            e.ClientId = clientId;
+            e.Angle = (int) (MathHelper.Angle(source) * 256f);
+            e.ArmorAmount = armorAmount;
+            e.HealthAmount = healthAmount;
+            e.IsSelf = self;
         }
 
         public override void CreateHammerHit(Vector2 pos)

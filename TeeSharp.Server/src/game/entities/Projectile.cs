@@ -1,6 +1,7 @@
 ﻿using TeeSharp.Common;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Core;
 
 namespace TeeSharp.Server.Game.Entities
 {
@@ -43,20 +44,21 @@ namespace TeeSharp.Server.Game.Entities
         {
             base.Tick();
 
-            var prevTime = (Server.Tick - _startTick - 1) / (float)Server.TickSpeed;
-            var currentTime = (Server.Tick - _startTick) / (float)Server.TickSpeed;
+            var prevTime = (Server.Tick - _startTick - 1) / (float) Server.TickSpeed;
+            var currentTime = (Server.Tick - _startTick) / (float) Server.TickSpeed;
             var prevPos = GetPos(prevTime);
             var currentPos = GetPos(currentTime);
 
             var collideFlags = GameContext.MapCollision.IntersectLine(prevPos, currentPos, out _, out _);
             var ownerCharacter = GameContext.Players[OwnerId]?.GetCharacter();
-            var targetCharacter = GameWorld.IntersectCharacter(prevPos, currentPos, 6.0f, ref currentPos, ownerCharacter);
+            var targetCharacter =
+                GameWorld.IntersectCharacter(prevPos, currentPos, 6.0f, ref currentPos, ownerCharacter);
 
             _lifeSpan--;
 
-            if (_lifeSpan < 0 || 
-                targetCharacter != null || 
-                collideFlags.HasFlag(CollisionFlags.Solid) || 
+            if (_lifeSpan < 0 ||
+                targetCharacter != null ||
+                collideFlags.HasFlag(CollisionFlags.Solid) ||
                 GameLayerClipped(currentPos))
             {
                 if (_lifeSpan >= 0 || Weapon == Weapon.Grenade)
@@ -67,9 +69,9 @@ namespace TeeSharp.Server.Game.Entities
                 else
                 {
                     targetCharacter?.TakeDamage(
-                        force: Direction * System.Math.Max(0.001f, Force), 
+                        force: Direction * System.Math.Max(0.001f, Force),
                         source: Direction * -1,
-                        damage: Damage, 
+                        damage: Damage,
                         from: OwnerId,
                         weapon: Weapon);
                 }
@@ -124,7 +126,7 @@ namespace TeeSharp.Server.Game.Entities
                 return;
 
             projectile.X = (int) Position.x;
-            projectile.Y = (int)Position.y;
+            projectile.Y = (int) Position.y;
             projectile.Weapon = Weapon;
             projectile.StartTick = _startTick;
             projectile.VelX = (int) (Direction.x * 100f);

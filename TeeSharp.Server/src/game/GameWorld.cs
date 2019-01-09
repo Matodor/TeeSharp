@@ -20,7 +20,7 @@ namespace TeeSharp.Server.Game
             float radius, ref Vector2 newPos, Character notThis)
         {
             var closestLength = MathHelper.Distance(pos1, pos2) * 100f;
-            Character closest = null;
+            var closest = default(Character);
 
             foreach (var character in Character.Entities)
             {
@@ -51,7 +51,14 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
-            if (!Paused)
+            if (Paused)
+            {
+                foreach (var entity in Entity.All)
+                {
+                    entity.TickPaused();
+                }
+            }
+            else
             {
                 foreach (var entity in Entity.All)
                 {
@@ -61,13 +68,6 @@ namespace TeeSharp.Server.Game
                 foreach (var entity in Entity.All)
                 {
                     entity.LateTick();
-                }
-            }
-            else
-            {
-                foreach (var entity in Entity.All)
-                {
-                    entity.TickPaused();
                 }
             }
         }

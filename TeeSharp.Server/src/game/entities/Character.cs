@@ -1,4 +1,5 @@
-﻿using TeeSharp.Common;
+﻿using System;
+using TeeSharp.Common;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
@@ -326,67 +327,54 @@ namespace TeeSharp.Server.Game.Entities
             return true;
         }
 
-        protected virtual void DoWeaponFireRifle(Vector2 direction)
+        protected virtual void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
         {
-            //var laser = new Laser(Position, direction, Tuning["LaserReach"], Player.ClientId);
-            //GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
-        protected virtual void DoWeaponFireNinja(Vector2 projStartPos, Vector2 direction)
+        protected virtual void DoWeaponFireNinja(Vector2 startPos, Vector2 direction)
         {
-            //HitObjects.Clear();
-            //NinjaStat.ActivationDir = direction;
-            //NinjaStat.CurrentMoveTime = ServerData.Data.Weapons.Ninja.MoveTime * Server.TickSpeed / 1000;
-            //NinjaStat.OldVelAmount = Core.Velocity.Length;
-
-            //GameContext.CreateSound(Position, Sound.NinjaFire);
         }
 
-        protected virtual void DoWeaponFireGrenade(Vector2 projStartPos, Vector2 direction)
+        protected virtual void DoWeaponFireGrenade(Vector2 startPos, Vector2 direction)
         {
-            //var projectile = new Projectile(Weapon.Grenade, Player.ClientId,
-            //    startPos, direction, (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
-            //    1, true, 0f, Sound.GrenadeExplode);
-
-            //var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
-            //msg.AddInt(1);
-
-            //var snapObj = new SnapshotProjectile();
-            //projectile.FillInfo(snapObj);
-            //snapObj.FillMsgPacker(msg);
-
-            //Server.SendMsg(msg, MsgFlags.None, Player.ClientId);
-            //GameContext.CreateSound(Position, Sound.GrenadeFire);
+            var projectile = new Projectile
+            (
+                weapon: Weapon.Grenade,
+                ownerId: Player.ClientId,
+                direction: direction,
+                lifeSpan: (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
+                damage: ServerData.Weapons.Grenade.Damage,
+                explosive: true,
+                force: 0f,
+                soundImpact: Sound.GrenadeExplode
+            ) {Position = startPos};
         }
 
-        protected virtual void DoWeaponFireShotgun(Vector2 projStartPos, Vector2 direction)
+        protected virtual void DoWeaponFireShotgun(Vector2 startPos, Vector2 direction)
         {
-            //const int SHOT_SPREAD = 2;
+            const int ShotSpread = 2;
+            var spreading = new[] {-0.185f, -0.070f, 0f, 0.070f, 0.185f};
 
-            //var spreading = new[] { -0.185f, -0.070f, 0, 0.070f, 0.185f };
-            //var msg = new MsgPacker((int)GameMessage.SV_EXTRAPROJECTILE);
-            //msg.AddInt(SHOT_SPREAD * 2 + 1);
+            for (var i = -ShotSpread; i <= ShotSpread; i++)
+            {
+                var angle = MathHelper.Angle(direction);
+                angle += spreading[i + ShotSpread];
+                var v = 1 - (Math.Abs(i) / (float) ShotSpread);
+                var speed = MathHelper.Mix(Tuning["ShotgunSpeeddiff"], 1.0f, v);
+                var projectile = new Projectile
+                (
+                    weapon: Weapon.Shotgun,
+                    ownerId: Player.ClientId,
+                    direction: new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * speed,
+                    lifeSpan: (int) (Server.TickSpeed * Tuning["ShotgunLifetime"]),
+                    damage: ServerData.Weapons.Shotgun.Damage,
+                    explosive: false,
+                    force: 0f,
+                    soundImpact: (Sound) (-1)
+                ) {Position = startPos};
+            }
 
-            //for (var i = -SHOT_SPREAD; i <= SHOT_SPREAD; i++)
-            //{
-            //    var angle = MathHelper.GetAngle(direction);
-            //    angle += spreading[i + 2];
-            //    var v = 1 - System.Math.Abs(i) / (float)SHOT_SPREAD;
-            //    var speed = MathHelper.Mix(Tuning["ShotgunSpeeddiff"], 1f, v);
-
-            //    var projectile = new Projectile(Weapon.Shotgun, Player.ClientId,
-            //        startPos,
-            //        new Vector2((float)System.Math.Cos(angle), (float)System.Math.Sin(angle)) * speed,
-            //        (int)(Server.TickSpeed * Tuning["ShotgunLifetime"]), 1, false,
-            //        0, (Sound)(-1));
-
-            //    var snapObj = new SnapshotProjectile();
-            //    projectile.FillInfo(snapObj);
-            //    snapObj.FillMsgPacker(msg);
-            //}
-
-            //Server.SendMsg(msg, MsgFlags.None, Player.ClientId);
-            //GameContext.CreateSound(Position, Sound.ShotgunFire);
+            GameContext.CreateSound(Position, Sound.ShotgunFire);
         }
 
         protected virtual void DoWeaponFireGun(Vector2 startPos, Vector2 direction)
@@ -467,7 +455,7 @@ namespace TeeSharp.Server.Game.Entities
                     break;
 
                 case Weapon.Laser:
-                    DoWeaponFireRifle(direction);
+                    DoWeaponFireRifle(startPos, direction);
                     break;
             }
         }
@@ -500,6 +488,8 @@ namespace TeeSharp.Server.Game.Entities
             Core.Velocity += force;
 
             SetEmote(Emote.Pain, Server.Tick + Server.TickSpeed / 2);
+
+            GameContext.CreateDamage(Position, source, Player.ClientId, 1, 1, from == Player.ClientId);
             return true;
         }
 

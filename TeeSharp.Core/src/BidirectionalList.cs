@@ -17,9 +17,11 @@ namespace TeeSharp.Core
         public Node Last { get; private set; }
         public int Count { get; private set; }
 
+        private Node _nextTraverseEntity;
+
         private BidirectionalList()
         {
-            Last = Last = null;
+            Last = First = null;
             Count = 0;
         }
 
@@ -33,17 +35,17 @@ namespace TeeSharp.Core
             var node = new Node()
             {
                 Value = item,
-                Next = null,
-                Prev = Last
+                Next = First,
+                Prev = null
             };
 
-            if (First == null)
-                First = node;
+            if (First != null)
+                First.Prev = node;
 
-            if (Last != null)
-                Last.Next = node;
+            if (Last == null)
+                Last = node;
 
-            Last = node;
+            First = node;
             Count++;
 
             return node;
@@ -64,6 +66,9 @@ namespace TeeSharp.Core
             else
                 Last = node.Prev; // remove last
 
+            if (_nextTraverseEntity == node)
+                _nextTraverseEntity = node.Next;
+
             node.Next = null;
             node.Prev = null;
 
@@ -75,8 +80,9 @@ namespace TeeSharp.Core
             var current = First;
             while (current != null)
             {
+                _nextTraverseEntity = current.Next;
                 yield return current.Value;
-                current = current.Next;
+                current = _nextTraverseEntity;
             }
         }
 

@@ -82,7 +82,8 @@ namespace TeeSharp.Server.Game
         public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, int damage);
         public abstract void CreatePlayerSpawn(Vector2 pos);
         public abstract void CreateDeath(Vector2 position, int clientId);
-        public abstract void CreateDamageInd(Vector2 pos, float a, int amount);
+        public abstract void CreateDamage(Vector2 pos, Vector2 source,
+            int clientId, int healthAmount, int armorAmount, bool self);
         public abstract void CreateHammerHit(Vector2 pos);
         public abstract void CreateSound(Vector2 position, Sound sound, int mask = -1);
         public abstract void CreateSoundGlobal(Sound sound, int targetId = -1);
