@@ -264,7 +264,6 @@ namespace TeeSharp.Server
             if (flags.HasFlag(MsgFlags.Flush))
                 packet.Flags |= SendFlags.Flush;
 
-
             if (!flags.HasFlag(MsgFlags.NoRecord))
             {
                 // TODO demo record
@@ -414,12 +413,6 @@ namespace TeeSharp.Server
             if (system)
             {
                 var networkMsg = (NetworkMessages) msg;
-
-                // TODO bug with more than 1 client
-                // TODO bug with more than 1 client
-                // TODO bug with more than 1 client
-                Debug.Warning("tst", $"cl={clientId} msg={networkMsg} end={packet.EndPoint}");
-
                 switch (networkMsg)
                 {
                     case NetworkMessages.ClientInfo:

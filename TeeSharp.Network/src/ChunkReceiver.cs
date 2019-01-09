@@ -56,7 +56,7 @@ namespace TeeSharp.Network
                     return false;
                 }
 
-                if (Connection != null && header.Flags.HasFlag(ChunkFlags.Vital))
+                if (header.Flags.HasFlag(ChunkFlags.Vital))
                 {
                     if (header.Sequence == (Connection.Ack + 1) % NetworkHelper.MaxSequence)
                     {
@@ -85,8 +85,7 @@ namespace TeeSharp.Network
                     Data = new byte[header.Size]
                 };
 
-                Buffer.BlockCopy(ChunkConstruct.Data, dataOffset, 
-                    packet.Data, 0, header.Size);
+                Buffer.BlockCopy(ChunkConstruct.Data, dataOffset, packet.Data, 0, header.Size);
                 return true;
             }
         }
