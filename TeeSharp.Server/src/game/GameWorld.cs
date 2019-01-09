@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
-using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
-using TeeSharp.Core;
 using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game

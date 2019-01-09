@@ -1,5 +1,4 @@
-﻿using TeeSharp.Common.Protocol;
-using TeeSharp.Common.Snapshots;
+﻿using TeeSharp.Common.Snapshots;
 
 namespace TeeSharp.Server
 {

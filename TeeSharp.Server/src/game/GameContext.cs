@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
@@ -7,7 +6,6 @@ using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 using TeeSharp.Network;
-using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {

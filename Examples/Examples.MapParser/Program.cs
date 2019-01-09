@@ -1,9 +1,5 @@
 ﻿using System;
 using System.IO;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using TeeSharp.Core;
 using TeeSharp.Map;
 using TeeSharp.Map.MapItems;

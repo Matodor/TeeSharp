@@ -1,6 +1,4 @@
-﻿using TeeSharp.Common.Enums;
-
-namespace TeeSharp.Common.Snapshots
+﻿namespace TeeSharp.Common.Snapshots
 {
     public class SnapshotItem
     {

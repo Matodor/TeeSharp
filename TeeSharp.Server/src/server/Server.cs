@@ -8,7 +8,6 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
-using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;

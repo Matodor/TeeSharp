@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using TeeSharp.Common;
+﻿using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Game;
 using TeeSharp.Core;
