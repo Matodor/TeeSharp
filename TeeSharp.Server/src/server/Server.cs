@@ -246,6 +246,11 @@ namespace TeeSharp.Server
             return false;
         }
 
+        public override void Kick(int clientId, string reason)
+        {
+            // TODO
+        }
+
         public override bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId)
         {
             if (msg == null)

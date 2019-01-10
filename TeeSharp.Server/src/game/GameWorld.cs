@@ -44,13 +44,22 @@ namespace TeeSharp.Server.Game
             return closest;
         }
 
-        public override void Reset()
+        protected override void Reset()
         {
-            // TODO
+            foreach (var entity in Entity.All)
+            {
+                entity.Reset();
+            }
+
+            ResetRequested = false;
+            OnReset();
         }
 
         public override void Tick()
         {
+            if (ResetRequested)
+                Reset();
+
             if (Paused)
             {
                 foreach (var entity in Entity.All)

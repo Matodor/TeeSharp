@@ -27,12 +27,14 @@ namespace TeeSharp.Server.Game
             GameState = GameState.GameRunning;
             GameStateTimer = TimerInfinite;
             GameStartTick = Server.Tick;
+            UnbalancedTick = BalanceOk;
 
             MatchCount = 0;
             RoundCount = 0;
             SuddenDeath = false;
 
             TeamScore = new int[2];
+            TeamSize = new int[2];
             Scores = new int[GameContext.Players.Length];
             SpawnPos = new IList<Vector2>[3]
             {
@@ -57,17 +59,41 @@ namespace TeeSharp.Server.Game
                 TimeLimit = Config["SvTimelimit"],
             };
 
+            World.Reseted += WorldOnReseted;
             GameContext.PlayerReady += OnPlayerReady;
             GameContext.PlayerEnter += OnPlayerEnter;
             GameContext.PlayerLeave += OnPlayerLeave;
         }
 
-        private void OnPlayerLeave(BasePlayer player, string reason)
+        protected override void ResetGame()
+        {
+            World.ResetRequested = true;
+            SetGameState(GameState.GameRunning, 0);
+            GameStartTick = Server.Tick;
+            SuddenDeath = false;
+
+            DoTeamBalance();
+        }
+        
+        protected override void WorldOnReseted()
+        {
+            
+        }
+
+        protected override void OnPlayerLeave(BasePlayer player, string reason)
         {
             if (Server.ClientInGame(player.ClientId))
             {
                 Console.Print(OutputLevel.Standard, "game", $"leave player={player.ClientId}:{Server.ClientName(player.ClientId)}");
             }
+
+            if (player.Team != Team.Spectators)
+            {
+                TeamSize[(int) player.Team]--;
+                UnbalancedTick = BalanceCheck;
+            }
+
+            CheckReadyStates(player.ClientId);
 
             player.CharacterSpawned -= OnCharacterSpawn;
             player.TeamChanged -= OnPlayerTeamChanged;
@@ -214,6 +240,11 @@ namespace TeeSharp.Server.Game
             }
         }
 
+        protected override void WincheckRound()
+        {
+
+        }
+
         protected override void WincheckMatch()
         {
             
@@ -221,22 +252,65 @@ namespace TeeSharp.Server.Game
 
         protected override void SetPlayersReadyState(bool state)
         {
-            throw new NotImplementedException();
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null ||
+                    GameContext.Players[i].Team == Team.Spectators ||
+                    GameContext.Players[i].DeadSpectatorMode && !state)
+                {
+                    continue;
+                }
+
+                GameContext.Players[i].IsReadyToPlay = state;
+            }
         }
 
         protected override void StartMatch()
         {
-            throw new NotImplementedException();
+            ResetGame();
+            RoundCount = 0;
+            TeamScore[(int) Team.Red] = 0;
+            TeamScore[(int) Team.Blue] = 0;
+
+            if (HasEnoughPlayers())
+                SetGameState(GameState.StartCountdown, 0);
+            else
+                SetGameState(GameState.WarmupGame, TimerInfinite);
+
+            // TODO demo recorder
+
+            Console.Print(OutputLevel.Debug, "game", $"start match={GameType} teamplay={IsTeamplay()}");
         }
 
         public override Team StartTeam()
         {
+            if (Config["SvTournamentMode"])
+                return Team.Spectators;
+
+            var team = Team.Red;
+            if (IsTeamplay())
+            {
+                team = TeamSize[(int) Team.Red] > TeamSize[(int) Team.Blue] 
+                    ? Team.Blue 
+                    : Team.Red;
+            }
+
+            if (TeamSize[(int) Team.Red] + TeamSize[(int) Team.Blue] < Config["SvPlayerSlots"])
+            {
+                TeamSize[(int) team]++;
+                UnbalancedTick = BalanceCheck;
+
+                if (GameState == GameState.WarmupGame && HasEnoughPlayers())
+                    SetGameState(GameState.WarmupGame, 0);
+                return team;
+            }
+
             return Team.Spectators;
         }
 
         public override bool IsTeamChangeAllowed(BasePlayer player)
         {
-            return true;
+            return !World.Paused || GameState == GameState.StartCountdown && GameStartTick == Server.Tick;
         }
 
         public override bool IsTeamplay()
@@ -266,7 +340,8 @@ namespace TeeSharp.Server.Game
 
         public override bool IsPlayerReadyMode()
         {
-            return false;
+            return Config["SvPlayerReadyMode"] && GameStateTimer == TimerInfinite && 
+                   (GameState == GameState.WarmupUser || GameState == GameState.GamePaused);
         }
 
         public override bool GetRespawnDisabled(BasePlayer player)
@@ -295,13 +370,171 @@ namespace TeeSharp.Server.Game
 
                 if (GameStateTimer == 0)
                 {
-                    
+                    switch (GameState)
+                    {
+                        case GameState.WarmupUser:
+                            SetGameState(GameState.WarmupUser, 0);
+                            break;
+
+                        case GameState.StartCountdown:
+                            SetGameState(GameState.GameRunning, 0);
+                            break;
+
+                        case GameState.GamePaused:
+                            SetGameState(GameState.GamePaused, 0);
+                            break;
+
+                        case GameState.EndRound:
+                            StartRound();
+                            break;
+
+                        case GameState.EndMatch:
+                            if (MatchCount >= GameInfo.MatchNum - 1)
+                                CycleMap();
+
+                            if (Config["SvMatchSwap"])
+                                SwapTeams();
+
+                            MatchCount++;
+                            StartMatch();
+                            break;
+                    }
                 }
                 else
                 {
+                    switch (GameState)
+                    {
+                        case GameState.WarmupUser:
+                            if (!Config["SvPlayerReadyMode"] && GameStateTimer == TimerInfinite)
+                                SetGameState(GameState.WarmupUser, 0);
+                            else if (GameStateTimer == 3 * Server.TickSpeed)
+                                StartMatch();
+                            break;
 
+                        case GameState.StartCountdown:
+                        case GameState.GamePaused:
+                            GameStartTick++;
+                            break;
+                    }
                 }
             }
+
+            if (IsTeamplay() && !GameFlags.HasFlag(GameFlags.Survival))
+            {
+                switch (UnbalancedTick)
+                {
+                    case BalanceCheck:
+                        CheckTeamBalance();
+                        break;
+                    case BalanceOk:
+                        break;
+                    default:
+                        if (Server.Tick > UnbalancedTick + Config["SvTeambalanceTime"] * Server.TickSpeed * 60)
+                            DoTeamBalance();
+                        break;
+                }
+            }
+
+            DoActivityCheck();
+
+            if (!World.ResetRequested && (
+                    GameState == GameState.GameRunning ||
+                    GameState == GameState.GamePaused))
+            {
+                if (GameFlags.HasFlag(GameFlags.Survival))
+                    WincheckRound();
+                else 
+                    WincheckMatch();
+            }
+        }
+
+        protected override void DoActivityCheck()
+        {
+            if (!Config["SvInactiveKickTime"])
+                return;
+
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null ||
+                    GameContext.Players[i].IsDummy ||
+                    GameContext.Players[i].Team == Team.Spectators && Config["SvInactiveKick"] <= 0 ||
+                    GameContext.Players[i].InactivityTickCounter <= Config["SvInactiveKickTime"] * Server.TickSpeed * 60 ||
+                    Server.IsAuthed(i))
+                {
+                    continue;
+                }
+
+                if (GameContext.Players[i].Team == Team.Spectators)
+                    Server.Kick(i, "Kicked for inactivity");
+                else
+                {
+                    switch (Config["SvInactiveKick"].AsInt())
+                    {
+                        case 0:
+                        case 1:
+                            GameContext.Players[i].SetTeam(Team.Spectators);
+                            break;
+
+                        case 2:
+                            var spectators = 0;
+                            for (var j = 0; j < GameContext.Players.Length; j++)
+                            {
+                                if (GameContext.Players[i] != null &&
+                                    GameContext.Players[i].Team == Team.Spectators)
+                                {
+                                    spectators++;
+                                }
+                            }
+
+                            if (spectators >= GameContext.Players.Length - Config["SvPlayerSlots"])
+                                Server.Kick(i, "Kicked for inactivity");
+                            else 
+                                GameContext.Players[i].SetTeam(Team.Spectators);
+                            break;
+
+                        case 3:
+                            Server.Kick(i, "Kicked for inactivity");
+                            break;
+                    }
+                }
+            }
+        }
+
+        protected override void DoTeamBalance()
+        {
+
+        }
+
+        protected override void CheckGameInfo()
+        {
+
+        }
+
+        protected override void CheckTeamBalance()
+        {
+
+        }
+
+        protected override void SwapTeams()
+        {
+
+        }
+
+        protected override void CycleMap()
+        {
+
+        }
+
+        protected override void StartRound()
+        {
+            ResetGame();
+            RoundCount++;
+
+            if (HasEnoughPlayers())
+                SetGameState(GameState.StartCountdown, 0);
+            else
+                SetGameState(GameState.WarmupGame, TimerInfinite);
+
         }
 
         public override int Score(int clientId)
@@ -403,11 +636,6 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnReset()
-        {
-            
-        }
-
         public override void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend)
         {
             isSend = true;
@@ -434,16 +662,38 @@ namespace TeeSharp.Server.Game
             UpdateGameInfo(player.ClientId);
         }
 
-        protected override void OnPlayerTeamChanged(BasePlayer player, Team prevteam, Team newteam)
+        protected override void OnPlayerTeamChanged(BasePlayer player, Team prevTeam, Team newTeam)
         {
-            Console.Print(OutputLevel.Debug, "game", $"team join player={player.ClientId}:{Server.ClientName(player.ClientId)} team={newteam}");
+            Console.Print(OutputLevel.Debug, "game", $"team join player={player.ClientId}:{Server.ClientName(player.ClientId)} team={newTeam}");
 
-            if (newteam != Team.Spectators)
+            if (prevTeam != Team.Spectators || newTeam != Team.Spectators)
             {
+                UnbalancedTick = BalanceCheck;
+            }
+
+            if (prevTeam != Team.Spectators)
+            {
+                TeamSize[(int) prevTeam]--;
+            }
+
+            if (newTeam != Team.Spectators)
+            {
+                TeamSize[(int)newTeam]++;
+
+                if (GameState == GameState.WarmupGame && HasEnoughPlayers())
+                    SetGameState(GameState.WarmupGame, 0);
+
                 player.IsReadyToPlay = !IsPlayerReadyMode();
                 if (GameFlags.HasFlag(GameFlags.Survival))
                     player.RespawnDisabled = GetRespawnDisabled(player);
             }
+
+            CheckReadyStates();
+        }
+
+        protected override bool HasEnoughPlayers()
+        {
+            return true;
         }
 
         protected override void OnCharacterSpawn(BasePlayer player, Character character)
@@ -557,9 +807,41 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        protected override void CheckReadyStates()
+        protected override bool GetPlayersReadyState(int withoutID = -1)
         {
-            // TODO
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (i == withoutID)
+                    continue;
+
+                if (GameContext.Players[i] != null &&
+                    GameContext.Players[i].Team != Team.Spectators &&
+                    GameContext.Players[i].IsReadyToPlay == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        protected override void CheckReadyStates(int withoutID = -1)
+        {
+            if (!Config["SvPlayerReadyMode"])
+                return;
+
+            switch (GameState)
+            {
+                case GameState.WarmupUser:
+                    if (GetPlayersReadyState(withoutID))
+                        SetGameState(GameState.WarmupUser, 0);
+                    break;
+
+                case GameState.GamePaused:
+                    if (GetPlayersReadyState(withoutID))
+                        SetGameState(GameState.GamePaused, 0);
+                    break;
+            }
         }
 
         protected override void UpdateGameInfo(int clientId)

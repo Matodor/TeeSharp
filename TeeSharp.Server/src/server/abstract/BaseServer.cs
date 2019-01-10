@@ -74,6 +74,7 @@ namespace TeeSharp.Server
         public abstract int SnapshotNewId();
         public abstract void SnapshotFreeId(int id);
         public abstract bool IsAuthed(int clientId);
+        public abstract void Kick(int clientId, string reason);
 
         protected abstract bool StartNetworkServer();
         protected abstract void ProcessClientPacket(Chunk packet);
@@ -123,5 +124,6 @@ namespace TeeSharp.Server
         {
             PlayerDisconnected?.Invoke(clientId, reason);
         }
+
     }
 }
