@@ -15,6 +15,8 @@ namespace TeeSharp.Server.Game
     public class GameController : BaseGameController
     {
         public override string GameType => "Test";
+        public override bool GamePaused => GameState == GameState.GamePaused || GameState == GameState.StartCountdown;
+        public override bool GameRunning => GameState == GameState.GameRunning;
 
         public override void Init()
         {
@@ -36,6 +38,7 @@ namespace TeeSharp.Server.Game
             TeamScore = new int[2];
             TeamSize = new int[2];
             Scores = new int[GameContext.Players.Length];
+            ScoresStartTick = new int[GameContext.Players.Length];
             SpawnPos = new IList<Vector2>[3]
             {
                 new List<Vector2>(), // dm
@@ -77,7 +80,22 @@ namespace TeeSharp.Server.Game
         
         protected override void WorldOnReseted()
         {
-            
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null)
+                    continue;
+
+                GameContext.Players[i].RespawnDisabled = false;
+                GameContext.Players[i].Respawn();
+                GameContext.Players[i].RespawnTick = Server.Tick + Server.TickSpeed / 2;
+                GameContext.Players[i].IsReadyToPlay = true;
+
+                if (RoundCount == 0)
+                {
+                    Scores[i] = 0;
+                    ScoresStartTick[i] = Server.Tick;
+                }
+            }
         }
 
         protected override void OnPlayerLeave(BasePlayer player, string reason)
@@ -219,14 +237,15 @@ namespace TeeSharp.Server.Game
                 case GameState.EndRound:
                 case GameState.EndMatch:
                 {
-                    WincheckMatch();
+                    if (state == GameState.EndRound)
+                        WincheckMatch();
 
                     if (GameState == GameState.EndMatch)
                         break;
 
                     if (GameState != GameState.GameRunning &&
-                        GameState != GameState.EndRound ||
-                        GameState != GameState.EndMatch ||
+                        GameState != GameState.EndRound &&
+                        GameState != GameState.EndMatch &&
                         GameState != GameState.GamePaused)
                     {
                         return;
@@ -245,9 +264,61 @@ namespace TeeSharp.Server.Game
 
         }
 
+        protected override void EndRound()
+        {
+            SetGameState(GameState.EndRound, TimerEnd / 2);
+        }
+
+        protected override void EndMatch()
+        {
+            SetGameState(GameState.EndMatch, TimerEnd);
+        }
+
         protected override void WincheckMatch()
         {
-            
+            if (IsTeamplay())
+            {
+                if (GameInfo.ScoreLimit > 0 && (
+                        TeamScore[(int) Team.Red] >= GameInfo.ScoreLimit || 
+                        TeamScore[(int) Team.Blue] >= GameInfo.ScoreLimit) ||
+                    GameInfo.TimeLimit > 0 && (Server.Tick - GameStartTick) >= GameInfo.TimeLimit * Server.TickSpeed * 60)
+                {
+                    if (TeamScore[(int) Team.Red] != TeamScore[(int) Team.Blue] ||
+                        GameFlags.HasFlag(GameFlags.Survival))
+                        EndMatch();
+                    else
+                        SuddenDeath = true;
+
+                }
+            }
+            else
+            {
+                var topScore = 0;
+                var topScoreCount = 0;
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null)
+                        continue;
+
+                    if (Score(i) > topScore)
+                    {
+                        topScore = Score(i);
+                        topScoreCount = 1;
+                    }
+                    else if (Score(i) == topScore)
+                        topScoreCount++;
+                }
+
+                if (GameInfo.ScoreLimit > 0 && topScore >= GameInfo.ScoreLimit ||
+                    GameInfo.TimeLimit > 0 && Server.Tick - GameStartTick >= GameInfo.TimeLimit * Server.TickSpeed * 60)
+                {
+                    if (topScoreCount == 1)
+                        EndMatch();
+                    else
+                        SuddenDeath = true;
+                }
+            }
         }
 
         protected override void SetPlayersReadyState(bool state)
@@ -320,6 +391,21 @@ namespace TeeSharp.Server.Game
 
         public override bool IsFriendlyFire(int clientId1, int clientId2)
         {
+            if (clientId1 == clientId2)
+                return false;
+
+            if (IsTeamplay())
+            {
+                if (GameContext.Players[clientId1] == null ||
+                    GameContext.Players[clientId2] == null)
+                {
+                    return false;
+                }
+
+                if (!Config["SvTeamdamage"] && GameContext.Players[clientId1].Team == GameContext.Players[clientId2].Team)
+                    return true;
+            }
+
             return false;
         }
 
@@ -330,12 +416,30 @@ namespace TeeSharp.Server.Game
 
         public override bool CanChangeTeam(BasePlayer player, Team team)
         {
-            return true;
+            if (!IsTeamplay() || team == Team.Spectators || !Config["SvTeambalanceTime"])
+                return true;
+
+            var playerCount = new int[]
+            {
+                TeamSize[(int) Team.Red],
+                TeamSize[(int) Team.Blue],
+            };
+
+            playerCount[(int) team]++;
+
+            if (player.Team != Team.Spectators)
+                playerCount[(int) team ^ 1]--;
+
+            return playerCount[(int) team] - playerCount[(int) team ^ 1] < 2;
         }
 
         public override bool CanJoinTeam(BasePlayer player, Team team)
         {
-            return true;
+            if (team == Team.Spectators)
+                return true;
+
+            var teamMod = player.Team != Team.Spectators ? -1 : 0;
+            return teamMod + TeamSize[(int) Team.Red] + TeamSize[(int) Team.Blue] < Config["SvPlayerSlots"];
         }
 
         public override bool IsPlayerReadyMode()
@@ -363,6 +467,12 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
+            if (GamePaused)
+            {
+                for (var i = 0; i < ScoresStartTick.Length; i++)
+                    ScoresStartTick[i]++;
+            }
+
             if (GameState != GameState.GameRunning)
             {
                 if (GameStateTimer > 0)
@@ -502,7 +612,68 @@ namespace TeeSharp.Server.Game
 
         protected override void DoTeamBalance()
         {
+            if (!IsTeamplay() || !Config["SvTeambalanceTime"] || Math.Abs(TeamSize[(int)Team.Red] - TeamSize[(int)Team.Blue]) < 2)
+                return;
 
+            Console.Print(OutputLevel.Debug, "game", "Balancing teams");
+
+            var teamScore = new float[2];
+            var playerScore = new float[GameContext.Players.Length];
+
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null ||
+                    GameContext.Players[i].Team == Team.Spectators)
+                {
+                    continue;
+                }
+
+                playerScore[i] = Score(i) * Server.TickSpeed * 60f / (Server.Tick - ScoresStartTick[i]);
+                teamScore[(int) GameContext.Players[i].Team] += playerScore[i];
+            }
+
+            var biggerTeam = TeamSize[(int) Team.Red] > TeamSize[(int) Team.Blue] 
+                ? Team.Red 
+                : Team.Blue;
+            var numBalance = Math.Abs(TeamSize[(int) Team.Red] - TeamSize[(int) Team.Blue]) / 2;
+
+            do
+            {
+                var player = default(BasePlayer);
+                var scoreDiff = teamScore[(int) biggerTeam];
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null || !CanBeMovedOnBalance(i))
+                        continue;
+
+                    var score = Math.Abs((teamScore[(int) biggerTeam ^ 1] + playerScore[i]) -
+                                         (teamScore[(int) biggerTeam] - playerScore[i]));
+                    if (GameContext.Players[i].Team == biggerTeam && (player == null || score < scoreDiff))
+                    {
+                        player = GameContext.Players[i];
+                        scoreDiff = score;
+                    }
+                }
+
+                if (player != null)
+                {
+                    var tmp = player.LastActionTick;
+                    player.SetTeam((Team) ((int) biggerTeam ^ 1));
+                    player.LastActionTick = tmp;
+                    player.Respawn();
+                    GameContext.SendGameplayMessage(player.ClientId, GameplayMessage.TeamBalanceVictim, (int?) player.Team);
+                }
+
+            } while (numBalance-- > 0);
+
+            UnbalancedTick = BalanceOk;
+            GameContext.SendGameplayMessage(-1, GameplayMessage.TeamBalance);
+        }
+
+        protected override bool CanBeMovedOnBalance(int clientId)
+        {
+            return true;
         }
 
         protected override void CheckGameInfo()
@@ -512,7 +683,27 @@ namespace TeeSharp.Server.Game
 
         protected override void CheckTeamBalance()
         {
+            if (!IsTeamplay() || !Config["SvTeambalanceTime"])
+            {
+                UnbalancedTick = BalanceOk;
+                return;
+            }
 
+            string message;
+
+            if (Math.Abs(TeamSize[(int)Team.Red] - TeamSize[(int)Team.Blue]) > 2)
+            {
+                message = $"Teams are NOT balanced (red={TeamSize[(int)Team.Red]} blue={TeamSize[(int)Team.Blue]})";
+                if (UnbalancedTick <= BalanceOk)
+                    UnbalancedTick = Server.Tick;
+            }
+            else
+            {
+                message = $"Teams are balanced (red={TeamSize[(int)Team.Red]} blue={TeamSize[(int)Team.Blue]})";
+                UnbalancedTick = BalanceOk;
+            }
+
+            Console.Print(OutputLevel.Debug, "game", message);
         }
 
         protected override void SwapTeams()
@@ -651,6 +842,7 @@ namespace TeeSharp.Server.Game
             player.CharacterSpawned += OnCharacterSpawn;
             player.TeamChanged += OnPlayerTeamChanged;
 
+            ScoresStartTick[player.ClientId] = Server.Tick;
             Scores[player.ClientId] = 0;
         }
 
