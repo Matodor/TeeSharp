@@ -33,6 +33,7 @@ namespace TeeSharp.Server.Game
             SuddenDeath = false;
 
             TeamScore = new int[2];
+            Scores = new int[GameContext.Players.Length];
             SpawnPos = new IList<Vector2>[3]
             {
                 new List<Vector2>(), // dm
@@ -421,6 +422,8 @@ namespace TeeSharp.Server.Game
         {
             player.CharacterSpawned += OnCharacterSpawn;
             player.TeamChanged += OnPlayerTeamChanged;
+
+            Scores[player.ClientId] = 0;
         }
 
         protected override void OnPlayerEnter(BasePlayer player)
@@ -473,7 +476,15 @@ namespace TeeSharp.Server.Game
             if (killer == null || weapon == BasePlayer.WeaponGame)
                 return;
 
-            // TODO
+            if (killer == victim.Player)
+                Scores[killer.ClientId]--;
+            else
+            {
+                if (IsTeamplay() && victim.Player.Team == killer.Team)
+                    Scores[killer.ClientId]--;
+                else
+                    Scores[killer.ClientId]++;
+            }
 
             if (weapon == BasePlayer.WeaponSelf)
                 victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
