@@ -15,6 +15,8 @@ namespace TeeSharp.Server.Game
     public class GameController : BaseGameController
     {
         public override string GameType => "Test";
+        public override bool GamePaused => GameState == GameState.GamePaused || GameState == GameState.StartCountdown;
+        public override bool GameRunning => GameState == GameState.GameRunning;
 
         public override void Init()
         {
@@ -36,6 +38,7 @@ namespace TeeSharp.Server.Game
             TeamScore = new int[2];
             TeamSize = new int[2];
             Scores = new int[GameContext.Players.Length];
+            ScoresStartTick = new int[GameContext.Players.Length];
             SpawnPos = new IList<Vector2>[3]
             {
                 new List<Vector2>(), // dm
@@ -77,7 +80,22 @@ namespace TeeSharp.Server.Game
         
         protected override void WorldOnReseted()
         {
-            
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null)
+                    continue;
+
+                GameContext.Players[i].RespawnDisabled = false;
+                GameContext.Players[i].Respawn();
+                GameContext.Players[i].RespawnTick = Server.Tick + Server.TickSpeed / 2;
+                GameContext.Players[i].IsReadyToPlay = true;
+
+                if (RoundCount == 0)
+                {
+                    Scores[i] = 0;
+                    ScoresStartTick[i] = Server.Tick;
+                }
+            }
         }
 
         protected override void OnPlayerLeave(BasePlayer player, string reason)
@@ -363,6 +381,12 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
+            if (GamePaused)
+            {
+                for (var i = 0; i < ScoresStartTick.Length; i++)
+                    ScoresStartTick[i]++;
+            }
+
             if (GameState != GameState.GameRunning)
             {
                 if (GameStateTimer > 0)
@@ -502,7 +526,68 @@ namespace TeeSharp.Server.Game
 
         protected override void DoTeamBalance()
         {
+            if (!IsTeamplay() || !Config["SvTeambalanceTime"] || Math.Abs(TeamSize[(int)Team.Red] - TeamSize[(int)Team.Blue]) < 2)
+                return;
 
+            Console.Print(OutputLevel.Debug, "game", "Balancing teams");
+
+            var teamScore = new float[2];
+            var playerScore = new float[GameContext.Players.Length];
+
+            for (var i = 0; i < GameContext.Players.Length; i++)
+            {
+                if (GameContext.Players[i] == null ||
+                    GameContext.Players[i].Team == Team.Spectators)
+                {
+                    continue;
+                }
+
+                playerScore[i] = Score(i) * Server.TickSpeed * 60f / (Server.Tick - ScoresStartTick[i]);
+                teamScore[(int) GameContext.Players[i].Team] += playerScore[i];
+            }
+
+            var biggerTeam = TeamSize[(int) Team.Red] > TeamSize[(int) Team.Blue] 
+                ? Team.Red 
+                : Team.Blue;
+            var numBalance = Math.Abs(TeamSize[(int) Team.Red] - TeamSize[(int) Team.Blue]) / 2;
+
+            do
+            {
+                var player = default(BasePlayer);
+                var scoreDiff = teamScore[(int) biggerTeam];
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null || !CanBeMovedOnBalance(i))
+                        continue;
+
+                    var score = Math.Abs((teamScore[(int) biggerTeam ^ 1] + playerScore[i]) -
+                                         (teamScore[(int) biggerTeam] - playerScore[i]));
+                    if (GameContext.Players[i].Team == biggerTeam && (player == null || score < scoreDiff))
+                    {
+                        player = GameContext.Players[i];
+                        scoreDiff = score;
+                    }
+                }
+
+                if (player != null)
+                {
+                    var tmp = player.LastActionTick;
+                    player.SetTeam((Team) ((int) biggerTeam ^ 1));
+                    player.LastActionTick = tmp;
+                    player.Respawn();
+                    GameContext.SendGameplayMessage(player.ClientId, GameplayMessage.TeamBalanceVictim, (int?) player.Team);
+                }
+
+            } while (numBalance-- > 0);
+
+            UnbalancedTick = BalanceOk;
+            GameContext.SendGameplayMessage(-1, GameplayMessage.TeamBalance);
+        }
+
+        protected override bool CanBeMovedOnBalance(int clientId)
+        {
+            return true;
         }
 
         protected override void CheckGameInfo()
@@ -671,6 +756,7 @@ namespace TeeSharp.Server.Game
             player.CharacterSpawned += OnCharacterSpawn;
             player.TeamChanged += OnPlayerTeamChanged;
 
+            ScoresStartTick[player.ClientId] = Server.Tick;
             Scores[player.ClientId] = 0;
         }
 

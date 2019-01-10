@@ -43,14 +43,14 @@ namespace TeeSharp.Server.Game
         public const int BalanceOk = -1;
 
         public abstract string GameType { get; }
+        public virtual bool GamePaused { get; }
+        public virtual bool GameRunning { get; }
 
         public virtual int MatchCount { get; protected set; }
         public virtual int RoundCount { get; protected set; }
 
         public virtual int GameStartTick { get; protected set; }
         public virtual bool SuddenDeath { get; protected set; }
-        public virtual bool GameRunning { get; protected set; }
-        public virtual bool GamePaused { get; protected set; }
         public virtual GameState GameState { get; protected set; }
         public virtual GameFlags GameFlags { get; protected set; }
 
@@ -67,6 +67,7 @@ namespace TeeSharp.Server.Game
         protected virtual int[] TeamSize { get; set; }
         protected virtual int[] TeamScore { get; set; }
         protected virtual int[] Scores { get; set; }
+        protected virtual int[] ScoresStartTick { get; set; }
         protected virtual int UnbalancedTick { get; set; }
 
         public abstract void Init();
@@ -115,5 +116,6 @@ namespace TeeSharp.Server.Game
         protected abstract void CheckGameInfo();
         protected abstract void ResetGame();
         protected abstract bool GetPlayersReadyState(int withoutID = -1);
+        protected abstract bool CanBeMovedOnBalance(int clientId);
     }
 }
