@@ -186,7 +186,7 @@ namespace TeeSharp.Server.Game
             e.ClientId = clientId;
         }
 
-        public override void CreateDamage(Vector2 pos, Vector2 source, 
+        public override void CreateDamageIndicator(Vector2 pos, Vector2 source, 
             int clientId, int healthAmount, int armorAmount, bool self)
         {
             var e = Events.Create<SnapshotEventDamage>(pos);

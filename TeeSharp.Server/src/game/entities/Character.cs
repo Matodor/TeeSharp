@@ -54,7 +54,7 @@ namespace TeeSharp.Server.Game.Entities
 
     public class Character : Entity<Character>
     {
-        public event CharacterDeadEvent Died;
+        public virtual event CharacterDeadEvent Died;
 
         public readonly BasePlayer Player;
 
@@ -500,9 +500,82 @@ namespace TeeSharp.Server.Game.Entities
         {
             Core.Velocity += force;
 
-            SetEmote(Emote.Pain, Server.Tick + Server.TickSpeed / 2);
+            if (GameContext.GameController.IsFriendlyFire(Player.ClientId, from))
+                return false;
 
-            GameContext.CreateDamage(Position, source, Player.ClientId, 1, 1, from == Player.ClientId);
+            if (from == Player.ClientId)
+                damage = Math.Max(1, damage / 2);
+
+            var prevHealth = Health;
+            var prevArmor = Armor;
+
+            if (damage > 0)
+            {
+                if (Armor > 0)
+                {
+                    if (damage > 1)
+                    {
+                        Health--;
+                        damage--;
+                    }
+
+                    if (damage > Armor)
+                    {
+                        damage -= Armor;
+                        Armor = 0;
+                    }
+                    else
+                    {
+                        Armor -= damage;
+                        damage = 0;
+                    }
+                }
+
+                Health -= damage;
+            }
+
+            GameContext.CreateDamageIndicator(Position, source, Player.ClientId, 
+                prevHealth - Health, 
+                prevArmor - Armor, from == Player.ClientId);
+
+            bool AttackerExist() => from >= 0 && from != Player.ClientId && GameContext.Players[from] != null;
+
+            if (AttackerExist())
+            {
+                var mask = BaseGameContext.MaskOne(from);
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] != null && (
+                            GameContext.Players[i].Team == Team.Spectators ||
+                            GameContext.Players[i].DeadSpectatorMode) &&
+                        GameContext.Players[i].SpectatorId == from)
+                    {
+                        mask |= BaseGameContext.MaskOne(i);
+                    }
+                }
+
+                GameContext.CreateSound(GameContext.Players[from].ViewPos, Sound.Hit, mask);
+            }
+
+            if (Health <= 0)
+            {
+                Die(from, weapon);
+
+                if (AttackerExist())
+                {
+                    GameContext.Players[from]
+                        .GetCharacter()?
+                        .SetEmote(Emote.Happy, Server.Tick + Server.TickSpeed);
+                }
+
+                return false;
+            }
+
+            GameContext.CreateSound(Position, damage > 2 
+                ? Sound.PlayerPainLong 
+                : Sound.PlayerPainShort);
+
+            SetEmote(Emote.Pain, Server.Tick + Server.TickSpeed / 2);
             return true;
         }
 
