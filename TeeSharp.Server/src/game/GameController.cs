@@ -584,9 +584,70 @@ namespace TeeSharp.Server.Game
             if (gameData == null)
                 return;
             
-            gameData.GameStartTick = 0; // GameStartTick
+            gameData.GameStartTick = GameStartTick; 
             gameData.GameStateFlags = GameStateFlags.None;
             gameData.GameStateEndTick = 0;
+
+            if (GameState == GameState.WarmupGame ||
+                GameState == GameState.WarmupUser ||
+                GameState == GameState.StartCountdown ||
+                GameState == GameState.GamePaused)
+            {
+                if (GameStateTimer != TimerInfinite)
+                    gameData.GameStateEndTick = Server.Tick + GameStateTimer;
+            }
+
+            switch (GameState)
+            {
+                case GameState.WarmupGame:
+                case GameState.WarmupUser:
+                    gameData.GameStateFlags |= GameStateFlags.Warmup;
+                    break;
+
+                case GameState.StartCountdown:
+                    gameData.GameStateFlags |= GameStateFlags.StartCountDown | GameStateFlags.Paused;
+                    break;
+
+                case GameState.GamePaused:
+                    gameData.GameStateFlags |= GameStateFlags.Paused;
+                    break;
+
+                case GameState.EndRound:
+                    gameData.GameStateFlags |= GameStateFlags.RoundOver;
+                    gameData.GameStateEndTick = Server.Tick - GameStartTick - TimerEnd / 2 * Server.TickSpeed + GameStateTimer;
+                    break;
+
+                case GameState.EndMatch:
+                    gameData.GameStateFlags |= GameStateFlags.GameOver;
+                    gameData.GameStateEndTick = Server.Tick - GameStartTick - TimerEnd * Server.TickSpeed + GameStateTimer;
+                    break;
+            }
+
+            if (SuddenDeath)
+                gameData.GameStateFlags |= GameStateFlags.SuddenDeath;
+
+            if (IsTeamplay())
+            {
+                var gameDataTeam = Server.SnapshotItem<SnapshotGameDataTeam>(0);
+                if (gameDataTeam != null)
+                {
+                    gameDataTeam.ScoreBlue = TeamScore[(int) Team.Blue];
+                    gameDataTeam.ScoreRed = TeamScore[(int) Team.Red];
+                }
+            }
+
+            if (snappingId == -1)
+            {
+                var gameInfo = Server.SnapshotItem<SnapshotDemoGameInfo>(0);
+                if (gameInfo != null)
+                {
+                    gameInfo.GameFlags = GameFlags;
+                    gameInfo.ScoreLimit = GameInfo.ScoreLimit;
+                    gameInfo.TimeLimit = GameInfo.TimeLimit;
+                    gameInfo.MatchNum = GameInfo.MatchNum;
+                    gameInfo.MatchCurrent = GameInfo.MatchCurrent;
+                }
+            }
         }
     }
 }
