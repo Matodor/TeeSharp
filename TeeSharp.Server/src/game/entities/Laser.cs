@@ -15,8 +15,9 @@ namespace TeeSharp.Server.Game.Entities
         private int _evalTick;
         private Vector2 _from;
 
-        public Laser(Vector2 direction, float startEnergy, int owner) : base(1)
+        public Laser(Vector2 startPos, Vector2 direction, float startEnergy, int owner) : base(1)
         {
+            Position = startPos;
             _direction = direction;
             _energy = startEnergy;
             _owner = owner;
@@ -49,7 +50,7 @@ namespace TeeSharp.Server.Game.Entities
                 force: Vector2.Zero, 
                 source: (to - from).Normalized, 
                 damage: ServerData.Weapons.Laser.Damage, 
-                @from: _owner,
+                from: _owner,
                 weapon: Weapon.Laser);
 
             return true;

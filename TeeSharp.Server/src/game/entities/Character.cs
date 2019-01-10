@@ -329,7 +329,7 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
         {
-            var laser = new Laser(direction, Tuning["LaserReach"], Player.ClientId) {Position = Position};
+            var laser = new Laser(Position, direction, Tuning["LaserReach"], Player.ClientId);
             GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
@@ -343,13 +343,16 @@ namespace TeeSharp.Server.Game.Entities
             (
                 weapon: Weapon.Grenade,
                 ownerId: Player.ClientId,
+                startPos: startPos,
                 direction: direction,
                 lifeSpan: (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
                 damage: ServerData.Weapons.Grenade.Damage,
                 explosive: true,
                 force: 0f,
                 soundImpact: Sound.GrenadeExplode
-            ) {Position = startPos};
+            );
+
+            GameContext.CreateSound(Position, Sound.GrenadeFire);
         }
 
         protected virtual void DoWeaponFireShotgun(Vector2 startPos, Vector2 direction)
@@ -367,13 +370,14 @@ namespace TeeSharp.Server.Game.Entities
                 (
                     weapon: Weapon.Shotgun,
                     ownerId: Player.ClientId,
+                    startPos: startPos,
                     direction: new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * speed,
                     lifeSpan: (int) (Server.TickSpeed * Tuning["ShotgunLifetime"]),
                     damage: ServerData.Weapons.Shotgun.Damage,
                     explosive: false,
                     force: 0f,
                     soundImpact: (Sound) (-1)
-                ) {Position = startPos};
+                );
             }
 
             GameContext.CreateSound(Position, Sound.ShotgunFire);
@@ -385,13 +389,14 @@ namespace TeeSharp.Server.Game.Entities
             (
                 weapon: Weapon.Gun,
                 ownerId: Player.ClientId,
+                startPos: startPos,
                 direction: direction,
                 lifeSpan: (int) (Server.TickSpeed * Tuning[key: "GunLifetime"]),
                 damage: 1,
                 explosive: false,
                 force: 0f,
                 soundImpact: (Sound) (-1)
-            ) {Position = startPos};
+            );
 
             GameContext.CreateSound(Position, Sound.GunFire);
         }
