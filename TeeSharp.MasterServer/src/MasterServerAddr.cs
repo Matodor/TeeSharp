@@ -3,7 +3,7 @@
 namespace TeeSharp.MasterServer
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class MasterServerAddr
+    public struct MasterServerAddr
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public byte[] Ip;

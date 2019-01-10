@@ -6,6 +6,7 @@ using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 using TeeSharp.Network;
 using TeeSharp.Server.Game.Entities;
 
@@ -43,6 +44,7 @@ namespace TeeSharp.Server.Game
             Server.PlayerReady += ServerOnPlayerReady;
             Server.PlayerEnter += ServerOnPlayerEnter;
             Server.PlayerDisconnected += ServerOnPlayerDisconnected;
+
             for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
                 for (var x = 0; x < MapLayers.GameLayer.Width; x++)
