@@ -429,7 +429,11 @@ namespace TeeSharp.Server.Game
 
         public override bool CanJoinTeam(BasePlayer player, Team team)
         {
-            return true;
+            if (team == Team.Spectators)
+                return true;
+
+            var teamMod = player.Team != Team.Spectators ? -1 : 0;
+            return teamMod + TeamSize[(int) Team.Red] + TeamSize[(int) Team.Blue] < Config["SvPlayerSlots"];
         }
 
         public override bool IsPlayerReadyMode()
