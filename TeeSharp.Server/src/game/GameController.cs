@@ -141,7 +141,7 @@ namespace TeeSharp.Server.Game
         {
             if (team == Team.Spectators || World.Paused)
             {
-                spawnPos = Vector2.zero;
+                spawnPos = Vector2.Zero;
                 return false;
             }
 

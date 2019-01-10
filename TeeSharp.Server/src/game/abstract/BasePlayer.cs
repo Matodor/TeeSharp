@@ -50,7 +50,7 @@ namespace TeeSharp.Server.Game
         public virtual bool RespawnDisabled { get; set; }
         public virtual bool IsReadyToPlay { get; set; }
         public virtual int RespawnTick { get; set; }
-        public virtual int DieTick { get; set; }
+        public virtual int DieTick { get; protected set; }
 
         public virtual int TeamChangeTick { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }

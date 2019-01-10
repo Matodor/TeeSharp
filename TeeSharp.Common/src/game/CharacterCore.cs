@@ -18,10 +18,10 @@ namespace TeeSharp.Common.Game
 
         public override void Reset()
         {
-            Position = Vector2.zero;
-            Velocity = Vector2.zero;
-            HookPosition = Vector2.zero;
-            HookDirection = Vector2.zero;
+            Position = Vector2.Zero;
+            Velocity = Vector2.Zero;
+            HookPosition = Vector2.Zero;
+            HookDirection = Vector2.Zero;
             HookTick = 0;
             HookState = HookState.Idle;
             HookedPlayer = -1;

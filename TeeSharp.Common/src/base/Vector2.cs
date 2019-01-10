@@ -2,8 +2,8 @@
 {
     public struct Vector2
     {
-        public static Vector2 zero = new Vector2(0, 0);
-        public static Vector2 one = new Vector2(1, 1);
+        public static Vector2 Zero = new Vector2(0, 0);
+        public static Vector2 One = new Vector2(1, 1);
 
         public float Length => (float) System.Math.Sqrt(x * x + y * y);
 

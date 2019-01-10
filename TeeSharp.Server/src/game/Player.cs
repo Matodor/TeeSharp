@@ -494,7 +494,13 @@ namespace TeeSharp.Server.Game
 
             Spawning = false;
             Character = new Character(this, spawnPos);
+            Character.Died += CharacterOnDied;
             OnCharacterSpawn(Character);
+        }
+
+        protected virtual void CharacterOnDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial)
+        {
+            DieTick = Server.Tick;
         }
     }
 }

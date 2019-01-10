@@ -79,7 +79,7 @@ namespace TeeSharp.Server.Game
 
         protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
 
-        public abstract void CreateExplosion(Vector2 pos, int owner, Weapon weapon, int damage);
+        public abstract void CreateExplosion(Vector2 position, int owner, Weapon weapon, int maxDamage);
         public abstract void CreatePlayerSpawn(Vector2 pos);
         public abstract void CreateDeath(Vector2 position, int clientId);
         public abstract void CreateDamage(Vector2 pos, Vector2 source,

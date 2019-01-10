@@ -78,7 +78,7 @@ namespace TeeSharp.Server.Game
             for (var i = 0; i < IDs.Length; i++)
                 IDs[i] = Server.SnapshotNewId();
 
-            Position = Vector2.zero;
+            Position = Vector2.Zero;
         }
 
         public abstract void OnSnapshot(int snappingClient);

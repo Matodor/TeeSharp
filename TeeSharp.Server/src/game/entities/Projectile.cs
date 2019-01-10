@@ -19,9 +19,10 @@ namespace TeeSharp.Server.Game.Entities
 
         public override float ProximityRadius { get; protected set; }
 
-        public Projectile(Weapon weapon, int ownerId, Vector2 direction,
+        public Projectile(Weapon weapon, int ownerId, Vector2 startPos, Vector2 direction,
             int lifeSpan, int damage, bool explosive, float force, Sound soundImpact) : base(idsCount: 1)
         {
+            Position = startPos;
             Weapon = weapon;
             OwnerId = ownerId;
             Direction = direction;

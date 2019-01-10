@@ -1,121 +1,134 @@
-﻿//using TeeSharp.Common;
-//using TeeSharp.Common.Enums;
-//using TeeSharp.Common.Protocol;
+﻿using TeeSharp.Common;
+using TeeSharp.Common.Enums;
+using TeeSharp.Common.Protocol;
 
-//namespace TeeSharp.Server.Game.Entities
-//{
-//    public class Laser : Entity<Laser>
-//    {
-//        public override float ProximityRadius { get; protected set; } = 16f;
+namespace TeeSharp.Server.Game.Entities
+{
+    public class Laser : Entity<Laser>
+    {
+        public override float ProximityRadius { get; protected set; }
 
-//        private readonly int _ownerId;
-//        private Vector2 _direction;
-//        private Vector2 _from;
-//        private float _energy;
-//        private int _bounces;
-//        private int _evalTick;
-    
-//        public Laser(Vector2 position, Vector2 direction, float startEnergy,
-//            int ownerId) : base(1)
-//        {
-//            Position = position;
-//            _direction = direction;
-//            _ownerId = ownerId;
-//            _energy = startEnergy;
-//            _bounces = 0;
-//            _evalTick = 0;
-            
-//            DoBounce();
-//        }
+        private Vector2 _direction;
+        private readonly int _owner;
+        private float _energy;
+        private int _bounces;
+        private int _evalTick;
+        private Vector2 _from;
 
-//        protected virtual void DoBounce()
-//        {
-//            _evalTick = Server.Tick;
+        public Laser(Vector2 startPos, Vector2 direction, float startEnergy, int owner) : base(1)
+        {
+            Position = startPos;
+            _direction = direction;
+            _energy = startEnergy;
+            _owner = owner;
+            _bounces = 0;
+            _evalTick = 0;
 
-//            if (_energy < 0)
-//            {
-//                Destroy();
-//                return;
-//            }
+            Reseted += OnReseted;
+            DoBounce();
+        }
 
-//            var to = Position + _direction * _energy;
+        private void OnReseted(Entity entity)
+        {
+            Destroy();
+        }
 
-//            if (GameContext.MapCollision.IntersectLine(Position, to, out _, out to) != CollisionFlags.NONE)
-//            {
-//                if (!HitCharacter(Position, to))
-//                {
-//                    _from = Position;
-//                    Position = to;
+        protected virtual bool HitCharacter(Vector2 from, Vector2 to)
+        {
+            var hitAt = Vector2.Zero;
+            var ownerCharacter = GameContext.Players[_owner]?.GetCharacter();
+            var hitCharacter = GameWorld.IntersectCharacter(Position, to, 0f, ref hitAt, ownerCharacter);
 
-//                    var tempPos = Position;
-//                    var tempDir = _direction * 4f;
+            if (hitCharacter == null)
+                return false;
 
-//                    GameContext.MapCollision.MovePoint(ref tempPos, ref tempDir, 1f, out _);
-//                    Position = tempPos;
-//                    _direction = tempDir.Normalized;
+            _from = from;
+            _energy = -1;
+            Position = hitAt;
 
-//                    _energy -= MathHelper.Distance(_from, Position) + Tuning["LaserBounceCost"];
-//                    _bounces++;
+            hitCharacter.TakeDamage(
+                force: Vector2.Zero, 
+                source: (to - from).Normalized, 
+                damage: ServerData.Weapons.Laser.Damage, 
+                from: _owner,
+                weapon: Weapon.Laser);
 
-//                    if (_bounces > Tuning["LaserBounceNum"])
-//                        _energy = -1;
+            return true;
+        }
 
-//                    GameContext.CreateSound(Position, Sound.LaserBounce);
-//                }
-//            }
-//            else if (!HitCharacter(Position, to))
-//            {
-//                _from = Position;
-//                _energy = -1;
-//                Position = to;
-//            }
-//        }
+        protected virtual void DoBounce()
+        {
+            if (_energy < 0)
+            {
+                Destroy();
+                return;
+            }
 
-//        public override void Reset()
-//        {
-//            Destroy();
-//        }
+            _evalTick = Server.Tick;
+            var to = Position + _direction * _energy;
+            if (GameContext.MapCollision.IntersectLine(Position, to, out _, out to).HasFlag(CollisionFlags.Solid))
+            {
+                if (!HitCharacter(Position, to))
+                {
+                    _from = Position;
+                    Position = to;
 
-//        public override void Tick()
-//        {
-//            if (Server.Tick > _evalTick + (Server.TickSpeed * Tuning["LaserBounceDelay"]) / 1000f)
-//                DoBounce();
-//        }
+                    var tempPos = Position;
+                    var tempDirection = _direction;
 
-//        public override void TickPaused()
-//        {
-//            _evalTick++;
-//        }
+                    GameContext.MapCollision.MovePoint(ref tempPos, ref tempDirection, 1f, out _);
+                    Position = tempPos;
+                    _direction = tempDirection.Normalized;
 
-//        protected virtual bool HitCharacter(Vector2 from, Vector2 to)
-//        {
-//            var hitAt = Vector2.zero;
-//            var ownerCharacter = GameContext.Players[_ownerId]?.GetCharacter();
-//            var hitCharacter = GameWorld.IntersectCharacter(Position, to, 0f, ref hitAt, ownerCharacter);
+                    _energy -= MathHelper.Distance(_from, Position) + Tuning["LaserBounceCost"];
+                    _bounces++;
 
-//            if (hitCharacter == null)
-//                return false;
+                    if (_bounces > Tuning["LaserBounceNum"])
+                        _energy = -1;
 
-//            _from = from;
-//            Position = hitAt;
-//            _energy = -1;
-//            hitCharacter.TakeDamage(Vector2.zero, (int)Tuning["LaserDamage"].FloatValue, 
-//                _ownerId, Weapon.Laser);
-//            return true;
-//        }
+                    GameContext.CreateSound(Position, Sound.LaserBounce);
+                }
+            }
+            else
+            {
+                if (!HitCharacter(Position, to))
+                {
+                    _from = Position;
+                    _energy = -1;
+                    Position = to;
+                }
+            }
+        }
 
-//        public override void OnSnapshot(int snappingClient)
-//        {
-//            if (NetworkClipped(snappingClient))
-//                return;
+        public override void Tick()
+        {
+            base.Tick();
 
-//            var laser = Server.SnapshotItem<SnapshotLaser>(IDs[0]);
-//            if (laser == null)
-//                return;
+            if (Server.Tick > _evalTick + (Server.TickSpeed * Tuning["LaserBounceDelay"]) / 1000f)
+                DoBounce();
+        }
 
-//            laser.Position = Position;
-//            laser.From = _from;
-//            laser.StartTick = _evalTick;
-//        }
-//    }
-//}
+        public override void TickPaused()
+        {
+            base.TickPaused();
+
+            _evalTick++;
+        }
+
+        public override void OnSnapshot(int snappingClient)
+        {
+            if (NetworkClipped(snappingClient) && NetworkClipped(snappingClient, _from))
+                return;
+
+            var laser = Server.SnapshotItem<SnapshotLaser>(IDs[0]);
+            if (laser == null)
+                return;
+
+            laser.StartTick = _evalTick;
+            laser.FromX = (int) _from.x;
+            laser.FromY = (int) _from.y;
+            laser.X = (int) Position.x;
+            laser.Y = (int) Position.y;
+        }
+    }
+}

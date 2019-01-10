@@ -1,4 +1,5 @@
-﻿using TeeSharp.Common;
+﻿using System;
+using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
@@ -6,6 +7,7 @@ using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 using TeeSharp.Network;
+using TeeSharp.Server.Game.Entities;
 
 namespace TeeSharp.Server.Game
 {
@@ -147,33 +149,27 @@ namespace TeeSharp.Server.Game
             return Players[clientId] != null && Players[clientId].Team != Team.Spectators;
         }
 
-        public override void CreateExplosion(Vector2 pos, int owner, Weapon weapon, int damage)
+        public override void CreateExplosion(Vector2 position, int owner, Weapon weapon, int maxDamage)
         {
-            //var e = Events.Create<SnapshotEventExplosion>();
-            //if (e != null)
-            //    e.Position = position;
+            Events.Create<SnapshotEventExplosion>(position);
 
-            //if (noDamage)
-            //    return;
+            const float innerRadius = 48f;
+            var radius = ServerData.Explosion.Radius;
+            var maxForce = ServerData.Explosion.MaxForce;
 
-            //const float radius = 135.0f;
-            //const float innerRadius = 48.0f;
+            foreach (var character in Character.Entities.Find(position, radius))
+            {
+                var diff = character.Position - position;
+                var force = new Vector2(0, maxForce);
+                var length = diff.Length;
 
-            //var characters = World.FindEntities<Character>(position, radius);
-            //foreach (var character in characters)
-            //{
-            //    var diff = character.Position - position;
-            //    var forceDir = new Vector2(0, 1);
-            //    var l = diff.Length;
+                if (Math.Abs(length) > 0.0001f)
+                    force = diff.Normalized * maxForce;
 
-            //    if (l > 0)
-            //        forceDir = diff.Normalized;
-            //    l = 1 - System.Math.Clamp((l - innerRadius) / (radius - innerRadius), 0f, 1f);
-            //    var dmg = (int) (6 * l);
-
-            //    if (dmg != 0)
-            //        character.TakeDamage(forceDir * dmg * 2, dmg, owner, weapon);
-            //}
+                var factor = 1 - Math.Clamp((length - innerRadius) / (radius - innerRadius), 0f, 1f);
+                if ((int) (factor * maxDamage) != 0)
+                    character.TakeDamage(force * factor, diff * -1, (int) (factor * maxDamage), owner, weapon);
+            }
         }
 
         public override void CreatePlayerSpawn(Vector2 pos)
