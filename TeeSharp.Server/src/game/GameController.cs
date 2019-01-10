@@ -512,7 +512,27 @@ namespace TeeSharp.Server.Game
 
         protected override void CheckTeamBalance()
         {
+            if (!IsTeamplay() || !Config["SvTeambalanceTime"])
+            {
+                UnbalancedTick = BalanceOk;
+                return;
+            }
 
+            string message;
+
+            if (Math.Abs(TeamSize[(int)Team.Red] - TeamSize[(int)Team.Blue]) > 2)
+            {
+                message = $"Teams are NOT balanced (red={TeamSize[(int)Team.Red]} blue={TeamSize[(int)Team.Blue]})";
+                if (UnbalancedTick <= BalanceOk)
+                    UnbalancedTick = Server.Tick;
+            }
+            else
+            {
+                message = $"Teams are balanced (red={TeamSize[(int)Team.Red]} blue={TeamSize[(int)Team.Blue]})";
+                UnbalancedTick = BalanceOk;
+            }
+
+            Console.Print(OutputLevel.Debug, "game", message);
         }
 
         protected override void SwapTeams()
