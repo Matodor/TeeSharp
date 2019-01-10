@@ -125,7 +125,7 @@ namespace TeeSharp.Server
                 FireDelay = 500,
                 MaxAmmo = 10,
                 AmmoRegenTime = 0,
-                Damage = 1,
+                Damage = 6,
                 Curvature = 7f,
                 Speed = 1000f,
                 Lifetime = 2f,
@@ -133,7 +133,7 @@ namespace TeeSharp.Server
             new DataWeaponInfoRifle
             {
                 Name = "rifle",
-                FireDelay = 500,
+                FireDelay = 800,
                 MaxAmmo = 10,
                 AmmoRegenTime = 0,
                 Damage = 5,
@@ -145,7 +145,7 @@ namespace TeeSharp.Server
             new DataWeaponInfoNinja
             {
                 Name = "ninja",
-                FireDelay = 500,
+                FireDelay = 800,
                 MaxAmmo = 10,
                 AmmoRegenTime = 0,
                 Damage = 9,

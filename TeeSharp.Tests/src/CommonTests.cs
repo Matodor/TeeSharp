@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Tests
 {

@@ -90,7 +90,12 @@ namespace TeeSharp.Server.Game
         {
             return GameFlags.HasFlag(GameFlags.Teams);
         }
-        
+
+        public override bool IsFriendlyFire(int clientId1, int clientId2)
+        {
+            return false;
+        }
+
         public override bool CanSelfKill(BasePlayer player)
         {
             return true;

@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 using TeeSharp.Network.Enums;
 using Math = System.Math;
 

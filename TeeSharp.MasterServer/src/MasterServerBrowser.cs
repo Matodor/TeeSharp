@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 using TeeSharp.Network;
 using TeeSharp.Network.Enums;
 using TeeSharp.Network.Extensions;
@@ -43,8 +44,7 @@ namespace TeeSharp.MasterServer
                 if (!IsMasterServer(packet.EndPoint))
                     return;
 
-                var list = packet.Data.ReadStructs<MasterServerAddr>(
-                    MasterServerPackets.List.Length);
+                var list = packet.Data.AsSpan(MasterServerPackets.List.Length).Read<MasterServerAddr[]>();
 
                 for (var i = 0; i < list.Length; i++)
                 {

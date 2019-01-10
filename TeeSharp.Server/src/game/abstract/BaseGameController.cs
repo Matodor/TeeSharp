@@ -155,6 +155,7 @@ namespace TeeSharp.Server.Game
         public abstract bool IsPlayerReadyMode();
         public abstract bool IsTeamChangeAllowed(BasePlayer player);
         public abstract bool IsTeamplay();
+        public abstract bool IsFriendlyFire(int clientId1, int clientId2);
         public abstract int Score(int clientId);
 
         public abstract void Tick();

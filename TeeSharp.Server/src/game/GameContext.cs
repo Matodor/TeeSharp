@@ -6,6 +6,7 @@ using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 using TeeSharp.Network;
 using TeeSharp.Server.Game.Entities;
 
@@ -43,6 +44,7 @@ namespace TeeSharp.Server.Game
             Server.PlayerReady += ServerOnPlayerReady;
             Server.PlayerEnter += ServerOnPlayerEnter;
             Server.PlayerDisconnected += ServerOnPlayerDisconnected;
+
             for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
                 for (var x = 0; x < MapLayers.GameLayer.Width; x++)
@@ -186,7 +188,7 @@ namespace TeeSharp.Server.Game
             e.ClientId = clientId;
         }
 
-        public override void CreateDamage(Vector2 pos, Vector2 source, 
+        public override void CreateDamageIndicator(Vector2 pos, Vector2 source, 
             int clientId, int healthAmount, int armorAmount, bool self)
         {
             var e = Events.Create<SnapshotEventDamage>(pos);

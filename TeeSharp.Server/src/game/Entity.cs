@@ -36,8 +36,8 @@ namespace TeeSharp.Server.Game
     public delegate void EntityEvent(Entity entity);
     public abstract class Entity : BaseInterface
     {
-        public event EntityEvent Destroyed;
-        public event EntityEvent Reseted;
+        public virtual event EntityEvent Destroyed;
+        public virtual event EntityEvent Reseted;
 
         /// <summary>
         /// All entities on map

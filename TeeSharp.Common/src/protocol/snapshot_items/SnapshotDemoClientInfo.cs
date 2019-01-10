@@ -4,6 +4,7 @@ using TeeSharp.Common.Enums;
 using TeeSharp.Common.Game;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Protocol
 {

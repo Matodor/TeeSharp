@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using ComponentAce.Compression.Libs.zlib;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Map
 {
@@ -11,7 +12,6 @@ namespace TeeSharp.Map
     {
         public readonly byte[] Raw;
         public readonly uint Crc;
-        public readonly DataFileVersionHeader VersionHeader;
         public readonly DataFileHeader Header;
         public readonly IReadOnlyList<DataFileItemType> ItemTypes;
         public readonly IReadOnlyList<int> ItemOffsets;
@@ -26,7 +26,6 @@ namespace TeeSharp.Map
         public DataFile(
             byte[] raw,
             uint crc, 
-            DataFileVersionHeader versionHeader,
             DataFileHeader header, 
             IReadOnlyList<DataFileItemType> itemTypes,
             IReadOnlyList<int> itemOffsets,
@@ -36,7 +35,6 @@ namespace TeeSharp.Map
         {
             Raw = raw;
             Crc = crc;
-            VersionHeader = versionHeader;
             Header = header;
             ItemTypes = itemTypes;
             ItemOffsets = itemOffsets;
@@ -77,7 +75,7 @@ namespace TeeSharp.Map
                 dataSize
             ))
             {
-                inMemoryStream.CopyStream(outZStream);
+                inMemoryStream.CopyTo(outZStream);
                 outZStream.finish();
 
                 // TODO
@@ -86,7 +84,7 @@ namespace TeeSharp.Map
                     if (typeof(T) == typeof(string[]))
                         throw new NotSupportedException("GetData not supported array string");
 
-                    _dataObjects[index] = outMemoryStream.ToArray().ReadStructs(typeof(T).GetElementType());
+                    _dataObjects[index] = outMemoryStream.ToArray().AsSpan().ReadArray<T>();
                 }
                 else
                 {
@@ -95,7 +93,7 @@ namespace TeeSharp.Map
                         _dataObjects[index] = Encoding.UTF8.GetString(outMemoryStream.ToArray()).SanitizeCC();
                     }
                     else
-                        _dataObjects[index] = outMemoryStream.ToArray().ReadStruct<T>();
+                        _dataObjects[index] = outMemoryStream.ToArray().AsSpan().Read<T>();
                 }
             }
 
@@ -121,12 +119,12 @@ namespace TeeSharp.Map
         public T GetItem<T>(int index, out int typeId, out int id)
         {
             var offset = ItemStartIndex + ItemOffsets[index];
-            var item = Raw.ReadStruct<DataFileItem>(offset);
+            var item = Raw.AsSpan(offset).Read<DataFileItem>();
 
             typeId = (item.TypeIdAndItemId >> 16) & 0b1111_1111_1111_1111;
             id = item.TypeIdAndItemId & 0b1111_1111_1111_1111;
 
-            return Raw.ReadStruct<T>(offset + sizeof(int) * 2);
+            return Raw.AsSpan(offset + sizeof(int) * 2).Read<T>(); // sizeof(int) * 2 = Marshal.SizeOf<DataFileItem>()
         }
 
         public T FindItem<T>(int typeId, int id)
