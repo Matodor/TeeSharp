@@ -306,7 +306,7 @@ namespace TeeSharp.Server.Game
 
         public override int Score(int clientId)
         {
-            return 0;
+            return Scores[clientId];
         }
 
         public override bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)
