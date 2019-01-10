@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
@@ -32,6 +33,7 @@ namespace TeeSharp.Server.Game
             SuddenDeath = false;
 
             TeamScore = new int[2];
+            Scores = new int[GameContext.Players.Length];
             SpawnPos = new IList<Vector2>[3]
             {
                 new List<Vector2>(), // dm
@@ -73,7 +75,158 @@ namespace TeeSharp.Server.Game
 
         protected override void SetGameState(GameState state, int timer)
         {
+            void CheckGameFlagsSurvival()
+            {
+                if (GameFlags.HasFlag(GameFlags.Survival))
+                {
+                    for (var i = 0; i < GameContext.Players.Length; i++)
+                    {
+                        if (GameContext.Players[i] != null)
+                            GameContext.Players[i].RespawnDisabled = false;
+                    }
+                }
+            }
 
+            switch (state)
+            {
+                case GameState.WarmupGame:
+                {
+                    if (GameState != GameState.GameRunning && 
+                        GameState != GameState.WarmupGame &&
+                        GameState != GameState.WarmupUser)
+                    {
+                        return;
+                    }
+
+                    if (timer == TimerInfinite)
+                    {
+                        GameState = state;
+                        GameStateTimer = timer;
+                        CheckGameFlagsSurvival();
+                    }
+                    else if (timer == 0)
+                    {
+                        StartMatch();
+                    }
+                } break;
+
+                case GameState.WarmupUser:
+                {
+                    if (GameState != GameState.GameRunning &&
+                        GameState != GameState.WarmupUser)
+                    {
+                        return;
+                    }
+
+                    if (timer == 0)
+                    {
+                        StartMatch();
+                        return;
+                    }
+
+                    if (timer < 0)
+                    {
+                        GameStateTimer = TimerInfinite;
+
+                        if (Config["SvPlayerReadyMode"])
+                            SetPlayersReadyState(false);
+                    }
+                    else
+                    {
+                        GameStateTimer = timer * Server.TickSpeed;
+                    }
+
+                    GameState = state;
+                    CheckGameFlagsSurvival();
+                } break;
+
+                case GameState.StartCountdown:
+                {
+                    if (GameState != GameState.GameRunning &&
+                        GameState != GameState.GamePaused &&
+                        GameState != GameState.StartCountdown)
+                    {
+                        return;
+                    }
+
+                    GameState = state;
+                    GameStateTimer = Server.TickSpeed * 3;
+                    World.Paused = true;
+                } break;
+
+                case GameState.GameRunning:
+                {
+                    GameState = state;
+                    GameStateTimer = TimerInfinite;
+                    World.Paused = false;
+                    SetPlayersReadyState(true);
+                } break;
+
+                case GameState.GamePaused:
+                {
+                    if (GameState != GameState.GameRunning &&
+                        GameState != GameState.GamePaused)
+                    {
+                        return;
+                    }
+
+                    if (timer == 0)
+                    {
+                        SetGameState(GameState.StartCountdown, 0);
+                        return;
+                    }
+
+                    if (timer < 0)
+                    {
+                        GameStateTimer = TimerInfinite;
+                        SetPlayersReadyState(false);
+                    }
+                    else
+                    {
+                        GameStateTimer = timer * Server.TickSpeed;
+                    }
+
+                    GameState = state;
+                    World.Paused = true;
+                } break;
+
+                case GameState.EndRound:
+                case GameState.EndMatch:
+                {
+                    WincheckMatch();
+
+                    if (GameState == GameState.EndMatch)
+                        break;
+
+                    if (GameState != GameState.GameRunning &&
+                        GameState != GameState.EndRound ||
+                        GameState != GameState.EndMatch ||
+                        GameState != GameState.GamePaused)
+                    {
+                        return;
+                    }
+
+                    GameState = state;
+                    GameStateTimer = timer * Server.TickSpeed;
+                    SuddenDeath = false;
+                    World.Paused = true;
+                } break;
+            }
+        }
+
+        protected override void WincheckMatch()
+        {
+            
+        }
+
+        protected override void SetPlayersReadyState(bool state)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void StartMatch()
+        {
+            throw new NotImplementedException();
         }
 
         public override Team StartTeam()
@@ -135,11 +288,25 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
+            if (GameState != GameState.GameRunning)
+            {
+                if (GameStateTimer > 0)
+                    GameStateTimer--;
+
+                if (GameStateTimer == 0)
+                {
+                    
+                }
+                else
+                {
+
+                }
+            }
         }
 
         public override int Score(int clientId)
         {
-            return 0;
+            return Scores[clientId];
         }
 
         public override bool CanSpawn(Team team, int clientId, out Vector2 spawnPos)
@@ -255,6 +422,8 @@ namespace TeeSharp.Server.Game
         {
             player.CharacterSpawned += OnCharacterSpawn;
             player.TeamChanged += OnPlayerTeamChanged;
+
+            Scores[player.ClientId] = 0;
         }
 
         protected override void OnPlayerEnter(BasePlayer player)
@@ -307,7 +476,15 @@ namespace TeeSharp.Server.Game
             if (killer == null || weapon == BasePlayer.WeaponGame)
                 return;
 
-            // TODO
+            if (killer == victim.Player)
+                Scores[killer.ClientId]--;
+            else
+            {
+                if (IsTeamplay() && victim.Player.Team == killer.Team)
+                    Scores[killer.ClientId]--;
+                else
+                    Scores[killer.ClientId]++;
+            }
 
             if (weapon == BasePlayer.WeaponSelf)
                 victim.Player.RespawnTick = Server.Tick + Server.TickSpeed * 3;
@@ -418,9 +595,70 @@ namespace TeeSharp.Server.Game
             if (gameData == null)
                 return;
             
-            gameData.GameStartTick = 0; // GameStartTick
+            gameData.GameStartTick = GameStartTick; 
             gameData.GameStateFlags = GameStateFlags.None;
             gameData.GameStateEndTick = 0;
+
+            if (GameState == GameState.WarmupGame ||
+                GameState == GameState.WarmupUser ||
+                GameState == GameState.StartCountdown ||
+                GameState == GameState.GamePaused)
+            {
+                if (GameStateTimer != TimerInfinite)
+                    gameData.GameStateEndTick = Server.Tick + GameStateTimer;
+            }
+
+            switch (GameState)
+            {
+                case GameState.WarmupGame:
+                case GameState.WarmupUser:
+                    gameData.GameStateFlags |= GameStateFlags.Warmup;
+                    break;
+
+                case GameState.StartCountdown:
+                    gameData.GameStateFlags |= GameStateFlags.StartCountDown | GameStateFlags.Paused;
+                    break;
+
+                case GameState.GamePaused:
+                    gameData.GameStateFlags |= GameStateFlags.Paused;
+                    break;
+
+                case GameState.EndRound:
+                    gameData.GameStateFlags |= GameStateFlags.RoundOver;
+                    gameData.GameStateEndTick = Server.Tick - GameStartTick - TimerEnd / 2 * Server.TickSpeed + GameStateTimer;
+                    break;
+
+                case GameState.EndMatch:
+                    gameData.GameStateFlags |= GameStateFlags.GameOver;
+                    gameData.GameStateEndTick = Server.Tick - GameStartTick - TimerEnd * Server.TickSpeed + GameStateTimer;
+                    break;
+            }
+
+            if (SuddenDeath)
+                gameData.GameStateFlags |= GameStateFlags.SuddenDeath;
+
+            if (IsTeamplay())
+            {
+                var gameDataTeam = Server.SnapshotItem<SnapshotGameDataTeam>(0);
+                if (gameDataTeam != null)
+                {
+                    gameDataTeam.ScoreBlue = TeamScore[(int) Team.Blue];
+                    gameDataTeam.ScoreRed = TeamScore[(int) Team.Red];
+                }
+            }
+
+            if (snappingId == -1)
+            {
+                var gameInfo = Server.SnapshotItem<SnapshotDemoGameInfo>(0);
+                if (gameInfo != null)
+                {
+                    gameInfo.GameFlags = GameFlags;
+                    gameInfo.ScoreLimit = GameInfo.ScoreLimit;
+                    gameInfo.TimeLimit = GameInfo.TimeLimit;
+                    gameInfo.MatchNum = GameInfo.MatchNum;
+                    gameInfo.MatchCurrent = GameInfo.MatchCurrent;
+                }
+            }
         }
     }
 }
