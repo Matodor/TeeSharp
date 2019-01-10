@@ -410,7 +410,21 @@ namespace TeeSharp.Server.Game
 
         public override bool CanChangeTeam(BasePlayer player, Team team)
         {
-            return true;
+            if (!IsTeamplay() || team == Team.Spectators || !Config["SvTeambalanceTime"])
+                return true;
+
+            var playerCount = new int[]
+            {
+                TeamSize[(int) Team.Red],
+                TeamSize[(int) Team.Blue],
+            };
+
+            playerCount[(int) team]++;
+
+            if (player.Team != Team.Spectators)
+                playerCount[(int) team ^ 1]--;
+
+            return playerCount[(int) team] - playerCount[(int) team ^ 1] < 2;
         }
 
         public override bool CanJoinTeam(BasePlayer player, Team team)
