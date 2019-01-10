@@ -117,5 +117,6 @@ namespace TeeSharp.Server.Game
         protected abstract void ResetGame();
         protected abstract bool GetPlayersReadyState(int withoutID = -1);
         protected abstract bool CanBeMovedOnBalance(int clientId);
+        protected abstract void EndMatch();
     }
 }

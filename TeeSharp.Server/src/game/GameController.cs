@@ -263,9 +263,56 @@ namespace TeeSharp.Server.Game
 
         }
 
+        protected override void EndMatch()
+        {
+
+        }
+
         protected override void WincheckMatch()
         {
-            
+            if (IsTeamplay())
+            {
+                if (GameInfo.ScoreLimit > 0 && (
+                        TeamScore[(int) Team.Red] >= GameInfo.ScoreLimit || 
+                        TeamScore[(int) Team.Blue] >= GameInfo.ScoreLimit) ||
+                    GameInfo.TimeLimit > 0 && (Server.Tick - GameStartTick) >= GameInfo.TimeLimit * Server.TickSpeed * 60)
+                {
+                    if (TeamScore[(int) Team.Red] != TeamScore[(int) Team.Blue] ||
+                        GameFlags.HasFlag(GameFlags.Survival))
+                        EndMatch();
+                    else
+                        SuddenDeath = true;
+
+                }
+            }
+            else
+            {
+                var topScore = 0;
+                var topScoreCount = 0;
+
+                for (var i = 0; i < GameContext.Players.Length; i++)
+                {
+                    if (GameContext.Players[i] == null)
+                        continue;
+
+                    if (Score(i) > topScore)
+                    {
+                        topScore = Score(i);
+                        topScoreCount = 1;
+                    }
+                    else if (Score(i) == topScore)
+                        topScoreCount++;
+                }
+
+                if (GameInfo.ScoreLimit > 0 && topScore >= GameInfo.ScoreLimit ||
+                    GameInfo.TimeLimit > 0 && Server.Tick - GameStartTick >= GameInfo.TimeLimit * Server.TickSpeed * 60)
+                {
+                    if (topScoreCount == 1)
+                        EndMatch();
+                    else
+                        SuddenDeath = true;
+                }
+            }
         }
 
         protected override void SetPlayersReadyState(bool state)
@@ -338,6 +385,21 @@ namespace TeeSharp.Server.Game
 
         public override bool IsFriendlyFire(int clientId1, int clientId2)
         {
+            if (clientId1 == clientId2)
+                return false;
+
+            if (IsTeamplay())
+            {
+                if (GameContext.Players[clientId1] == null ||
+                    GameContext.Players[clientId2] == null)
+                {
+                    return false;
+                }
+
+                if (!Config["SvTeamdamage"] && GameContext.Players[clientId1].Team == GameContext.Players[clientId2].Team)
+                    return true;
+            }
+
             return false;
         }
 
