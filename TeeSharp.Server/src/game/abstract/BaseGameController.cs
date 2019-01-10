@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// ReSharper disable UnusedMemberInSuper.Global
+using System.Collections.Generic;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
@@ -38,6 +39,8 @@ namespace TeeSharp.Server.Game
     {
         public const int TimerInfinite = -1;
         public const int TimerEnd = 10;
+        public const int BalanceCheck = -2;
+        public const int BalanceOk = -1;
 
         public abstract string GameType { get; }
 
@@ -61,8 +64,10 @@ namespace TeeSharp.Server.Game
 
         protected virtual int GameStateTimer { get; set; }
         protected virtual GameInfo GameInfo { get; set; }
+        protected virtual int[] TeamSize { get; set; }
         protected virtual int[] TeamScore { get; set; }
         protected virtual int[] Scores { get; set; }
+        protected virtual int UnbalancedTick { get; set; }
 
         public abstract void Init();
         public abstract Team StartTeam();
@@ -79,13 +84,12 @@ namespace TeeSharp.Server.Game
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 spawnPos);
         public abstract bool CanSelfKill(BasePlayer player);
 
-        public abstract void OnReset();
-
         protected abstract void OnCharacterSpawn(BasePlayer player, Character character);
         protected abstract void OnCharacterDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial);
-        protected abstract void OnPlayerTeamChanged(BasePlayer player, Team prevteam, Team newteam);
+        protected abstract void OnPlayerTeamChanged(BasePlayer player, Team prevTeam, Team newTeam);
         protected abstract void OnPlayerReady(BasePlayer player);
         protected abstract void OnPlayerEnter(BasePlayer player);
+        protected abstract void OnPlayerLeave(BasePlayer player, string reason);
 
         public abstract void OnPlayerInfoChange(BasePlayer player);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
@@ -93,11 +97,23 @@ namespace TeeSharp.Server.Game
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
         public abstract void OnEntity(Tile tile, Vector2 pos);
 
-        protected abstract void CheckReadyStates();
+        protected abstract void CheckReadyStates(int withoutId = -1);
         protected abstract void UpdateGameInfo(int clientId);
         protected abstract void StartMatch();
         protected abstract void SetGameState(GameState state, int timer);
         protected abstract void SetPlayersReadyState(bool state);
         protected abstract void WincheckMatch();
+        protected abstract void StartRound();
+        protected abstract void CycleMap();
+        protected abstract void SwapTeams();
+        protected abstract bool HasEnoughPlayers();
+        protected abstract void CheckTeamBalance();
+        protected abstract void DoTeamBalance();
+        protected abstract void WorldOnReseted();
+        protected abstract void WincheckRound();
+        protected abstract void DoActivityCheck();
+        protected abstract void CheckGameInfo();
+        protected abstract void ResetGame();
+        protected abstract bool GetPlayersReadyState(int withoutID = -1);
     }
 }

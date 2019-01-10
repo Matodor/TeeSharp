@@ -50,9 +50,11 @@ namespace TeeSharp.Server.Game
         public virtual bool RespawnDisabled { get; set; }
         public virtual bool IsReadyToPlay { get; set; }
         public virtual int RespawnTick { get; set; }
-        public virtual int DieTick { get; protected set; }
 
+        public virtual int DieTick { get; protected set; }
+        public virtual int InactivityTickCounter { get; protected set; }
         public virtual int TeamChangeTick { get; protected set; }
+        public virtual int LastChangeInfo { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
@@ -60,7 +62,6 @@ namespace TeeSharp.Server.Game
         public virtual TeeInfo TeeInfo { get; protected set; }
         public virtual bool IsReadyToEnter { get; protected set; }
         public virtual bool DeadSpectatorMode { get; protected set; }
-        public virtual int LastChangeInfo { get; protected set; }
 
         protected virtual Character Character { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
@@ -68,7 +69,6 @@ namespace TeeSharp.Server.Game
         protected virtual BaseConfig Config { get; set; }
 
         protected virtual PlayerFlags PlayerFlags { get; set; }
-        protected virtual int InactivityTickCounter { get; set; }
         protected virtual Flag SpectatorFlag { get; set; }
         protected virtual bool ActiveSpectatorSwitch { get; set; }
 
