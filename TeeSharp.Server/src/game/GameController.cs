@@ -237,14 +237,15 @@ namespace TeeSharp.Server.Game
                 case GameState.EndRound:
                 case GameState.EndMatch:
                 {
-                    WincheckMatch();
+                    if (state == GameState.EndRound)
+                        WincheckMatch();
 
                     if (GameState == GameState.EndMatch)
                         break;
 
                     if (GameState != GameState.GameRunning &&
-                        GameState != GameState.EndRound ||
-                        GameState != GameState.EndMatch ||
+                        GameState != GameState.EndRound &&
+                        GameState != GameState.EndMatch &&
                         GameState != GameState.GamePaused)
                     {
                         return;
