@@ -180,6 +180,9 @@ namespace TeeSharp.Server.Game
 
         protected abstract void CheckReadyStates();
         protected abstract void UpdateGameInfo(int clientId);
+        protected abstract void StartMatch();
         protected abstract void SetGameState(GameState state, int timer);
+        protected abstract void SetPlayersReadyState(bool state);
+        protected abstract void WincheckMatch();
     }
 }
