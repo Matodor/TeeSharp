@@ -263,9 +263,14 @@ namespace TeeSharp.Server.Game
 
         }
 
+        protected override void EndRound()
+        {
+            SetGameState(GameState.EndRound, TimerEnd / 2);
+        }
+
         protected override void EndMatch()
         {
-
+            SetGameState(GameState.EndMatch, TimerEnd);
         }
 
         protected override void WincheckMatch()
