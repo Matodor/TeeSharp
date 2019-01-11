@@ -41,8 +41,8 @@ namespace TeeSharp.Server.Game
             Players = new BasePlayer[Server.MaxClients];
 
             GameMsgUnpacker.MaxClients = Players.Length;
-            
-            GameController = new GameController(); // TODO
+
+            GameController = Server.GameController(Config["SvGametype"]);
             GameController.Init();
 
             Server.PlayerReady += ServerOnPlayerReady;
@@ -135,9 +135,13 @@ namespace TeeSharp.Server.Game
             OnPlayerReady(Players[clientId]);
         }
 
-        public override void RegisterConsoleCommands()
+        public override void RegisterCommandsUpdates()
         {
             Console["sv_scorelimit"].Executed += GameInfoUpdated;
+        }
+
+        public override void RegisterConsoleCommands()
+        {
         }
 
         protected virtual void GameInfoUpdated(ConsoleCommandResult result, object data)

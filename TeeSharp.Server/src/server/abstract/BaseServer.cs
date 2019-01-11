@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿// ReSharper disable UnusedMemberInSuper.Global
+using System;
+using System.Collections.Generic;
+using System.Net;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
@@ -32,6 +35,7 @@ namespace TeeSharp.Server
         public virtual int Tick { get; protected set; }
         public virtual MapContainer CurrentMap { get; protected set; }
 
+        protected virtual IDictionary<string, Type> GameTypes { get; set; }
         protected virtual SnapshotIdPool SnapshotIdPool { get; set; }
         protected virtual SnapshotBuilder SnapshotBuilder { get; set; }
         protected virtual BaseNetworkBan NetworkBan { get; set; }
@@ -46,6 +50,8 @@ namespace TeeSharp.Server
         protected virtual long StartTime { get; set; }
         protected virtual bool IsRunning { get; set; }
 
+        public abstract GameController GameController(string gameType);
+        public abstract void AddGametype<T>(string gameType) where T : GameController;
         public abstract string ClientName(int clientId);
         public abstract void ClientName(int clientId, string name);
 

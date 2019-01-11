@@ -1,5 +1,6 @@
 ﻿using TeeSharp.Core;
 using TeeSharp.Server;
+using TeeSharp.Server.Game;
 
 namespace Examples.BasicServer
 {
@@ -10,6 +11,8 @@ namespace Examples.BasicServer
             var kernel = new Kernel(new ServerKernelConfig());
             var server = kernel.Get<BaseServer>();
             server.Init(args);
+            server.AddGametype<GameControllerDM>("DM");
+            server.AddGametype<GameControllerCTF>("CTF");
             server.Run();
         }
     }

@@ -11,10 +11,8 @@ using Pickup = TeeSharp.Common.Enums.Pickup;
 
 namespace TeeSharp.Server.Game
 {
-    // TODO abstract
-    public class GameController : BaseGameController
+    public abstract class GameController : BaseGameController
     {
-        public override string GameType => "Test";
         public override bool GamePaused => GameState == GameState.GamePaused || GameState == GameState.StartCountdown;
         public override bool GameRunning => GameState == GameState.GameRunning;
 

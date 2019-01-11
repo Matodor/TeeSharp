@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -58,7 +59,7 @@ namespace TeeSharp.Server
         {
             Tick = 0;
             StartTime = 0;
-
+            GameTypes = new Dictionary<string, Type>();
             SnapshotIdPool = new SnapshotIdPool();
             SnapshotBuilder = new SnapshotBuilder();
 
@@ -123,6 +124,7 @@ namespace TeeSharp.Server
 
             Console.Print(OutputLevel.Standard, "server", $"server name is '{Config["SvName"]}'");
             GameContext.Init();
+            GameContext.RegisterCommandsUpdates();
 
             StartTime = Time.Get();
             IsRunning = true;
@@ -176,7 +178,36 @@ namespace TeeSharp.Server
 
             GameContext.OnShutdown();
         }
-        
+
+        public override GameController GameController(string gameType)
+        {
+            Type type;
+
+            try
+            {
+                type = GameTypes
+                    .First(kvp => kvp.Key.Equals(gameType, StringComparison.InvariantCultureIgnoreCase))
+                    .Value;
+            }
+            catch (Exception)
+            {
+                Debug.Exception("server", $"Gametype '{gameType}' not found");
+                throw;
+            }
+           
+            var gameController = (GameController) Activator.CreateInstance(type);
+            Debug.Log("server", $"Create gamecontroller '{gameController.GameType}'");
+            return gameController;
+        }
+
+        public override void AddGametype<T>(string gameType)
+        {
+            gameType = gameType.ToLower();
+            if (GameTypes.ContainsKey(gameType))
+                Debug.Warning("server", $"Gametype '{gameType}' already exist");
+            GameTypes.Add(gameType, typeof(T));
+        }
+
         public override string ClientName(int clientId)
         {
             return Clients[clientId].State == ServerClientState.InGame
@@ -550,36 +581,6 @@ namespace TeeSharp.Server
                 return;
 
             // TODO
-            //var login = unPacker.GetString();
-            //var password = unPacker.GetString();
-
-            //SendRconLine(clientId, password);
-            //if (!packet.Flags.HasFlag(SendFlags.VITAL) || unPacker.Error)
-            //    return;
-
-            //if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
-            //    string.IsNullOrEmpty(Config["SvRconModPassword"]))
-            //{
-            //    SendRconLine(clientId, "No rcon password set on server. Set sv_rcon_password and/or sv_rcon_mod_password to enable the remote console.");
-            //}
-
-            //var authed = false;
-            //if (password == Config["SvRconPassword"])
-            //{
-            //    authed = true;
-            //}
-            //else if (password == Config["SvRconModPassword"])
-            //{
-            //    authed = true;
-            //}
-
-            //if (authed)
-            //{
-            //    var msg = new MsgPacker((int) NetworkMessages.SV_RCON_AUTH_STATUS);
-            //    msg.AddInt(1);
-            //    msg.AddInt(1);
-            //    SendMsgEx(msg, MsgFlags.Vital, clientId, true);
-            //}
         }
 
         protected override void NetMsgRconCmd(Chunk packet, UnPacker unPacker, int clientId)

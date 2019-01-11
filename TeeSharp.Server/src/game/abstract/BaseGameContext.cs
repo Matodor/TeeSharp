@@ -38,6 +38,7 @@ namespace TeeSharp.Server.Game
 
         protected virtual bool LockTeams { get; set; }
 
+        public abstract void RegisterCommandsUpdates();
         public abstract void RegisterConsoleCommands();
         public abstract bool IsClientSpectator(int clientId);
         public abstract bool IsClientReady(int clientId);
