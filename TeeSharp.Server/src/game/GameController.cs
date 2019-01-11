@@ -75,6 +75,7 @@ namespace TeeSharp.Server.Game
             GameStartTick = Server.Tick;
             SuddenDeath = false;
 
+            CheckGameInfo();
             DoTeamBalance();
         }
         
@@ -678,7 +679,27 @@ namespace TeeSharp.Server.Game
 
         protected override void CheckGameInfo()
         {
+            var matchNum = Config["SvMaprotation"].AsString().Length > 0 &&
+                           Config["SvMatchesPerMap"]
+                ? Config["SvMatchesPerMap"]
+                : 0;
 
+            if (matchNum == 0)
+                MatchCount = 0;
+
+            var gameInfoChanged =
+                GameInfo.MatchCurrent != MatchCount + 1 ||
+                GameInfo.MatchNum != matchNum ||
+                GameInfo.ScoreLimit != Config["SvScorelimit"] ||
+                GameInfo.TimeLimit != Config["SvTimelimit"];
+
+            GameInfo.MatchCurrent = MatchCount + 1;
+            GameInfo.MatchNum = matchNum;
+            GameInfo.ScoreLimit = Config["SvScorelimit"];
+            GameInfo.TimeLimit = Config["SvTimelimit"];
+
+            if (gameInfoChanged)
+                UpdateGameInfo(-1);
         }
 
         protected override void CheckTeamBalance()
