@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -57,7 +59,7 @@ namespace TeeSharp.Server
         {
             Tick = 0;
             StartTime = 0;
-
+            GameTypes = new Dictionary<string, Type>();
             SnapshotIdPool = new SnapshotIdPool();
             SnapshotBuilder = new SnapshotBuilder();
 
@@ -83,15 +85,25 @@ namespace TeeSharp.Server
                 Clients[i] = Kernel.Get<BaseServerClient>();
 
             Storage.Init("TeeSharp", StorageType.Server);
+            Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
             Console.Init();
             Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
             NetworkServer.Init();
 
-            RegisterConsoleCommands();
-            GameContext.RegisterConsoleCommands();
+            GameContext.BeforeInit();
 
-            Console.ExecuteFile("autoexec.cfg");
-            Console.ParseArguments(args);
+            var useDefaultConfig = args.Any(a => a == "--default" || a == "-d");
+            if (useDefaultConfig)
+            {
+            }
+            else
+            {
+                RegisterConsoleCommands();
+                Console.ExecuteFile("autoexec.cfg");
+                Console.ParseArguments(args);
+            }
+
+            Config.RestoreString();
         }
 
         public override void Run()
@@ -111,7 +123,8 @@ namespace TeeSharp.Server
                 return;
 
             Console.Print(OutputLevel.Standard, "server", $"server name is '{Config["SvName"]}'");
-            GameContext.OnInit();
+            GameContext.Init();
+            GameContext.RegisterCommandsUpdates();
 
             StartTime = Time.Get();
             IsRunning = true;
@@ -165,7 +178,36 @@ namespace TeeSharp.Server
 
             GameContext.OnShutdown();
         }
-        
+
+        public override GameController GameController(string gameType)
+        {
+            Type type;
+
+            try
+            {
+                type = GameTypes
+                    .First(kvp => kvp.Key.Equals(gameType, StringComparison.InvariantCultureIgnoreCase))
+                    .Value;
+            }
+            catch (Exception)
+            {
+                Debug.Exception("server", $"Gametype '{gameType}' not found");
+                throw;
+            }
+           
+            var gameController = (GameController) Activator.CreateInstance(type);
+            Debug.Log("server", $"Create gamecontroller '{gameController.GameType}'");
+            return gameController;
+        }
+
+        public override void AddGametype<T>(string gameType)
+        {
+            gameType = gameType.ToLower();
+            if (GameTypes.ContainsKey(gameType))
+                Debug.Warning("server", $"Gametype '{gameType}' already exist");
+            GameTypes.Add(gameType, typeof(T));
+        }
+
         public override string ClientName(int clientId)
         {
             return Clients[clientId].State == ServerClientState.InGame
@@ -501,7 +543,7 @@ namespace TeeSharp.Server
                         packer.AddString(ClientName(i), BaseServerClient.MaxNameLength);
                         packer.AddString(ClientClan(i), BaseServerClient.MaxClanLength);
                         packer.AddInt(ClientCountry(i));
-                        packer.AddInt(GameContext.GameController.Score(i)); // TODO client score
+                        packer.AddInt(GameContext.GameController.Score(i));
                         packer.AddInt(GameContext.IsClientPlayer(i) ? 0 : 1); // flag spectator=1, bot=2 (player=0)
                     }
                 }
@@ -539,36 +581,6 @@ namespace TeeSharp.Server
                 return;
 
             // TODO
-            //var login = unPacker.GetString();
-            //var password = unPacker.GetString();
-
-            //SendRconLine(clientId, password);
-            //if (!packet.Flags.HasFlag(SendFlags.VITAL) || unPacker.Error)
-            //    return;
-
-            //if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
-            //    string.IsNullOrEmpty(Config["SvRconModPassword"]))
-            //{
-            //    SendRconLine(clientId, "No rcon password set on server. Set sv_rcon_password and/or sv_rcon_mod_password to enable the remote console.");
-            //}
-
-            //var authed = false;
-            //if (password == Config["SvRconPassword"])
-            //{
-            //    authed = true;
-            //}
-            //else if (password == Config["SvRconModPassword"])
-            //{
-            //    authed = true;
-            //}
-
-            //if (authed)
-            //{
-            //    var msg = new MsgPacker((int) NetworkMessages.SV_RCON_AUTH_STATUS);
-            //    msg.AddInt(1);
-            //    msg.AddInt(1);
-            //    SendMsgEx(msg, MsgFlags.Vital, clientId, true);
-            //}
         }
 
         protected override void NetMsgRconCmd(Chunk packet, UnPacker unPacker, int clientId)
@@ -956,7 +968,7 @@ namespace TeeSharp.Server
             SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
-        protected override void SendRconCommandRem(ConsoleCommand command, int clientId)
+        protected override void SendRconCommand(ConsoleCommand command, int clientId)
         {
             var msg = new MsgPacker((int) NetworkMessages.ServerRconCommandRemove, true);
             msg.AddString(command.Cmd, ConsoleCommand.MaxCmdLength);
@@ -965,55 +977,7 @@ namespace TeeSharp.Server
 
         protected override void RegisterConsoleCommands()
         {
-            Console.RegisterCommand("kick", "i?s", ConsoleKick, ConfigFlags.Server, "Kick player with specified id for any reason");
-            Console.RegisterCommand("status", "", ConsoleStatus, ConfigFlags.Server, "List players");
-            Console.RegisterCommand("shutdown", "", ConsoleShutdown, ConfigFlags.Server, "Shut down");
-            Console.RegisterCommand("logout", "", ConsoleLogout, ConfigFlags.Server, "Logout of rcon");
-            Console.RegisterCommand("reload", "", ConsoleReload, ConfigFlags.Server, "Reload the map");
-
-            /*
-                Console()->Register("kick", "i?r", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");
-	            Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
-	            Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
-	            Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");
-
-	            Console()->Register("record", "?s", CFGFLAG_SERVER|CFGFLAG_STORE, ConRecord, this, "Record to a file");
-	            Console()->Register("stoprecord", "", CFGFLAG_SERVER, ConStopRecord, this, "Stop recording");
-
-	            Console()->Register("reload", "", CFGFLAG_SERVER, ConMapReload, this, "Reload the map");
-
-	            Console()->Chain("sv_name", ConchainSpecialInfoupdate, this);
-	            Console()->Chain("password", ConchainSpecialInfoupdate, this);
-
-	            Console()->Chain("sv_max_clients_per_ip", ConchainMaxclientsperipUpdate, this);
-	            Console()->Chain("mod_command", ConchainModCommandUpdate, this);
-	            Console()->Chain("console_output_level", ConchainConsoleOutputLevelUpdate, this);
-            */
-        }
-
-        protected override void ConsoleReload(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ConsoleLogout(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ConsoleShutdown(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ConsoleStatus(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ConsoleKick(ConsoleResult result, object data)
-        {
-            throw new NotImplementedException();
+            GameContext.RegisterConsoleCommands();
         }
     }
 }

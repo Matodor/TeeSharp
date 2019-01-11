@@ -38,6 +38,7 @@ namespace TeeSharp.Server.Game
 
         protected virtual bool LockTeams { get; set; }
 
+        public abstract void RegisterCommandsUpdates();
         public abstract void RegisterConsoleCommands();
         public abstract bool IsClientSpectator(int clientId);
         public abstract bool IsClientReady(int clientId);
@@ -55,7 +56,8 @@ namespace TeeSharp.Server.Game
         public abstract void SendGameplayMessage(int clientId, GameplayMessage message, 
             int? param1 = null, int? param2 = null, int? param3 = null);
 
-        public abstract void OnInit();
+        public abstract void BeforeInit();
+        public abstract void Init();
         public abstract void OnTick();
         public abstract void OnShutdown();
         public abstract void OnMessage(GameMessage msg, UnPacker unPacker, int clientId);

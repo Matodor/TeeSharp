@@ -7,12 +7,6 @@ namespace TeeSharp.Server.Game
     {
         protected override IList<EventInfo> EventInfos { get; set; }
 
-        public Events()
-        {
-            MaxEvents = 128;
-            EventInfos = new List<EventInfo>(128);
-        }
-        
         public override T Create<T>(Vector2 position, int mask = -1)
         {
             if (EventInfos.Count == MaxEvents)
@@ -30,6 +24,15 @@ namespace TeeSharp.Server.Game
             EventInfos.Add(info);
 
             return (T) info.EventItem;
+        }
+
+        public override void Init()
+        {
+            GameContext = Kernel.Get<BaseGameContext>();
+            Server = Kernel.Get<BaseServer>();
+
+            MaxEvents = 128;
+            EventInfos = new List<EventInfo>(128);
         }
 
         public override void Clear()

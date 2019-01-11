@@ -18,7 +18,7 @@ namespace TeeSharp.Server.Game
         public override string NetVersion { get; } = "0.7";
         public override string ReleaseVersion { get; } = "0.7.2";
 
-        public override void OnInit()
+        public override void BeforeInit()
         {
             Votes = Kernel.Get<BaseVotes>();
             Events = Kernel.Get<BaseEvents>();
@@ -30,15 +30,19 @@ namespace TeeSharp.Server.Game
             Console = Kernel.Get<BaseGameConsole>();
             Tuning = Kernel.Get<BaseTuningParams>();
             World = Kernel.Get<BaseGameWorld>();
+        }
 
+        public override void Init()
+        {
             Votes.Init();
+            Events.Init();
             MapLayers.Init(Server.CurrentMap);
             MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
 
             GameMsgUnpacker.MaxClients = Players.Length;
-            
-            GameController = new GameController(); // TODO
+
+            GameController = Server.GameController(Config["SvGametype"]);
             GameController.Init();
 
             Server.PlayerReady += ServerOnPlayerReady;
@@ -128,12 +132,21 @@ namespace TeeSharp.Server.Game
 
             SendMotd(clientId);
             SendSettings(clientId);
-
             OnPlayerReady(Players[clientId]);
+        }
+
+        public override void RegisterCommandsUpdates()
+        {
+            Console["sv_scorelimit"].Executed += GameInfoUpdated;
         }
 
         public override void RegisterConsoleCommands()
         {
+        }
+
+        protected virtual void GameInfoUpdated(ConsoleCommandResult result, object data)
+        {
+
         }
 
         public override bool IsClientSpectator(int clientId)
