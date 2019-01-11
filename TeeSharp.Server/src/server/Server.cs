@@ -89,6 +89,8 @@ namespace TeeSharp.Server
             Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
             NetworkServer.Init();
 
+            GameContext.BeforeInit();
+
             var useDefaultConfig = args.Any(a => a == "--default" || a == "-d");
             if (useDefaultConfig)
             {
@@ -120,7 +122,7 @@ namespace TeeSharp.Server
                 return;
 
             Console.Print(OutputLevel.Standard, "server", $"server name is '{Config["SvName"]}'");
-            GameContext.OnInit();
+            GameContext.Init();
 
             StartTime = Time.Get();
             IsRunning = true;
