@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
@@ -8,12 +9,15 @@ namespace TeeSharp.Common.Console
 {
     public class GameConsole : BaseGameConsole
     {
-        protected BaseStorage Storage { get; private set; }
-        protected BaseConfig Config { get; private set; }
-
-        protected virtual IList<PrintCallbackInfo> PrintCallbacks { get; set; }
-        protected virtual IList<string> ExecutedFiles { get; set; }
-        protected virtual IDictionary<string, ConsoleCommand> Commands { get; set; }
+        public override ConsoleCommand this[string command]
+        {
+            get
+            {
+                if (Commands.ContainsKey(command))
+                    return Commands[command];
+                throw new Exception("Command not found");
+            }
+        }
 
         public GameConsole()
         {
@@ -31,28 +35,35 @@ namespace TeeSharp.Common.Console
             {
                 if (pair.Value is ConfigInt intCfg)
                 {
-                    RegisterCommand(intCfg.ConsoleCommand, "?i", IntVariableCommand, 
-                        intCfg.Flags, intCfg.Description, intCfg);
+                    AddCommand(
+                        intCfg.ConsoleCommand, "?i", 
+                        intCfg.Description, 
+                        intCfg.Flags, 
+                        IntVariableCommand, 
+                        intCfg);
                 }
                 else if (pair.Value is ConfigString strCfg)
                 {
-                    RegisterCommand(strCfg.ConsoleCommand, "?s", StrVariableCommand,
-                        strCfg.Flags, strCfg.Description, strCfg);
+                    AddCommand(strCfg.ConsoleCommand, "?s", 
+                        strCfg.Description, 
+                        strCfg.Flags, 
+                        StrVariableCommand,
+                        strCfg);
                 }
             }
         }
 
-        public override void RegisterCommand(string cmd, string format, ConsoleCallback callback, 
-            ConfigFlags flags, string description, object data = null)
+        public override void AddCommand(string cmd, string format, string description, ConfigFlags flags, CommandCallback callback, object data = null)
         {
             if (Commands.ContainsKey(cmd))
+            {
+                Debug.Warning("console", $"Command {cmd} already exist");
                 return;
+            }
 
-            cmd = cmd.Trim();
-            format = format.Trim().Replace("??", "?");
-
-            Commands.Add(cmd, new ConsoleCommand(cmd, format, flags,
-                description, callback, data));
+            var command = new ConsoleCommand(cmd, format, description, flags, data);
+            command.Executed += callback;
+            Commands.Add(cmd, command);
         }
 
         public override PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
@@ -80,27 +91,27 @@ namespace TeeSharp.Common.Console
                 : null;
         }
 
-        protected override void StrVariableCommand(ConsoleResult result, object data)
+        protected override void StrVariableCommand(ConsoleCommandResult commandResult, object data)
         {
-            if (result.NumArguments != 0)
-                ((ConfigString) data).Value = (string) result[0];
+            if (commandResult.NumArguments != 0)
+                ((ConfigString) data).Value = (string) commandResult[0];
             else
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
         }
 
-        protected override void IntVariableCommand(ConsoleResult result, object data)
+        protected override void IntVariableCommand(ConsoleCommandResult commandResult, object data)
         {
-            if (result.NumArguments != 0)
-                ((ConfigInt) data).Value = (int) result[0];
+            if (commandResult.NumArguments != 0)
+                ((ConfigInt) data).Value = (int) commandResult[0];
             else
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigInt) data).Value}");
         }
 
-        protected override bool ParseLine(string line, out ConsoleResult result, out ConsoleCommand command, out string parsedCmd)
+        protected override bool ParseLine(string line, out ConsoleCommandResult commandResult, out ConsoleCommand command, out string parsedCmd)
         {
             if (string.IsNullOrWhiteSpace(line))
             {
-                result = null;
+                commandResult = null;
                 command = null;
                 parsedCmd = null;
                 return false;
@@ -112,7 +123,7 @@ namespace TeeSharp.Common.Console
 
             if (!Commands.TryGetValue(parsedCmd, out command))
             {
-                result = null;
+                commandResult = null;
                 return false;
             }
 
@@ -120,7 +131,7 @@ namespace TeeSharp.Common.Console
             if (space > 0 && space + 1 < line.Length)
                 args = line.Substring(space + 1);
 
-            result = new ConsoleResult(args);
+            commandResult = new ConsoleCommandResult(args);
             return true;
         }
 
@@ -174,7 +185,7 @@ namespace TeeSharp.Common.Console
             {
                 if (result.ParseArguments(command.Format))
                 {
-                    command.Callback(result, command.Data);
+                    command.Invoke(result);
                 }
                 else
                 {

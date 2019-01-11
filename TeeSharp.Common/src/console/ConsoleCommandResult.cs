@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TeeSharp.Common.Console
 {
-    public class ConsoleResult
+    public class ConsoleCommandResult
     {
         public int NumArguments => _arguments.Count;
         public object this[int index] => _arguments[index];
@@ -12,7 +12,7 @@ namespace TeeSharp.Common.Console
         private readonly string _argsStored;
         private readonly IList<object> _arguments;
 
-        public ConsoleResult(string args)
+        public ConsoleCommandResult(string args)
         {
             _argsStored = args.Trim();
             _arguments = new List<object>();
@@ -23,7 +23,7 @@ namespace TeeSharp.Common.Console
             if (string.IsNullOrWhiteSpace(format))
                 return true;
 
-            if (format.Any(c => !ConsoleCommand.ARGUMENTS_TYPES.Contains(c)))
+            if (format.Any(c => !ConsoleCommand.ArgumentsTypes.Contains(c)))
                 return false;
 
             var args = new List<string>();

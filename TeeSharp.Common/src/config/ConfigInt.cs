@@ -8,14 +8,14 @@
             set => _value = System.Math.Clamp(value, Min, Max);
         }
 
-        public int Min;
-        public int Max;
+        public int Min { get; set; }
+        public int Max { get; set; }
         public readonly int DefaultValue;
 
         private int _value;
 
-        public ConfigInt(string name, string cmd, int def, int min, int max,
-            ConfigFlags flags, string desc) : base(name, cmd, flags, desc)
+        public ConfigInt(string cmd, int def, int min, int max,
+            ConfigFlags flags, string desc) : base(cmd, flags, desc)
         {
             Min = min;
             Max = max;

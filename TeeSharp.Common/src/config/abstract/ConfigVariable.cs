@@ -2,7 +2,6 @@
 {
     public abstract class ConfigVariable
     {
-        public readonly string Name;
         public readonly string ConsoleCommand;
         public readonly ConfigFlags Flags;
         public readonly string Description;
@@ -26,9 +25,8 @@
             return v.AsBoolean();
         }
 
-        protected ConfigVariable(string name, string cmd, ConfigFlags flags, string desc)
+        protected ConfigVariable(string cmd, ConfigFlags flags, string desc)
         {
-            Name = name;
             ConsoleCommand = cmd;
             Flags = flags;
             Description = desc;

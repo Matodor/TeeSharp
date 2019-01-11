@@ -2,12 +2,12 @@
 {
     public class ConfigString : ConfigVariable
     {
-        public int MaxLength;
-        public string Value;
+        public int MaxLength { get; set; }
+        public string Value { get; set; }
         public readonly string DefaultValue;
 
-        public ConfigString(string name, string cmd, int maxLength, string def,
-            ConfigFlags flags, string desc) : base(name, cmd, flags, desc)
+        public ConfigString(string cmd, int maxLength, string def,
+            ConfigFlags flags, string desc) : base(cmd, flags, desc)
         {
             MaxLength = maxLength;
             Value = def;

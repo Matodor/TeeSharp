@@ -128,12 +128,17 @@ namespace TeeSharp.Server.Game
 
             SendMotd(clientId);
             SendSettings(clientId);
-
             OnPlayerReady(Players[clientId]);
         }
 
         public override void RegisterConsoleCommands()
         {
+            Console["sv_scorelimit"].Executed += GameInfoUpdated;
+        }
+
+        protected virtual void GameInfoUpdated(ConsoleCommandResult result, object data)
+        {
+
         }
 
         public override bool IsClientSpectator(int clientId)
