@@ -1,4 +1,6 @@
-﻿using TeeSharp.Common.Protocol;
+﻿using System.Collections.Generic;
+using TeeSharp.Common.Console;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Common.Snapshots;
 using TeeSharp.Core;
 
@@ -10,7 +12,11 @@ namespace TeeSharp.Server
         public const int MaxNameLength = 16;
         public const int MaxClanLength = 12;
         public const int MaxInputs = 200;
-            
+        public const int AuthedAdmin = 2;
+        public const int AuthedModerator = 1;
+
+        public virtual IEnumerator<KeyValuePair<string, ConsoleCommand>> SendCommandsEnumerator { get; set; }
+
         public class Input
         {
             public int Tick { get; set; }
@@ -26,6 +32,12 @@ namespace TeeSharp.Server
         public virtual ServerClientState State { get; set; }
         public virtual int Latency { get; set; }
         public virtual int MapChunk { get; set; }
+        public virtual int AuthTries { get; set; }
+
+        /// <summary>
+        /// 0 - non authed, 1 - moderator, 2 - admin
+        /// </summary>
+        public virtual int AuthLevel { get; set; }
 
         public virtual string Name { get; set; }
         public virtual string Clan { get; set; }

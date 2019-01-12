@@ -21,9 +21,9 @@ namespace TeeSharp.Server
 
     public abstract class BaseServer : BaseInterface
     {
-        public event ClientEvent PlayerReady;
-        public event ClientEvent PlayerEnter;
-        public event ClientDisconnectEvent PlayerDisconnected;
+        public abstract event ClientEvent PlayerReady;
+        public abstract event ClientEvent PlayerEnter;
+        public abstract event ClientDisconnectEvent PlayerDisconnected;
 
         public const int MapChunkSize = NetworkHelper.MaxPayload - NetworkHelper.MaxChunkHeaderSize - 4;
         public const int ServerInfoFlagPassword = 1;
@@ -49,6 +49,7 @@ namespace TeeSharp.Server
         protected virtual BaseServerClient[] Clients { get; set; }
         protected virtual long StartTime { get; set; }
         protected virtual bool IsRunning { get; set; }
+        protected virtual Queue<int> SendRconCommandsClients { get; set; }
 
         public abstract GameController GameController(string gameType);
         public abstract void AddGametype<T>(string gameType) where T : GameController;
@@ -60,8 +61,6 @@ namespace TeeSharp.Server
 
         public abstract int ClientCountry(int clientId);
         public abstract void ClientCountry(int clientId, int country);
-
-        protected abstract void GenerateRconPassword();
 
         public abstract IPEndPoint ClientEndPoint(int clientId);
         public abstract ClientInfo ClientInfo(int clientId);
@@ -97,9 +96,12 @@ namespace TeeSharp.Server
         protected abstract void SendRconCommandAdd(ConsoleCommand command, int clientId);
         protected abstract void SendRconCommand(ConsoleCommand command, int clientId);
 
+        protected abstract void ConsoleOnCommandAdded(ConsoleCommand command);
+        protected abstract void RandomRconPassword();
         protected abstract void RegisterConsoleCommands();
         protected abstract void GenerateServerInfo(Packer packer, int token);
         protected abstract void SendServerInfo(int clientId);
+        protected abstract void SendClientRconCommands();
 
         protected abstract void NetMsgPing(Chunk packet, UnPacker unPacker, int clientId);
         protected abstract void NetMsgRconAuth(Chunk packet, UnPacker unPacker, int clientId);
@@ -109,20 +111,5 @@ namespace TeeSharp.Server
         protected abstract void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId);
         protected abstract void NetMsgRequestMapData(Chunk packet, UnPacker unPacker, int clientId);
         protected abstract void NetMsgInfo(Chunk packet, UnPacker unPacker, int clientId);
-
-        protected void OnPlayerReady(int clientId)
-        {
-            PlayerReady?.Invoke(clientId);
-        }
-
-        protected void OnPlayerEnter(int clientId)
-        {
-            PlayerEnter?.Invoke(clientId);
-        }
-
-        protected void OnPlayerDisconnected(int clientId, string reason)
-        {
-            PlayerDisconnected?.Invoke(clientId, reason);
-        }
     }
 }

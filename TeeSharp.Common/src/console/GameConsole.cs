@@ -9,6 +9,8 @@ namespace TeeSharp.Common.Console
 {
     public class GameConsole : BaseGameConsole
     {
+        public override event Action<ConsoleCommand> CommandAdded;
+
         public override ConsoleCommand this[string command]
         {
             get
@@ -64,6 +66,16 @@ namespace TeeSharp.Common.Console
             var command = new ConsoleCommand(cmd, format, description, flags, data);
             command.Executed += callback;
             Commands.Add(cmd, command);
+            CommandAdded?.Invoke(command);
+        }
+
+        public override IEnumerator<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel)
+        {
+            foreach (var kvp in Commands)
+            {
+                if (accessLevel >= kvp.Value.AccessLevel)
+                    yield return kvp;
+            }
         }
 
         public override PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
@@ -214,6 +226,11 @@ namespace TeeSharp.Common.Console
                     PrintCallbacks[i]?.Callback($"[{sys}]: {format}", PrintCallbacks[i].Data);
                 }
             }
+        }
+
+        public override IEnumerator<KeyValuePair<string, ConsoleCommand>> GetEnumerator()
+        {
+            return Commands.GetEnumerator();
         }
     }
 }

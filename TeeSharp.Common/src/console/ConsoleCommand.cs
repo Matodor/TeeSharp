@@ -20,6 +20,7 @@ namespace TeeSharp.Common.Console
         public readonly ConfigFlags Flags;
         public readonly string Description;
         public readonly object Data;
+        public int AccessLevel { get; set; }
 
         public ConsoleCommand(
             string cmd, 
