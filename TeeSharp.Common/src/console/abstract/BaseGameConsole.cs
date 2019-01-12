@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
@@ -21,8 +23,10 @@ namespace TeeSharp.Common.Console
         public object Data { get; set; }
     }
 
-    public abstract class BaseGameConsole : BaseInterface
+    public abstract class BaseGameConsole : BaseInterface, IEnumerable<KeyValuePair<string, ConsoleCommand>>
     {
+        public abstract event Action<ConsoleCommand> CommandAdded;
+        
         public abstract ConsoleCommand this[string command] { get; }
 
         protected virtual BaseStorage Storage { get; set; }
@@ -43,11 +47,19 @@ namespace TeeSharp.Common.Console
         public abstract PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
             PrintCallback callback, object data = null);
         public abstract ConsoleCommand FindCommand(string cmd, ConfigFlags mask);
+        public abstract IEnumerator<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel);
 
         protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, object data);
         protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, object data);
 
         protected abstract bool ParseLine(string line, out ConsoleCommandResult commandResult,
             out ConsoleCommand command, out string parsedCmd);
+
+        public abstract IEnumerator<KeyValuePair<string, ConsoleCommand>> GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

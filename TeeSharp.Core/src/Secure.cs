@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 
 namespace TeeSharp.Core
 {
@@ -14,16 +15,16 @@ namespace TeeSharp.Core
             MD5.Initialize();
         }
 
-        //public static uint RandomUInt32()
-        //{
-        //    var bytes = new byte[4];
-        //    RandomFill(bytes);
-        //    return BitConverter.ToUInt32(bytes, 0);
-        //}
+        public static void RandomFill(ushort[] array)
+        {
+            var buffer = new byte[array.Length * sizeof(ushort)];
+            RandomFill(buffer);
+            Buffer.BlockCopy(buffer, 0, array, 0, buffer.Length);
+        }
 
-        //public static void RandomFill(byte[] bytes)
-        //{
-        //    RNG.GetBytes(bytes);
-        //}
+        public static void RandomFill(byte[] bytes)
+        {
+            RNG.GetBytes(bytes);
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using TeeSharp.Common;
 using TeeSharp.Common.Config;
@@ -51,6 +52,10 @@ namespace TeeSharp.Server
 
     public class Server : BaseServer
     {
+        public override event ClientEvent PlayerReady;
+        public override event ClientEvent PlayerEnter;
+        public override event ClientDisconnectEvent PlayerDisconnected;
+
         public override int MaxClients => 64;
         public override int MaxPlayers => 16;
         public override int TickSpeed => 50;
@@ -59,6 +64,7 @@ namespace TeeSharp.Server
         {
             Tick = 0;
             StartTime = 0;
+            SendRconCommandsClients = new Queue<int>();
             GameTypes = new Dictionary<string, Type>();
             SnapshotIdPool = new SnapshotIdPool();
             SnapshotBuilder = new SnapshotBuilder();
@@ -87,6 +93,7 @@ namespace TeeSharp.Server
             Storage.Init("TeeSharp", StorageType.Server);
             Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
             Console.Init();
+            Console.CommandAdded += ConsoleOnCommandAdded;
             Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
             NetworkServer.Init();
 
@@ -104,6 +111,33 @@ namespace TeeSharp.Server
             }
 
             Config.RestoreString();
+        }
+
+        protected override void ConsoleOnCommandAdded(ConsoleCommand command)
+        {
+            command.AccessLevel = BaseServerClient.AuthedAdmin;
+        }
+
+        protected override void RandomRconPassword()
+        {
+            const int PasswordLength = 6;
+            const string PasswordChars = "ABCDEFGHKLMNPRSTUVWXYZabcdefghjkmnopqt23456789";
+
+            Debug.Assert(PasswordLength % 2 == 0, "Need an even password length");
+
+            var password = new StringBuilder(PasswordLength);
+            var random = new ushort[PasswordLength / 2];
+
+            Secure.RandomFill(random);
+
+            for (var i = 0; i < PasswordLength / 2; i++)
+            {
+                var randomNumber = random[i] % 2048;
+                password.Append(PasswordChars[randomNumber / PasswordChars.Length]);
+                password.Append(PasswordChars[randomNumber % PasswordChars.Length]);
+            }
+
+            ((ConfigString) Config["SvRconPassword"]).Value = password.ToString();
         }
 
         public override void Run()
@@ -128,6 +162,14 @@ namespace TeeSharp.Server
 
             StartTime = Time.Get();
             IsRunning = true;
+
+            if (string.IsNullOrEmpty(Config["SvRconPassword"]))
+            {
+                RandomRconPassword();
+                Debug.Assert(false, "+-------------------------+");
+                Debug.Assert(false, $"| rcon password: '{Config["SvRconPassword"]}' |");
+                Debug.Assert(false, "+-------------------------+");
+            }
 
             while (IsRunning)
             {
@@ -161,7 +203,7 @@ namespace TeeSharp.Server
                 {
                     if (Tick % 2 == 0 || Config["SvHighBandwidth"])
                         DoSnapshot();
-                    // UpdateClientRconCommands()
+                    SendClientRconCommands();
                 }
 
                 //Register.RegisterUpdate(NetworkServer.NetType());
@@ -173,10 +215,47 @@ namespace TeeSharp.Server
             for (var i = 0; i < Clients.Length; i++)
             {
                 if (Clients[i].State != ServerClientState.Empty)
-                    NetworkServer.Drop(i, "Server shutdown");
+                    Kick(i, "Server shutdown");
             }
 
             GameContext.OnShutdown();
+        }
+
+        protected override void SendClientRconCommands()
+        {
+            if (SendRconCommandsClients.Count == 0)
+                return;
+
+
+            var clientId = SendRconCommandsClients.Peek();
+            void Reset()
+            {
+                if (Clients[clientId].SendCommandsEnumerator != null)
+                {
+                    Clients[clientId].SendCommandsEnumerator.Dispose();
+                    Clients[clientId].SendCommandsEnumerator = null;
+                }
+
+                SendRconCommandsClients.Dequeue();
+            }
+
+            if (Clients[clientId].State == ServerClientState.Empty ||
+                Clients[clientId].SendCommandsEnumerator == null)
+            {
+                Reset();
+                return;
+            }
+            
+            var sended = 0;
+            while (sended < 16 && Clients[clientId].SendCommandsEnumerator.MoveNext())
+            {
+                var command = Clients[clientId].SendCommandsEnumerator.Current.Value;
+                SendRconCommandAdd(command, clientId);
+                sended++;
+            }
+
+            if (sended == 0)
+                Reset();
         }
 
         public override GameController GameController(string gameType)
@@ -253,11 +332,6 @@ namespace TeeSharp.Server
             Clients[clientId].Country = country;
         }
 
-        protected override void GenerateRconPassword()
-        {
-            throw new NotImplementedException();
-        }
-
         public override IPEndPoint ClientEndPoint(int clientId)
         {
             return Clients[clientId].State == ServerClientState.InGame
@@ -284,13 +358,12 @@ namespace TeeSharp.Server
 
         public override bool IsAuthed(int clientId)
         {
-            // TODO
-            return false;
+            return Clients[clientId].AuthLevel > 0;
         }
 
         public override void Kick(int clientId, string reason)
         {
-            // TODO
+            NetworkServer.Drop(clientId, reason);
         }
 
         public override bool SendMsg(MsgPacker msg, MsgFlags flags, int clientId)
@@ -338,49 +411,6 @@ namespace TeeSharp.Server
 
             return true;
         }
-
-        //public override bool SendMsgEx(MsgPacker msg, MsgFlags flags, int clientId, bool system)
-        //{
-        //    if (msg == null)
-        //        return false;
-
-        //    var packet = new Chunk()
-        //    {
-        //        ClientId = clientId,
-        //        DataSize = msg.Size(),
-        //        Data = msg.Data(),
-        //    };
-
-        //    packet.Data[0] <<= 1;
-        //    if (system)
-        //        packet.Data[0] |= 1;
-
-        //    if (flags.HasFlag(MsgFlags.Vital))
-        //        packet.Flags |= SendFlags.VITAL;
-        //    if (flags.HasFlag(MsgFlags.Flush))
-        //        packet.Flags |= SendFlags.FLUSH;
-
-        //    if (!flags.HasFlag(MsgFlags.NoSend))
-        //    {
-        //        if (clientId == -1)
-        //        {
-        //            for (var i = 0; i < Clients.Length; i++)
-        //            {
-        //                if (Clients[i].State != ServerClientState.IN_GAME)
-        //                    continue;
-
-        //                packet.ClientId = i;
-        //                NetworkServer.Send(packet);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            NetworkServer.Send(packet);
-        //        }
-        //    }
-
-        //    return true;
-        //}
 
         public override bool SendPackMsg<T>(T msg, MsgFlags flags, int clientId)
         {
@@ -575,12 +605,75 @@ namespace TeeSharp.Server
 
         protected override void NetMsgRconAuth(Chunk packet, UnPacker unPacker, int clientId)
         {
+            if (IsAuthed(clientId))
+                return;
+
             var password = unPacker.GetString(SanitizeType.SanitizeCC);
 
             if (!packet.Flags.HasFlag(SendFlags.Vital) || unPacker.Error)
                 return;
 
             // TODO
+
+            if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
+                string.IsNullOrEmpty(Config["SvRconModPassword"]))
+            {
+                SendRconLine(clientId, "No rcon password set on server. Set sv_rcon_password and/or sv_rcon_mod_password to enable the remote console.");
+                return;
+            }
+
+            var authed = false;
+            var format = string.Empty;
+            var authLevel = 0;
+
+            if (!string.IsNullOrEmpty(Config["SvRconPassword"]) && Config["SvRconPassword"] == password)
+            {
+                authed = true;
+                format = $"clientId={clientId} authed 'admin'";
+                authLevel = BaseServerClient.AuthedAdmin;
+                SendRconLine(clientId, "Admin authentication successful. Full remote console access granted.");
+            }
+            else if (!string.IsNullOrEmpty(Config["SvRconModPassword"]) && Config["SvRconModPassword"] == password)
+            {
+                authed = true;
+                format = $"clientId={clientId} authed 'moderator'";
+                authLevel = BaseServerClient.AuthedModerator;
+                SendRconLine(clientId, "Moderator authentication successful. Limited remote console access granted.");
+            }
+            else if (Config["SvRconMaxTries"])
+            {
+                Clients[clientId].AuthTries++;
+                SendRconLine(clientId,
+                    $"Wrong password {Clients[clientId].AuthTries}/{Config["SvRconMaxTries"]}.");
+
+                if (Clients[clientId].AuthTries >= Config["SvRconMaxTries"])
+                {
+                    if (Config["SvRconBantime"])
+                    {
+                        NetworkBan.BanAddr(NetworkServer.ClientEndPoint(clientId), Config["SvRconBantime"] * 60,
+                            "Too many remote console authentication tries");
+                    }
+                    else
+                    {
+                        Kick(clientId, "Too many remote console authentication tries");
+                    }
+                }
+            }
+            else
+            {
+                SendRconLine(clientId, "Wrong password");
+            }
+
+            if (authed)
+            {
+                var msg = new MsgPacker((int) NetworkMessages.ServerRconAuthOn, true);
+                SendMsg(msg, MsgFlags.Vital, clientId);
+                Console.Print(OutputLevel.Standard, "server", format);
+
+                Clients[clientId].AuthLevel = authLevel;
+                Clients[clientId].SendCommandsEnumerator = Console.GetCommands(authLevel);
+                SendRconCommandsClients.Enqueue(clientId);
+            }
         }
 
         protected override void NetMsgRconCmd(Chunk packet, UnPacker unPacker, int clientId)
@@ -657,7 +750,7 @@ namespace TeeSharp.Server
             Console.Print(OutputLevel.Standard, "server", $"player has entered the game. ClientId={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.InGame;
             SendServerInfo(clientId);
-            OnPlayerEnter(clientId);
+            PlayerEnter?.Invoke(clientId);
         }
 
         protected override void NetMsgReady(Chunk packet, UnPacker unPacker, int clientId)
@@ -670,7 +763,7 @@ namespace TeeSharp.Server
 
             Console.Print(OutputLevel.AddInfo, "server", $"player is ready. ClientId={clientId} addr={NetworkServer.ClientEndPoint(clientId)}");
             Clients[clientId].State = ServerClientState.Ready;
-            OnPlayerReady(clientId);
+            PlayerReady?.Invoke(clientId);
 
             var msg = new MsgPacker((int) NetworkMessages.ServerConnectionReady, true);
             SendMsg(msg, MsgFlags.Vital | MsgFlags.Flush, clientId);
@@ -719,14 +812,14 @@ namespace TeeSharp.Server
             var version = unPacker.GetString(SanitizeType.SanitizeCC);
             if (string.IsNullOrEmpty(version) || !version.StartsWith(GameContext.NetVersion))
             {
-                NetworkServer.Drop(clientId, $"Wrong version. Server is running '{GameContext.NetVersion}' and client '{version}'");
+                Kick(clientId, $"Wrong version. Server is running '{GameContext.NetVersion}' and client '{version}'");
                 return;
             }
 
             var password = unPacker.GetString(SanitizeType.SanitizeCC);
             if (!string.IsNullOrEmpty(Config["Password"]) && password != Config["Password"])
             {
-                NetworkServer.Drop(clientId, "Wrong password");
+                Kick(clientId, "Wrong password");
                 return;
             }
 
@@ -886,7 +979,7 @@ namespace TeeSharp.Server
             if (Clients[clientId].State >= ServerClientState.Ready)
             {
                 Clients[clientId].Quitting = true;
-                OnPlayerDisconnected(clientId, reason);
+                PlayerDisconnected?.Invoke(clientId, reason);
             }
 
             Clients[clientId].State = ServerClientState.Empty;

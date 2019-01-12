@@ -37,6 +37,14 @@ namespace TeeSharp.Server
             LastInputTick = -1;
             SnapshotRate = SnapshotRate.Init;
             MapChunk = 0;
+            AuthTries = 0;
+            AuthLevel = 0;
+
+            if (SendCommandsEnumerator != null)
+            {
+                SendCommandsEnumerator.Dispose();
+                SendCommandsEnumerator = null;
+            }
         }
     }
 }
