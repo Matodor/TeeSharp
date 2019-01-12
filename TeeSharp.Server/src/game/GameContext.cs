@@ -14,6 +14,10 @@ namespace TeeSharp.Server.Game
 {
     public class GameContext : BaseGameContext
     {
+        public override event PlayerEvent PlayerReady;
+        public override event PlayerEvent PlayerEnter;
+        public override event PlayerLeaveEvent PlayerLeave;
+
         public override string GameVersion { get; } = "0.7.2";
         public override string NetVersion { get; } = "0.7";
         public override string ReleaseVersion { get; } = "0.7.2";
@@ -65,7 +69,7 @@ namespace TeeSharp.Server.Game
 
         protected override void ServerOnPlayerDisconnected(int clientId, string reason)
         {
-            OnPlayerLeave(Players[clientId], reason);
+            PlayerLeave?.Invoke(Players[clientId], reason);
 
             if (Server.ClientInGame(clientId))
             {
@@ -122,7 +126,7 @@ namespace TeeSharp.Server.Game
                 Server.SendPackMsg(msg, MsgFlags.NoSend, -1);
             }
 
-            OnPlayerEnter(Players[clientId]);
+            PlayerEnter?.Invoke(Players[clientId]);
         }
 
         protected override void ServerOnPlayerReady(int clientId)
@@ -132,7 +136,7 @@ namespace TeeSharp.Server.Game
 
             SendMotd(clientId);
             SendSettings(clientId);
-            OnPlayerReady(Players[clientId]);
+            PlayerReady?.Invoke(Players[clientId]);
         }
 
         public override void RegisterCommandsUpdates()

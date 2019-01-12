@@ -9,7 +9,7 @@ namespace TeeSharp.Server.Game
 {
     public abstract class BaseGameWorld : BaseInterface
     {
-        public virtual event Action Reseted;
+        public abstract event Action Reseted;
         
         public virtual bool Paused { get; set; }
         public virtual WorldCore WorldCore { get; set; }
@@ -29,10 +29,5 @@ namespace TeeSharp.Server.Game
         public abstract void BeforeSnapshot();
         public abstract void OnSnapshot(int snappingClient);
         public abstract void AfterSnapshot();
-
-        protected void OnReset()
-        {
-            Reseted?.Invoke();
-        }
     }
 }

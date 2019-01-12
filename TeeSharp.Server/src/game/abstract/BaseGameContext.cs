@@ -13,9 +13,9 @@ namespace TeeSharp.Server.Game
 
     public abstract class BaseGameContext : BaseInterface
     {
-        public event PlayerEvent PlayerReady;
-        public event PlayerEvent PlayerEnter;
-        public event PlayerLeaveEvent PlayerLeave;
+        public abstract event PlayerEvent PlayerReady;
+        public abstract event PlayerEvent PlayerEnter;
+        public abstract event PlayerLeaveEvent PlayerLeave;
 
         public abstract string GameVersion { get; }
         public abstract string NetVersion { get; }
@@ -108,21 +108,6 @@ namespace TeeSharp.Server.Game
         public static bool MaskIsSet(int mask, int clientID)
         {
             return (mask & MaskOne(clientID)) != 0;
-        }
-
-        protected void OnPlayerReady(BasePlayer player)
-        {
-            PlayerReady?.Invoke(player);
-        }
-
-        protected void OnPlayerEnter(BasePlayer player)
-        {
-            PlayerEnter?.Invoke(player);
-        }
-
-        protected void OnPlayerLeave(BasePlayer player, string reason)
-        {
-            PlayerLeave?.Invoke(player, reason);
         }
     }
 }
