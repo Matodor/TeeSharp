@@ -169,7 +169,7 @@ namespace TeeSharp.Common.Console
                     string currentLine;
 
                     while (!string.IsNullOrWhiteSpace(currentLine = reader.ReadLine()))
-                        ExecuteLine(currentLine);
+                        ExecuteLine(currentLine, -1);
                 }
             }
         }
@@ -186,18 +186,23 @@ namespace TeeSharp.Common.Console
                 }
                 else
                 {
-                    ExecuteLine(args[i]);
+                    ExecuteLine(args[i], -1);
                 }
             }
         }
 
-        public override void ExecuteLine(string line)
+        public override void ExecuteLine(string line, int accessLevel)
         {
             if (ParseLine(line, out var result, out var command, out var parsedCmd))
             {
                 if (result.ParseArguments(command.Format))
                 {
-                    command.Invoke(result);
+                    if (accessLevel == -1 || accessLevel >= command.AccessLevel)
+                        command.Invoke(result);
+                    else
+                    {
+                        Print(OutputLevel.Standard, "console", $"Insufficient access level for execute command '{line}'");
+                    }
                 }
                 else
                 {
