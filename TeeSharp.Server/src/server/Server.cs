@@ -159,6 +159,7 @@ namespace TeeSharp.Server
             Console.Print(OutputLevel.Standard, "server", $"server name is '{Config["SvName"]}'");
             GameContext.Init();
             GameContext.RegisterCommandsUpdates();
+            RegisterConsoleUpdates();
 
             StartTime = Time.Get();
             IsRunning = true;
@@ -1082,6 +1083,17 @@ namespace TeeSharp.Server
             SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
+        protected override void RegisterConsoleUpdates()
+        {
+            Console["sv_name"].Executed += ConsoleSpecialInfoUpdated;
+            Console["password"].Executed += ConsoleSpecialInfoUpdated;
+
+            Console["sv_max_clients_per_ip"].Executed += ConsoleMaxClientsPerIpUpdated;
+            Console["mod_command"].Executed += ConsoleModCommandUpdated;
+            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
+            Console["sv_rcon_password"].Executed += ConsoleRconPasswordUpdated;
+        }
+
         protected override void RegisterConsoleCommands()
         {
             Console.AddCommand("mod_command", "s?i", "Specify command accessibility for moderators", ConfigFlags.Server, ConsoleModCommand);
@@ -1095,14 +1107,6 @@ namespace TeeSharp.Server
             Console.AddCommand("kick", "i?r", "Kick player with specified id for any reason", ConfigFlags.Server, ConsoleKick);
             Console.AddCommand("record", "?s", "Record to a file", ConfigFlags.Server | ConfigFlags.Store, ConsoleRecord);
             Console.AddCommand("stoprecord", string.Empty, "Stop recording", ConfigFlags.Server, ConsoleStopRecord);
-
-            Console["sv_name"].Executed += ConsoleSpecialInfoUpdated;
-            Console["password"].Executed += ConsoleSpecialInfoUpdated;
-
-            Console["sv_max_clients_per_ip"].Executed += ConsoleMaxClientsPerIpUpdated;
-            Console["mod_command"].Executed += ConsoleModCommandUpdated;
-            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
-            Console["sv_rcon_password"].Executed += ConsoleRconPasswordUpdated;
 
             GameContext.RegisterConsoleCommands();
         }

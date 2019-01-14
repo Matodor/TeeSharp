@@ -98,6 +98,7 @@ namespace TeeSharp.Server
 
         protected abstract void ConsoleOnCommandAdded(ConsoleCommand command);
         protected abstract void RandomRconPassword();
+        protected abstract void RegisterConsoleUpdates();
         protected abstract void RegisterConsoleCommands();
         protected abstract void GenerateServerInfo(Packer packer, int token);
         protected abstract void SendServerInfo(int clientId);
