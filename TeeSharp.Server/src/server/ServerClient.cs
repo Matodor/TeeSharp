@@ -38,7 +38,7 @@ namespace TeeSharp.Server
             SnapshotRate = SnapshotRate.Init;
             MapChunk = 0;
             AuthTries = 0;
-            AuthLevel = 0;
+            AccessLevel = 0;
 
             if (SendCommandsEnumerator != null)
             {

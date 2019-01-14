@@ -33,6 +33,10 @@ namespace TeeSharp.Common.Console
             Storage = Kernel.Get<BaseStorage>();
             Config = Kernel.Get<BaseConfig>();
 
+            AddCommand("echo", "r", "Echo the text", ConfigFlags.Server | ConfigFlags.Client, ConsoleEchoText);
+            AddCommand("exec", "r", "Execute the specified file", ConfigFlags.Server | ConfigFlags.Client, ConsoleExec);
+            AddCommand("toggle", "sii", "Toggle config value", ConfigFlags.Server | ConfigFlags.Client, ConsoleToggle);
+
             foreach (var pair in Config)
             {
                 if (pair.Value is ConfigInt intCfg)
@@ -53,6 +57,21 @@ namespace TeeSharp.Common.Console
                         strCfg);
                 }
             }
+        }
+
+        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleEchoText(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
         }
 
         public override void AddCommand(string cmd, string format, string description, ConfigFlags flags, CommandCallback callback, object data = null)
@@ -169,7 +188,7 @@ namespace TeeSharp.Common.Console
                     string currentLine;
 
                     while (!string.IsNullOrWhiteSpace(currentLine = reader.ReadLine()))
-                        ExecuteLine(currentLine);
+                        ExecuteLine(currentLine, -1);
                 }
             }
         }
@@ -186,18 +205,23 @@ namespace TeeSharp.Common.Console
                 }
                 else
                 {
-                    ExecuteLine(args[i]);
+                    ExecuteLine(args[i], -1);
                 }
             }
         }
 
-        public override void ExecuteLine(string line)
+        public override void ExecuteLine(string line, int accessLevel)
         {
             if (ParseLine(line, out var result, out var command, out var parsedCmd))
             {
                 if (result.ParseArguments(command.Format))
                 {
-                    command.Invoke(result);
+                    if (accessLevel == -1 || accessLevel >= command.AccessLevel)
+                        command.Invoke(result);
+                    else
+                    {
+                        Print(OutputLevel.Standard, "console", $"Insufficient access level for execute command '{line}'");
+                    }
                 }
                 else
                 {

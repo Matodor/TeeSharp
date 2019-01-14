@@ -20,6 +20,8 @@ namespace TeeSharp.Common.Console
         
         public bool ParseArguments(string format)
         {
+            // TODO rewrite this
+
             if (string.IsNullOrWhiteSpace(format))
                 return true;
 
@@ -68,33 +70,36 @@ namespace TeeSharp.Common.Console
                     continue;
                 }
 
-                if (optional)
-                    optional = false;
-                else
+                if (!optional)
                     countNonOptional++;
-
+                
                 if (countNonOptional > args.Count)
                     return false;
 
-                if (format[i] == 's')
+                if (!optional || index < args.Count)
                 {
-                    _arguments.Add(args[index]);
-                }
-                else if (format[i] == 'i')
-                {
-                    if (int.TryParse(args[index], out var result))
-                        _arguments.Add(result);
-                    else
-                        return false;
-                }
-                else if (format[i] == 'f')
-                {
-                    if (float.TryParse(args[index], out var result))
-                        _arguments.Add(result);
-                    else
-                        return false;
+                    if (format[i] == 's')
+                    {
+                        _arguments.Add(args[index]);
+                    }
+                    else if (format[i] == 'i')
+                    {
+                        if (int.TryParse(args[index], out var result))
+                            _arguments.Add(result);
+                        else
+                            return false;
+                    }
+                    else if (format[i] == 'f')
+                    {
+                        if (float.TryParse(args[index], out var result))
+                            _arguments.Add(result);
+                        else
+                            return false;
+                    }
                 }
 
+                if (optional)
+                    optional = false;
                 index++;
             }
 

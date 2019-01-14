@@ -94,7 +94,7 @@ namespace TeeSharp.Server
             Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
             Console.Init();
             Console.CommandAdded += ConsoleOnCommandAdded;
-            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), SendRconLineAuthed);
+            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
             NetworkServer.Init();
 
             GameContext.BeforeInit();
@@ -358,7 +358,7 @@ namespace TeeSharp.Server
 
         public override bool IsAuthed(int clientId)
         {
-            return Clients[clientId].AuthLevel > 0;
+            return Clients[clientId].AccessLevel > 0;
         }
 
         public override void Kick(int clientId, string reason)
@@ -670,7 +670,7 @@ namespace TeeSharp.Server
                 SendMsg(msg, MsgFlags.Vital, clientId);
                 Console.Print(OutputLevel.Standard, "server", format);
 
-                Clients[clientId].AuthLevel = authLevel;
+                Clients[clientId].AccessLevel = authLevel;
                 Clients[clientId].SendCommandsEnumerator = Console.GetCommands(authLevel);
                 SendRconCommandsClients.Enqueue(clientId);
             }
@@ -681,7 +681,15 @@ namespace TeeSharp.Server
             if (!packet.Flags.HasFlag(SendFlags.Vital) || unPacker.Error)
                 return;
 
-            // TODO
+            if (!IsAuthed(clientId))
+                return;
+
+            var command = unPacker.GetString(SanitizeType.SanitizeCC);
+            if (string.IsNullOrEmpty(command))
+                return;
+
+            Console.Print(OutputLevel.AddInfo, "server", $"ClientId={clientId} execute rcon command: '{command}'");
+            Console.ExecuteLine(command, Clients[clientId].AccessLevel);
         }
 
         protected override void NetMsgInput(Chunk packet, UnPacker unPacker, int clientId)
@@ -1047,9 +1055,15 @@ namespace TeeSharp.Server
             SendMsg(packer, MsgFlags.Vital, clientId);
         }
 
-        protected override void SendRconLineAuthed(string message, object data)
+        protected override void OnConsolePrint(string message, object data)
         {
-            // TODO
+            for (var i = 0; i < Clients.Length; i++)
+            {
+                if (!IsAuthed(i))
+                    continue;
+             
+                SendRconLine(i, message);
+            }
         }
 
         protected override void SendRconCommandAdd(ConsoleCommand command, int clientId)
@@ -1061,7 +1075,7 @@ namespace TeeSharp.Server
             SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
-        protected override void SendRconCommand(ConsoleCommand command, int clientId)
+        protected override void SendRconCommandRemove(ConsoleCommand command, int clientId)
         {
             var msg = new MsgPacker((int) NetworkMessages.ServerRconCommandRemove, true);
             msg.AddString(command.Cmd, ConsoleCommand.MaxCmdLength);
@@ -1070,7 +1084,97 @@ namespace TeeSharp.Server
 
         protected override void RegisterConsoleCommands()
         {
+            Console.AddCommand("mod_command", "s?i", "Specify command accessibility for moderators", ConfigFlags.Server, ConsoleModCommand);
+            Console.AddCommand("mod_status", string.Empty, "List all commands which are accessible for moderators", ConfigFlags.Server, ConsoleModStatus);
+
+            Console.AddCommand("status", string.Empty, "List players", ConfigFlags.Server, ConsoleStatus);
+            Console.AddCommand("shutdown", string.Empty, "Shut down", ConfigFlags.Server, ConsoleShutdown);
+            Console.AddCommand("logout", string.Empty, "Logout of rcon", ConfigFlags.Server, ConsoleLogout);
+            Console.AddCommand("reload", string.Empty, "Reload the map", ConfigFlags.Server, ConsoleReload);
+
+            Console.AddCommand("kick", "i?r", "Kick player with specified id for any reason", ConfigFlags.Server, ConsoleKick);
+            Console.AddCommand("record", "?s", "Record to a file", ConfigFlags.Server | ConfigFlags.Store, ConsoleRecord);
+            Console.AddCommand("stoprecord", string.Empty, "Stop recording", ConfigFlags.Server, ConsoleStopRecord);
+
+            Console["sv_name"].Executed += ConsoleSpecialInfoUpdated;
+            Console["password"].Executed += ConsoleSpecialInfoUpdated;
+
+            Console["sv_max_clients_per_ip"].Executed += ConsoleMaxClientsPerIpUpdated;
+            Console["mod_command"].Executed += ConsoleModCommandUpdated;
+            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
+            Console["sv_rcon_password"].Executed += ConsoleRconPasswordUpdated;
+
             GameContext.RegisterConsoleCommands();
+        }
+
+        protected virtual void ConsoleModStatus(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleModCommand(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleModCommandUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleReload(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleRecord(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleLogout(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleShutdown(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleStatus(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleKick(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
         }
     }
 }

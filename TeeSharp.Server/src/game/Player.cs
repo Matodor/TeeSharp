@@ -9,6 +9,9 @@ namespace TeeSharp.Server.Game
 {
     public class Player : BasePlayer
     {
+        public override event EventPlayerCharacter CharacterSpawned;
+        public override event EventSetTeam TeamChanged;
+
         public override void Init(int clientId, bool dummy)
         {
             base.Init(clientId, dummy);
@@ -41,7 +44,7 @@ namespace TeeSharp.Server.Game
             PlayerFlags = PlayerFlags.None;
             TeeInfo = new TeeInfo();
         }
-
+        
         public override void Tick()
         {
             if (!IsDummy && !Server.ClientInGame(ClientId))
@@ -484,7 +487,7 @@ namespace TeeSharp.Server.Game
                 }
             }
 
-            OnTeamChanged(prevTeam, team);
+            TeamChanged?.Invoke(this, prevTeam, team);
         }
 
         protected override void TryRespawn()
@@ -495,7 +498,7 @@ namespace TeeSharp.Server.Game
             Spawning = false;
             Character = new Character(this, spawnPos);
             Character.Died += CharacterOnDied;
-            OnCharacterSpawn(Character);
+            CharacterSpawned?.Invoke(this, Character);
         }
 
         protected virtual void CharacterOnDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial)

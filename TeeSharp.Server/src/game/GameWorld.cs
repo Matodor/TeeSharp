@@ -1,4 +1,5 @@
-﻿using TeeSharp.Common;
+﻿using System;
+using TeeSharp.Common;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Game;
 using TeeSharp.Server.Game.Entities;
@@ -7,6 +8,8 @@ namespace TeeSharp.Server.Game
 {
     public class GameWorld : BaseGameWorld
     {
+        public override event Action Reseted;
+
         public GameWorld()
         {
             GameContext = Kernel.Get<BaseGameContext>();
@@ -52,7 +55,7 @@ namespace TeeSharp.Server.Game
             }
 
             ResetRequested = false;
-            OnReset();
+            Reseted?.Invoke();
         }
 
         public override void Tick()

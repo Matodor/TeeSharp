@@ -37,7 +37,7 @@ namespace TeeSharp.Server
         /// <summary>
         /// 0 - non authed, 1 - moderator, 2 - admin
         /// </summary>
-        public virtual int AuthLevel { get; set; }
+        public virtual int AccessLevel { get; set; }
 
         public virtual string Name { get; set; }
         public virtual string Clan { get; set; }

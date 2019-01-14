@@ -28,8 +28,8 @@ namespace TeeSharp.Server.Game
 
     public abstract class BasePlayer : BaseInterface
     {
-        public event EventPlayerCharacter CharacterSpawned;
-        public event EventSetTeam TeamChanged;
+        public abstract event EventPlayerCharacter CharacterSpawned;
+        public abstract event EventSetTeam TeamChanged;
 
         public const Weapon WeaponGame = (Weapon) (-3);
         public const Weapon WeaponSelf = (Weapon) (-2);
@@ -104,16 +104,6 @@ namespace TeeSharp.Server.Game
         {
             ClientId = clientId;
             IsDummy = dummy;
-        }
-
-        protected void OnTeamChanged(Team prevTeam, Team newTeam)
-        {
-            TeamChanged?.Invoke(this, prevTeam, newTeam);
-        }
-
-        protected void OnCharacterSpawn(Character character)
-        {
-            CharacterSpawned?.Invoke(this, character);
         }
     }
 }

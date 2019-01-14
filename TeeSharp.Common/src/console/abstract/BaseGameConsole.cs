@@ -42,7 +42,7 @@ namespace TeeSharp.Common.Console
             ConfigFlags flags, CommandCallback callback, object data = null);
         public abstract void ExecuteFile(string fileName, bool forcibly = false);
         public abstract void ParseArguments(string[] args);
-        public abstract void ExecuteLine(string line);
+        public abstract void ExecuteLine(string line, int accessLevel);
         public abstract void Print(OutputLevel outputLevel, string sys, string format);
         public abstract PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
             PrintCallback callback, object data = null);

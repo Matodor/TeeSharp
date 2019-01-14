@@ -13,7 +13,7 @@ namespace TeeSharp.Common.Console
         public const int MaxDescLength = 96;
         public const int MaxParamsLength = 16;
 
-        public const string ArgumentsTypes = "sfi?"; // s - string, f - float, i - integer, ? - optional
+        public const string ArgumentsTypes = "sfi?"; // s - string, f - float, i - integer, ? - optional, r - rest of the string
 
         public readonly string Cmd;
         public readonly string Format;
