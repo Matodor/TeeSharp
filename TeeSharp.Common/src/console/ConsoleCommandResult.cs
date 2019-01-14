@@ -20,6 +20,8 @@ namespace TeeSharp.Common.Console
         
         public bool ParseArguments(string format)
         {
+            // TODO rewrite this
+
             if (string.IsNullOrWhiteSpace(format))
                 return true;
 

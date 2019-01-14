@@ -33,6 +33,10 @@ namespace TeeSharp.Common.Console
             Storage = Kernel.Get<BaseStorage>();
             Config = Kernel.Get<BaseConfig>();
 
+            AddCommand("echo", "r", "Echo the text", ConfigFlags.Server | ConfigFlags.Client, ConsoleEchoText);
+            AddCommand("exec", "r", "Execute the specified file", ConfigFlags.Server | ConfigFlags.Client, ConsoleExec);
+            AddCommand("toggle", "sii", "Toggle config value", ConfigFlags.Server | ConfigFlags.Client, ConsoleToggle);
+
             foreach (var pair in Config)
             {
                 if (pair.Value is ConfigInt intCfg)
@@ -53,6 +57,21 @@ namespace TeeSharp.Common.Console
                         strCfg);
                 }
             }
+        }
+
+        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleEchoText(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
         }
 
         public override void AddCommand(string cmd, string format, string description, ConfigFlags flags, CommandCallback callback, object data = null)

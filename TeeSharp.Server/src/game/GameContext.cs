@@ -141,18 +141,148 @@ namespace TeeSharp.Server.Game
 
         public override void RegisterCommandsUpdates()
         {
-            Console["sv_scorelimit"].Executed += GameInfoUpdated;
+            Console["sv_motd"].Executed += ConsoleMotdUpdated;
+
+            Console["sv_vote_kick"].Executed += ConsoleSettingsUpdated;
+            Console["sv_vote_kick_min"].Executed += ConsoleSettingsUpdated;
+            Console["sv_vote_spectate"].Executed += ConsoleSettingsUpdated;
+            Console["sv_teambalance_time"].Executed += ConsoleSettingsUpdated;
+            Console["sv_player_slots"].Executed += ConsoleSettingsUpdated;
+
+            Console["sv_scorelimit"].Executed += ConsoleGameInfoUpdated;
+            Console["sv_timelimit"].Executed += ConsoleGameInfoUpdated;
+            Console["sv_matches_per_map"].Executed += ConsoleGameInfoUpdated;
+        }
+
+        protected virtual void ConsoleSettingsUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleMotdUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleGameInfoUpdated(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
         }
 
         public override void RegisterConsoleCommands()
         {
+            Console.AddCommand("tune", "si", "Tune variable to value", ConfigFlags.Server, ConsoleTune);
+            Console.AddCommand("tune_reset", string.Empty, "Reset tuning", ConfigFlags.Server, ConsoleTuneReset);
+            Console.AddCommand("tune_dump", string.Empty, "Dump tuning", ConfigFlags.Server, ConsoleTuneDump);
+
+            Console.AddCommand("pause", "?i", "Pause/unpause game", ConfigFlags.Server | ConfigFlags.Store, ConsolePause);
+            Console.AddCommand("change_map", "r", "Change map", ConfigFlags.Server | ConfigFlags.Store, ConsoleChangeMap);
+            Console.AddCommand("restart", "?i", "Restart in x seconds (0 == abort)", ConfigFlags.Server | ConfigFlags.Store, ConsoleRestart);
+            Console.AddCommand("say", "r", "Say in chat", ConfigFlags.Server, ConsoleSay);
+            Console.AddCommand("broadcast", "r", "Broadcast message", ConfigFlags.Server, ConsoleBroadcast);
+            Console.AddCommand("set_team", "ii?i", "Set team of player to team", ConfigFlags.Server, ConsoleSetTeam);
+            Console.AddCommand("set_team_all", "i", "Set team of all players to team", ConfigFlags.Server, ConsoleSetTeamAll);
+            Console.AddCommand("swap_teams", string.Empty, "Swap the current teams", ConfigFlags.Server, ConsoleSwapTeams);
+            Console.AddCommand("shuffle_teams", string.Empty, "Shuffle the current teams", ConfigFlags.Server, ConsoleShuffleTeams);
+            Console.AddCommand("lock_teams", string.Empty, "Lock/unlock teams", ConfigFlags.Server, ConsoleLockTeams);
+            Console.AddCommand("force_teambalance", string.Empty, "Force team balance", ConfigFlags.Server, ConsoleForceTeamBalance);
+
+            Console.AddCommand("add_vote", "sr", "Add a voting option", ConfigFlags.Server, ConsoleAddVote);
+            Console.AddCommand("remove_vote", "s", "Remove a voting option", ConfigFlags.Server, ConsoleRemoveVote);
+            Console.AddCommand("clear_votes", string.Empty, "Clears the voting options", ConfigFlags.Server, ConsoleClearVotes);
+            Console.AddCommand("vote", "r", "Force a vote to yes/no", ConfigFlags.Server, ConsoleVote);
         }
 
-        protected virtual void GameInfoUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleVote(ConsoleCommandResult result, object data)
         {
-
+            throw new NotImplementedException();
         }
 
+        protected virtual void ConsoleClearVotes(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleRemoveVote(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleAddVote(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleLockTeams(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleShuffleTeams(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleSwapTeams(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleSetTeamAll(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleSetTeam(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleBroadcast(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleSay(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleRestart(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleChangeMap(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsolePause(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleTuneDump(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleTuneReset(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void ConsoleTune(ConsoleCommandResult result, object data)
+        {
+            throw new NotImplementedException();
+        }
+        
         public override bool IsClientSpectator(int clientId)
         {
             return Players[clientId] != null && Players[clientId].Team == Team.Spectators;
