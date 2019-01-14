@@ -1139,7 +1139,12 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, object data)
         {
-            throw new NotImplementedException();
+            if (result.NumArguments > 0)
+            {
+                var configVar = ((ConfigString) Config["SvName"]);
+                configVar.Value = configVar.Value.Trim();
+                SendServerInfo(-1);
+            }
         }
 
         protected virtual void ConsoleReload(ConsoleCommandResult result, object data)
