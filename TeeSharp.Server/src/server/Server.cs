@@ -1111,37 +1111,37 @@ namespace TeeSharp.Server
             GameContext.RegisterConsoleCommands();
         }
 
-        protected virtual void ConsoleModStatus(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleModCommand(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleModCommandUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleModCommandUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             if (result.NumArguments > 0)
             {
@@ -1151,39 +1151,51 @@ namespace TeeSharp.Server
             }
         }
 
-        protected virtual void ConsoleReload(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleReload(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRecord(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleRecord(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleLogout(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleShutdown(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleStatus(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleKick(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, object data)
         {
-            throw new NotImplementedException();
+            var kickId = (int) result[0];
+            if (kickId < 0 || kickId >= Clients.Length)
+            {
+                SendRconLine(clientId, "Wrong kick id");
+                return;
+            }
+
+            if (result.NumArguments > 1)
+            {
+                Kick(kickId, (string) result[1]);
+            }
+            else
+                Kick(kickId, "Kicked by console");
         }
     }
 }

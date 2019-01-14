@@ -59,17 +59,17 @@ namespace TeeSharp.Common.Console
             }
         }
 
-        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, object data)
+        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, object data)
+        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleEchoText(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleEchoText(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
@@ -122,7 +122,7 @@ namespace TeeSharp.Common.Console
                 : null;
         }
 
-        protected override void StrVariableCommand(ConsoleCommandResult commandResult, object data)
+        protected override void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, object data)
         {
             if (commandResult.NumArguments != 0)
                 ((ConfigString) data).Value = (string) commandResult[0];
@@ -130,7 +130,7 @@ namespace TeeSharp.Common.Console
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
         }
 
-        protected override void IntVariableCommand(ConsoleCommandResult commandResult, object data)
+        protected override void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, object data)
         {
             if (commandResult.NumArguments != 0)
                 ((ConfigInt) data).Value = (int) commandResult[0];
@@ -210,14 +210,14 @@ namespace TeeSharp.Common.Console
             }
         }
 
-        public override void ExecuteLine(string line, int accessLevel)
+        public override void ExecuteLine(string line, int accessLevel, int clientId = -1)
         {
             if (ParseLine(line, out var result, out var command, out var parsedCmd))
             {
                 if (result.ParseArguments(command.Format))
                 {
                     if (accessLevel == -1 || accessLevel >= command.AccessLevel)
-                        command.Invoke(result);
+                        command.Invoke(result, clientId);
                     else
                     {
                         Print(OutputLevel.Standard, "console", $"Insufficient access level for execute command '{line}'");

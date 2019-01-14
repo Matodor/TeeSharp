@@ -154,17 +154,17 @@ namespace TeeSharp.Server.Game
             Console["sv_matches_per_map"].Executed += ConsoleGameInfoUpdated;
         }
 
-        protected virtual void ConsoleSettingsUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSettingsUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleMotdUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleMotdUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleGameInfoUpdated(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleGameInfoUpdated(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
@@ -193,92 +193,92 @@ namespace TeeSharp.Server.Game
             Console.AddCommand("vote", "r", "Force a vote to yes/no", ConfigFlags.Server, ConsoleVote);
         }
 
-        protected virtual void ConsoleVote(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleVote(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleClearVotes(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleClearVotes(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRemoveVote(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleRemoveVote(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleAddVote(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleAddVote(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleLockTeams(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleLockTeams(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleShuffleTeams(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleShuffleTeams(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSwapTeams(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSwapTeams(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSetTeamAll(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSetTeamAll(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSetTeam(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSetTeam(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleBroadcast(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleBroadcast(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSay(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleSay(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRestart(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleRestart(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleChangeMap(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleChangeMap(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsolePause(ConsoleCommandResult result, object data)
+        protected virtual void ConsolePause(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleTuneDump(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleTuneDump(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleTuneReset(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleTuneReset(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleTune(ConsoleCommandResult result, object data)
+        protected virtual void ConsoleTune(ConsoleCommandResult result, int clientId, object data)
         {
             throw new NotImplementedException();
         }
