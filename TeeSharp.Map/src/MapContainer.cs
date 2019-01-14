@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
+using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Map
 {
@@ -20,7 +21,7 @@ namespace TeeSharp.Map
 
         public void GetType(MapItemTypes type, out int startItems, out int numItems)
         {
-            _dataFile.GetType((int) type, out startItems, out numItems);
+            _dataFile.GetType(type, out startItems, out numItems);
         }
 
         public T GetItem<T>(int index, out MapItemTypes itemType, out int itemId)
@@ -48,8 +49,54 @@ namespace TeeSharp.Map
         public static MapContainer Load(Stream stream, out string error)
         {
             var dataFile = DataFileReader.Read(stream, out error);
-            if (dataFile == null)
+            var item = dataFile?.FindItem<MapItemVersion>(MapItemTypes.Version, 0);
+
+            if (item == null || item.Version != 1)
                 return null;
+
+            dataFile.GetType(MapItemTypes.Group, out var groupsStart, out var groupsNum);
+            dataFile.GetType(MapItemTypes.Layer, out var layersStart, out var layersNum);
+
+            for (var g = 0; g < groupsNum; g++)
+            {
+                var group = dataFile.GetItem<MapItemGroup>(groupsStart + g, out _, out _);
+                for (var l = 0; l < group.NumLayers; l++)
+                {
+                    var layer = dataFile.GetItem<MapItemLayer>(layersStart + group.StartLayer + l, out _, out _);
+                    if (layer.Type == LayerType.Tiles)
+                    {
+                        var tilemap = dataFile.GetItem<MapItemLayerTilemap>(
+                            layersStart + group.StartLayer + l,
+                            out _,
+                            out _
+                        );
+
+                        if (tilemap.Version > 3)
+                        {
+                            var tiles = new Tile[tilemap.Width * tilemap.Height];
+                            var savedTiles = dataFile.GetData<Tile[]>(tilemap.Data);
+                            var i = 0;
+                            var sIndex = 0;
+
+                            while (i < tilemap.Width * tilemap.Height)
+                            {
+                                for (var counter = 0;
+                                    counter <= savedTiles[sIndex].Skip && i < tilemap.Width * tilemap.Height;
+                                    counter++)
+                                {
+                                    tiles[i] = savedTiles[sIndex];
+                                    tiles[i++].Skip = 0;
+                                }
+
+                                sIndex++;
+                            }
+
+                            dataFile.ReplaceData<Tile[]>(tilemap.Data, tiles);
+                        }
+                    }
+                }
+            }
+
             return new MapContainer(dataFile);
         }
     }

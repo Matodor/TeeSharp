@@ -248,4 +248,7 @@ ModelManifest.xml
 autoexec.cfg
 App.config
 
+Examples/**/maps
+Examples/**/storage.cfg
+
 !TeeSharp.Core/src/debug/

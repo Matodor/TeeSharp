@@ -3,7 +3,7 @@ using TeeSharp.Common.Config;
 
 namespace TeeSharp.Common.Console
 {
-    public delegate void CommandCallback(ConsoleCommandResult commandResult, object data = null);
+    public delegate void CommandCallback(ConsoleCommandResult commandResult, int clientId, object data = null);
 
     public class ConsoleCommand
     {
@@ -39,9 +39,9 @@ namespace TeeSharp.Common.Console
                 throw new Exception("ConsoleCommand empty cmd");
         }
 
-        public void Invoke(ConsoleCommandResult result)
+        public void Invoke(ConsoleCommandResult result, int clientId)
         {
-            Executed?.Invoke(result, Data);
+            Executed?.Invoke(result, clientId, Data);
         }
     }
 }
