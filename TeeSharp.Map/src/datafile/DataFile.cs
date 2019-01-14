@@ -5,6 +5,7 @@ using System.Text;
 using ComponentAce.Compression.Libs.zlib;
 using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
+using TeeSharp.Map.MapItems;
 
 namespace TeeSharp.Map
 {
@@ -100,7 +101,7 @@ namespace TeeSharp.Map
             return (T) _dataObjects[index];
         }
 
-        public void GetType(int typeId, out int start, out int num)
+        public void GetType(MapItemTypes typeId, out int start, out int num)
         {
             for (var i = 0; i < Header.NumItemTypes; i++)
             {
@@ -127,7 +128,7 @@ namespace TeeSharp.Map
             return Raw.AsSpan(offset + sizeof(int) * 2).Read<T>(); // sizeof(int) * 2 = Marshal.SizeOf<DataFileItem>()
         }
 
-        public T FindItem<T>(int typeId, int id)
+        public T FindItem<T>(MapItemTypes typeId, int id)
         {
             GetType(typeId, out var start, out var num);
 
@@ -138,7 +139,15 @@ namespace TeeSharp.Map
                     return item;
             }
 
-            return default(T);
+            return default;
+        }
+
+        public void ReplaceData<T>(int index, object data)
+        {
+            GetData<T>(index);
+            UnloadData(index);
+
+            _dataObjects[index] = data;
         }
     }
 }

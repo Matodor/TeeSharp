@@ -12,7 +12,7 @@ namespace TeeSharp.Map
         /// The type_id 32-bit signed integer must be unique amongst all other item_type.type_ids. Its value must fit into an unsigned 16-bit integer.
         /// </summary>
         [MarshalAs(UnmanagedType.I4)]
-        public int TypeId;
+        public MapItemTypes TypeId;
 
         /// <summary>
         /// The start signed integer is the index of the first item in the items with the type type_id.

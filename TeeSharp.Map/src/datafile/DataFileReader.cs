@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Runtime.InteropServices;
 using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
 
@@ -38,7 +39,7 @@ namespace TeeSharp.Map
                 error = $"wrong version ({header.Version})";
                 return null;
             }
-
+            
             var itemTypes = stream.ReadArray<DataFileItemType[]>(header.NumItemTypes);
             var itemOffsets = stream.ReadArray<int[]>(header.NumItems);
             var dataOffsets = stream.ReadArray<int[]>(header.NumData);
