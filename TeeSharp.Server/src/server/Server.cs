@@ -1154,8 +1154,7 @@ namespace TeeSharp.Server
                 Console.Print(OutputLevel.Standard, "console",
                     $"moderator access for '{cmd}' is now '{command.AccessLevel <= BaseServerClient.AuthedModerator}'");
 
-                if (command.AccessLevel != prevAccessLevel &&
-                    command.AccessLevel <= BaseServerClient.AuthedModerator)
+                if (prevAccessLevel != command.AccessLevel)
                 {
                     for (var i = 0; i < Clients.Length; i++)
                     {
