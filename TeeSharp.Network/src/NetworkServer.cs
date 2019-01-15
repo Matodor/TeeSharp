@@ -78,7 +78,16 @@ namespace TeeSharp.Network
                     return false;
 
                 var endPoint = default(IPEndPoint);
-                var data = UdpClient.Receive(ref endPoint);
+                byte[] data;
+
+                try
+                {
+                    data = UdpClient.Receive(ref endPoint);
+                }
+                catch
+                {
+                    continue;
+                }
 
                 if (data.Length == 0)
                     continue;

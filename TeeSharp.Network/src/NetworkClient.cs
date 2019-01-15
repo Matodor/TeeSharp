@@ -63,7 +63,7 @@ namespace TeeSharp.Network
                 if (UdpClient.Available <= 0)
                     return false;
 
-                IPEndPoint endPoint = null;
+                var endPoint = default(IPEndPoint);
                 byte[] data;
 
                 try
