@@ -691,7 +691,7 @@ namespace TeeSharp.Server
                 return;
 
             Console.Print(OutputLevel.AddInfo, "server", $"ClientId={clientId} execute rcon command: '{command}'");
-            Console.ExecuteLine(command, Clients[clientId].AccessLevel);
+            Console.ExecuteLine(command, Clients[clientId].AccessLevel, clientId);
         }
 
         protected override void NetMsgInput(Chunk packet, UnPacker unPacker, int clientId)
