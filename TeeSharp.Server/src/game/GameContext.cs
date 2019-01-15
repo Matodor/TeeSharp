@@ -171,7 +171,7 @@ namespace TeeSharp.Server.Game
 
         public override void RegisterConsoleCommands()
         {
-            Console.AddCommand("tune", "si", "Tune variable to value", ConfigFlags.Server, ConsoleTune);
+            Console.AddCommand("tune", "s?i", "Tune variable to value", ConfigFlags.Server, ConsoleTune);
             Console.AddCommand("tune_reset", string.Empty, "Reset tuning", ConfigFlags.Server, ConsoleTuneReset);
             Console.AddCommand("tune_dump", string.Empty, "Dump tuning", ConfigFlags.Server, ConsoleTuneDump);
 
@@ -270,7 +270,10 @@ namespace TeeSharp.Server.Game
 
         protected virtual void ConsoleTuneDump(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            foreach (var pair in Tuning)
+            {
+                Console.Print(OutputLevel.Standard, "tuning", $"{pair.Key} {pair.Value.FloatValue:F2}");
+            }
         }
 
         protected virtual void ConsoleTuneReset(ConsoleCommandResult result, int clientId, ref object data)
