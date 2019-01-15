@@ -614,7 +614,7 @@ namespace TeeSharp.Server
             if (!packet.Flags.HasFlag(SendFlags.Vital) || unPacker.Error)
                 return;
 
-            // TODO
+            // TODO send map list
 
             if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
                 string.IsNullOrEmpty(Config["SvRconModPassword"]))
@@ -1178,7 +1178,28 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, object data)
         {
-            throw new NotImplementedException();
+            for (var i = 0; i < Clients.Length; i++)
+            {
+                if (Clients[i].State == ServerClientState.Empty)
+                    continue;
+
+                string line;
+                var endPoint = NetworkServer.ClientEndPoint(i);
+                if (ClientInGame(i))
+                {
+                    var auth = Clients[i].AccessLevel == BaseServerClient.AuthedAdmin ? "(admin)" :
+                               Clients[i].AccessLevel == BaseServerClient.AuthedModerator ? "(moderator)" : string.Empty;
+
+                    line = $"id={i} endpoint={endPoint} client={Clients[i].Version:X} name='{ClientName(i)}' " +
+                           $"score={GameContext.GameController.Score(i)} team={GameContext.Players[i].Team} {auth}";
+                }
+                else
+                {
+                    line = $"id={i} endpoint={endPoint} connecting";
+                }
+
+                Console.Print(OutputLevel.Standard, "server", line);
+            }
         }
 
         protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, object data)

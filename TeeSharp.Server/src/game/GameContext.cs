@@ -368,6 +368,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateSoundGlobal(Sound sound, int targetId = -1)
         {
+            throw new NotImplementedException();
             //if (sound < 0 || sound >= Sound.NumSounds)
             //    return;
 
@@ -424,18 +425,18 @@ namespace TeeSharp.Server.Game
 
         public override void SendBroadcast(int clientId, string msg)
         {
-            //Server.SendPackMsg(new GameMsg_SvBroadcast
-            //{
-            //    Message = msg
-            //}, MsgFlags.Vital, clientId);
+            Server.SendPackMsg(new GameMsg_SvBroadcast
+            {
+                Message = msg
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendWeaponPickup(int clientId, Weapon weapon)
         {
-            //Server.SendPackMsg(new GameMsg_SvWeaponPickup
-            //{
-            //    Weapon = weapon
-            //}, MsgFlags.Vital, clientId);
+            Server.SendPackMsg(new GameMsg_SvWeaponPickup
+            {
+                Weapon = weapon
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendEmoticon(int clientId, Emoticon emote)
@@ -761,7 +762,7 @@ namespace TeeSharp.Server.Game
                 KickVote = Config["SvVoteKick"],
                 KickMin = Config["SvVoteKickMin"],
                 SpectatorsVote = Config["SvVoteSpectate"],
-                TeamLock = false, // TODO
+                TeamLock = LockTeams,
                 TeamBalance = Config["SvTeambalanceTime"],
                 PlayerSlots = Config["SvPlayerSlots"],
             };
