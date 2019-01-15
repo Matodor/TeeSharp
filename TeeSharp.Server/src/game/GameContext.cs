@@ -278,14 +278,34 @@ namespace TeeSharp.Server.Game
 
         protected virtual void ConsoleTuneReset(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            foreach (var pair in Tuning)
+                pair.Value.Value = pair.Value.DefaultValue;
+
+            SendTuningParams(-1);
+            Console.Print(OutputLevel.Standard, "tuning", "Tuning reset");
         }
 
         protected virtual void ConsoleTune(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            var name = (string) result[0];
+            var param = Tuning.Contains(name) ? Tuning[name] : null;
+
+            if (param == null)
+            {
+                Console.Print(OutputLevel.Standard, "tuning", "No such tuning parameter");
+                return;
+            }
+
+            if (result.NumArguments == 2)
+            {
+                var newValue = (float) result[1];
+                param.FloatValue = newValue;
+                SendTuningParams(-1);
+            }
+
+            Console.Print(OutputLevel.Standard, "tuning", $"{name} = {param.FloatValue}");
         }
-        
+
         public override bool IsClientSpectator(int clientId)
         {
             return Players[clientId] != null && Players[clientId].Team == Team.Spectators;

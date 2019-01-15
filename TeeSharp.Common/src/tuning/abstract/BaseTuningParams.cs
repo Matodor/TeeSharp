@@ -4,40 +4,18 @@ using TeeSharp.Core;
 
 namespace TeeSharp.Common
 {
-    public class BaseTuningParams : BaseInterface, IEnumerable<KeyValuePair<string, TuningParameter>>
+    public abstract class BaseTuningParams : BaseInterface, IEnumerable<KeyValuePair<string, TuningParameter>>
     {
         public virtual TuningParameter this[string key] => Parameters[key];
         public virtual int Count => Parameters.Count;
 
         protected virtual IDictionary<string, TuningParameter> Parameters { get; set; }
 
-        protected BaseTuningParams()
-        {
-            Parameters = new Dictionary<string, TuningParameter>();
-        }
+        public virtual bool Contains(string param) => Parameters.ContainsKey(param);
+        public abstract void Reset();
+        public abstract IEnumerator<KeyValuePair<string, TuningParameter>> GetEnumerator();
 
-        protected virtual void AppendParameters(
-            IDictionary<string, TuningParameter> parameters)
-        {
-            foreach (var pair in parameters)
-            {
-                if (!Parameters.TryAdd(pair.Key, pair.Value))
-                    Debug.Log("tuning", $"Parameter '{pair.Key}' already added");
-            }
-        }
-
-        public virtual void Reset()
-        {
-            foreach (var pair in Parameters)
-            {
-                pair.Value.Value = pair.Value.DefaultValue;
-            }
-        }
-
-        public virtual IEnumerator<KeyValuePair<string, TuningParameter>> GetEnumerator()
-        {
-            return Parameters.GetEnumerator();
-        }
+        protected abstract void AppendParameters(IDictionary<string, TuningParameter> parameters);
 
         IEnumerator IEnumerable.GetEnumerator()
         {

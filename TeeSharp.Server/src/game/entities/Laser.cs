@@ -80,10 +80,10 @@ namespace TeeSharp.Server.Game.Entities
                     Position = tempPos;
                     _direction = tempDirection.Normalized;
 
-                    _energy -= MathHelper.Distance(_from, Position) + Tuning["LaserBounceCost"];
+                    _energy -= MathHelper.Distance(_from, Position) + Tuning["laser_bounce_cost"];
                     _bounces++;
 
-                    if (_bounces > Tuning["LaserBounceNum"])
+                    if (_bounces > Tuning["laser_bounce_num"])
                         _energy = -1;
 
                     GameContext.CreateSound(Position, Sound.LaserBounce);
@@ -104,7 +104,7 @@ namespace TeeSharp.Server.Game.Entities
         {
             base.Tick();
 
-            if (Server.Tick > _evalTick + (Server.TickSpeed * Tuning["LaserBounceDelay"]) / 1000f)
+            if (Server.Tick > _evalTick + (Server.TickSpeed * Tuning["laser_bounce_delay"]) / 1000f)
                 DoBounce();
         }
 
