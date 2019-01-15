@@ -1205,12 +1205,28 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            if (!IsAuthed(clientId))
+                return;
+
+            var msg = new MsgPacker((int) NetworkMessages.ServerRconAuthOff, true);
+            SendMsg(msg, MsgFlags.Vital, clientId);
+
+            Clients[clientId].AccessLevel = 0;
+            Clients[clientId].AuthTries = 0;
+
+            if (Clients[clientId].SendCommandsEnumerator != null)
+            {
+                Clients[clientId].SendCommandsEnumerator.Dispose();
+                Clients[clientId].SendCommandsEnumerator = null;
+            }
+
+            SendRconLine(clientId, "Logout successful");
+            Console.Print(OutputLevel.Standard, "server", $"ClientId={clientId} rcon logged out");
         }
 
         protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            IsRunning = false;
         }
 
         protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, ref object data)
