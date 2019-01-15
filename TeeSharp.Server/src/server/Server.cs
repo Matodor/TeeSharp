@@ -92,8 +92,8 @@ namespace TeeSharp.Server
 
             Storage.Init("TeeSharp", StorageType.Server);
             Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
-            Console.Init();
             Console.CommandAdded += ConsoleOnCommandAdded;
+            Console.Init();
             PrintCallbackInfo = Console.RegisterPrintCallback(
                 (OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
             NetworkServer.Init();
@@ -673,7 +673,8 @@ namespace TeeSharp.Server
                 Console.Print(OutputLevel.Standard, "server", format);
 
                 Clients[clientId].AccessLevel = authLevel;
-                Clients[clientId].SendCommandsEnumerator = Console.GetCommands(authLevel);
+                Clients[clientId].SendCommandsEnumerator =
+                    Console.GetCommands(authLevel, ConfigFlags.Server).GetEnumerator();
                 SendRconCommandsClients.Enqueue(clientId);
             }
         }
@@ -1108,12 +1109,32 @@ namespace TeeSharp.Server
             Console.AddCommand("record", "?s", "Record to a file", ConfigFlags.Server | ConfigFlags.Store, ConsoleRecord);
             Console.AddCommand("stoprecord", string.Empty, "Stop recording", ConfigFlags.Server, ConsoleStopRecord);
 
+            Console.SetAccessLevel(BaseServerClient.AuthedModerator, "logout");
+
             GameContext.RegisterConsoleCommands();
         }
 
         protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            var stringBuilder = new StringBuilder(256);
+
+            foreach (var pair in Console.GetCommands(BaseServerClient.AuthedModerator, ConfigFlags.Server))
+            {
+                if (stringBuilder.Length + pair.Key.Length < stringBuilder.Capacity)
+                {
+                    if (stringBuilder.Length > 0)
+                        stringBuilder.Append(", ");
+                    stringBuilder.Append(pair.Key);
+                }
+                else
+                {
+                    Console.Print(OutputLevel.Standard, "console", stringBuilder.ToString());
+                    stringBuilder.Clear();
+                    stringBuilder.Append(pair.Key);
+                }
+            }
+
+            Console.Print(OutputLevel.Standard, "console", stringBuilder.ToString());
         }
 
         protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, ref object data)
