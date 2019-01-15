@@ -49,8 +49,8 @@ namespace TeeSharp.Common.Console
         public abstract ConsoleCommand FindCommand(string cmd, ConfigFlags mask);
         public abstract IEnumerator<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel);
 
-        protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, object data);
-        protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, object data);
+        protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
+        protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
 
         protected abstract bool ParseLine(string line, out ConsoleCommandResult commandResult,
             out ConsoleCommand command, out string parsedCmd);

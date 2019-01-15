@@ -94,7 +94,8 @@ namespace TeeSharp.Server
             Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
             Console.Init();
             Console.CommandAdded += ConsoleOnCommandAdded;
-            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
+            PrintCallbackInfo = Console.RegisterPrintCallback(
+                (OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
             NetworkServer.Init();
 
             GameContext.BeforeInit();
@@ -1087,10 +1088,9 @@ namespace TeeSharp.Server
         {
             Console["sv_name"].Executed += ConsoleSpecialInfoUpdated;
             Console["password"].Executed += ConsoleSpecialInfoUpdated;
+            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
 
             Console["sv_max_clients_per_ip"].Executed += ConsoleMaxClientsPerIpUpdated;
-            Console["mod_command"].Executed += ConsoleModCommandUpdated;
-            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
             Console["sv_rcon_password"].Executed += ConsoleRconPasswordUpdated;
         }
 
@@ -1111,37 +1111,74 @@ namespace TeeSharp.Server
             GameContext.RegisterConsoleCommands();
         }
 
-        protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, ref object data)
+        {
+            var cmd = (string) result[0];
+            var command = Console.FindCommand(cmd, ConfigFlags.Server);
+            if (command == null)
+            {
+                Console.Print(OutputLevel.Standard, "console", $"No such command '{cmd}'");
+                return;
+            }
+
+            if (result.NumArguments == 2)
+            {
+                var prevAccessLevel = command.AccessLevel;
+                command.AccessLevel = (int) result[1];
+                Console.Print(OutputLevel.Standard, "console",
+                    $"moderator access for '{cmd}' is now '{command.AccessLevel <= BaseServerClient.AuthedModerator}'");
+
+                if (command.AccessLevel != prevAccessLevel &&
+                    command.AccessLevel <= BaseServerClient.AuthedModerator)
+                {
+                    for (var i = 0; i < Clients.Length; i++)
+                    {
+                        if (Clients[i].State == ServerClientState.Empty ||
+                            Clients[i].AccessLevel != BaseServerClient.AuthedModerator || (
+                                Clients[i].SendCommandsEnumerator != null &&
+                                Clients[i].SendCommandsEnumerator.Current.Value.Cmd == cmd))
+                        {
+                            continue;
+                        }
+
+                        if (prevAccessLevel == BaseServerClient.AuthedAdmin)
+                            SendRconCommandAdd(command, i);
+                        else
+                            SendRconCommandRemove(command, i);
+                    }
+                }
+            }
+            else
+            {
+                data = null;
+                Console.Print(OutputLevel.Standard, "console",
+                    $"moderator access for '{cmd}' is '{command.AccessLevel <= BaseServerClient.AuthedModerator}'");
+            }
+        }
+
+        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, int clientId, ref object data)
+        {
+        }
+
+        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, ref object data)
+        {
+            if (result.NumArguments != 1)
+                return;
+
+            PrintCallbackInfo.OutputLevel = (OutputLevel) result[0];
+        }
+
+        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, int clientId, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void ConsoleModCommandUpdated(ConsoleCommandResult result, int clientId, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             if (result.NumArguments > 0)
             {
@@ -1151,32 +1188,32 @@ namespace TeeSharp.Server
             }
         }
 
-        protected virtual void ConsoleReload(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleReload(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRecord(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleRecord(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, ref object data)
         {
             for (var i = 0; i < Clients.Length; i++)
             {
@@ -1202,7 +1239,7 @@ namespace TeeSharp.Server
             }
         }
 
-        protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, ref object data)
         {
             var kickId = (int) result[0];
             if (kickId < 0 || kickId >= Clients.Length)
