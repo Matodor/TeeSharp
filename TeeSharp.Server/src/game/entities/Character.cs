@@ -114,7 +114,7 @@ namespace TeeSharp.Server.Game.Entities
 
             var worldCore = new WorldCore(
                 GameWorld.WorldCore.CharacterCores.Length,
-                GameWorld.WorldCore.Tuning);
+                Kernel.Get<BaseTuningParams>());
             ReckoningCore.Init(worldCore, GameContext.MapCollision);
 
             GameContext.CreatePlayerSpawn(spawnPos);
@@ -329,7 +329,7 @@ namespace TeeSharp.Server.Game.Entities
 
         protected virtual void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
         {
-            var laser = new Laser(Position, direction, Tuning["LaserReach"], Player.ClientId);
+            var laser = new Laser(Position, direction, Tuning["laser_reach"], Player.ClientId);
             GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
@@ -351,7 +351,7 @@ namespace TeeSharp.Server.Game.Entities
                 ownerId: Player.ClientId,
                 startPos: startPos,
                 direction: direction,
-                lifeSpan: (int) (Server.TickSpeed * Tuning["GrenadeLifetime"]),
+                lifeSpan: (int) (Server.TickSpeed * Tuning["grenade_lifetime"]),
                 damage: ServerData.Weapons.Grenade.Damage,
                 explosive: true,
                 force: 0f,
@@ -371,14 +371,14 @@ namespace TeeSharp.Server.Game.Entities
                 var angle = MathHelper.Angle(direction);
                 angle += spreading[i + ShotSpread];
                 var v = 1 - (Math.Abs(i) / (float) ShotSpread);
-                var speed = MathHelper.Mix(Tuning["ShotgunSpeeddiff"], 1.0f, v);
+                var speed = MathHelper.Mix(Tuning["shotgun_speeddiff"], 1.0f, v);
                 var projectile = new Projectile
                 (
                     weapon: Weapon.Shotgun,
                     ownerId: Player.ClientId,
                     startPos: startPos,
                     direction: new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * speed,
-                    lifeSpan: (int) (Server.TickSpeed * Tuning["ShotgunLifetime"]),
+                    lifeSpan: (int) (Server.TickSpeed * Tuning["shotgun_lifetime"]),
                     damage: ServerData.Weapons.Shotgun.Damage,
                     explosive: false,
                     force: 0f,
@@ -397,7 +397,7 @@ namespace TeeSharp.Server.Game.Entities
                 ownerId: Player.ClientId,
                 startPos: startPos,
                 direction: direction,
-                lifeSpan: (int) (Server.TickSpeed * Tuning[key: "GunLifetime"]),
+                lifeSpan: (int) (Server.TickSpeed * Tuning[key: "gun_lifetime"]),
                 damage: 1,
                 explosive: false,
                 force: 0f,

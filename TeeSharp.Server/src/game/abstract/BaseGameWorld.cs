@@ -15,7 +15,6 @@ namespace TeeSharp.Server.Game
         public virtual WorldCore WorldCore { get; set; }
         public virtual bool ResetRequested { get; set; }
 
-        protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }

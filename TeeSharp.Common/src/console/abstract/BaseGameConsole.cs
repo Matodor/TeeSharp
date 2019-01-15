@@ -38,19 +38,24 @@ namespace TeeSharp.Common.Console
 
         public abstract void Init();
 
-        public abstract void AddCommand(string cmd, string format, string description, 
-            ConfigFlags flags, CommandCallback callback, object data = null);
         public abstract void ExecuteFile(string fileName, bool forcibly = false);
         public abstract void ParseArguments(string[] args);
         public abstract void ExecuteLine(string line, int accessLevel, int clientId = -1);
         public abstract void Print(OutputLevel outputLevel, string sys, string format);
-        public abstract PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
-            PrintCallback callback, object data = null);
         public abstract ConsoleCommand FindCommand(string cmd, ConfigFlags mask);
-        public abstract IEnumerator<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel);
+        public abstract void SetAccessLevel(int accessLevel, params string[] commands);
 
-        protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, object data);
-        protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, object data);
+        public abstract void AddCommand(string cmd, string format, string description,
+            ConfigFlags flags, CommandCallback callback, object data = null);
+
+        public abstract IEnumerable<KeyValuePair<string, ConsoleCommand>> GetCommands(
+            int accessLevel, ConfigFlags flags = ConfigFlags.All);
+
+        public abstract PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel,
+            PrintCallback callback, object data = null);
+
+        protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
+        protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
 
         protected abstract bool ParseLine(string line, out ConsoleCommandResult commandResult,
             out ConsoleCommand command, out string parsedCmd);

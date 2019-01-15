@@ -11,5 +11,7 @@ namespace TeeSharp.Common.Config
         Store = 1 << 3,
         Master = 1 << 4,
         Econ = 1 << 5,
+
+        All = Save | Client | Server | Store | Master | Econ
     }
 }

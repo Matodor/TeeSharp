@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core;
@@ -59,19 +60,27 @@ namespace TeeSharp.Common.Console
             }
         }
 
-        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, int clientId, object data)
+        protected virtual void ConsoleToggle(ConsoleCommandResult commandresult, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, int clientId, object data)
+        protected virtual void ConsoleExec(ConsoleCommandResult commandresult, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleEchoText(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleEchoText(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
+        }
+
+        public override void SetAccessLevel(int accessLevel, params string[] commands)
+        {
+            for (var i = 0; i < commands.Length; i++)
+            {
+                Commands[commands[i]].AccessLevel = accessLevel;
+            }
         }
 
         public override void AddCommand(string cmd, string format, string description, ConfigFlags flags, CommandCallback callback, object data = null)
@@ -88,13 +97,10 @@ namespace TeeSharp.Common.Console
             CommandAdded?.Invoke(command);
         }
 
-        public override IEnumerator<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel)
+        public override IEnumerable<KeyValuePair<string, ConsoleCommand>> GetCommands(int accessLevel, ConfigFlags flags = ConfigFlags.All)
         {
-            foreach (var kvp in Commands)
-            {
-                if (accessLevel >= kvp.Value.AccessLevel)
-                    yield return kvp;
-            }
+            return Commands.Where(pair => pair.Value.AccessLevel <= accessLevel &&
+                                          pair.Value.Flags.HasFlag(flags));
         }
 
         public override PrintCallbackInfo RegisterPrintCallback(OutputLevel outputLevel, 
@@ -122,7 +128,7 @@ namespace TeeSharp.Common.Console
                 : null;
         }
 
-        protected override void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, object data)
+        protected override void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data)
         {
             if (commandResult.NumArguments != 0)
                 ((ConfigString) data).Value = (string) commandResult[0];
@@ -130,7 +136,7 @@ namespace TeeSharp.Common.Console
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
         }
 
-        protected override void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, object data)
+        protected override void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data)
         {
             if (commandResult.NumArguments != 0)
                 ((ConfigInt) data).Value = (int) commandResult[0];

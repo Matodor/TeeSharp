@@ -96,18 +96,18 @@ namespace TeeSharp.Server.Game.Entities
             switch (Weapon)
             {
                 case Weapon.Gun:
-                    curvature = Tuning["GunCurvature"];
-                    speed = Tuning["GunSpeed"];
+                    curvature = Tuning["gun_curvature"];
+                    speed = Tuning["gun_speed"];
                     break;
 
                 case Weapon.Shotgun:
-                    curvature = Tuning["ShotgunCurvature"];
-                    speed = Tuning["ShotgunSpeed"];
+                    curvature = Tuning["shotgun_curvature"];
+                    speed = Tuning["shotgun_speed"];
                     break;
 
                 case Weapon.Grenade:
-                    curvature = Tuning["GrenadeCurvature"];
-                    speed = Tuning["GrenadeSpeed"];
+                    curvature = Tuning["grenade_curvature"];
+                    speed = Tuning["grenade_speed"];
                     break;
             }
 

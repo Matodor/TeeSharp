@@ -27,10 +27,10 @@ namespace TeeSharp.Server.Game
         public virtual BaseGameController GameController { get; protected set; }
         public virtual BaseGameWorld World { get; protected set; }
 
-        public virtual BaseMapLayers MapLayers { get; set; }
-        public virtual BaseMapCollision MapCollision { get; set; }
+        public virtual BaseMapLayers MapLayers { get; protected set; }
+        public virtual BaseMapCollision MapCollision { get; protected set; }
+        public virtual BaseTuningParams Tuning { get; protected set; }
 
-        protected virtual BaseTuningParams Tuning { get; set; }
         protected virtual BaseConfig Config { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseGameConsole Console { get; set; }

@@ -154,24 +154,24 @@ namespace TeeSharp.Server.Game
             Console["sv_matches_per_map"].Executed += ConsoleGameInfoUpdated;
         }
 
-        protected virtual void ConsoleSettingsUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSettingsUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleMotdUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleMotdUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleGameInfoUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleGameInfoUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
         public override void RegisterConsoleCommands()
         {
-            Console.AddCommand("tune", "si", "Tune variable to value", ConfigFlags.Server, ConsoleTune);
+            Console.AddCommand("tune", "s?i", "Tune variable to value", ConfigFlags.Server, ConsoleTune);
             Console.AddCommand("tune_reset", string.Empty, "Reset tuning", ConfigFlags.Server, ConsoleTuneReset);
             Console.AddCommand("tune_dump", string.Empty, "Dump tuning", ConfigFlags.Server, ConsoleTuneDump);
 
@@ -193,96 +193,118 @@ namespace TeeSharp.Server.Game
             Console.AddCommand("vote", "r", "Force a vote to yes/no", ConfigFlags.Server, ConsoleVote);
         }
 
-        protected virtual void ConsoleVote(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleVote(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleClearVotes(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleClearVotes(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRemoveVote(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleRemoveVote(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleAddVote(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleAddVote(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleLockTeams(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleLockTeams(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleShuffleTeams(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleShuffleTeams(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSwapTeams(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSwapTeams(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSetTeamAll(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSetTeamAll(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSetTeam(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSetTeam(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleBroadcast(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleBroadcast(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleSay(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSay(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRestart(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleRestart(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleChangeMap(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleChangeMap(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsolePause(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsolePause(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleTuneDump(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleTuneDump(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            foreach (var pair in Tuning)
+            {
+                Console.Print(OutputLevel.Standard, "tuning", $"{pair.Key} {pair.Value.FloatValue:F2}");
+            }
         }
 
-        protected virtual void ConsoleTuneReset(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleTuneReset(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            foreach (var pair in Tuning)
+                pair.Value.Value = pair.Value.DefaultValue;
+
+            SendTuningParams(-1);
+            Console.Print(OutputLevel.Standard, "tuning", "Tuning reset");
         }
 
-        protected virtual void ConsoleTune(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleTune(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            var name = (string) result[0];
+            var param = Tuning.Contains(name) ? Tuning[name] : null;
+
+            if (param == null)
+            {
+                Console.Print(OutputLevel.Standard, "tuning", "No such tuning parameter");
+                return;
+            }
+
+            if (result.NumArguments == 2)
+            {
+                param.FloatValue = (int)result[1];
+                SendTuningParams(-1);
+            }
+
+            Console.Print(OutputLevel.Standard, "tuning", $"{name} = {param.FloatValue}");
         }
-        
+
         public override bool IsClientSpectator(int clientId)
         {
             return Players[clientId] != null && Players[clientId].Team == Team.Spectators;
@@ -368,6 +390,7 @@ namespace TeeSharp.Server.Game
 
         public override void CreateSoundGlobal(Sound sound, int targetId = -1)
         {
+            throw new NotImplementedException();
             //if (sound < 0 || sound >= Sound.NumSounds)
             //    return;
 
@@ -424,18 +447,18 @@ namespace TeeSharp.Server.Game
 
         public override void SendBroadcast(int clientId, string msg)
         {
-            //Server.SendPackMsg(new GameMsg_SvBroadcast
-            //{
-            //    Message = msg
-            //}, MsgFlags.Vital, clientId);
+            Server.SendPackMsg(new GameMsg_SvBroadcast
+            {
+                Message = msg
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendWeaponPickup(int clientId, Weapon weapon)
         {
-            //Server.SendPackMsg(new GameMsg_SvWeaponPickup
-            //{
-            //    Weapon = weapon
-            //}, MsgFlags.Vital, clientId);
+            Server.SendPackMsg(new GameMsg_SvWeaponPickup
+            {
+                Weapon = weapon
+            }, MsgFlags.Vital, clientId);
         }
 
         public override void SendEmoticon(int clientId, Emoticon emote)
@@ -761,7 +784,7 @@ namespace TeeSharp.Server.Game
                 KickVote = Config["SvVoteKick"],
                 KickMin = Config["SvVoteKickMin"],
                 SpectatorsVote = Config["SvVoteSpectate"],
-                TeamLock = false, // TODO
+                TeamLock = LockTeams,
                 TeamBalance = Config["SvTeambalanceTime"],
                 PlayerSlots = Config["SvPlayerSlots"],
             };

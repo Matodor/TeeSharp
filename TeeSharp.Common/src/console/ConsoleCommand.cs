@@ -3,7 +3,7 @@ using TeeSharp.Common.Config;
 
 namespace TeeSharp.Common.Console
 {
-    public delegate void CommandCallback(ConsoleCommandResult commandResult, int clientId, object data = null);
+    public delegate void CommandCallback(ConsoleCommandResult commandResult, int clientId, ref object data);
 
     public class ConsoleCommand
     {
@@ -13,14 +13,16 @@ namespace TeeSharp.Common.Console
         public const int MaxDescLength = 96;
         public const int MaxParamsLength = 16;
 
-        public const string ArgumentsTypes = "sfi?"; // s - string, f - float, i - integer, ? - optional, r - rest of the string
+        public const string ArgumentsTypes = "sfi?r"; // s - string, f - float, i - integer, ? - optional, r - rest of the string
 
+        public int AccessLevel { get; set; }
         public readonly string Cmd;
+
         public readonly string Format;
         public readonly ConfigFlags Flags;
         public readonly string Description;
-        public readonly object Data;
-        public int AccessLevel { get; set; }
+
+        public object Data;
 
         public ConsoleCommand(
             string cmd, 
@@ -41,7 +43,7 @@ namespace TeeSharp.Common.Console
 
         public void Invoke(ConsoleCommandResult result, int clientId)
         {
-            Executed?.Invoke(result, clientId, Data);
+            Executed?.Invoke(result, clientId, ref Data);
         }
     }
 }

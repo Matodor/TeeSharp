@@ -39,14 +39,10 @@ namespace TeeSharp.Server
             kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
             kernel.Bind<BaseEvents>().To<Events>().AsSingleton();
             kernel.Bind<BaseMapCollision>().To<MapCollision>().AsSingleton();
-            kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
             kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
 
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BasePlayer>().To<Player>();
-
-            // singletons
-            //kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
         }
     }
 
@@ -92,9 +88,10 @@ namespace TeeSharp.Server
 
             Storage.Init("TeeSharp", StorageType.Server);
             Config.Init(ConfigFlags.Server | ConfigFlags.Econ);
-            Console.Init();
             Console.CommandAdded += ConsoleOnCommandAdded;
-            Console.RegisterPrintCallback((OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
+            Console.Init();
+            PrintCallbackInfo = Console.RegisterPrintCallback(
+                (OutputLevel) Config["ConsoleOutputLevel"].AsInt(), OnConsolePrint);
             NetworkServer.Init();
 
             GameContext.BeforeInit();
@@ -614,7 +611,7 @@ namespace TeeSharp.Server
             if (!packet.Flags.HasFlag(SendFlags.Vital) || unPacker.Error)
                 return;
 
-            // TODO
+            // TODO send map list
 
             if (string.IsNullOrEmpty(Config["SvRconPassword"]) &&
                 string.IsNullOrEmpty(Config["SvRconModPassword"]))
@@ -672,7 +669,8 @@ namespace TeeSharp.Server
                 Console.Print(OutputLevel.Standard, "server", format);
 
                 Clients[clientId].AccessLevel = authLevel;
-                Clients[clientId].SendCommandsEnumerator = Console.GetCommands(authLevel);
+                Clients[clientId].SendCommandsEnumerator =
+                    Console.GetCommands(authLevel, ConfigFlags.Server).GetEnumerator();
                 SendRconCommandsClients.Enqueue(clientId);
             }
         }
@@ -690,7 +688,7 @@ namespace TeeSharp.Server
                 return;
 
             Console.Print(OutputLevel.AddInfo, "server", $"ClientId={clientId} execute rcon command: '{command}'");
-            Console.ExecuteLine(command, Clients[clientId].AccessLevel);
+            Console.ExecuteLine(command, Clients[clientId].AccessLevel, clientId);
         }
 
         protected override void NetMsgInput(Chunk packet, UnPacker unPacker, int clientId)
@@ -1087,10 +1085,9 @@ namespace TeeSharp.Server
         {
             Console["sv_name"].Executed += ConsoleSpecialInfoUpdated;
             Console["password"].Executed += ConsoleSpecialInfoUpdated;
+            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
 
             Console["sv_max_clients_per_ip"].Executed += ConsoleMaxClientsPerIpUpdated;
-            Console["mod_command"].Executed += ConsoleModCommandUpdated;
-            Console["console_output_level"].Executed += ConsoleOutputLevelUpdated;
             Console["sv_rcon_password"].Executed += ConsoleRconPasswordUpdated;
         }
 
@@ -1108,40 +1105,97 @@ namespace TeeSharp.Server
             Console.AddCommand("record", "?s", "Record to a file", ConfigFlags.Server | ConfigFlags.Store, ConsoleRecord);
             Console.AddCommand("stoprecord", string.Empty, "Stop recording", ConfigFlags.Server, ConsoleStopRecord);
 
+            Console.SetAccessLevel(BaseServerClient.AuthedModerator, "logout");
+
             GameContext.RegisterConsoleCommands();
         }
 
-        protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleModStatus(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            var stringBuilder = new StringBuilder(256);
+
+            foreach (var pair in Console.GetCommands(BaseServerClient.AuthedModerator, ConfigFlags.Server))
+            {
+                if (stringBuilder.Length + pair.Key.Length < stringBuilder.Capacity)
+                {
+                    if (stringBuilder.Length > 0)
+                        stringBuilder.Append(", ");
+                    stringBuilder.Append(pair.Key);
+                }
+                else
+                {
+                    Console.Print(OutputLevel.Standard, "console", stringBuilder.ToString());
+                    stringBuilder.Clear();
+                    stringBuilder.Append(pair.Key);
+                }
+            }
+
+            Console.Print(OutputLevel.Standard, "console", stringBuilder.ToString());
         }
 
-        protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleModCommand(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            var cmd = (string) result[0];
+            var command = Console.FindCommand(cmd, ConfigFlags.Server);
+            if (command == null)
+            {
+                Console.Print(OutputLevel.Standard, "console", $"No such command '{cmd}'");
+                return;
+            }
+
+            if (result.NumArguments == 2)
+            {
+                var prevAccessLevel = command.AccessLevel;
+                command.AccessLevel = (int) result[1];
+                Console.Print(OutputLevel.Standard, "console",
+                    $"moderator access for '{cmd}' is now '{command.AccessLevel <= BaseServerClient.AuthedModerator}'");
+
+                if (prevAccessLevel != command.AccessLevel)
+                {
+                    for (var i = 0; i < Clients.Length; i++)
+                    {
+                        if (Clients[i].State == ServerClientState.Empty ||
+                            Clients[i].AccessLevel != BaseServerClient.AuthedModerator || (
+                                Clients[i].SendCommandsEnumerator != null &&
+                                Clients[i].SendCommandsEnumerator.Current.Value.Cmd == cmd))
+                        {
+                            continue;
+                        }
+
+                        if (prevAccessLevel == BaseServerClient.AuthedAdmin)
+                            SendRconCommandAdd(command, i);
+                        else
+                            SendRconCommandRemove(command, i);
+                    }
+                }
+            }
+            else
+            {
+                data = null;
+                Console.Print(OutputLevel.Standard, "console",
+                    $"moderator access for '{cmd}' is '{command.AccessLevel <= BaseServerClient.AuthedModerator}'");
+            }
         }
 
-        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleRconPasswordUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            if (result.NumArguments != 1)
+                return;
+
+            PrintCallbackInfo.OutputLevel = (OutputLevel) result[0];
         }
 
-        protected virtual void ConsoleModCommandUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            if (result.NumArguments > 0)
+                NetworkServer.SetMaxClientsPerIp((int) result[0]);
         }
 
-        protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, object data)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
             if (result.NumArguments > 0)
             {
@@ -1151,37 +1205,74 @@ namespace TeeSharp.Server
             }
         }
 
-        protected virtual void ConsoleReload(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleReload(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleStopRecord(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleRecord(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleRecord(ConsoleCommandResult result, int clientId, ref object data)
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleLogout(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            if (!IsAuthed(clientId))
+                return;
+
+            var msg = new MsgPacker((int) NetworkMessages.ServerRconAuthOff, true);
+            SendMsg(msg, MsgFlags.Vital, clientId);
+
+            Clients[clientId].AccessLevel = 0;
+            Clients[clientId].AuthTries = 0;
+
+            if (Clients[clientId].SendCommandsEnumerator != null)
+            {
+                Clients[clientId].SendCommandsEnumerator.Dispose();
+                Clients[clientId].SendCommandsEnumerator = null;
+            }
+
+            SendRconLine(clientId, "Logout successful");
+            Console.Print(OutputLevel.Standard, "server", $"ClientId={clientId} rcon logged out");
         }
 
-        protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleShutdown(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            IsRunning = false;
         }
 
-        protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleStatus(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            for (var i = 0; i < Clients.Length; i++)
+            {
+                if (Clients[i].State == ServerClientState.Empty)
+                    continue;
+
+                string line;
+                var endPoint = NetworkServer.ClientEndPoint(i);
+                if (ClientInGame(i))
+                {
+                    var auth = Clients[i].AccessLevel == BaseServerClient.AuthedAdmin ? "(admin)" :
+                               Clients[i].AccessLevel == BaseServerClient.AuthedModerator ? "(moderator)" : string.Empty;
+
+                    line = $"id={i} endpoint={endPoint} client={Clients[i].Version:X} name='{ClientName(i)}' " +
+                           $"score={GameContext.GameController.Score(i)} team={GameContext.Players[i].Team} {auth}";
+                }
+                else
+                {
+                    line = $"id={i} endpoint={endPoint} connecting";
+                }
+
+                Console.Print(OutputLevel.Standard, "server", line);
+            }
         }
 
-        protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, object data)
+        protected virtual void ConsoleKick(ConsoleCommandResult result, int clientId, ref object data)
         {
             var kickId = (int) result[0];
             if (kickId < 0 || kickId >= Clients.Length)

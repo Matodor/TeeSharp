@@ -71,8 +71,8 @@ namespace TeeSharp.Server.Game
             Server = Kernel.Get<BaseServer>();
             GameWorld = Kernel.Get<BaseGameWorld>();
             Config = Kernel.Get<BaseConfig>();
-            Tuning = Kernel.Get<BaseTuningParams>();
             Console = Kernel.Get<BaseGameConsole>();
+            Tuning = GameContext.Tuning;
 
             IDs = new int[idsCount];
             for (var i = 0; i < IDs.Length; i++)

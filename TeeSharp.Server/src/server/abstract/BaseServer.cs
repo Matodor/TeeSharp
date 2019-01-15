@@ -46,6 +46,7 @@ namespace TeeSharp.Server
         protected virtual BaseStorage Storage { get; set; }
         protected virtual BaseNetworkServer NetworkServer { get; set; }
 
+        protected virtual PrintCallbackInfo PrintCallbackInfo { get; set; }
         protected virtual BaseServerClient[] Clients { get; set; }
         protected virtual long StartTime { get; set; }
         protected virtual bool IsRunning { get; set; }

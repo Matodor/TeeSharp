@@ -44,7 +44,7 @@ namespace TeeSharp.Common.Game
                 isGrounded = true;
 
             var vel = Velocity;
-            vel.y += World.Tuning["Gravity"];
+            vel.y += World.Tuning["gravity"];
 
             if (input != null)
             {
@@ -58,13 +58,13 @@ namespace TeeSharp.Common.Game
                         if (isGrounded)
                         {
                             TriggeredEvents |= CoreEvents.GroundJump;
-                            vel.y = -World.Tuning["GroundJumpImpulse"];
+                            vel.y = -World.Tuning["ground_jump_impulse"];
                             Jumped |= 1;
                         }
                         else if ((Jumped & 2) == 0)
                         {
                             TriggeredEvents |= CoreEvents.AirJump;
-                            vel.y = -World.Tuning["AirJumpImpulse"];
+                            vel.y = -World.Tuning["air_jump_impulse"];
                             Jumped |= 3;
                         }
                     }
@@ -92,9 +92,9 @@ namespace TeeSharp.Common.Game
                 }
             }
 
-            float maxSpeed = isGrounded ? World.Tuning["GroundControlSpeed"] : World.Tuning["AirControlSpeed"];
-            float accel = isGrounded ? World.Tuning["GroundControlAccel"] : World.Tuning["AirControlAccel"];
-            float friction = isGrounded ? World.Tuning["GroundFriction"] : World.Tuning["AirFriction"];
+            float maxSpeed = isGrounded ? World.Tuning["ground_control_speed"] : World.Tuning["air_control_speed"];
+            float accel = isGrounded ? World.Tuning["ground_control_accel"] : World.Tuning["air_control_accel"];
+            float friction = isGrounded ? World.Tuning["ground_friction"] : World.Tuning["air_friction"];
 
             if (Direction < 0)
                 vel.x = MathHelper.SaturatedAdd(-maxSpeed, maxSpeed, vel.x, -accel);
@@ -122,11 +122,11 @@ namespace TeeSharp.Common.Game
             }
             else if (HookState == HookState.Flying)
             {
-                var newHookPos = HookPosition + HookDirection * World.Tuning["HookFireSpeed"];
-                if (MathHelper.Distance(Position, newHookPos) > World.Tuning["HookLength"])
+                var newHookPos = HookPosition + HookDirection * World.Tuning["hook_fire_speed"];
+                if (MathHelper.Distance(Position, newHookPos) > World.Tuning["hook_length"])
                 {
                     HookState = HookState.RetractStart;
-                    newHookPos = Position + (newHookPos - Position).Normalized * World.Tuning["HookLength"];
+                    newHookPos = Position + (newHookPos - Position).Normalized * World.Tuning["hook_length"];
                 }
 
                 var goingToHitGround = false;
@@ -142,7 +142,7 @@ namespace TeeSharp.Common.Game
                         goingToHitGround = true;
                 }
 
-                if (World.Tuning["PlayerHooking"] > 0)
+                if (World.Tuning["player_hooking"] > 0)
                 {
                     var distance = 0f;
                     for (var i = 0; i < World.CharacterCores.Length; i++)
@@ -201,7 +201,7 @@ namespace TeeSharp.Common.Game
 
                 if (HookedPlayer == -1 && MathHelper.Distance(HookPosition, Position) > 46.0f)
                 {
-                    var hookVel = (HookPosition - Position).Normalized * World.Tuning["HookDragAccel"];
+                    var hookVel = (HookPosition - Position).Normalized * World.Tuning["hook_drag_accel"];
                     if (hookVel.y > 0)
                         hookVel.y *= 0.3f;
 
@@ -211,7 +211,7 @@ namespace TeeSharp.Common.Game
                         hookVel.x *= 0.75f;
 
                     var newVel = vel + hookVel;
-                    if (newVel.Length < World.Tuning["HookDragSpeed"] || newVel.Length < vel.Length)
+                    if (newVel.Length < World.Tuning["hook_drag_speed"] || newVel.Length < vel.Length)
                         vel = newVel;
                 }
 
@@ -226,8 +226,8 @@ namespace TeeSharp.Common.Game
                 }
             }
 
-            if (World.Tuning["PlayerCollision"] > 0 ||
-                World.Tuning["PlayerHooking"] > 0)
+            if (World.Tuning["player_collision"] > 0 ||
+                World.Tuning["player_hooking"] > 0)
             {
                 for (var i = 0; i < World.CharacterCores.Length; i++)
                 {
@@ -238,7 +238,7 @@ namespace TeeSharp.Common.Game
                     var distance = MathHelper.Distance(Position, characterCore.Position);
                     var direction = (Position - characterCore.Position).Normalized;
 
-                    if (World.Tuning["PlayerCollision"] > 0 &&
+                    if (World.Tuning["player_collision"] > 0 &&
                         distance < TeeSize * 1.25f &&
                         distance > 0)
                     {
@@ -252,14 +252,14 @@ namespace TeeSharp.Common.Game
                         vel *= 0.85f;
                     }
 
-                    if (World.Tuning["PlayerHooking"] > 0 &&
+                    if (World.Tuning["player_hooking"] > 0 &&
                         HookedPlayer == i)
                     {
                         if (distance > TeeSize * 1.50f)
                         {
-                            var hookAccelerate = World.Tuning["HookDragAccel"] *
-                                                 (distance / World.Tuning["HookLength"]);
-                            float dragSpeed = World.Tuning["HookDragSpeed"];
+                            var hookAccelerate = World.Tuning["hook_drag_accel"] *
+                                                 (distance / World.Tuning["hook_length"]);
+                            float dragSpeed = World.Tuning["hook_drag_speed"];
 
                             characterCore.Velocity = new Vector2(
                                 MathHelper.SaturatedAdd(-dragSpeed, dragSpeed,
@@ -301,9 +301,9 @@ namespace TeeSharp.Common.Game
         {
             var vel = Velocity;
             var rampValue = MathHelper.VelocityRamp(vel.Length * 50,
-                World.Tuning["VelrampStart"],
-                World.Tuning["VelrampRange"],
-                World.Tuning["VelrampCurvature"]);
+                World.Tuning["velramp_start"],
+                World.Tuning["velramp_range"],
+                World.Tuning["velramp_curvature"]);
 
             vel.x *= rampValue;
 
@@ -312,7 +312,7 @@ namespace TeeSharp.Common.Game
 
             vel.x = vel.x * (1.0f / rampValue);
 
-            if (World.Tuning["PlayerCollision"] > 0)
+            if (World.Tuning["player_collision"] > 0)
             {
                 var distance = MathHelper.Distance(Position, newPos);
                 var end = (int) (distance + 1);
