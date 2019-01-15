@@ -1175,7 +1175,8 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
+            if (result.NumArguments > 0)
+                NetworkServer.SetMaxClientsPerIp((int) result[0]);
         }
 
         protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, ref object data)
