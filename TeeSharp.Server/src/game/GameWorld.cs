@@ -15,8 +15,7 @@ namespace TeeSharp.Server.Game
             GameContext = Kernel.Get<BaseGameContext>();
             Server = Kernel.Get<BaseServer>();
             Config = Kernel.Get<BaseConfig>();
-            Tuning = Kernel.Get<BaseTuningParams>();
-            WorldCore = new WorldCore(Server.MaxClients, Tuning);
+            WorldCore = new WorldCore(Server.MaxClients, GameContext.Tuning);
         }
 
         public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 

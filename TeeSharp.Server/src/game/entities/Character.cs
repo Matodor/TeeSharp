@@ -114,7 +114,7 @@ namespace TeeSharp.Server.Game.Entities
 
             var worldCore = new WorldCore(
                 GameWorld.WorldCore.CharacterCores.Length,
-                GameWorld.WorldCore.Tuning);
+                Kernel.Get<BaseTuningParams>());
             ReckoningCore.Init(worldCore, GameContext.MapCollision);
 
             GameContext.CreatePlayerSpawn(spawnPos);

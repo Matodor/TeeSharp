@@ -39,14 +39,10 @@ namespace TeeSharp.Server
             kernel.Bind<BaseVotes>().To<Votes>().AsSingleton();
             kernel.Bind<BaseEvents>().To<Events>().AsSingleton();
             kernel.Bind<BaseMapCollision>().To<MapCollision>().AsSingleton();
-            kernel.Bind<BaseTuningParams>().To<TuningParams>().AsSingleton();
             kernel.Bind<BaseGameWorld>().To<GameWorld>().AsSingleton();
 
             kernel.Bind<BaseServerClient>().To<ServerClient>();
             kernel.Bind<BasePlayer>().To<Player>();
-
-            // singletons
-            //kernel.Bind<BaseStorage>().To<Storage>().AsSingleton();
         }
     }
 

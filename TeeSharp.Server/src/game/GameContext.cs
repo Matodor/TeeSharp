@@ -298,8 +298,7 @@ namespace TeeSharp.Server.Game
 
             if (result.NumArguments == 2)
             {
-                var newValue = (float) result[1];
-                param.FloatValue = newValue;
+                param.FloatValue = (int)result[1];
                 SendTuningParams(-1);
             }
 

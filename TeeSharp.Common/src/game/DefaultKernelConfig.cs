@@ -17,6 +17,7 @@ namespace TeeSharp.Common.Game
 
             kernel.Bind<BaseTokenManager>().To<TokenManager>();
             kernel.Bind<BaseTokenCache>().To<TokenCache>();
+            kernel.Bind<BaseTuningParams>().To<TuningParams>();
 
             kernel.Bind<BaseNetworkConnection>().To<NetworkConnection>();
             kernel.Bind<BaseChunkReceiver>().To<ChunkReceiver>();

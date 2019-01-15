@@ -13,6 +13,7 @@ namespace Examples.BasicServer
             server.Init(args);
             server.AddGametype<GameControllerDM>("DM");
             server.AddGametype<GameControllerCTF>("CTF");
+            server.AddGametype<GameControllerMod>("MOD");
             server.Run();
         }
     }
