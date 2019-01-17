@@ -53,18 +53,22 @@ namespace TeeSharp.Server.Game
             Server.PlayerEnter += ServerOnPlayerEnter;
             Server.PlayerDisconnected += ServerOnPlayerDisconnected;
 
+            HandleGameLayer();
+            CheckPureTuning();
+        }
+
+        protected override void HandleGameLayer()
+        {
             for (var y = 0; y < MapLayers.GameLayer.Height; y++)
             {
                 for (var x = 0; x < MapLayers.GameLayer.Width; x++)
                 {
                     var tile = MapCollision.GetTile(y * MapLayers.GameLayer.Width + x);
                     var pos = new Vector2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-                    
+
                     GameController.OnEntity(tile, pos);
                 }
             }
-
-            CheckPureTuning();
         }
 
         protected override void ServerOnPlayerDisconnected(int clientId, string reason)
