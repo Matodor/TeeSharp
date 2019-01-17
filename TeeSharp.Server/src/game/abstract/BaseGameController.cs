@@ -96,7 +96,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
         public abstract void OnPlayerReadyChange(BasePlayer player);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
-        public abstract void OnEntity(Tile tile, Vector2 pos);
+        public abstract void OnEntity(in Tile tile, in Vector2 pos);
 
         protected abstract void CheckReadyStates(int withoutId = -1);
         protected abstract void UpdateGameInfo(int clientId);

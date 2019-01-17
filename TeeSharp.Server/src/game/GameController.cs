@@ -973,7 +973,7 @@ namespace TeeSharp.Server.Game
             }   
         }
         
-        public override void OnEntity(Tile tile, Vector2 pos)
+        public override void OnEntity(in Tile tile, in Vector2 pos)
         {
             if (tile.Index < (int) MapEntities.EntityOffset)
                 return;

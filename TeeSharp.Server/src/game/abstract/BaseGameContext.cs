@@ -80,6 +80,7 @@ namespace TeeSharp.Server.Game
         protected abstract void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message);
 
         protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
+        protected abstract void HandleGameLayer();
 
         public abstract void CreateExplosion(Vector2 position, int owner, Weapon weapon, int maxDamage);
         public abstract void CreatePlayerSpawn(Vector2 pos);
