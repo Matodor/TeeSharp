@@ -64,9 +64,9 @@ namespace TeeSharp.Server.Game.Entities
         public virtual int Health { get; protected set; }
         public virtual int Armor { get; protected set; }
 
-        protected virtual CharacterCore Core { get; set; }
-        protected virtual CharacterCore SendCore { get; set; }
-        protected virtual CharacterCore ReckoningCore { get; set; }
+        protected virtual BaseCharacterCore Core { get; set; }
+        protected virtual BaseCharacterCore SendCore { get; set; }
+        protected virtual BaseCharacterCore ReckoningCore { get; set; }
 
         protected virtual int ReckoningTick { get; set; }
         protected virtual int EmoteStopTick { get; set; }
@@ -104,9 +104,10 @@ namespace TeeSharp.Server.Game.Entities
             EmoteStopTick = -1;
             Emote = Emote.Normal;
 
-            Core = new CharacterCore();
-            SendCore = new CharacterCore();
-            ReckoningCore = new CharacterCore();
+            Core = Kernel.Get<BaseCharacterCore>();
+            SendCore = Kernel.Get<BaseCharacterCore>();
+            ReckoningCore = Kernel.Get<BaseCharacterCore>();
+            ReckoningCore.IsPredicted = true;
 
             Core.Reset();
             Core.Init(GameWorld.WorldCore, GameContext.MapCollision);

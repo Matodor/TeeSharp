@@ -9,6 +9,7 @@ namespace TeeSharp.Common
     {
         public const float TeeSize = 28.0f;
 
+        public virtual bool IsPredicted { get; set; }
         public virtual Vector2 Position { get; set; }
         public virtual Vector2 Velocity { get; set; }
 
@@ -34,5 +35,6 @@ namespace TeeSharp.Common
         public abstract void Write(SnapshotCharacterCore core);
         public abstract void Quantize();
         public abstract void Read(SnapshotCharacter core);
+        public abstract void Fill(BaseCharacterCore from);
     }
 }
