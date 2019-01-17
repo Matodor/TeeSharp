@@ -35,5 +35,6 @@ namespace TeeSharp.Common
         public abstract void Write(SnapshotCharacterCore core);
         public abstract void Quantize();
         public abstract void Read(SnapshotCharacter core);
+        public abstract void Fill(BaseCharacterCore from);
     }
 }

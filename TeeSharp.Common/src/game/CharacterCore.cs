@@ -282,7 +282,7 @@ namespace TeeSharp.Common.Game
             Velocity = vel;
         }
 
-        public virtual void Fill(CharacterCore from)
+        public override void Fill(BaseCharacterCore from)
         {
             Position = from.Position;
             Velocity = from.Velocity;

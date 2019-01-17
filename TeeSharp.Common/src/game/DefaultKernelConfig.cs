@@ -15,6 +15,7 @@ namespace TeeSharp.Common.Game
             kernel.Bind<BaseMapLayers>().To<MapLayers>().AsSingleton();
             kernel.Bind<BaseGameMsgUnpacker>().To<GameMsgUnpacker>().AsSingleton();
 
+            kernel.Bind<BaseCharacterCore>().To<CharacterCore>();
             kernel.Bind<BaseTokenManager>().To<TokenManager>();
             kernel.Bind<BaseTokenCache>().To<TokenCache>();
             kernel.Bind<BaseTuningParams>().To<TuningParams>();
