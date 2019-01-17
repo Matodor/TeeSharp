@@ -106,7 +106,10 @@ namespace TeeSharp.Server.Game.Entities
 
             Core = new CharacterCore();
             SendCore = new CharacterCore();
-            ReckoningCore = new CharacterCore();
+            ReckoningCore = new CharacterCore()
+            {
+                IsPredicted = true
+            };
 
             Core.Reset();
             Core.Init(GameWorld.WorldCore, GameContext.MapCollision);
