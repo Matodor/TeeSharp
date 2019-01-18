@@ -199,11 +199,6 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override void OnChangeInfo()
-        {
-            LastChangeInfo = Server.Tick;
-        }
-
         public override void OnPlayerLeave(string reason)
         {
             KillCharacter(WeaponGame);

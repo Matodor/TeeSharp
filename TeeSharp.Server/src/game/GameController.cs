@@ -851,11 +851,6 @@ namespace TeeSharp.Server.Game
             isSend = true;
         }
 
-        public override void OnPlayerInfoChange(BasePlayer player)
-        {
-            
-        }
-
         protected override void OnPlayerReady(BasePlayer player)
         {
             player.CharacterSpawned += OnCharacterSpawn;

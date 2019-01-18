@@ -54,7 +54,6 @@ namespace TeeSharp.Server.Game
         public virtual int DieTick { get; protected set; }
         public virtual int InactivityTickCounter { get; protected set; }
         public virtual int TeamChangeTick { get; protected set; }
-        public virtual int LastChangeInfo { get; protected set; }
         public virtual int[] ActualLatency { get; protected set; }
         public virtual Team Team { get; protected set; }
         public virtual Vector2 ViewPos { get; protected set; }
@@ -85,7 +84,6 @@ namespace TeeSharp.Server.Game
             out SnapshotSpectatorInfo spectatorInfo, 
             out SnapshotDemoClientInfo demoClientInfo);
 
-        public abstract void OnChangeInfo();
         public abstract void OnPlayerLeave(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);
         public abstract void OnDirectInput(SnapshotPlayerInput input);

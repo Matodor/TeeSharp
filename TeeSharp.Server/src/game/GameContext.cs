@@ -14,6 +14,7 @@ namespace TeeSharp.Server.Game
 {
     public class GameContext : BaseGameContext
     {
+        public override event PlayerEvent PlayerInfoChanged;
         public override event PlayerEvent PlayerReady;
         public override event PlayerEvent PlayerEnter;
         public override event PlayerLeaveEvent PlayerLeave;
@@ -214,7 +215,6 @@ namespace TeeSharp.Server.Game
 
         protected virtual void ConsoleAddVote(ConsoleCommandResult result, int clientId, ref object data)
         {
-            throw new NotImplementedException();
         }
 
         protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, int clientId, ref object data)
@@ -569,8 +569,6 @@ namespace TeeSharp.Server.Game
                     case GameMessage.ClientSetSpectatorMode:
                         OnMsgClientSetSpectatorMode(player, (GameMsg_ClSetSpectatorMode) message);
                         break;
-                    case GameMessage.ClientStartInfo:
-                        break;
                     case GameMessage.ClientKill:
                         OnMsgClientKill(player, (GameMsg_ClKill) message);
                         break;
@@ -583,6 +581,7 @@ namespace TeeSharp.Server.Game
                     case GameMessage.ClientVote:
                         break;
                     case GameMessage.ClientCallVote:
+                        OnMsgClientCallVote(player, (GameMsg_ClCallVote) message);
                         break;
                 }
             }
@@ -590,6 +589,11 @@ namespace TeeSharp.Server.Game
             {
                 OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
             }
+        }
+
+        protected override void OnMsgClientCallVote(BasePlayer player, GameMsg_ClCallVote message)
+        {
+            Votes.CallVote(message, player);
         }
 
         protected override void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message)
@@ -684,7 +688,7 @@ namespace TeeSharp.Server.Game
         {
             if (player.IsReadyToEnter)
                 return;
-
+            
             Server.ClientName(player.ClientId, startInfo.Name.Limit(BaseServerClient.MaxNameLength));
             Server.ClientClan(player.ClientId, startInfo.Clan.Limit(BaseServerClient.MaxClanLength));
             Server.ClientCountry(player.ClientId, startInfo.Country);
@@ -696,13 +700,7 @@ namespace TeeSharp.Server.Game
                 player.TeeInfo[i].UseCustomColor = startInfo.UseCustomColors[(int)i];
             }
 
-            player.OnChangeInfo();
-
-            GameController.OnPlayerInfoChange(player);
-
-            Votes.SendClearMsg(player);
-            Votes.SendVotes(player);
-
+            PlayerInfoChanged?.Invoke(player);
             SendTuningParams(player.ClientId);
             player.ReadyToEnter();
         }

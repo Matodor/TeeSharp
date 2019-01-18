@@ -13,6 +13,7 @@ namespace TeeSharp.Server.Game
 
     public abstract class BaseGameContext : BaseInterface
     {
+        public abstract event PlayerEvent PlayerInfoChanged;
         public abstract event PlayerEvent PlayerReady;
         public abstract event PlayerEvent PlayerEnter;
         public abstract event PlayerLeaveEvent PlayerLeave;
@@ -78,6 +79,7 @@ namespace TeeSharp.Server.Game
         protected abstract void OnMsgClientKill(BasePlayer player, GameMsg_ClKill message);
         protected abstract void OnMsgClientReadyChange(BasePlayer player, GameMsg_ClReadyChange message);
         protected abstract void OnMsgClientSetSpectatorMode(BasePlayer player, GameMsg_ClSetSpectatorMode message);
+        protected abstract void OnMsgClientCallVote(BasePlayer player, GameMsg_ClCallVote message);
 
         protected abstract GameMsg_SvClientInfo ClientInfo(int clientId);
         protected abstract void HandleGameLayer();

@@ -92,7 +92,6 @@ namespace TeeSharp.Server.Game
         protected abstract void OnPlayerEnter(BasePlayer player);
         protected abstract void OnPlayerLeave(BasePlayer player, string reason);
 
-        public abstract void OnPlayerInfoChange(BasePlayer player);
         public abstract void OnPlayerChat(BasePlayer player, GameMsg_ClSay message, out bool isSend);
         public abstract void OnPlayerReadyChange(BasePlayer player);
         public abstract void OnSnapshot(int snappingId, out SnapshotGameData gameData);
