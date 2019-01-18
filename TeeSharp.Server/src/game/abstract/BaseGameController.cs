@@ -85,8 +85,8 @@ namespace TeeSharp.Server.Game
         public abstract bool CanSpawn(Team team, int clientId, out Vector2 spawnPos);
         public abstract bool CanSelfKill(BasePlayer player);
 
-        protected abstract void OnCharacterSpawn(BasePlayer player, Character character);
-        protected abstract void OnCharacterDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial);
+        protected abstract void OnCharacterSpawn(BasePlayer player, BaseCharacter character);
+        protected abstract void OnCharacterDied(BaseCharacter victim, BasePlayer killer, Weapon weapon, ref int modespecial);
         protected abstract void OnPlayerTeamChanged(BasePlayer player, Team prevTeam, Team newTeam);
         protected abstract void OnPlayerReady(BasePlayer player);
         protected abstract void OnPlayerEnter(BasePlayer player);

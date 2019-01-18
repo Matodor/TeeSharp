@@ -332,7 +332,7 @@ namespace TeeSharp.Server.Game
             var radius = ServerData.Explosion.Radius;
             var maxForce = ServerData.Explosion.MaxForce;
 
-            foreach (var character in Character.Entities.Find(position, radius))
+            foreach (var character in BaseCharacter.Entities.Find(position, radius))
             {
                 var diff = character.Position - position;
                 var force = new Vector2(0, maxForce);

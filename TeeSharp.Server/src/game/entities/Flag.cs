@@ -6,7 +6,7 @@ namespace TeeSharp.Server.Game.Entities
     {
         public override float ProximityRadius { get; protected set; }
 
-        public Character Carrier { get; protected set; }
+        public BaseCharacter Carrier { get; protected set; }
         public Team Team { get; protected set; }
 
         public Flag() : base(idsCount: 1)
