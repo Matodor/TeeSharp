@@ -18,13 +18,13 @@ namespace TeeSharp.Server.Game
             WorldCore = new WorldCore(Server.MaxClients, GameContext.Tuning);
         }
 
-        public override Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
-            float radius, ref Vector2 newPos, Character notThis)
+        public override BaseCharacter IntersectCharacter(Vector2 pos1, Vector2 pos2, 
+            float radius, ref Vector2 newPos, BaseCharacter notThis)
         {
             var closestLength = MathHelper.Distance(pos1, pos2) * 100f;
-            var closest = default(Character);
+            var closest = default(BaseCharacter);
 
-            foreach (var character in Character.Entities)
+            foreach (var character in BaseCharacter.Entities)
             {
                 if (character == notThis)
                     continue;

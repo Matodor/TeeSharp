@@ -29,8 +29,6 @@ namespace TeeSharp.Common.Game
             Direction = 0;
             Angle = 0;
             TriggeredEvents = CoreEvents.None;
-
-            // TODO reset input
         }
 
         public override void Tick(SnapshotPlayerInput input)

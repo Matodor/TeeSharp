@@ -47,7 +47,7 @@ namespace TeeSharp.Server.Game.Entities
                 else return;
             }
 
-            var character = Character.Entities.Closest(Position, 20f, null);
+            var character = BaseCharacter.Entities.Closest(Position, 20f, null);
             if (character == null || !character.IsAlive)
                 return;
 
@@ -106,7 +106,7 @@ namespace TeeSharp.Server.Game.Entities
                     character.SetEmote(Emote.Angry,
                         Server.Tick + Server.TickSpeed * ServerData.Weapons.Ninja.Duration / 1000);
 
-                    foreach (var entity in Character.Entities)
+                    foreach (var entity in BaseCharacter.Entities)
                     {
                         if (entity == character)
                             continue;

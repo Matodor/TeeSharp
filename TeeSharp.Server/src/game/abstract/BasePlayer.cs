@@ -24,7 +24,7 @@ namespace TeeSharp.Server.Game
     }
 
     public delegate void EventSetTeam(BasePlayer player, Team prevTeam, Team newTeam);
-    public delegate void EventPlayerCharacter(BasePlayer player, Character character);
+    public delegate void EventPlayerCharacter(BasePlayer player, BaseCharacter character);
 
     public abstract class BasePlayer : BaseInterface
     {
@@ -63,7 +63,7 @@ namespace TeeSharp.Server.Game
         public virtual bool IsReadyToEnter { get; protected set; }
         public virtual bool DeadSpectatorMode { get; protected set; }
 
-        protected virtual Character Character { get; set; }
+        protected virtual BaseCharacter Character { get; set; }
         protected virtual BaseGameContext GameContext { get; set; }
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
@@ -89,7 +89,7 @@ namespace TeeSharp.Server.Game
         public abstract void OnPlayerLeave(string reason);
         public abstract void OnPredictedInput(SnapshotPlayerInput input);
         public abstract void OnDirectInput(SnapshotPlayerInput input);
-        public abstract Character GetCharacter();
+        public abstract BaseCharacter GetCharacter();
         public abstract void KillCharacter(Weapon weapon);
         public abstract bool SetSpectatorID(SpectatorMode mode, int spectatorId);
         public abstract bool DeadCanFollow(BasePlayer player);

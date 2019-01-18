@@ -19,8 +19,8 @@ namespace TeeSharp.Server.Game
         protected virtual BaseServer Server { get; set; }
         protected virtual BaseConfig Config { get; set; }
 
-        public abstract Character IntersectCharacter(Vector2 pos1, Vector2 pos2, 
-            float radius, ref Vector2 newPos, Character notThis);
+        public abstract BaseCharacter IntersectCharacter(Vector2 pos1, Vector2 pos2, 
+            float radius, ref Vector2 newPos, BaseCharacter notThis);
 
         protected abstract void Reset();
 

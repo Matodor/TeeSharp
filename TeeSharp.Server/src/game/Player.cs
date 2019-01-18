@@ -268,7 +268,7 @@ namespace TeeSharp.Server.Game
                     ActiveSpectatorSwitch = true;
                     if (SpectatorMode == SpectatorMode.FreeView)
                     {
-                        var character = Character.Entities.Closest(ViewPos, 6 * 32f, null);
+                        var character = BaseCharacter.Entities.Closest(ViewPos, 6 * 32f, null);
                         var flag = Flag.Entities.Closest(ViewPos, 6 * 32f, null);
 
                         if (character != null || flag != null)
@@ -314,7 +314,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        public override Character GetCharacter()
+        public override BaseCharacter GetCharacter()
         {
             return Character != null && Character.IsAlive ? Character : null;
         }
@@ -496,12 +496,13 @@ namespace TeeSharp.Server.Game
                 return;
 
             Spawning = false;
-            Character = new Character(this, spawnPos);
+            Character = Kernel.Get<BaseCharacter>();
+            Character.Init(this, spawnPos);
             Character.Died += CharacterOnDied;
             CharacterSpawned?.Invoke(this, Character);
         }
 
-        protected virtual void CharacterOnDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial)
+        protected virtual void CharacterOnDied(BaseCharacter victim, BasePlayer killer, Weapon weapon, ref int modespecial)
         {
             DieTick = Server.Tick;
         }

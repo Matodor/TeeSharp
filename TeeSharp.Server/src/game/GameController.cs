@@ -788,7 +788,7 @@ namespace TeeSharp.Server.Game
         {
             var score = 0f;
 
-            foreach (var character in Character.Entities)
+            foreach (var character in BaseCharacter.Entities)
             {
                 var scoremod = 1f;
                 if (eval.FriendlyTeam != Team.Spectators && character.Player.Team == eval.FriendlyTeam)
@@ -819,7 +819,7 @@ namespace TeeSharp.Server.Game
                 {
                     result = index;
 
-                    foreach (var character in Character.Entities.Find(spawnPos[i], 64f))
+                    foreach (var character in BaseCharacter.Entities.Find(spawnPos[i], 64f))
                     {
                         if (GameContext.MapCollision.IsTileSolid(spawnPos[i] + positions[index]) ||
                             MathHelper.Distance(character.Position, spawnPos[i] + positions[index]) <=
@@ -907,7 +907,7 @@ namespace TeeSharp.Server.Game
             return true;
         }
 
-        protected override void OnCharacterSpawn(BasePlayer player, Character character)
+        protected override void OnCharacterSpawn(BasePlayer player, BaseCharacter character)
         {
             character.Died += OnCharacterDied;
 
@@ -930,7 +930,7 @@ namespace TeeSharp.Server.Game
             }
         }
 
-        protected override void OnCharacterDied(Character victim, BasePlayer killer, Weapon weapon, ref int modespecial)
+        protected override void OnCharacterDied(BaseCharacter victim, BasePlayer killer, Weapon weapon, ref int modespecial)
         {
             victim.Died -= OnCharacterDied;
 

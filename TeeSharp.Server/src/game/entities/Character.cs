@@ -8,92 +8,11 @@ using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Server.Game.Entities
 {
-    public struct WeaponStat
+    public class Character : BaseCharacter
     {
-        public int AmmoRegenStart { get; set; }
-        public int Ammo { get; set; }
-        public int AmmoCost { get; set; }
-        public bool Got { get; set; }
-    }
+        public override event CharacterDeadEvent Died;
 
-    public class NinjaStat
-    {
-        public Vector2 ActivationDirection;
-        public int ActivationTick;
-        public int CurrentMoveTime;
-        public float OldVelAmount;
-    }
-
-    public struct InputCount
-    {
-        public int Presses;
-        public int Releases;
-
-        public static InputCount Count(int prev, int cur)
-        {
-            var c = new InputCount() {Presses = 0, Releases = 0};
-            prev &= SnapshotPlayerInput.StateMask;
-            cur &= SnapshotPlayerInput.StateMask;
-            var i = prev;
-
-            while (i != cur)
-            {
-                i = (i + 1) & SnapshotPlayerInput.StateMask;
-                if ((i & 1) != 0)
-                    c.Presses++;
-                else
-                    c.Releases++;
-            }
-
-            return c;
-        }
-    }
-
-    public delegate void CharacterDeadEvent(Character victim, 
-        BasePlayer killer, Weapon weapon, ref int modeSpecial);
-
-    public class Character : Entity<Character>
-    {
-        public virtual event CharacterDeadEvent Died;
-
-        public readonly BasePlayer Player;
-
-        public override float ProximityRadius { get; protected set; } = 28f;
-
-        public virtual bool IsAlive { get; protected set; }
-        public virtual int Health { get; protected set; }
-        public virtual int Armor { get; protected set; }
-
-        protected virtual BaseCharacterCore Core { get; set; }
-        protected virtual BaseCharacterCore SendCore { get; set; }
-        protected virtual BaseCharacterCore ReckoningCore { get; set; }
-
-        protected virtual int ReckoningTick { get; set; }
-        protected virtual int EmoteStopTick { get; set; }
-        protected virtual Emote Emote { get; set; }
-
-        protected virtual SnapshotPlayerInput Input { get; set; }
-        protected virtual SnapshotPlayerInput LatestPrevInput { get; set; }
-        protected virtual SnapshotPlayerInput LatestInput { get; set; }
-        protected virtual int LastAction { get; set; }
-        protected virtual int NumInputs { get; set; }
-
-        protected virtual Weapon ActiveWeapon { get; set; }
-        protected virtual Weapon LastWeapon { get; set; }
-        protected virtual Weapon QueuedWeapon { get; set; }
-        protected virtual WeaponStat[] Weapons { get; set; }
-
-        protected virtual int AttackTick { get; set; }
-        protected virtual int ReloadTimer { get; set; }
-        protected virtual int LastNoAmmoSound { get; set; }
-        //protected virtual int DamageTaken { get; set; }
-        //protected virtual int DamageTakenTick { get; set; }
-
-
-        protected virtual NinjaStat NinjaStat { get; set; }
-        protected virtual IList<Entity> HitObjects { get; set; }
-
-        public Character(BasePlayer player, Vector2 spawnPos) : base(1)
+        public override void Init(BasePlayer player, Vector2 spawnPos)
         {
             Player = player;
             Position = spawnPos;
@@ -140,18 +59,18 @@ namespace TeeSharp.Server.Game.Entities
             Reseted += OnReseted;
         }
 
-        private void OnReseted(Entity character)
+        protected override void OnReseted(Entity character)
         {
             Destroy();
         }
 
-        private void OnDestroyed(Entity character)
+        protected void OnDestroyed(Entity character)
         {
             GameWorld.WorldCore.CharacterCores[Player.ClientId] = null;
             IsAlive = false;
         }
 
-        public virtual void SetWeapon(Weapon weapon)
+        public override void SetWeapon(Weapon weapon)
         {
             if (ActiveWeapon == weapon || ActiveWeapon == Weapon.Ninja)
                 return;
@@ -166,33 +85,14 @@ namespace TeeSharp.Server.Game.Entities
 
             Weapons[(int) ActiveWeapon].AmmoRegenStart = 0;
         }
-
-        //public bool IsGrounded()
-        //{
-        //    if (GameContext.MapCollision.IsTileSolid(
-        //        Position.x + ProximityRadius / 2,
-        //        Position.y + ProximityRadius / 2 + 2))
-        //    {
-        //        return true;
-        //    }
-
-        //    if (GameContext.MapCollision.IsTileSolid(
-        //        Position.x - ProximityRadius / 2,
-        //        Position.y + ProximityRadius / 2 + 2))
-        //    {
-        //        return true;
-        //    }
-
-        //    return false;
-        //}
-
-        public virtual void SetEmote(Emote emote, int stopTick)
+        
+        public override void SetEmote(Emote emote, int stopTick)
         {
             Emote = emote;
             EmoteStopTick = stopTick;
         }
 
-        public virtual void Die(int killer, Weapon weapon)
+        public override void Die(int killer, Weapon weapon)
         {
             IsAlive = false;
             Player.RespawnTick = Server.Tick + Server.TickSpeed / 2;
@@ -218,7 +118,7 @@ namespace TeeSharp.Server.Game.Entities
             Destroy();
         }
 
-        public virtual  void OnPredictedInput(SnapshotPlayerInput newInput)
+        public override void OnPredictedInput(SnapshotPlayerInput newInput)
         {
             if (!Input.Equals(newInput))
                 LastAction = Server.Tick;
@@ -230,7 +130,7 @@ namespace TeeSharp.Server.Game.Entities
                 Input.TargetY = -1;
         }
 
-        public virtual void OnDirectInput(SnapshotPlayerInput newInput)
+        public override void OnDirectInput(SnapshotPlayerInput newInput)
         {
             LatestPrevInput.Fill(LatestInput);
             LatestInput.Fill(newInput);
@@ -247,7 +147,7 @@ namespace TeeSharp.Server.Game.Entities
             LatestPrevInput.Fill(LatestInput);
         }
 
-        protected virtual void DoWeaponSwitch()
+        protected override void DoWeaponSwitch()
         {
             if (ReloadTimer != 0 || QueuedWeapon == (Weapon) (-1) || Weapons[(int) Weapon.Ninja].Got)
                 return;
@@ -255,7 +155,7 @@ namespace TeeSharp.Server.Game.Entities
             SetWeapon(QueuedWeapon);
         }
 
-        protected virtual void HandleWeaponSwitch()
+        protected override void HandleWeaponSwitch()
         {
             var wantedWeapon = ActiveWeapon;
             if (QueuedWeapon != (Weapon) (-1))
@@ -302,7 +202,7 @@ namespace TeeSharp.Server.Game.Entities
             DoWeaponSwitch();
         }
 
-        protected virtual bool CanFire()
+        protected override bool CanFire()
         {
             var fullAuto = ActiveWeapon == Weapon.Grenade ||
                            ActiveWeapon == Weapon.Shotgun ||
@@ -328,13 +228,13 @@ namespace TeeSharp.Server.Game.Entities
             return true;
         }
 
-        protected virtual void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireRifle(Vector2 startPos, Vector2 direction)
         {
             var laser = new Laser(Position, direction, Tuning["laser_reach"], Player.ClientId);
             GameContext.CreateSound(Position, Sound.LaserFire);
         }
 
-        protected virtual void DoWeaponFireNinja(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireNinja(Vector2 startPos, Vector2 direction)
         {
             HitObjects.Clear();
             NinjaStat.ActivationDirection = direction;
@@ -344,7 +244,7 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreateSound(Position, Sound.NinjaFire);
         }
 
-        protected virtual void DoWeaponFireGrenade(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireGrenade(Vector2 startPos, Vector2 direction)
         {
             var projectile = new Projectile
             (
@@ -362,7 +262,7 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreateSound(Position, Sound.GrenadeFire);
         }
 
-        protected virtual void DoWeaponFireShotgun(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireShotgun(Vector2 startPos, Vector2 direction)
         {
             const int ShotSpread = 2;
             var spreading = new[] {-0.185f, -0.070f, 0f, 0.070f, 0.185f};
@@ -390,7 +290,7 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreateSound(Position, Sound.ShotgunFire);
         }
 
-        protected virtual void DoWeaponFireGun(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireGun(Vector2 startPos, Vector2 direction)
         {
             var projectile = new Projectile
             (
@@ -408,7 +308,7 @@ namespace TeeSharp.Server.Game.Entities
             GameContext.CreateSound(Position, Sound.GunFire);
         }
 
-        protected virtual void DoWeaponFireHammer(Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFireHammer(Vector2 startPos, Vector2 direction)
         {
             GameContext.CreateSound(Position, Sound.HammerFire);
 
@@ -444,7 +344,7 @@ namespace TeeSharp.Server.Game.Entities
             }
         }
 
-        protected virtual void DoWeaponFire(Weapon weapon, Vector2 startPos, Vector2 direction)
+        protected override void DoWeaponFire(Weapon weapon, Vector2 startPos, Vector2 direction)
         {
             switch (weapon)
             {
@@ -474,7 +374,7 @@ namespace TeeSharp.Server.Game.Entities
             }
         }
 
-        protected virtual void FireWeapon()
+        protected override void FireWeapon()
         {
             if (ReloadTimer != 0)
                 return;
@@ -497,7 +397,7 @@ namespace TeeSharp.Server.Game.Entities
                 ReloadTimer = ServerData.Weapons[ActiveWeapon].FireDelay * Server.TickSpeed / 1000;
         }
 
-        public virtual bool TakeDamage(Vector2 force, Vector2 source, int damage, int from, Weapon weapon)
+        public override bool TakeDamage(Vector2 force, Vector2 source, int damage, int from, Weapon weapon)
         {
             Core.Velocity += force;
 
@@ -580,7 +480,7 @@ namespace TeeSharp.Server.Game.Entities
             return true;
         }
 
-        protected virtual void HandleNinja()
+        protected override void HandleNinja()
         {
             if (ActiveWeapon != Weapon.Ninja)
                 return;
@@ -643,7 +543,7 @@ namespace TeeSharp.Server.Game.Entities
             }
         }
 
-        protected virtual void HandleWeapons()
+        protected override void HandleWeapons()
         {
             HandleNinja();
 
@@ -681,7 +581,7 @@ namespace TeeSharp.Server.Game.Entities
             }
         }
 
-        public virtual void GiveNinja()
+        public override void GiveNinja()
         {
             NinjaStat.ActivationTick = Server.Tick;
             NinjaStat.CurrentMoveTime = -1;
@@ -699,7 +599,7 @@ namespace TeeSharp.Server.Game.Entities
 
         }
 
-        public virtual bool GiveWeapon(Weapon weapon, int ammo)
+        public override bool GiveWeapon(Weapon weapon, int ammo)
         {
             if (!Weapons[(int) weapon].Got || Weapons[(int) weapon].Ammo < ServerData.Weapons[weapon].MaxAmmo)
             {
@@ -711,7 +611,7 @@ namespace TeeSharp.Server.Game.Entities
             return false;
         }
 
-        public virtual void ResetInput()
+        public override void ResetInput()
         {
             Input.Direction = 0;
             Input.IsHook = false;
@@ -789,7 +689,7 @@ namespace TeeSharp.Server.Game.Entities
                 Weapons[(int) ActiveWeapon].AmmoRegenStart++;
         }
 
-        public virtual bool IncreaseHealth(int amount)
+        public override bool IncreaseHealth(int amount)
         {
             if (Health >= 10)
                 return false;
@@ -797,7 +697,7 @@ namespace TeeSharp.Server.Game.Entities
             return true;
         }
 
-        public virtual bool IncreaseArmor(int amount)
+        public override bool IncreaseArmor(int amount)
         {
             if (Armor >= 10)
                 return false;
