@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System;
+using BenchmarkDotNet.Attributes;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
 
@@ -46,6 +47,17 @@ namespace TeeSharp.Benchmark
             for (var i = 0; i < 100000; i++)
             {
                 var equals = _first.Equals(_second);
+            }
+        }
+
+        [Benchmark]
+        public void MethodSequenceEqual()
+        {
+            for (var i = 0; i < 100000; i++)
+            {
+                var data1 = _first.ToArray().AsSpan();
+                var data2 = _second.ToArray().AsSpan();
+                var equals = data1.SequenceEqual(data2);
             }
         }
 

@@ -9,7 +9,8 @@ namespace TeeSharp.Benchmark
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<EquatableSnapshotPlayerInput>();
+            BenchmarkRunner.Run<MarshalBenchmark>();
+            //BenchmarkRunner.Run<EquatableSnapshotPlayerInput>();
             Console.ReadLine();
         }
     }
