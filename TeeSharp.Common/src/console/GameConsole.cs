@@ -130,7 +130,7 @@ namespace TeeSharp.Common.Console
 
         protected override void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data)
         {
-s            if (commandResult.ArgumentsCount != 0)
+            if (commandResult.ArgumentsCount != 0)
                 ((ConfigString) data).Value = (string) commandResult[0];
             else
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
