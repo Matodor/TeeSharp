@@ -13,12 +13,16 @@ namespace TeeSharp.Common.Console
         public const int MaxDescLength = 96;
         public const int MaxParamsLength = 16;
 
-        public const string ArgumentsTypes = "sfi?r"; // s - string, f - float, i - integer, ? - optional, r - rest of the string
+        public const char ParameterString = 's';
+        public const char ParameterFloat = 'f';
+        public const char ParameterInt = 'i';
+        public const char ParameterRest = 'r';
+        public const char ParameterOptional = '?';
 
         public int AccessLevel { get; set; }
         public readonly string Cmd;
 
-        public readonly string Format;
+        public readonly string ParametersFormat;
         public readonly ConfigFlags Flags;
         public readonly string Description;
 
@@ -32,7 +36,7 @@ namespace TeeSharp.Common.Console
             object data)
         {
             Cmd = cmd.Trim();
-            Format = format.Trim().Replace("??", "?");
+            ParametersFormat = format.Trim().Replace("??", "?");
             Flags = flags;
             Description = description;
             Data = data;

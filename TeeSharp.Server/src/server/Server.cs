@@ -1049,7 +1049,7 @@ namespace TeeSharp.Server
             var msg = new MsgPacker((int) NetworkMessages.ServerRconCommandAdd, true);
             msg.AddString(command.Cmd, ConsoleCommand.MaxCmdLength);
             msg.AddString(command.Description, ConsoleCommand.MaxDescLength);
-            msg.AddString(command.Format, ConsoleCommand.MaxParamsLength);
+            msg.AddString(command.ParametersFormat, ConsoleCommand.MaxParamsLength);
             SendMsg(msg, MsgFlags.Vital, clientId);
         }
 
@@ -1122,7 +1122,7 @@ namespace TeeSharp.Server
                 return;
             }
 
-            if (result.NumArguments == 2)
+            if (result.ArgumentsCount == 2)
             {
                 var prevAccessLevel = command.AccessLevel;
                 command.AccessLevel = (int) result[1];
@@ -1162,7 +1162,7 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleOutputLevelUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            if (result.NumArguments != 1)
+            if (result.ArgumentsCount != 1)
                 return;
 
             PrintCallbackInfo.OutputLevel = (OutputLevel) result[0];
@@ -1170,13 +1170,13 @@ namespace TeeSharp.Server
 
         protected virtual void ConsoleMaxClientsPerIpUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            if (result.NumArguments > 0)
+            if (result.ArgumentsCount > 0)
                 NetworkServer.SetMaxClientsPerIp((int) result[0]);
         }
 
         protected virtual void ConsoleSpecialInfoUpdated(ConsoleCommandResult result, int clientId, ref object data)
         {
-            if (result.NumArguments > 0)
+            if (result.ArgumentsCount > 0)
             {
                 var configVar = ((ConfigString) Config["SvName"]);
                 configVar.Value = configVar.Value.Trim();
@@ -1260,7 +1260,7 @@ namespace TeeSharp.Server
                 return;
             }
 
-            if (result.NumArguments > 1)
+            if (result.ArgumentsCount > 1)
             {
                 Kick(kickId, (string) result[1]);
             }

@@ -1,108 +1,127 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Console
 {
     public class ConsoleCommandResult
     {
-        public int NumArguments => _arguments.Count;
+        public int ArgumentsCount => _arguments.Length;
         public object this[int index] => _arguments[index];
 
-        private readonly string _argsStored;
-        private readonly IList<object> _arguments;
+        private readonly object[] _arguments;
 
-        public ConsoleCommandResult(string args)
+        private ConsoleCommandResult(object[] arguments)
         {
-            _argsStored = args.Trim();
-            _arguments = new List<object>();
+            _arguments = arguments;
         }
-        
-        public bool ParseArguments(string format)
+
+        public static bool Parse(in string arguments, in string parameters, out ConsoleCommandResult result)
         {
-            // TODO rewrite this
-
-            if (string.IsNullOrWhiteSpace(format))
-                return true;
-
-            if (format.Any(c => !ConsoleCommand.ArgumentsTypes.Contains(c)))
-                return false;
-
-            var args = new List<string>();
-            var builder = new StringBuilder();
-            var quoteIndex = -1;
-
-            for (var i = 0; i < _argsStored.Length; i++)
+            if (string.IsNullOrEmpty(parameters))
             {
-                if (_argsStored[i] == '"')
-                {
-                    if (quoteIndex < 0)
-                        quoteIndex = i;
-                    else
-                        quoteIndex = -1;
-                    continue;
-                }
-
-                if (_argsStored[i] == '"' && quoteIndex > 0 ||
-                    _argsStored[i] == ' ' && quoteIndex < 0)
-                {
-                    quoteIndex = -1;
-                    args.Add(builder.ToString());
-                    builder.Clear();
-                    continue;
-                }
-
-                builder.Append(_argsStored[i]);
+                result = new ConsoleCommandResult(new object[] {arguments});
+                return true;
             }
 
-            if (builder.Length > 0)
-                args.Add(builder.ToString());
-
-            var optional = false;
-            var countNonOptional = 0;
-            var index = 0;
-
-            for (var i = 0; i < format.Length; i++)
+            if (parameters.Any(parameterType => 
+                parameterType != ConsoleCommand.ParameterString &&
+                parameterType != ConsoleCommand.ParameterFloat &&
+                parameterType != ConsoleCommand.ParameterInt &&
+                parameterType != ConsoleCommand.ParameterRest &&
+                parameterType != ConsoleCommand.ParameterOptional))
             {
-                if (format[i] == '?')
+                result = null;
+                return false;
+            }
+
+            var parameterIndex = 0;
+            var optional = false;
+            var list = new List<object>();
+            ReadOnlySpan<char> argsSpan = arguments;
+
+            while (true)
+            {
+                if (parameterIndex >= parameters.Length)
+                    break;
+
+                var parameterType = parameters[parameterIndex++];
+                if (parameterType == ConsoleCommand.ParameterOptional)
                 {
                     optional = true;
                     continue;
                 }
 
-                if (!optional)
-                    countNonOptional++;
-                
-                if (countNonOptional > args.Count)
-                    return false;
+                argsSpan = argsSpan.SkipWhitespaces();
 
-                if (!optional || index < args.Count)
+                if (argsSpan.Length == 0)
                 {
-                    if (format[i] == 's')
+                    if (!optional)
                     {
-                        _arguments.Add(args[index]);
+                        result = null;
+                        return false;
                     }
-                    else if (format[i] == 'i')
-                    {
-                        if (int.TryParse(args[index], out var result))
-                            _arguments.Add(result);
-                        else
-                            return false;
-                    }
-                    else if (format[i] == 'f')
-                    {
-                        if (float.TryParse(args[index], out var result))
-                            _arguments.Add(result);
-                        else
-                            return false;
-                    }
+
+                    break;
                 }
 
-                if (optional)
-                    optional = false;
-                index++;
+                if (argsSpan[0] == '"')
+                {
+                    argsSpan = argsSpan.Slice(1);
+
+                    for (var i = 0; i < argsSpan.Length; i++)
+                    {
+                        if (argsSpan[i] == '"')
+                        {
+                            list.Add(argsSpan.Slice(0, i).ToString());
+                            argsSpan = argsSpan.Slice(i + 1);
+                            break;
+                        }
+
+                        if (argsSpan[i] == '\\')
+                        {
+                            if (i + 1 < argsSpan.Length && (argsSpan[i + 1] == '\\' || argsSpan[i + 1] == '"'))
+                                i++;
+                        }
+                        else if (i + 1 == argsSpan.Length)
+                        {
+                            result = null;
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (parameterType == ConsoleCommand.ParameterRest)
+                    {
+                        list.Add(argsSpan.ToString());
+                        break;
+                    }
+
+                    var temp = argsSpan.SkipToWhitespaces();
+                    var str = argsSpan.Slice(0, argsSpan.Length - temp.Length);
+
+                    switch (parameterType)
+                    {
+                        case ConsoleCommand.ParameterInt when int.TryParse(str, out var @int):
+                            list.Add(@int);
+                            break;
+                        case ConsoleCommand.ParameterFloat when float.TryParse(str, out var @float):
+                            list.Add(@float);
+                            break;
+                        case ConsoleCommand.ParameterString:
+                            list.Add(str.ToString());
+                            break;
+                    }
+
+                    argsSpan = temp;
+                }
             }
 
+            result = new ConsoleCommandResult(list.ToArray());
             return true;
         }
     }

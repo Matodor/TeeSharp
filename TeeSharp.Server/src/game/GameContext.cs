@@ -300,7 +300,7 @@ namespace TeeSharp.Server.Game
                 return;
             }
 
-            if (result.NumArguments == 2)
+            if (result.ArgumentsCount == 2)
             {
                 param.FloatValue = (int)result[1];
                 SendTuningParams(-1);

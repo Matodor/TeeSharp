@@ -130,7 +130,7 @@ namespace TeeSharp.Common.Console
 
         protected override void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data)
         {
-            if (commandResult.NumArguments != 0)
+s            if (commandResult.ArgumentsCount != 0)
                 ((ConfigString) data).Value = (string) commandResult[0];
             else
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigString) data).Value}");
@@ -138,17 +138,17 @@ namespace TeeSharp.Common.Console
 
         protected override void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data)
         {
-            if (commandResult.NumArguments != 0)
+            if (commandResult.ArgumentsCount != 0)
                 ((ConfigInt) data).Value = (int) commandResult[0];
             else
                 Print(OutputLevel.Standard, "console", $"Value: {((ConfigInt) data).Value}");
         }
 
-        protected override bool ParseLine(string line, out ConsoleCommandResult commandResult, out ConsoleCommand command, out string parsedCmd)
+        protected override bool ParseLine(string line, out string arguments, out ConsoleCommand command, out string parsedCmd)
         {
             if (string.IsNullOrWhiteSpace(line))
             {
-                commandResult = null;
+                arguments = null;
                 command = null;
                 parsedCmd = null;
                 return false;
@@ -160,7 +160,7 @@ namespace TeeSharp.Common.Console
 
             if (!Commands.TryGetValue(parsedCmd, out command))
             {
-                commandResult = null;
+                arguments = null;
                 return false;
             }
 
@@ -168,7 +168,7 @@ namespace TeeSharp.Common.Console
             if (space > 0 && space + 1 < line.Length)
                 args = line.Substring(space + 1);
 
-            commandResult = new ConsoleCommandResult(args);
+            arguments = args;
             return true;
         }
 
@@ -193,7 +193,7 @@ namespace TeeSharp.Common.Console
                     Print(OutputLevel.Standard, "console", $"executing '{fileName}'");
                     string currentLine;
 
-                    while (!string.IsNullOrWhiteSpace(currentLine = reader.ReadLine()))
+                    while (!reader.EndOfStream && (currentLine = reader.ReadLine()) != null)
                         ExecuteLine(currentLine, -1);
                 }
             }
@@ -218,9 +218,13 @@ namespace TeeSharp.Common.Console
 
         public override void ExecuteLine(string line, int accessLevel, int clientId = -1)
         {
-            if (ParseLine(line, out var result, out var command, out var parsedCmd))
+            if (string.IsNullOrEmpty(line))
+                return;
+
+            // TODO separeted commands
+            if (ParseLine(line, out var arguments, out var command, out var parsedCmd))
             {
-                if (result.ParseArguments(command.Format))
+                if (ConsoleCommandResult.Parse(arguments, command.ParametersFormat, out var result))
                 {
                     if (accessLevel == -1 || accessLevel >= command.AccessLevel)
                         command.Invoke(result, clientId);
@@ -232,7 +236,7 @@ namespace TeeSharp.Common.Console
                 else
                 {
                     Print(OutputLevel.Standard, "console", 
-                        $"Invalid arguments... Usage: {command.Cmd} {command.Format}");
+                        $"Invalid arguments... Usage: {command.Cmd} {command.ParametersFormat}");
                 }
             }
             else

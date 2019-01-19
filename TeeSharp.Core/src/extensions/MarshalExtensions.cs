@@ -6,6 +6,10 @@ namespace TeeSharp.Core.Extensions
 {
     public static class MarshalExtensions
     {
+        // TODO MemoryMarshal and Unsafe class
+        // https://youtu.be/Do0mcw8hwYo
+        // MemoryMarshal.Cast<>()
+
         private static Array Read(this Span<byte> buffer, Type elementType, int elementSize, int reads = 1)
         {
             var array = Array.CreateInstance(elementType, reads);

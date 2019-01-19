@@ -57,7 +57,7 @@ namespace TeeSharp.Common.Console
         protected abstract void StrVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
         protected abstract void IntVariableCommand(ConsoleCommandResult commandResult, int clientId, ref object data);
 
-        protected abstract bool ParseLine(string line, out ConsoleCommandResult commandResult,
+        protected abstract bool ParseLine(string line, out string arguments,
             out ConsoleCommand command, out string parsedCmd);
 
         public abstract IEnumerator<KeyValuePair<string, ConsoleCommand>> GetEnumerator();
