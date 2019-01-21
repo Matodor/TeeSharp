@@ -216,6 +216,15 @@ namespace TeeSharp.Common.Console
             }
         }
 
+        public override bool IsLineValid(string command)
+        {
+            if (string.IsNullOrEmpty(command))
+                return false;
+
+
+            return true; // TODO
+        }
+
         public override void ExecuteLine(string line, int accessLevel, int clientId = -1)
         {
             if (string.IsNullOrEmpty(line))

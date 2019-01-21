@@ -29,23 +29,25 @@ namespace TeeSharp.Server.Game
             Events = Kernel.Get<BaseEvents>();
             Server = Kernel.Get<BaseServer>();
             MapLayers = Kernel.Get<BaseMapLayers>();
+
             GameMsgUnpacker = Kernel.Get<BaseGameMsgUnpacker>();
+            GameMsgUnpacker.MaxClients = Server.MaxClients;
+
             MapCollision = Kernel.Get<BaseMapCollision>();
             Config = Kernel.Get<BaseConfig>();
             Console = Kernel.Get<BaseGameConsole>();
             Tuning = Kernel.Get<BaseTuningParams>();
             World = Kernel.Get<BaseGameWorld>();
+
+            Votes.Init();
         }
 
         public override void Init()
         {
-            Votes.Init();
             Events.Init();
             MapLayers.Init(Server.CurrentMap);
             MapCollision.Init(MapLayers);
             Players = new BasePlayer[Server.MaxClients];
-
-            GameMsgUnpacker.MaxClients = Players.Length;
 
             GameController = Server.GameController(Config["SvGametype"]);
             GameController.Init();
@@ -215,6 +217,10 @@ namespace TeeSharp.Server.Game
 
         protected virtual void ConsoleAddVote(ConsoleCommandResult result, int clientId, ref object data)
         {
+            var description = ((string) result[0]).SkipWhitespaces();
+            var command = ((string)result[1]).SkipWhitespaces();
+
+            Votes.AddVote(description, command);
         }
 
         protected virtual void ConsoleForceTeamBalance(ConsoleCommandResult result, int clientId, ref object data)
@@ -474,16 +480,6 @@ namespace TeeSharp.Server.Game
             }, MsgFlags.Vital, -1);
         }
 
-        public override void SendChatTarget(int clientId, string msg)
-        {
-            //Server.SendPackMsg(new GameMsg_SvChat
-            //{
-            //    IsTeam = false,
-            //    ClientId = -1,
-            //    Message = msg
-            //}, MsgFlags.Vital, clientId);
-        }
-
         public override void SendChat(int from, ChatMode mode, int target, string message)
         {
             if (mode == ChatMode.None)
@@ -579,6 +575,7 @@ namespace TeeSharp.Server.Game
                         OnMsgClientEmoticon(player, (GameMsg_ClEmoticon) message);
                         break;
                     case GameMessage.ClientVote:
+                        OnMsgClientVote(player, (GameMsg_ClVote) message);
                         break;
                     case GameMessage.ClientCallVote:
                         OnMsgClientCallVote(player, (GameMsg_ClCallVote) message);
@@ -589,6 +586,11 @@ namespace TeeSharp.Server.Game
             {
                 OnMsgClientStartInfo(player, (GameMsg_ClStartInfo) message);
             }
+        }
+
+        protected override void OnMsgClientVote(BasePlayer player, GameMsg_ClVote message)
+        {
+            Votes.ClientVote(message, player);
         }
 
         protected override void OnMsgClientCallVote(BasePlayer player, GameMsg_ClCallVote message)

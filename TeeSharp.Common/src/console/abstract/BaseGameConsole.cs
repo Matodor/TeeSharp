@@ -44,6 +44,7 @@ namespace TeeSharp.Common.Console
         public abstract void Print(OutputLevel outputLevel, string sys, string format);
         public abstract ConsoleCommand FindCommand(string cmd, ConfigFlags mask);
         public abstract void SetAccessLevel(int accessLevel, params string[] commands);
+        public abstract bool IsLineValid(string command);
 
         public abstract void AddCommand(string cmd, string format, string description,
             ConfigFlags flags, CommandCallback callback, object data = null);
