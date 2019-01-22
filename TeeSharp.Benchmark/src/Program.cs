@@ -1,6 +1,4 @@
 ﻿using System;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 
 namespace TeeSharp.Benchmark
@@ -9,8 +7,30 @@ namespace TeeSharp.Benchmark
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<MarshalBenchmark>();
-            //BenchmarkRunner.Run<EquatableSnapshotPlayerInput>();
+            string result;
+            int number;
+
+            var benchmarks = new Type[]
+            {
+                typeof(MarshalBenchmark),
+                typeof(EndPointCompareBenchmark),
+                typeof(EquatableSnapshotPlayerInput),
+            };
+
+            do
+            {
+                Console.WriteLine("Select banchmark:");
+                for (var i = 0; i < benchmarks.Length; i++)
+                {
+                    Console.WriteLine($"\t{i} - {benchmarks[i].Name}");
+                }
+
+                Console.Write("\nWrite number: ");
+                result = Console.ReadLine();
+
+            } while (!int.TryParse(result, out number) || number < 0 || number >= benchmarks.Length);
+
+            BenchmarkRunner.Run(benchmarks[number]);
             Console.ReadLine();
         }
     }

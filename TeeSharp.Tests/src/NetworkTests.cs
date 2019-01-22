@@ -44,6 +44,15 @@ namespace TeeSharp.Tests
         }
 
         [TestMethod]
+        public void TestEquals()
+        {
+            var endPoint1 = new IPEndPoint(IPAddress.Parse("192.168.137.106"), 51850);
+            var endPoint2 = new IPEndPoint(IPAddress.Parse("192.168.137.106"), 51850);
+
+            Assert.IsTrue(endPoint1.Compare(endPoint2, true));
+        }
+
+        [TestMethod]
         public void TestGenerateToken()
         {
             var endPoint1 = new IPEndPoint(IPAddress.Parse("192.168.137.106"), 51850);
