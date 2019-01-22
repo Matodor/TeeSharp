@@ -5,6 +5,7 @@ using TeeSharp.Common.Config;
 using TeeSharp.Common.Console;
 using TeeSharp.Common.Enums;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Network;
 using TeeSharp.Network.Extensions;
 
 namespace TeeSharp.Server.Game
@@ -38,6 +39,22 @@ namespace TeeSharp.Server.Game
             PlayersVoteInfo[player.ClientId].LastVoteCall = Server.Tick;
             ClearOptions(player);
             SendVotes(player);
+
+            if (ActiveVote != null)
+            {
+                var localPlayer = GameContext.Players.FirstOrDefault(p =>
+                    p != null &&
+                    p != player &&
+                    p.Team != Team.Spectators &&
+                    Server.ClientEndPoint(p.ClientId)
+                        .Compare(Server.ClientEndPoint(player.ClientId), false));
+
+                if (localPlayer == null)
+                    ActiveVote.VotesTotal++;
+
+                SendVoteSet(ActiveVote.Type, player);
+                SendVoteStatus(null);
+            }
         }
 
         public override void ClearOptions(BasePlayer player)
@@ -111,6 +128,13 @@ namespace TeeSharp.Server.Game
 
         public override void Tick()
         {
+            if (ActiveVote == null)
+                return;
+
+            if (ActiveVote.CloseTick < Server.Tick)
+            {
+                EndVote(Vote.EndFail);
+            }
         }
 
         public override bool AddVote(string description, string command)
@@ -158,8 +182,15 @@ namespace TeeSharp.Server.Game
         public override void StartVote(ActiveVote vote)
         {
             ActiveVote = vote;
+            ActiveVote.VotesTotal = GameContext.Players
+                .Where(p => p != null)
+                .GroupBy(p => Server.ClientEndPoint(p.ClientId).Address.ToString())
+                .Count();
+            ActiveVote.VotesYes++;
+
             SendVoteSet(vote.Type, null);
             SendVoteStatus(null);
+            CheckVoteStatus();
         }
 
         public override void ClientVote(GameMsg_ClVote message, BasePlayer player)
@@ -173,7 +204,6 @@ namespace TeeSharp.Server.Game
                     return;
 
                 PlayersVoteInfo[player.ClientId].Vote = message.Vote;
-                ActiveVote.VotesTotal++;
 
                 for (var i = 0; i < GameContext.Players.Length; i++)
                 {
@@ -230,6 +260,8 @@ namespace TeeSharp.Server.Game
 
             SendVoteSet(type, null);
             ActiveVote = null;
+            for (var i = 0; i < PlayersVoteInfo.Length; i++)
+                PlayersVoteInfo[i].Vote = 0;
         }
 
         public override void CallVote(GameMsg_ClCallVote message, BasePlayer player)
@@ -301,6 +333,9 @@ namespace TeeSharp.Server.Game
             }
             else
             {
+                PlayersVoteInfo[player.ClientId].Vote = 1;
+                PlayersVoteInfo[player.ClientId].LastVoteCall = Server.Tick;
+
                 StartVote(new ActiveVote
                 {
                     CallerId = player.ClientId,
@@ -310,15 +345,7 @@ namespace TeeSharp.Server.Game
                     CloseTick = Server.Tick + Server.TickSpeed * 25,
                     Command = command
                 });
-
-                PlayersVoteInfo[player.ClientId].Vote = 1;
-                PlayersVoteInfo[player.ClientId].LastVoteCall = Server.Tick;
-                ActiveVote.VotesTotal++;
-                ActiveVote.VotesYes++;
-
-                CheckVoteStatus();
             }
-            // call vote
         }
     }
 }

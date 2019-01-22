@@ -24,6 +24,7 @@ namespace TeeSharp.Server.Game
         public string Command { get; set; }
         public Vote Type { get; set; }
         public int CloseTick { get; set; }
+        public int? ClientId { get; set; }
 
         public int VotesTotal { get; set; }
         public int VotesYes { get; set; }
