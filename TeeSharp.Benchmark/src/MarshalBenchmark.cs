@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TeeSharp.Common.Enums;
 using BenchmarkDotNet.Attributes;
+using TeeSharp.Common.Protocol;
 
 namespace TeeSharp.Benchmark
 {
@@ -24,6 +25,7 @@ namespace TeeSharp.Benchmark
     public class MarshalBenchmark
     {
         private StructSnapshotPlayerInput _input;
+        private SnapshotPlayerInput _input2;
 
         public MarshalBenchmark()
         {
@@ -40,9 +42,43 @@ namespace TeeSharp.Benchmark
                 NextWeapon = Weapon.Hammer,
                 TargetX = 999,
             };
+
+            _input2 = new SnapshotPlayerInput()
+            {
+                Direction = -1,
+                PlayerFlags = PlayerFlags.Admin | PlayerFlags.Bot | PlayerFlags.Dead,
+                WantedWeapon = Weapon.Grenade,
+                Hook = 1,
+                Jump = 1,
+                TargetY = 123,
+                PreviousWeapon = Weapon.Ninja,
+                Fire = 555,
+                NextWeapon = Weapon.Hammer,
+                TargetX = 999,
+            };
         }
 
-        [Benchmark(Description = "sizeof")]
+        [Benchmark(Description = "ToArray1")]
+        public void ToArray1()
+        {
+            for (var i = 0; i < 100000; i++)
+            {
+                var data = _input2.ToArray();
+            }
+        }
+
+        [Benchmark(Description = "ToArray2")]
+        public void ToArray2()
+        {
+            for (var i = 0; i < 100000; i++)
+            {
+                Span<byte> span = new byte[Unsafe.SizeOf<StructSnapshotPlayerInput>()];
+                MemoryMarshal.Write(span, ref _input);
+                var data = MemoryMarshal.Cast<byte, int>(span);
+            }
+        }
+
+        [Benchmark(Description = "sizeof()")]
         public unsafe void Sizeof()
         {
             for (var i = 0; i < 100000; i++)
@@ -68,7 +104,7 @@ namespace TeeSharp.Benchmark
                 var bytes = Write(_input);
             }
         }
-        
+
         private byte[] Write(in StructSnapshotPlayerInput input)
         {
             var array = new byte[Marshal.SizeOf<StructSnapshotPlayerInput>()];
