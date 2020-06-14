@@ -49,7 +49,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.MasterServer", "Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeeSharp.Core", "TeeSharp.Core\TeeSharp.Core.csproj", "{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.MasterServer", "Examples\Examples.MasterServer\Examples.MasterServer\Examples.MasterServer.csproj", "{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.MasterServer", "Examples\Examples.MasterServer\Examples.MasterServer.csproj", "{BB7DFA51-06C5-467A-AAAD-F83C2CD7C612}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D655D9AE-26A0-4F52-84A0-C55D6D8BC337} = {D655D9AE-26A0-4F52-84A0-C55D6D8BC337}
 		{B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340} = {B9FDBCCB-EF86-4B0A-ABCE-8140A97FD340}
