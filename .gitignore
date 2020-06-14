@@ -272,7 +272,8 @@ Desktop.ini
 autoexec.cfg
 App.config
 
-Examples/**/maps
-Examples/**/storage.cfg
+/Examples/**/maps
+/Examples/**/storage.cfg
+/Examples/**/autoexec.cfg
 
 !TeeSharp.Core/src/debug/
