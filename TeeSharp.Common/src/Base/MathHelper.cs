@@ -10,8 +10,8 @@ namespace TeeSharp.Common
         public static int RoundToInt(float f)
         {
             if (f > 0)
-                return (int)(f + 0.5f);
-            return (int)(f - 0.5f);
+                return (int) (f + 0.5f);
+            return (int) (f - 0.5f);
         }
 
         public static int Mix(int a, int b, int amount)
@@ -36,39 +36,51 @@ namespace TeeSharp.Common
             {
                 if (current < min)
                     return current;
+
                 current += modifier;
+
                 if (current < min)
                     current = min;
+
                 return current;
             }
 
             if (current > max)
                 return current;
+
             current += modifier;
+
             if (current > max)
                 current = max;
+
             return current;
         }
 
-        public static float SaturatedAdd(float min, float max, 
+        public static float SaturatedAdd(float min, float max,
             float current, float modifier)
         {
             if (modifier < 0)
             {
                 if (current < min)
                     return current;
+
                 current += modifier;
+
                 if (current < min)
                     current = min;
+
                 return current;
             }
 
             if (current > max)
-                    return current;
-                current += modifier;
-                if (current > max)
-                    current = max;
                 return current;
+
+            current += modifier;
+
+            if (current > max)
+                current = max;
+
+            return current;
         }
 
         public static double SaturatedAdd(double min, double max,
@@ -78,17 +90,23 @@ namespace TeeSharp.Common
             {
                 if (current < min)
                     return current;
+
                 current += modifier;
+
                 if (current < min)
                     current = min;
+
                 return current;
             }
 
             if (current > max)
                 return current;
+
             current += modifier;
+
             if (current > max)
                 current = max;
+
             return current;
         }
 
@@ -107,7 +125,7 @@ namespace TeeSharp.Common
             return a + (b - a) * amount;
         }
 
-        public static Vector2 CalcPos(Vector2 pos, Vector2 velocity, float curvature, 
+        public static Vector2 CalcPos(Vector2 pos, Vector2 velocity, float curvature,
             float speed, float time)
         {
             time *= speed;
@@ -131,12 +149,12 @@ namespace TeeSharp.Common
         {
             if (value < start)
                 return 1.0f;
-            return (float)(1.0f / Math.Pow(curvature, (value - start) / range));
+            return (float) (1.0f / Math.Pow(curvature, (value - start) / range));
         }
 
         public static float Angle(Vector2 v)
         {
-	        return (float) Math.Atan2(v.y, v.x);
+            return (float) Math.Atan2(v.y, v.x);
         }
 
         //public static float GetAngle(Vector2 Dir)
