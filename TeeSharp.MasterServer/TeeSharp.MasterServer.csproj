@@ -1,13 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <LangVersion>7.2</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
-    <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
+    </ItemGroup>
 
 </Project>

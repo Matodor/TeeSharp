@@ -267,13 +267,3 @@ ModelManifest.xml
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-# TeeSharp
-autoexec.cfg
-App.config
-
-/Examples/**/maps
-/Examples/**/storage.cfg
-/Examples/**/autoexec.cfg
-
-!TeeSharp.Core/src/debug/

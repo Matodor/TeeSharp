@@ -3,23 +3,23 @@ using BenchmarkDotNet.Running;
 
 namespace TeeSharp.Benchmark
 {
-    internal class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {
             string result;
             int number;
 
-            var benchmarks = new Type[]
+            var benchmarks = new[]
             {
-                typeof(MarshalBenchmark),
-                typeof(EndPointCompareBenchmark),
-                typeof(EquatableSnapshotPlayerInput),
+                typeof(SerializationBenchmark),
+                typeof(DeserializeBenchmark),
+                typeof(SizeofBenchmark),
             };
 
             do
             {
-                Console.WriteLine("Select banchmark:");
+                Console.WriteLine("Select banchmark: ");
                 for (var i = 0; i < benchmarks.Length; i++)
                 {
                     Console.WriteLine($"\t{i} - {benchmarks[i].Name}");
@@ -31,7 +31,6 @@ namespace TeeSharp.Benchmark
             } while (!int.TryParse(result, out number) || number < 0 || number >= benchmarks.Length);
 
             BenchmarkRunner.Run(benchmarks[number]);
-            Console.ReadLine();
         }
     }
 }
