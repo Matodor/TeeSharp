@@ -4,6 +4,6 @@ namespace TeeSharp.Core
 {
     public static class TypeHelper<T>
     {
-        public static readonly int Bytes = Marshal.SizeOf(typeof(T));
+        public static readonly int Size = Marshal.SizeOf(typeof(T));
     }
 }
