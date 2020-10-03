@@ -7,6 +7,8 @@ namespace TeeSharp.Benchmark
     {
         static void Main(string[] args)
         {
+            new DeserializeBenchmark().Struct3GetArray();
+            
             string result;
             int number;
 
@@ -15,6 +17,7 @@ namespace TeeSharp.Benchmark
                 typeof(SerializationBenchmark),
                 typeof(DeserializeBenchmark),
                 typeof(SizeofBenchmark),
+                typeof(CastIpEndpointBenchmark),
             };
 
             do

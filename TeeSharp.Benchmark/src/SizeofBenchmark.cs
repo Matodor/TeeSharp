@@ -16,7 +16,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = Marshal.SizeOf(typeof(ServerEndpoint));
+                var size = Marshal.SizeOf(typeof(TestStruct2));
             }
         }
         
@@ -25,7 +25,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = Unsafe.SizeOf<ServerEndpoint>();
+                var size = Unsafe.SizeOf<TestStruct2>();
             }
         }
         
@@ -34,7 +34,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = SizeOfHelper.SizeOf(typeof(ServerEndpoint));
+                var size = SizeOfHelper.SizeOf(typeof(TestStruct2));
             }
         } 
         
@@ -43,7 +43,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = TypeHelper<ServerEndpoint>.Bytes;
+                var size = TypeHelper<TestStruct2>.Size;
             }
         }
     }
