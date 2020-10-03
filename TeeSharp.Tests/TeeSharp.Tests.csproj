@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Examples\Examples.Map\Examples.Map.csproj" />
       <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
       <ProjectReference Include="..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
       <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />

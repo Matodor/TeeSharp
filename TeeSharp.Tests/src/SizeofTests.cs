@@ -1,6 +1,5 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using NUnit.Framework;
+using TeeSharp.Core;
 using TeeSharp.MasterServer;
 
 namespace TeeSharp.Tests
@@ -13,9 +12,10 @@ namespace TeeSharp.Tests
         }
 
         [Test]
-        public void Test1()
+        public void CheckSize()
         {
-            Assert.AreEqual(18, Marshal.SizeOf<ServerEndpoint>());
+            Assert.Fail();
+            // Assert.AreEqual(18, TypeHelper<ServerEndpoint>.Size);
         }
     }
 }
