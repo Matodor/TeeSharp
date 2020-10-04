@@ -19,6 +19,7 @@ namespace TeeSharp.Tests
             };
 
             var header = data.AsSpan().ToStruct<DataFileHeader>();
+            Assert.True(header.IsValidSignature);
             Assert.True(header.IsValidVersion);
         }
     }
