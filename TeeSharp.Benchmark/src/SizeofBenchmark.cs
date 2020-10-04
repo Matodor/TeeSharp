@@ -29,7 +29,7 @@ namespace TeeSharp.Benchmark
             }
         }
         
-        [Benchmark(Description = "TypeHelper.SizeOf")]
+        [Benchmark(Description = "SizeOfHelper")]
         public void TypeHelperSizeof()
         {
             for (var i = 0; i < 1000; i++)
@@ -38,12 +38,21 @@ namespace TeeSharp.Benchmark
             }
         } 
         
-        [Benchmark(Description = "ElementSize")]
-        public void ElementSize()
+        [Benchmark(Description = "TypeHelper1")]
+        public void TypeHelper1()
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = TypeHelper<TestStruct2>.Size;
+                var size = TypeHelper1<TestStruct2>.Size;
+            }
+        }      
+        
+        [Benchmark(Description = "TypeHelper2")]
+        public void TypeHelper2()
+        {
+            for (var i = 0; i < 1000; i++)
+            {
+                var size = TypeHelper2<TestStruct2>.Size;
             }
         }
     }
@@ -53,18 +62,6 @@ namespace TeeSharp.Benchmark
      */
     internal static class SizeOfHelper
     {
-        public static int SizeOf<T>(T? obj) where T : struct
-        {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-            return SizeOf(typeof(T?));
-        }
-
-        public static int SizeOf<T>(T obj)
-        {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-            return SizeOf(obj.GetType());
-        }
-
         public static int SizeOf(Type t)
         {
             if (t == null) throw new ArgumentNullException(nameof(t));
@@ -72,7 +69,7 @@ namespace TeeSharp.Benchmark
             return _cache.GetOrAdd(t, t2 =>
             {
                 var dm = new DynamicMethod("$", typeof(int), Type.EmptyTypes);
-                ILGenerator il = dm.GetILGenerator();
+                var il = dm.GetILGenerator();
                 il.Emit(OpCodes.Sizeof, t2);
                 il.Emit(OpCodes.Ret);
 
@@ -83,5 +80,15 @@ namespace TeeSharp.Benchmark
 
         private static readonly ConcurrentDictionary<Type, int>
             _cache = new ConcurrentDictionary<Type, int>();
+    }
+    
+    internal static class TypeHelper1<T>
+    {
+        public static readonly int Size = Marshal.SizeOf(typeof(T));
+    }
+    
+    internal static class TypeHelper2<T>
+    {
+        public static readonly int Size = Unsafe.SizeOf<T>();
     }
 }

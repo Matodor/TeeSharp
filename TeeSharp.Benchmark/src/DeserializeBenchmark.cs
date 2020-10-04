@@ -1,9 +1,8 @@
 using System;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
-using TeeSharp.MasterServer;
+using TeeSharp.Core;
 using TeeSharp.Network;
 
 namespace TeeSharp.Benchmark
@@ -95,7 +94,7 @@ namespace TeeSharp.Benchmark
     
     public class DeserializeBenchmark
     {
-        // [Benchmark(Description = "IPEndPoint Marshal.PtrToStructure")]
+        [Benchmark(Description = "IPEndPoint Marshal.PtrToStructure")]
         public void MarshalPtrToStructure()
         {
             var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
@@ -105,7 +104,7 @@ namespace TeeSharp.Benchmark
             handle.Free();
         }
         
-        // [Benchmark(Description = "IPEndPoint MemoryMarshal.Cast")]
+        [Benchmark(Description = "IPEndPoint MemoryMarshal.Cast")]
         public void MemoryMarshalCast()
         {
             var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
@@ -113,7 +112,7 @@ namespace TeeSharp.Benchmark
             var endpoint = (IPEndPoint) addr;
         }
 
-        // [Benchmark(Description = "IPEndPoint MemoryMarshal.AsBytes")]
+        [Benchmark(Description = "IPEndPoint MemoryMarshal.AsBytes")]
         public void MemoryMarshalAsBytes()
         {
             var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
@@ -124,7 +123,7 @@ namespace TeeSharp.Benchmark
             var endpoint = (IPEndPoint) addr;
         }
         
-        // [Benchmark(Description = "IPEndPoint MemoryMarshal.Read")]
+        [Benchmark(Description = "IPEndPoint MemoryMarshal.Read")]
         public void MemoryMarshalRead()
         {
             var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
@@ -132,7 +131,7 @@ namespace TeeSharp.Benchmark
             var endpoint = (IPEndPoint) addr;
         }
         
-        // [Benchmark(Description = "IPEndPoint ForwardCast")]
+        [Benchmark(Description = "IPEndPoint ForwardCast")]
         public void ForwardCast()
         {
             var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
@@ -178,7 +177,7 @@ namespace TeeSharp.Benchmark
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
             };
 
-            var size = Unsafe.SizeOf<TestStruct2>();
+            var size = TypeHelper<TestStruct2>.Size;
             var array = new IPEndPoint[data.Length / size];
 
             for (int i = 0; i < size; i++)
