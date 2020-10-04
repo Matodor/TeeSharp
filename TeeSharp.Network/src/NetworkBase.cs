@@ -29,7 +29,7 @@ namespace TeeSharp.Network
         private static void EndSendCallback(IAsyncResult result)
         {
             var client = (UdpClient) result.AsyncState;
-            client.EndSend(result);
+            client?.EndSend(result);
         }
     }
 }
