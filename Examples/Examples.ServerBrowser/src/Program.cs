@@ -18,7 +18,6 @@ namespace Examples.ServerBrowser
                 var masterServerAddr = $"master{i}.teeworlds.com";
 
                 var addresses = Dns.GetHostAddresses(masterServerAddr);
-
                 if (addresses.Length == 0)
                 {
                     Console.WriteLine("Cant resolve master server address!");
@@ -50,7 +49,6 @@ namespace Examples.ServerBrowser
                 {
                     var remote = default(IPEndPoint);
                     var data = client.Receive(ref remote);
-
                     var test = string.Join(',', data.Select(b => $"{b}"));
                 }
             }
