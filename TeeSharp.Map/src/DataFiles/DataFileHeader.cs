@@ -17,15 +17,17 @@ namespace TeeSharp.Map
                 ((byte) 'A') * (1 << 16) +
                 ((byte) 'D') * (1 << 24);
          */
-        public bool IsValidVersion => Id == 1096040772 || Id == 1145132097;
+        public bool IsValidSignature => Id == 1096040772 || Id == 1145132097;
+        
+        public bool IsValidVersion => Version == 3 || Version == 4;
 
         public int Id;
         public int Version;
         public int Size;
         public int Swaplen;
-        public int NumItemTypes;
-        public int NumItems;
-        public int NumRawData;
+        public int ItemTypesCount;
+        public int ItemsCount;
+        public int RawDataSize;
         public int ItemSize;
         public int DataSize;
     }
