@@ -2,27 +2,33 @@
 
 namespace TeeSharp.MasterServer
 {
-    public readonly ref struct Packets
+    public static class Packets
     {
-        public static readonly byte[] Heartbeat = Packet('b', 'e', 'a', '2');
-        public static readonly byte[] GetList = Packet('r', 'e', 'q', '2');
-        public static readonly byte[] List = Packet('l', 'i', 's', '2');
-        public static readonly byte[] GetCount = Packet('c', 'o', 'u', '2');
-        public static readonly byte[] Count = Packet('s', 'i', 'z', '2');
-        public static readonly byte[] GetInfo = Packet('g', 'i', 'e', '3');
-        public static readonly byte[] Info = Packet('i', 'n', 'f', '3');
-        public static readonly byte[] GetInfo64Legacy = Packet('f', 's', 't', 'd');
-        public static readonly byte[] Info64Legacy = Packet('d', 't', 's', 'f');
-        public static readonly byte[] InfoExtended = Packet('i', 'e', 'x', 't');
-        public static readonly byte[] InfoExtendedMore = Packet('i', 'e', 'x', '+');
-        public static readonly byte[] FirewallCheck = Packet('f', 'w', '?', '?');
-        public static readonly byte[] FirewallResponse = Packet('f', 'w', '!', '!');
-        public static readonly byte[] FirewallOk = Packet('f', 'w', 'o', 'k');
-        public static readonly byte[] FirewallError = Packet('f', 'w', 'e', 'r');
+        public static readonly byte[] Heartbeat = Packet("bea2");
+        public static readonly byte[] GetList = Packet("req2");
+        public static readonly byte[] List = Packet("lis2");
+        public static readonly byte[] GetCount = Packet("cou2");
+        public static readonly byte[] Count = Packet("siz2");
+        public static readonly byte[] GetInfo = Packet("gie3");
+        public static readonly byte[] Info = Packet("inf3");
+        public static readonly byte[] GetInfo64Legacy = Packet("fstd");
+        public static readonly byte[] Info64Legacy = Packet("dtsf");
+        public static readonly byte[] InfoExtended = Packet("iext");
+        public static readonly byte[] InfoExtendedMore = Packet("iex+");
+        public static readonly byte[] FirewallCheck = Packet("fw??");
+        public static readonly byte[] FirewallResponse = Packet("fw!!");
+        public static readonly byte[] FirewallOk = Packet("fwok");
+        public static readonly byte[] FirewallError = Packet("fwer");
 
-        private static byte[] Packet(char b1, char b2, char b3, char b4)
+        private static byte[] Packet(string symbols)
         {
-            return new byte[] {255, 255, 255, 255, (byte) b1, (byte) b2, (byte) b3, (byte) b4};
+            var buffer = new Span<byte>(new byte[8]);
+            buffer.Slice(0, 4).Fill(255);
+            buffer[4] = (byte) symbols[0];
+            buffer[5] = (byte) symbols[1];
+            buffer[6] = (byte) symbols[2];
+            buffer[7] = (byte) symbols[3];
+            return buffer.ToArray();
         }
     }
 }
