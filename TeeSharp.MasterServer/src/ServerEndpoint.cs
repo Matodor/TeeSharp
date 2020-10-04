@@ -15,6 +15,9 @@ namespace TeeSharp.MasterServer
         
         public static IPEndPoint Get(Span<byte> data)
         {
+            if (data.Length < SizeOfAddr)
+                throw new ArgumentException(nameof(data));
+            
             var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(data.Slice(0, 12));
             var port = (data[16] << 8) | data[17];
 
@@ -23,8 +26,10 @@ namespace TeeSharp.MasterServer
         
         public static IPEndPoint[] GetArray(Span<byte> data)
         {
+            if (data.Length < SizeOfAddr)
+                throw new ArgumentException(nameof(data));
+            
             var array = new IPEndPoint[data.Length / SizeOfAddr];
-
             for (var i = 0; i < array.Length; i++)
                 array[i] = Get(data.Slice(i * SizeOfAddr));
 
