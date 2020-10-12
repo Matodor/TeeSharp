@@ -3,6 +3,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,6 +13,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Examples\Examples.ServerBrowser\Examples.ServerBrowser.csproj" />
       <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
+      <ProjectReference Include="..\TeeSharp.Map\TeeSharp.Map.csproj" />
       <ProjectReference Include="..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
       <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
     </ItemGroup>
