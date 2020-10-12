@@ -1,6 +1,6 @@
 namespace TeeSharp.Map
 {
-    public enum MapItemType : int
+    public enum MapItem
     {
         Version = 0,
         Info,
