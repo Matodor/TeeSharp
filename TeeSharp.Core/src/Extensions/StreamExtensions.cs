@@ -6,8 +6,11 @@ namespace TeeSharp.Core.Extensions
 {
     public static class StreamExtensions
     {
-        public static bool GetStruct<T>(this Stream stream, out T output) where T : struct
+        public static bool Get<T>(this Stream stream, out T output) where T : struct
         {
+            if (TypeHelper<T>.IsArray)
+                throw new Exception(nameof(T));
+            
             var size = TypeHelper<T>.Size;
             if (stream.Position + size >= stream.Length)
             {
@@ -22,13 +25,16 @@ namespace TeeSharp.Core.Extensions
                 return false;
             }
 
-            output = buffer.ToStruct<T>();
+            output = buffer.Deserialize<T>();
             return true;
         }
 
-        public static bool GetStructs<T>(this Stream stream, int count, out Span<T> output) where T : struct
+        public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
         {
-            var size = TypeHelper<T>.Size;
+            if (TypeHelper<T>.IsArray)
+                throw new Exception(nameof(T));
+            
+            var size = TypeHelper<T>.ElementSize;
             if (stream.Position + size * count >= stream.Length)
             {
                 output = default;
@@ -41,8 +47,8 @@ namespace TeeSharp.Core.Extensions
                 output = default;
                 return false;
             }
-            
-            output = buffer.ToStructs<T>();
+
+            output = buffer.Deserialize<T>(count);
             return true;
         }
     }
