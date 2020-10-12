@@ -1,34 +1,31 @@
+using System;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Map
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    public struct DataFileHeader
+    public unsafe struct DataFileHeader
     {
-        /*
-            1096040772 = ((byte) 'D') * (1 << 0) +
-                ((byte) 'A') * (1 << 8) +
-                ((byte) 'T') * (1 << 16) +
-                ((byte) 'A') * (1 << 24);
-                
-            1145132097 = ((byte) 'A') * (1 << 0) +
-                ((byte) 'T') * (1 << 8) +
-                ((byte) 'A') * (1 << 16) +
-                ((byte) 'D') * (1 << 24);
-         */
-        public bool IsValidSignature => Id == 1096040772 || Id == 1145132097;
-        
-        public bool IsValidVersion => Version == 3 || Version == 4;
+        public Span<byte> Signature => new Span<byte>(Unsafe.AsPointer(ref _signature[0]), 4);
 
-        public int Id;
+        public bool IsValidSignature => 
+            Encoding.ASCII.GetString(Signature) == "DATA" || 
+            Encoding.ASCII.GetString(Signature) == "ATAD"; 
+        
+        public bool IsValidVersion => Version == 4;
+        
+        private fixed byte _signature[4];
+        
         public int Version;
         public int Size;
-        public int Swaplen;
+        public int SwapLength;
         public int ItemTypesCount;
         public int ItemsCount;
-        public int RawDataSize;
-        public int ItemSize;
-        public int DataSize;
+        public int RawDataBlocks;
+        public int ItemsSize;
+        public int RawDataBlocksSize;
     }
 }
