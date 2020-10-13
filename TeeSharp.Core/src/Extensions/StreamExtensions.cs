@@ -6,20 +6,30 @@ namespace TeeSharp.Core.Extensions
 {
     public static class StreamExtensions
     {
-        public static bool Get<T>(this Stream stream, out T output) where T : struct
+        public static bool Get<T>(this Stream stream, out T output, int readSize = 0) where T : struct
         {
-            if (TypeHelper<T>.IsArray)
-                throw new Exception(nameof(T));
-            
-            var size = TypeHelper<T>.Size;
-            if (stream.Position + size >= stream.Length)
+            if (TypeHelper<T>.IsArray || readSize < 0)
             {
                 output = default;
                 return false;
             }
 
-            var buffer = new Span<byte>(new byte[size]);
-            if (buffer.Length != stream.Read(buffer))
+            readSize = readSize > 0 
+                ? Math.Min(readSize, TypeHelper<T>.Size) 
+                : TypeHelper<T>.Size;
+            
+            if (stream.Position + readSize >= stream.Length)
+            {
+                output = default;
+                return false;
+            }
+
+            var buffer = new Span<byte>(new byte[TypeHelper<T>.Size]);
+            var readBuffer = readSize != TypeHelper<T>.Size
+                ? buffer.Slice(0, readSize)
+                : buffer;
+            
+            if (buffer.Length != stream.Read(readBuffer))
             {
                 output = default;
                 return false;
@@ -31,20 +41,19 @@ namespace TeeSharp.Core.Extensions
 
         public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
         {
-            if (TypeHelper<T>.IsArray)
-                throw new Exception(nameof(T));
-            
             var size = TypeHelper<T>.ElementSize;
-            if (stream.Position + size * count >= stream.Length)
+
+            if (TypeHelper<T>.IsArray || 
+                stream.Position + size * count >= stream.Length)
             {
-                output = default;
+                output = null;
                 return false;
             }
             
             var buffer = new Span<byte>(new byte[size * count]);
             if (buffer.Length != stream.Read(buffer))
             {
-                output = default;
+                output = null;
                 return false;
             }
 
