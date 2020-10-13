@@ -7,9 +7,9 @@ using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Map
 {
-    public unsafe struct DataFileHeader
+    public struct DataFileHeader
     {
-        public Span<byte> Signature => new Span<byte>(Unsafe.AsPointer(ref _signature[0]), 4);
+        public unsafe Span<byte> Signature => new Span<byte>(Unsafe.AsPointer(ref _signature[0]), 4);
 
         public bool IsValidSignature => 
             Encoding.ASCII.GetString(Signature) == "DATA" || 
@@ -17,7 +17,7 @@ namespace TeeSharp.Map
         
         public bool IsValidVersion => Version == 4;
         
-        private fixed byte _signature[4];
+        private unsafe fixed byte _signature[4];
         
         public int Version;
         public int Size;
