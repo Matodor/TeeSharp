@@ -1,6 +1,6 @@
 namespace TeeSharp.Map
 {
-    public struct MapItemInfo
+    public struct MapItemInfo : IDataFileItem
     {
         public int ItemVersion;
         public int DataIndexAuthor;

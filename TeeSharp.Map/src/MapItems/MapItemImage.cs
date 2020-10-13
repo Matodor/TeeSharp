@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace TeeSharp.Map
 {
-    public struct MapItemImage
+    public struct MapItemImage : IDataFileItem
     {
         public int Version;
         public int Width;
