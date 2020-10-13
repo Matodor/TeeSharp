@@ -64,24 +64,27 @@ namespace TeeSharp.Map
             return ItemTypes[type];
         }
 
-        public IEnumerable<T> GetItems<T>(int type) where T : struct
+        public IEnumerable<MapItem<T>> GetItems<T>(int type) 
+            where T : struct, IDataFileItem
         {
             var itemTypeInfo = GetItemType(type);
             for (var i = 0; i < itemTypeInfo.ItemsCount; i++)
-                yield return GetItem<T>(itemTypeInfo.ItemsOffset + i, out _);
+                yield return GetItem<T>(itemTypeInfo.ItemsOffset + i);
         }
         
-        public T GetItem<T>(int index, out DataFileItem itemInfo) where T : struct
+        public MapItem<T> GetItem<T>(int index) 
+            where T : struct, IDataFileItem
         {
             // TODO add external item types support from ddnet
 
+            var mapItem = new MapItem<T>();
             var offset = ItemsStartOffset + ItemsOffsets[index];
             Stream.Seek(offset, SeekOrigin.Begin);
 
-            if (Stream.Get(out itemInfo) &&
-                Stream.Get<T>(out var item))
+            if (Stream.Get(out mapItem.Info) &&
+                Stream.Get(out mapItem.Item, mapItem.Info.Size))
             {
-                return item;
+                return mapItem;
             }
             
             throw new Exception($"Get item error at index {index}");
