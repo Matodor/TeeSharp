@@ -32,10 +32,10 @@ namespace TeeSharp.Core.Extensions
             throw new ArgumentOutOfRangeException(nameof(data));
         }
 
-        public static void PutString(this Span<int> data, string str)
+        public static Span<int> PutString(this Span<int> data, string str)
         {
             if (data.Length == 0)
-                return;
+                return data;
             
             var buffer = Encoding.UTF8.GetBytes(str ?? string.Empty);
             var bufferIndex = 0;
@@ -58,6 +58,8 @@ namespace TeeSharp.Core.Extensions
             }
          
             data[^1] = (int)(data[^1] & 0xFF_FF_FF_00);
+
+            return data;
         }
         
         public static string GetString(this Span<int> data)
