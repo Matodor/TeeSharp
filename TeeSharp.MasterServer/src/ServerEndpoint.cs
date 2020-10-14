@@ -26,7 +26,7 @@ namespace TeeSharp.MasterServer
         
         public static IPEndPoint[] GetArray(Span<byte> data)
         {
-            if (data.Length < SizeOfAddr)
+            if (data.Length < SizeOfAddr || data.Length % SizeOfAddr != 0)
                 throw new ArgumentException(nameof(data));
             
             var array = new IPEndPoint[data.Length / SizeOfAddr];
