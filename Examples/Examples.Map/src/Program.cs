@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using TeeSharp.Map;
 
 namespace Examples.Map
@@ -117,6 +122,11 @@ namespace Examples.Map
 
         private static void ShowImages(DataFile dataFile)
         {
+            if (!Directory.Exists("images"))
+            {
+                Directory.CreateDirectory("images");
+            }
+            
             if (dataFile.HasItemType((int) MapItemType.Image))
             {
                 foreach (var mapImage in dataFile.GetItems<MapItemImage>((int) MapItemType.Image))
@@ -124,8 +134,40 @@ namespace Examples.Map
                     var imageName = dataFile.GetDataAsString(mapImage.Item.DataIndexName);
                     Console.WriteLine($"[{mapImage.Info.Id}] Image: {imageName}");
                     Console.WriteLine("--------------------------------------");
+
+
+                    // save images
+                    if (mapImage.Item.External != 1)
+                    {
+                        var imageArray = dataFile.GetDataAsArrayOf<byte>(mapImage.Item.DateIndexImage);
+
+                        var picture = PictureFromArgb(mapImage.Item.Width, mapImage.Item.Height, imageArray);
+                        
+                        //BUG: сохраняет без расширения
+                        var path = Path.Combine(Environment.CurrentDirectory, "images", $"{imageName}.png");
+                        
+                        picture.Save(path);
+                    }
                 }
             }
+
+            Image PictureFromArgb(int w, int h, IReadOnlyList<byte> data)
+            {
+                var pic = new Bitmap(w, h, PixelFormat.Format32bppArgb);
+
+                for (var x = 0; x < w; x++)
+                {
+                    for (var y = 0; y < h; y++)
+                    {
+                        var position = (y * w + x) * 4;
+                        var c = Color.FromArgb(data[3 + position], data[0 + position], data[1 + position], data[2 + position]);
+                        
+                        pic.SetPixel(x, y, c);
+                    }
+                }
+
+                return pic;
+            } 
         }
 
         private static void ShowVersion(DataFile dataFile)
