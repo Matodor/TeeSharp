@@ -29,7 +29,7 @@ namespace TeeSharp.Core.Extensions
                 ? buffer.Slice(0, readSize)
                 : buffer;
             
-            if (buffer.Length != stream.Read(readBuffer))
+            if (readBuffer.Length != stream.Read(readBuffer))
             {
                 output = default;
                 return false;
