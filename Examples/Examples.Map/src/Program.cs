@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.InteropServices;
 using TeeSharp.Map;
 
 namespace Examples.Map
@@ -141,33 +136,15 @@ namespace Examples.Map
                     {
                         var imageArray = dataFile.GetDataAsArrayOf<byte>(mapImage.Item.DateIndexImage);
 
-                        var picture = PictureFromArgb(mapImage.Item.Width, mapImage.Item.Height, imageArray);
+                        //var picture = ImageHelper.FromArgbArray(mapImage.Item.Width, mapImage.Item.Height, imageArray);
                         
                         //BUG: сохраняет без расширения
                         var path = Path.Combine(Environment.CurrentDirectory, "images", $"{imageName}.png");
                         
-                        picture.Save(path);
+                        //picture.Save(path);
                     }
                 }
             }
-
-            Image PictureFromArgb(int w, int h, IReadOnlyList<byte> data)
-            {
-                var pic = new Bitmap(w, h, PixelFormat.Format32bppArgb);
-
-                for (var x = 0; x < w; x++)
-                {
-                    for (var y = 0; y < h; y++)
-                    {
-                        var position = (y * w + x) * 4;
-                        var c = Color.FromArgb(data[3 + position], data[0 + position], data[1 + position], data[2 + position]);
-                        
-                        pic.SetPixel(x, y, c);
-                    }
-                }
-
-                return pic;
-            } 
         }
 
         private static void ShowVersion(DataFile dataFile)
