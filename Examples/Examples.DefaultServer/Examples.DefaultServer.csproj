@@ -8,6 +8,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
       <ProjectReference Include="..\..\TeeSharp.Network\TeeSharp.Network.csproj" />
+      <ProjectReference Include="..\..\TeeSharp.Server\TeeSharp.Server.csproj" />
     </ItemGroup>
 
 </Project>
