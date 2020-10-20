@@ -117,10 +117,7 @@ namespace Examples.Map
 
         private static void ShowImages(DataFile dataFile)
         {
-            if (!Directory.Exists("images"))
-            {
-                Directory.CreateDirectory("images");
-            }
+            Directory.CreateDirectory("images");
             
             if (dataFile.HasItemType((int) MapItemType.Image))
             {
@@ -130,21 +127,78 @@ namespace Examples.Map
                     Console.WriteLine($"[{mapImage.Info.Id}] Image: {imageName}");
                     Console.WriteLine("--------------------------------------");
 
-
-                    // save images
-                    if (mapImage.Item.External != 1)
+                    if (!mapImage.Item.IsExternal)
                     {
+<<<<<<< .mine
                         var imageArray = dataFile.GetDataAsArrayOf<byte>(mapImage.Item.DateIndexImage);
 
                         //var picture = ImageHelper.FromArgbArray(mapImage.Item.Width, mapImage.Item.Height, imageArray);
                         
                         //BUG: сохраняет без расширения
+=======
+                        var data = dataFile.GetDataAsRaw(mapImage.Item.DateIndexImage);
+                        var picture = PictureFromArgb(mapImage.Item.Width, mapImage.Item.Height, data);
+
+
+
+>>>>>>> .theirs
                         var path = Path.Combine(Environment.CurrentDirectory, "images", $"{imageName}.png");
                         
+<<<<<<< .mine
                         //picture.Save(path);
+=======
+                        picture.Save(path, ImageFormat.Png);
+>>>>>>> .theirs
                     }
                 }
             }
+<<<<<<< .mine
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=======
+
+            Image PictureFromArgb(int width, int height, ReadOnlySpan<byte> data)
+            {
+                var image = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                for (var x = 0; x < width; x++)
+                {
+                    for (var y = 0; y < height; y++)
+                    {
+                        var position = (y * width + x) * 4;
+                        var color = Color.FromArgb(
+                            data[position + 3], 
+                            data[position + 0], 
+                            data[position + 1], 
+                            data[position + 2]
+                        );
+                        
+                        image.SetPixel(x, y, color);
+                    }
+                }
+
+                return image;
+            } 
+>>>>>>> .theirs
         }
 
         private static void ShowVersion(DataFile dataFile)
