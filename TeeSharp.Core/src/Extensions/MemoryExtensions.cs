@@ -64,37 +64,35 @@ namespace TeeSharp.Core.Extensions
         
         public static string GetString(this Span<int> data)
         {
-            var buffer = new Span<byte>(new byte[data.Length * sizeof(int)]);
+            var buffer = (Span<byte>) stackalloc byte[data.Length * sizeof(int)];
             var length = 0;
 
             for (var i = 0; i < data.Length; i++)
             {
                 buffer[i * 4 + 0] = (byte) (((data[i] >> 24) & 0xFF) - 128);
-                length++;
-
                 if (buffer[i * 4 + 0] < 32)
                     break;
-
-                buffer[i * 4 + 1] = (byte) (((data[i] >> 16) & 0xFF) - 128);
                 length++;
-
+                
+                buffer[i * 4 + 1] = (byte) (((data[i] >> 16) & 0xFF) - 128);
                 if (buffer[i * 4 + 1] < 32)
                     break;
-
-                buffer[i * 4 + 2] = (byte) (((data[i] >> 8) & 0xFF) - 128);
                 length++;
-
+                
+                buffer[i * 4 + 2] = (byte) (((data[i] >> 8) & 0xFF) - 128);
                 if (buffer[i * 4 + 2] < 32)
                     break;
-
-                buffer[i * 4 + 3] = (byte) ((data[i] & 0xFF) - 128);
                 length++;
-
+                
+                buffer[i * 4 + 3] = (byte) ((data[i] & 0xFF) - 128);
                 if (buffer[i * 4 + 3] < 32)
                     break;
+                length++;
             }
 
-            return Encoding.UTF8.GetString(buffer.Slice(0, --length));
+            return length == 0
+                ? string.Empty
+                : Encoding.UTF8.GetString(buffer.Slice(0, length));
         }
     }
 }

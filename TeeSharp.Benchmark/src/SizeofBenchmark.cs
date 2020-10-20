@@ -5,18 +5,30 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using TeeSharp.Core;
+using TeeSharp.Map;
 using TeeSharp.MasterServer;
 
 namespace TeeSharp.Benchmark
 {
     public class SizeofBenchmark
     {
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct Struct1
+        {
+            public int Int1;
+            public int Int2;
+            public int Int3;
+            public int Int4;
+            public int Int5;
+            public int Int6;
+        }
+        
         [Benchmark(Description = "Marshal.SizeOf")]
         public void MarshalSizeof()
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = Marshal.SizeOf(typeof(TestStruct2));
+                var size = Marshal.SizeOf(typeof(Struct1));
             }
         }
         
@@ -25,7 +37,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = Unsafe.SizeOf<TestStruct2>();
+                var size = Unsafe.SizeOf<Struct1>();
             }
         }
         
@@ -34,7 +46,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = SizeOfHelper.SizeOf(typeof(TestStruct2));
+                var size = SizeOfHelper.SizeOf(typeof(Struct1));
             }
         } 
         
@@ -43,7 +55,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = TypeHelper1<TestStruct2>.Size;
+                var size = TypeHelper1<Struct1>.Size;
             }
         }      
         
@@ -52,7 +64,7 @@ namespace TeeSharp.Benchmark
         {
             for (var i = 0; i < 1000; i++)
             {
-                var size = TypeHelper2<TestStruct2>.Size;
+                var size = TypeHelper2<Struct1>.Size;
             }
         }
     }

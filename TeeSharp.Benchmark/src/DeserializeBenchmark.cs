@@ -7,93 +7,93 @@ using TeeSharp.Network;
 
 namespace TeeSharp.Benchmark
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct DataFileHeader1
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public char[] Id;
-        
-        public int Version;
-        public int Size;
-        public int Swaplen;
-        public int NumItemTypes;
-        public int NumItems;
-        public int NumRawData;
-        public int ItemSize;
-        public int DataSize;
-    }
-    
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct TestStruct1
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public byte[] IpData;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public byte[] PortData;
-
-        public static explicit operator IPEndPoint(TestStruct1 serverEndpoint)
-        {
-            var buffer = serverEndpoint.IpData.AsSpan();
-            var ipV4Mapping = new Span<byte>(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255});
-            var isIpV4 = ipV4Mapping.SequenceEqual(buffer.Slice(0, 12));
-            var port = (serverEndpoint.PortData[0] << 8) | serverEndpoint.PortData[1];
-            
-            return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
-        }
-    }
-    
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct TestStruct2
-    {
-        private readonly int _ipData1;
-        private readonly int _ipData2;
-        private readonly int _ipData3;
-        private readonly int _ipData4;
-        private readonly byte _portData1;
-        private readonly byte _portData2;
-
-        public static explicit operator IPEndPoint(TestStruct2 endpoint)
-        {
-            var buffer = MemoryMarshal.Cast<int, byte>(new Span<int>(new int[]
-            {
-                endpoint._ipData1,
-                endpoint._ipData2,
-                endpoint._ipData3,
-                endpoint._ipData4,
-            }));
-            
-            var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(buffer.Slice(0, 12));
-            var port = (endpoint._portData1 << 8) | endpoint._portData2;
-            
-            return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
-        }
-    }
-    
-    public static class Struct3
-    {
-        public static IPEndPoint Get(Span<byte> data)
-        {
-            var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(data.Slice(0, 12));
-            var port = (data[16] << 8) | data[17];
-
-            return new IPEndPoint(new IPAddress(isIpV4 ? data.Slice(12, 4) : data), port);
-        }
-
-        public static IPEndPoint[] GetArray(Span<byte> data)
-        {
-            const int sizeOfServerEndpoint = 18; 
-            var array = new IPEndPoint[data.Length / sizeOfServerEndpoint];
-
-            for (var i = 0; i < array.Length; i++)
-                array[i] = Get(data.Slice(i * sizeOfServerEndpoint));
-
-            return array;
-        }
-    }
-    
     public class DeserializeBenchmark
     {
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct DataFileHeader1
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public char[] Id;
+            
+            public int Version;
+            public int Size;
+            public int Swaplen;
+            public int NumItemTypes;
+            public int NumItems;
+            public int NumRawData;
+            public int ItemSize;
+            public int DataSize;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct TestStruct1
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            public byte[] IpData;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+            public byte[] PortData;
+
+            public static explicit operator IPEndPoint(TestStruct1 serverEndpoint)
+            {
+                var buffer = serverEndpoint.IpData.AsSpan();
+                var ipV4Mapping = new Span<byte>(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255});
+                var isIpV4 = ipV4Mapping.SequenceEqual(buffer.Slice(0, 12));
+                var port = (serverEndpoint.PortData[0] << 8) | serverEndpoint.PortData[1];
+                
+                return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct TestStruct2
+        {
+            private readonly int _ipData1;
+            private readonly int _ipData2;
+            private readonly int _ipData3;
+            private readonly int _ipData4;
+            private readonly byte _portData1;
+            private readonly byte _portData2;
+
+            public static explicit operator IPEndPoint(TestStruct2 endpoint)
+            {
+                var buffer = MemoryMarshal.Cast<int, byte>(new Span<int>(new int[]
+                {
+                    endpoint._ipData1,
+                    endpoint._ipData2,
+                    endpoint._ipData3,
+                    endpoint._ipData4,
+                }));
+                
+                var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(buffer.Slice(0, 12));
+                var port = (endpoint._portData1 << 8) | endpoint._portData2;
+                
+                return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
+            }
+        }
+        
+        private static class Struct3
+        {
+            public static IPEndPoint Get(Span<byte> data)
+            {
+                var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(data.Slice(0, 12));
+                var port = (data[16] << 8) | data[17];
+
+                return new IPEndPoint(new IPAddress(isIpV4 ? data.Slice(12, 4) : data), port);
+            }
+
+            public static IPEndPoint[] GetArray(Span<byte> data)
+            {
+                const int sizeOfServerEndpoint = 18; 
+                var array = new IPEndPoint[data.Length / sizeOfServerEndpoint];
+
+                for (var i = 0; i < array.Length; i++)
+                    array[i] = Get(data.Slice(i * sizeOfServerEndpoint));
+
+                return array;
+            }
+        }
+        
         [Benchmark(Description = "IPEndPoint Marshal.PtrToStructure")]
         public void MarshalPtrToStructure()
         {

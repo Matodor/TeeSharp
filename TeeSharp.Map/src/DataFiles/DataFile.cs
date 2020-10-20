@@ -89,17 +89,26 @@ namespace TeeSharp.Map
             
             throw new Exception($"Get item error at index {index}");
         }
+
+        public Span<byte> GetDataAsRaw(int index)
+        {
+            return GetDataBuffer(index);
+        }
         
         public string GetDataAsString(int index)
         {
             if (DataItems.TryGetValue(index, out var data))
                 return (string) data;
             
-            DataItems.Add(index, Encoding.UTF8.GetString(GetDataBuffer(index)));
+            var buffer = GetDataBuffer(index);
+            if (buffer[^1] == 0)
+                buffer = buffer[0..^1];
+            
+            DataItems.Add(index, Encoding.UTF8.GetString(buffer));
             return (string) DataItems[index];
         }
         
-        public T GetDataAs<T>(int index) where T : struct
+        public T GetDataAs<T>(int index) where T : struct, IDataFileItem
         {
             if (DataItems.TryGetValue(index, out var data))
                 return (T) data;
@@ -110,7 +119,7 @@ namespace TeeSharp.Map
             return (T) DataItems[index];
         }        
         
-        public T[] GetDataAsArrayOf<T>(int index) where T : struct
+        public T[] GetDataAsArrayOf<T>(int index) where T : struct, IDataFileItem
         {
             if (DataItems.TryGetValue(index, out var data))
                 return (T[]) data;
