@@ -50,7 +50,7 @@ namespace TeeSharp.Server
 
         protected virtual void RunLoop()
         {
-            while (ServerState == ServerState.Running)
+            while (true)
             {
                 BeginLoop:
                 
