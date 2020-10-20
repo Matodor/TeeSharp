@@ -45,13 +45,12 @@ namespace TeeSharp.Server
         
         public override void Stop()
         {
-            Started = false;
+            ServerState = ServerState.Stopping;
         }
 
         protected virtual void RunLoop()
         {
-            Started = true;
-            while (Started)
+            while (ServerState == ServerState.Running)
             {
                 BeginLoop:
                 
