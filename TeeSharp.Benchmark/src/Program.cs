@@ -21,6 +21,7 @@ namespace TeeSharp.Benchmark
                 typeof(DeserializeStructWithArrayBenchmark),
                 typeof(SizeofBenchmark),
                 typeof(CastIpEndpointBenchmark),
+                typeof(VirtualCallBenchmark),
             };
 
             do

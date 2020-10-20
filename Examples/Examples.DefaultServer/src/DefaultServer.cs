@@ -1,4 +1,5 @@
 ﻿using System;
+using TeeSharp.Server;
 
 namespace Examples.DefaultServer
 {
@@ -6,7 +7,9 @@ namespace Examples.DefaultServer
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var server = new TeeSharp.Server.DefaultServer();
+            server.Init();
+            server.Run();
         }
     }
 }
