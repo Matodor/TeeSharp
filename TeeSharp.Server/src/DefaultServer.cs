@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Server
 {
@@ -41,10 +42,16 @@ namespace TeeSharp.Server
             
             RunLoop();
         }
+        
+        public override void Stop()
+        {
+            Started = false;
+        }
 
         protected virtual void RunLoop()
         {
-            while (true)
+            Started = true;
+            while (Started)
             {
                 BeginLoop:
                 
@@ -55,9 +62,9 @@ namespace TeeSharp.Server
                 if (AccumulatedElapsedTime < TargetElapsedTime)
                 {
                     var sleepTime = (TargetElapsedTime - AccumulatedElapsedTime).TotalMilliseconds;
-
-#if _WIND1OWS
-                    var t = 1;
+                    
+#if _WINDOWS 
+                    ThreadsHelper.SleepForNoMoreThan(sleepTime);
 #else
                     if (sleepTime >= 2)
                         Thread.Sleep(1);
@@ -93,7 +100,7 @@ namespace TeeSharp.Server
         protected virtual void Update()
         {
             if (Tick % TickRate == 0)
-                Console.WriteLine($"[{GameTimer.Elapsed.ToString("G")}] Tick: {Tick}");
+                Console.WriteLine($"[{GameTimer.Elapsed:G}] Tick: {Tick}");
         }
     }
 }

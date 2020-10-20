@@ -7,6 +7,8 @@ namespace TeeSharp.Server
     {
         public const int TickRate = 50;
         public const int TickTime = 1000 / TickRate;
+
+        protected bool Started;
         
         public TimeSpan GameTime { get; protected set; }
         public ServerState ServerState { get; protected set; }
@@ -14,5 +16,6 @@ namespace TeeSharp.Server
         
         public abstract void Init();
         public abstract void Run();
+        public abstract void Stop();
     }
 }

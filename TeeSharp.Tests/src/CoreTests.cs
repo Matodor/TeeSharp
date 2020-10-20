@@ -1,9 +1,8 @@
 using System;
+using System.Diagnostics;
 using NUnit.Framework;
-using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
-using TeeSharp.Map;
-using TeeSharp.MasterServer;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Tests
 {
@@ -23,6 +22,31 @@ namespace TeeSharp.Tests
         {
             var ints = new int[3] {-840829713, -454036864, -2139062272}.AsSpan();
             Assert.AreEqual("Matodor", ints.GetString());
+        }
+
+        [Test]
+        public void ShouldThreadSleeps()
+        {
+            const int millis = 5000;
+            
+            // 5ms error
+            var error = 5;
+            
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            var beforeMilliseconds = stopWatch.ElapsedMilliseconds;
+                
+            ThreadsHelper.SleepForNoMoreThan(millis);
+            
+            if (stopWatch.ElapsedMilliseconds <= beforeMilliseconds + millis + error)
+            {
+                Assert.Pass();
+            }
+            else
+            {
+                Assert.Fail();
+            }
         }
     }
 }
