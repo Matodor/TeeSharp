@@ -5,4 +5,7 @@
         <LangVersion>8</LangVersion>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <DefineConstants>_WINDOWS</DefineConstants>
+    </PropertyGroup>
 </Project>
