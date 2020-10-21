@@ -17,16 +17,18 @@ namespace TeeSharp.Tests
                         
             var server = new DefaultServer();
             server.Init();
-
-            StartServer(server);
+            
             var stopWatch = Stopwatch.StartNew();
+            StartServer(server);
             
             Thread.Sleep(delay);
             server.Stop();
             stopWatch.Stop();
             
             var elapsedMilliseconds = stopWatch.ElapsedMilliseconds;
-            if (Math.Abs(elapsedMilliseconds / 1000 * BaseServer.TickRate - server.Tick) < error)
+            var expectedTicks = elapsedMilliseconds / 1000 * BaseServer.TickRate;
+            
+            if (expectedTicks - server.Tick < error)
                 Assert.Pass();
             else
                 Assert.Fail();
