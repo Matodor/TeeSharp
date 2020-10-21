@@ -2,9 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-
         <IsPackable>false</IsPackable>
-
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
@@ -19,6 +17,10 @@
       <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
       <ProjectReference Include="..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
       <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
+      <ProjectReference Include="..\TeeSharp.Server\TeeSharp.Server.csproj" />
     </ItemGroup>
 
+    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <DefineConstants>_WINDOWS</DefineConstants>
+    </PropertyGroup>
 </Project>

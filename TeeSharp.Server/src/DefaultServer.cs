@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using TeeSharp.Network;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Server
 {
@@ -28,8 +29,6 @@ namespace TeeSharp.Server
             
             NetworkServer = new NetworkServer();
             NetworkServer.Init();
-            
-            
         }
 
         public override void Run()
@@ -47,6 +46,11 @@ namespace TeeSharp.Server
 
             RunNetworkServer();
             RunLoop();
+        }
+        
+        public override void Stop()
+        {
+            ServerState = ServerState.Stopping;
         }
 
         protected virtual void RunNetworkServer()
@@ -67,9 +71,8 @@ namespace TeeSharp.Server
                 if (AccumulatedElapsedTime < TargetElapsedTime)
                 {
                     var sleepTime = (TargetElapsedTime - AccumulatedElapsedTime).TotalMilliseconds;
-
-#if _WINDOWS_TODO
-                    // TODO
+#if _WINDOWS 
+                    ThreadsHelper.SleepForNoMoreThan(sleepTime);
 #else
                     if (sleepTime >= 2)
                         Thread.Sleep(1);
@@ -111,7 +114,7 @@ namespace TeeSharp.Server
         protected virtual void Update()
         {
             if (Tick % TickRate == 0)
-                Console.WriteLine($"[{GameTimer.Elapsed.ToString("G")}] Tick: {Tick}");
+                Console.WriteLine($"[{GameTimer.Elapsed:G}] Tick: {Tick}");
         }
     }
 }
