@@ -19,6 +19,7 @@
 # Rider auto-generates .iml files, and contentModel.xml
 **/.idea/**/*.iml
 **/.idea/**/contentModel.xml
+**/.idea/**/projectSettingsUpdater.xml
 **/.idea/**/modules.xml
 
 # Project-level settings
