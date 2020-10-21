@@ -24,29 +24,21 @@ namespace TeeSharp.Tests
             Assert.AreEqual("Matodor", ints.GetString());
         }
 
+#if _WINDOWS
         [Test]
         public void ShouldThreadSleeps()
         {
             const int millis = 5000;
             
-            // 5ms error
             var error = 5;
-            
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            var beforeMilliseconds = stopWatch.ElapsedMilliseconds;
-                
+            var sw = Stopwatch.StartNew();
             ThreadsHelper.SleepForNoMoreThan(millis);
             
-            if (stopWatch.ElapsedMilliseconds <= beforeMilliseconds + millis + error)
-            {
+            if (sw.ElapsedMilliseconds <= millis + error)
                 Assert.Pass();
-            }
             else
-            {
                 Assert.Fail();
-            }
         }
     }
+#endif
 }
