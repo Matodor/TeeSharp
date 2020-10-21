@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using TeeSharp.Network;
 using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Server
@@ -25,6 +26,11 @@ namespace TeeSharp.Server
                 return;
             
             ServerState = ServerState.StartsUp;
+            
+            NetworkServer = new NetworkServer();
+            NetworkServer.Init();
+            
+            
         }
 
         public override void Run()
@@ -39,7 +45,8 @@ namespace TeeSharp.Server
             
             GameTimer = Stopwatch.StartNew();
             Tick = 0;
-            
+
+            RunNetworkServer();
             RunLoop();
         }
         
@@ -48,6 +55,11 @@ namespace TeeSharp.Server
             ServerState = ServerState.Stopping;
         }
 
+        protected virtual void RunNetworkServer()
+        {
+            
+        }
+        
         protected virtual void RunLoop()
         {
             while (true)
@@ -96,6 +108,12 @@ namespace TeeSharp.Server
             }
         }
 
+
+        protected virtual void UpdateNetwork()
+        {
+            NetworkServer.Update();
+        }
+        
         protected virtual void Update()
         {
             if (Tick % TickRate == 0)
