@@ -29,8 +29,6 @@ namespace TeeSharp.Server
             
             NetworkServer = new NetworkServer();
             NetworkServer.Init();
-            
-            
         }
 
         public override void Run()
@@ -73,7 +71,6 @@ namespace TeeSharp.Server
                 if (AccumulatedElapsedTime < TargetElapsedTime)
                 {
                     var sleepTime = (TargetElapsedTime - AccumulatedElapsedTime).TotalMilliseconds;
-                    
 #if _WINDOWS 
                     ThreadsHelper.SleepForNoMoreThan(sleepTime);
 #else
