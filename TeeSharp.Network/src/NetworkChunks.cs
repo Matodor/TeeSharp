@@ -6,6 +6,7 @@ namespace TeeSharp.Network
         public int Ack { get; set; }
         public int ChunksCount { get; set; }
         public int DataSize { get; set; }
-        public byte[] Data { get; } = new byte[NetworkConstants.MaxPayload];
+        public readonly byte[] Data = new byte[NetworkConstants.MaxPayload];
+        public readonly byte[] ExtraData = new byte[4];
     }
 }
