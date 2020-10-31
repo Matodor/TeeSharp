@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using System.Net.Sockets;
 
 namespace TeeSharp.Network
 {
@@ -14,17 +17,43 @@ namespace TeeSharp.Network
             
         }
 
-        public override bool Open()
+        // ReSharper disable once InconsistentNaming
+        public override bool Open(IPEndPoint localEP)
         {
-            try
+            if (localEP == null)
+                throw new ArgumentNullException(nameof(localEP));
+            
+            if (!NetworkBase.TryGetUdpClient(localEP, out var socket))
+                return false;
+
+            Socket = socket;
+            Socket.Client.Blocking = true;
+            
+            return true;
+        }
+
+        public override bool Receive()
+        {
+            while (true)
             {
-                throw new NotImplementedException();
+                // ReSharper disable once InconsistentNaming
+                var remoteEP = default(IPEndPoint);
+                var data = Socket.Receive(ref remoteEP).AsSpan();
+                
+                if (data.Length == 0) 
+                    continue;
+
+                var chunks = new NetworkChunks();
+                var isSixUp = false;
+                var securityToken = default(SecurityToken);
+                
+                if (!NetworkBase.TryUnpackPacket(data, chunks, ref isSixUp, ref securityToken))
+                    continue;
+                
+                
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+
+            return true;
         }
     }
 }
