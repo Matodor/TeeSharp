@@ -1,11 +1,17 @@
+using System;
+
 namespace TeeSharp.Network
 {
+    [Flags]
     public enum PacketFlags
     {
-        None     = 0b_0000_0000,
-        Vital    = 0b_0000_0001,
-        Connless = 0b_0000_0010,
-        Flush    = 0b_0000_0100,
-        Extended = 0b_0000_1000
+        None           = 0,
+        Unused         = 1 << 0,
+        Token          = 1 << 1,
+        Control        = 1 << 2,
+        ConnectionLess = 1 << 3,
+        Resend         = 1 << 4,
+        Compression    = 1 << 5,
+        Extended       = 1 << 6,
     }
 }
