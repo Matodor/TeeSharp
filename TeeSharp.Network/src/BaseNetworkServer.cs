@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Sockets;
 
 namespace TeeSharp.Network
@@ -7,7 +9,12 @@ namespace TeeSharp.Network
         protected UdpClient Socket { get; set; }
         
         public abstract void Init();
+        
         public abstract void Update();
-        public abstract bool Open();
+        
+        // ReSharper disable once InconsistentNaming
+        public abstract bool Open(IPEndPoint localEP);
+
+        public abstract bool Receive();
     }
 }
