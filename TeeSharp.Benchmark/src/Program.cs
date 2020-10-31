@@ -7,8 +7,6 @@ namespace TeeSharp.Benchmark
     {
         static void Main(string[] args)
         {
-            // new DeserializeStructWithArrayBenchmark().MarshalPtrToStructure();
-            // new DeserializeStructWithArrayBenchmark().UnsafeAs();
             // new DeserializeStructWithArrayBenchmark().MemoryMarshalRead();
             
             string result;
@@ -22,6 +20,7 @@ namespace TeeSharp.Benchmark
                 typeof(SizeofBenchmark),
                 typeof(CastIpEndpointBenchmark),
                 typeof(VirtualCallBenchmark),
+                typeof(HasFlagBenchmark),
             };
 
             do
