@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Threading;
 using TeeSharp.Network;
 using TeeSharp.Core.Helpers;
@@ -20,6 +21,9 @@ namespace TeeSharp.Server
         protected TimeSpan AccumulatedElapsedTime;
         protected long PrevTicks = 0;
         
+        protected CancellationTokenSource NetworkLoopCancellationToken { get; set; }
+        protected Thread NetworkLoopThread { get; set; }
+        
         public override void Init()
         {
             if (ServerState >= ServerState.StartsUp)
@@ -27,6 +31,7 @@ namespace TeeSharp.Server
             
             ServerState = ServerState.StartsUp;
             
+            // TODO use dependency injection container 
             NetworkServer = new NetworkServer();
             NetworkServer.Init();
         }
@@ -50,12 +55,55 @@ namespace TeeSharp.Server
         
         public override void Stop()
         {
+            if (ServerState != ServerState.Running)
+                return;
+            
             ServerState = ServerState.Stopping;
+            NetworkLoopCancellationToken.Cancel();
         }
 
         protected virtual void RunNetworkServer()
         {
+            // TODO make bind address from config
+            // ReSharper disable InconsistentNaming
+            // var localEP = NetworkBase.TryGetLocalIP(out var localIP) 
+            //     ? new IPEndPoint(localIP, 8303) 
+            //     : new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8303);
+            // ReSharper restore InconsistentNaming
+
+            // ReSharper disable once InconsistentNaming
+            var localEP = new IPEndPoint(IPAddress.Any, 8303);
             
+            if (NetworkServer.Open(localEP))
+            {
+                NetworkLoopCancellationToken = new CancellationTokenSource();
+                NetworkLoopThread = new Thread(RunNetworkLoop);
+                NetworkLoopThread.Start(NetworkLoopCancellationToken.Token);
+            }
+            else
+            {
+                throw new Exception("Can't run network server");
+            }
+        }
+
+        protected virtual void RunNetworkLoop(object obj)
+        {
+            var cancellationToken = (CancellationToken) obj;
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                if (NetworkServer.Receive())
+                {
+                    Console.WriteLine("READ");
+                }
+            }
+        }
+
+        protected virtual void NetworkUpdate()
+        {
+            NetworkServer.Update();
         }
         
         protected virtual void RunLoop()
@@ -99,17 +147,14 @@ namespace TeeSharp.Server
                 {
                     
                 }
+
+                NetworkUpdate();
                 
                 if (ServerState == ServerState.Stopping)
                     break;
             }
         }
-
-
-        protected virtual void UpdateNetwork()
-        {
-            NetworkServer.Update();
-        }
+        
         
         protected virtual void Update()
         {
