@@ -33,16 +33,7 @@ namespace Examples.ServerBrowser
                     }
                 };
 
-                var packet = new Packet()
-                {
-                    ClientId = -1,
-                    Flags = PacketFlags.Connless,
-                    Data = Packets.GetList,
-                    EndPoint = masterServerEndpoint
-                };
-
-                NetworkBase.SendData(client, packet.EndPoint, packet.Data);
-
+                NetworkBase.SendData(client, masterServerEndpoint, Packets.GetList);
                 Thread.Sleep(2300);
 
                 if (client.Available > 0)
