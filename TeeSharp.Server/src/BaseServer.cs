@@ -1,13 +1,14 @@
 using System;
-using System.Diagnostics;
+using TeeSharp.Core.MinIoC;
 using TeeSharp.Network;
 
 namespace TeeSharp.Server
 {
-    public abstract class BaseServer
+    public abstract class BaseServer : IServiceBinder, IContainerService
     {
         public const int TickRate = 50;
         
+        public Container Container { get; set; }
         public TimeSpan GameTime { get; protected set; }
         public ServerState ServerState { get; protected set; }
         public abstract int Tick { get; protected set; }
@@ -17,5 +18,6 @@ namespace TeeSharp.Server
         public abstract void Init();
         public abstract void Run();
         public abstract void Stop();
+        public abstract void ConfigureServices(Container services);
     }
 }
