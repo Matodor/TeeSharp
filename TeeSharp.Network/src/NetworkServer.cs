@@ -46,9 +46,17 @@ namespace TeeSharp.Network
                 var chunks = new NetworkChunks();
                 var isSixUp = false;
                 var securityToken = default(SecurityToken);
-                
-                if (!NetworkBase.TryUnpackPacket(data, chunks, ref isSixUp, ref securityToken))
+                var responseToken = default(SecurityToken);
+
+                if (!NetworkBase.TryUnpackPacket(
+                    data, 
+                    chunks,
+                    ref isSixUp,
+                    ref securityToken,
+                    ref responseToken))
+                {
                     continue;
+                }
                 
                 
             }

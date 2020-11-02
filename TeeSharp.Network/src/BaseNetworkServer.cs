@@ -1,13 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
+using TeeSharp.Core.MinIoC;
 
 namespace TeeSharp.Network
 {
-    public abstract class BaseNetworkServer
+    public abstract class BaseNetworkServer : IContainerService
     {
-        protected UdpClient Socket { get; set; }
+        public Container Container { get; set; }
         
+        protected UdpClient Socket { get; set; }
+
         public abstract void Init();
         
         public abstract void Update();
