@@ -33,7 +33,7 @@ namespace TeeSharp.Server
             ServerState = ServerState.StartsUp;
             
             // TODO use dependency injection container 
-            NetworkServer = new NetworkServer();
+            NetworkServer = Container.Resolve<BaseNetworkServer>();
             NetworkServer.Init();
         }
 
