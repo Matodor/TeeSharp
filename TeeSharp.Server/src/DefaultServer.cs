@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using TeeSharp.Network;
 using TeeSharp.Core.Helpers;
+using TeeSharp.Core.MinIoC;
 
 namespace TeeSharp.Server
 {
@@ -60,6 +61,11 @@ namespace TeeSharp.Server
             
             ServerState = ServerState.Stopping;
             NetworkLoopCancellationToken.Cancel();
+        }
+
+        public override void ConfigureServices(Container services)
+        {
+            services.Register<BaseNetworkServer, NetworkServer>();
         }
 
         protected virtual void RunNetworkServer()
