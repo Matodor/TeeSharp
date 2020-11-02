@@ -3,7 +3,6 @@
 // https://github.com/microsoft/MinIoC/blob/master/Container.cs
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -35,6 +34,19 @@ namespace TeeSharp.Core.MinIoC
 
         private IRegisteredType RegisterType(Type itemType, Func<ILifetime, object> factory)
         {
+            if (typeof(IContainerService).IsAssignableFrom(itemType))
+            {
+                var sourceFactory = factory;
+                factory = lifetime =>
+                {
+                    var obj = sourceFactory(lifetime);
+                    if (obj is IContainerService service)
+                        service.Container = this;
+
+                    return obj;
+                };
+            }
+
             return new RegisteredType(itemType, f => _registeredTypes[itemType] = f, factory);
         }
 

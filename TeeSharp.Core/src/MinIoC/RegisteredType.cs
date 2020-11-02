@@ -21,9 +21,8 @@ namespace TeeSharp.Core.MinIoC
             {
                 _itemType = itemType;
                 _registerFactory = registerFactory;
+                _registerFactory(factory);
                 _factory = factory;
-
-                registerFactory(_factory);
             }
 
             public void AsSingleton()

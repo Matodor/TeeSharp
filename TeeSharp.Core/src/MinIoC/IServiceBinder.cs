@@ -2,6 +2,6 @@
 {
     public interface IServiceBinder
     {
-        void ConfigureServices(Container container);
+        void ConfigureServices(Container services);
     }
 }
