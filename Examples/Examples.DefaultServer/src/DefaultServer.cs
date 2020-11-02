@@ -1,4 +1,5 @@
 ﻿using System;
+using TeeSharp.Core.MinIoC;
 using TeeSharp.Server;
 
 namespace Examples.DefaultServer
@@ -7,7 +8,14 @@ namespace Examples.DefaultServer
     {
         private static void Main(string[] args)
         {
-            var server = new TeeSharp.Server.DefaultServer();
+            var services = new Container();
+            
+            // ReSharper disable RedundantTypeArgumentsOfMethod
+            services.Register<BaseServer, TeeSharp.Server.DefaultServer>().AsSingleton();
+            // ReSharper restore RedundantTypeArgumentsOfMethod
+
+            var server = services.Resolve<BaseServer>();
+            server.ConfigureServices(services);
             server.Init();
             server.Run();
         }
