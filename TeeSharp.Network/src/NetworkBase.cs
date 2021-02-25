@@ -15,16 +15,15 @@ namespace TeeSharp.Network
             ref SecurityToken securityToken,
             ref SecurityToken responseToken)
         {
-            if (data.Length == 0 ||
-                data.Length < NetworkConstants.PacketHeaderSize ||
+            if (data.Length < NetworkConstants.PacketHeaderSize ||
                 data.Length > NetworkConstants.MaxPacketSize)
             {
                 return true;
             }
 
-            chunks.Flags = (PacketFlags) (data[0] >> 2);
+            chunks.Flags = (ChunkFlags) (data[0] >> 2);
 
-            if (chunks.Flags.HasFlag(PacketFlags.ConnectionLess))
+            if (chunks.Flags.HasFlag(ChunkFlags.ConnectionLess))
             {
                 isSixUp = (data[0] & 0b_0000_0011) == 0b_0000_0001;
 
@@ -38,9 +37,9 @@ namespace TeeSharp.Network
                     responseToken = data.Slice(5, 4).Deserialize<SecurityToken>();
                 }
 
-                chunks.Flags = PacketFlags.ConnectionLess;
+                chunks.Flags = ChunkFlags.ConnectionLess;
                 chunks.Ack = 0;
-                chunks.ChunksCount = 0;
+                chunks.Count = 0;
                 chunks.DataSize = data.Length - dataStart;
                 data.Slice(dataStart, chunks.DataSize).CopyTo(chunks.Data);
 
@@ -48,41 +47,41 @@ namespace TeeSharp.Network
                     .Slice(0, NetworkConstants.PacketHeaderExtended.Length)
                     .SequenceEqual(NetworkConstants.PacketHeaderExtended))
                 {
-                    chunks.Flags |= PacketFlags.Extended;
+                    chunks.Flags |= ChunkFlags.Extended;
                     data.Slice(NetworkConstants.PacketHeaderExtended.Length, chunks.ExtraData.Length)
                         .CopyTo(chunks.ExtraData);
                 }
             }
             else
             {
-                if (chunks.Flags.HasFlag(PacketFlags.Unused))
+                if (chunks.Flags.HasFlag(ChunkFlags.Unused))
                     isSixUp = true;
 
                 var dataStart = isSixUp ? 7 : NetworkConstants.PacketHeaderSize;
                 if (dataStart > data.Length)
                     return false;
 
-                chunks.Ack = (data[0] & 0b_0000_0011) << 8 | data[1];
-                chunks.ChunksCount = data[2];
+                chunks.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
+                chunks.Count = data[2];
                 chunks.DataSize = data.Length - dataStart;
 
                 if (isSixUp)
                 {
-                    chunks.Flags = PacketFlags.None;
+                    chunks.Flags = ChunkFlags.None;
 
-                    if (((PacketFlagsSixUp) chunks.Flags).HasFlag(PacketFlagsSixUp.Control))
-                        chunks.Flags |= PacketFlags.Control;
-                    if (((PacketFlagsSixUp) chunks.Flags).HasFlag(PacketFlagsSixUp.Resend))
-                        chunks.Flags |= PacketFlags.Resend;
-                    if (((PacketFlagsSixUp) chunks.Flags).HasFlag(PacketFlagsSixUp.Compression))
-                        chunks.Flags |= PacketFlags.Compression;
+                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Control))
+                        chunks.Flags |= ChunkFlags.Control;
+                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Resend))
+                        chunks.Flags |= ChunkFlags.Resend;
+                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Compression))
+                        chunks.Flags |= ChunkFlags.Compression;
 
                     securityToken = data.Slice(3, 4).Deserialize<SecurityToken>();
                 }
 
-                if (chunks.Flags.HasFlag(PacketFlags.Compression))
+                if (chunks.Flags.HasFlag(ChunkFlags.Compression))
                 {
-                    if (chunks.Flags.HasFlag(PacketFlags.Control))
+                    if (chunks.Flags.HasFlag(ChunkFlags.Control))
                         return false;
                     
                     // TODO decomprassion

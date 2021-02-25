@@ -2,14 +2,18 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using TeeSharp.Core.MinIoC;
 
 namespace TeeSharp.Network
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class NetworkServer : BaseNetworkServer
     {
         public override void Init()
         {
-            
+            ChunkFactory = Container.Resolve<BaseChunkFactory>();
+            ChunkFactory.Init();
         }
 
         public override void Update()
@@ -32,36 +36,71 @@ namespace TeeSharp.Network
             return true;
         }
 
-        public override bool Receive()
+        public override bool Receive(out NetworkMessage netMsg, ref SecurityToken responseToken)
         {
             while (true)
             {
+                if (ChunkFactory.TryGet(out netMsg))
+                    return true;
+
                 // ReSharper disable once InconsistentNaming
-                var remoteEP = default(IPEndPoint);
-                var data = Socket.Receive(ref remoteEP).AsSpan();
-                
-                if (data.Length == 0) 
+                var endPoint = default(IPEndPoint);
+                var data = Socket.Receive(ref endPoint).AsSpan();
+
+                if (data.Length == 0)
                     continue;
 
-                var chunks = new NetworkChunks();
+                // TODO check for banned IP address
+
                 var isSixUp = false;
                 var securityToken = default(SecurityToken);
-                var responseToken = default(SecurityToken);
+
+                responseToken = SecurityToken.TokenUnknown;
 
                 if (!NetworkBase.TryUnpackPacket(
-                    data, 
-                    chunks,
+                    data,
+                    ChunkFactory.Chunks,
                     ref isSixUp,
                     ref securityToken,
                     ref responseToken))
                 {
                     continue;
                 }
-                
-                
+
+                if (ChunkFactory.Chunks.Flags.HasFlag(ChunkFlags.ConnectionLess))
+                {
+                    if (isSixUp && securityToken != GetToken(endPoint))
+                        continue;
+
+                    netMsg = new NetworkMessage
+                    {
+                        ClientId = -1,
+                        EndPoint = endPoint,
+                        Flags = MessageFlags.ConnectionLess,
+                        DataSize = ChunkFactory.Chunks.DataSize,
+                        Data = ChunkFactory.Chunks.Data,
+                    };
+
+                    if (ChunkFactory.Chunks.Flags.HasFlag(ChunkFlags.Extended))
+                    {
+                        netMsg.Flags |= MessageFlags.Extended;
+                        netMsg.ExtraData = new byte[NetworkConstants.ExtraDataSize];
+                        ChunkFactory.Chunks.ExtraData.AsSpan().CopyTo(netMsg.ExtraData);
+                    }
+
+                    return true;
+
+                    // 192.168.66.1:13032
+                    // 138, 153, 106, 214, 139, 34, 32, 162, 24, 139, 49, 155, 18, 192, 231, 110
+                }
             }
 
             return true;
+        }
+
+        public override SecurityToken GetToken(IPEndPoint endPoint)
+        {
+            throw new NotImplementedException();
         }
     }
 }

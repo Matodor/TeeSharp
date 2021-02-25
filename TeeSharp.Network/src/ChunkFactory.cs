@@ -6,6 +6,11 @@ namespace TeeSharp.Network
     {
         public override void Init()
         {
+            Chunks = new NetworkChunks
+            {
+                Data = new byte[NetworkConstants.MaxPayload], 
+                ExtraData = new byte[4],
+            };
         }
 
         public override void Reset()

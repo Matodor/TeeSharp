@@ -3,7 +3,7 @@ using System;
 namespace TeeSharp.Network
 {
     [Flags]
-    public enum PacketFlags
+    public enum ChunkFlags
     {
         None           = 0,
         Unused         = 1 << 0,

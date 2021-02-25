@@ -3,7 +3,7 @@ using System;
 namespace TeeSharp.Network
 {
     [Flags]
-    public enum PacketFlagsSixUp
+    public enum ChunkFlagsSixUp
     {
         None           = 0,
         Control        = 1 << 0,

@@ -8,6 +8,7 @@ using TeeSharp.Core.MinIoC;
 
 namespace TeeSharp.Server
 {
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class DefaultServer : BaseServer
     {
         public override int Tick { get; protected set; }
@@ -32,7 +33,6 @@ namespace TeeSharp.Server
             
             ServerState = ServerState.StartsUp;
             
-            // TODO use dependency injection container 
             NetworkServer = Container.Resolve<BaseNetworkServer>();
             NetworkServer.Init();
         }
@@ -65,7 +65,8 @@ namespace TeeSharp.Server
 
         public override void ConfigureServices(Container services)
         {
-            services.Register<BaseNetworkServer, NetworkServer>();
+            services.Register<BaseChunkFactory, ChunkFactory>();
+            services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
         }
 
         protected virtual void RunNetworkServer()
@@ -100,7 +101,8 @@ namespace TeeSharp.Server
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                if (NetworkServer.Receive())
+                var responseToken = default(SecurityToken);
+                if (NetworkServer.Receive(out var msg, ref responseToken))
                 {
                     Console.WriteLine("READ");
                 }
@@ -161,7 +163,9 @@ namespace TeeSharp.Server
             }
         }
         
-        
+        /// <summary>
+        /// Game server tick
+        /// </summary>
         protected virtual void Update()
         {
             if (Tick % TickRate == 0)
