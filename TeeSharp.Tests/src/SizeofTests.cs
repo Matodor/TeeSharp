@@ -1,7 +1,6 @@
 using NUnit.Framework;
-using TeeSharp.Core;
+using TeeSharp.Core.Helpers;
 using TeeSharp.Map;
-using TeeSharp.MasterServer;
 
 namespace TeeSharp.Tests
 {

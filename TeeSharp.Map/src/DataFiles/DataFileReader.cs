@@ -1,7 +1,6 @@
-using System;
 using System.IO;
-using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Map
 {

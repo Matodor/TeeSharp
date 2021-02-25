@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Core.Extensions
 {

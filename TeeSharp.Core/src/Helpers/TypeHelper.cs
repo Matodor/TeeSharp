@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace TeeSharp.Core
+namespace TeeSharp.Core.Helpers
 {
     public static class TypeHelper<T>
     {

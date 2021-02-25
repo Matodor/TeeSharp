@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using ComponentAce.Compression.Libs.zlib;
-using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Map
 {

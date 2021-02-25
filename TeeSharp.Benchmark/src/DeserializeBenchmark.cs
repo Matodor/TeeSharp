@@ -2,7 +2,7 @@ using System;
 using System.Net;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
-using TeeSharp.Core;
+using TeeSharp.Core.Helpers;
 using TeeSharp.Network;
 
 namespace TeeSharp.Benchmark
