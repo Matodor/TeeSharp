@@ -8,6 +8,7 @@ namespace TeeSharp.Network
         public static readonly SecurityToken SecurityTokenUnknown = -1;
         public static readonly SecurityToken SecurityTokenUnsupported = 0;
         
+        public const int ExtraDataSize = 4;
         public const int MaxPayload = MaxPacketSize - PacketConnLessDataOffset;
         public const int MaxPacketSize = 1400;
         public const int PacketHeaderSize = 3;
