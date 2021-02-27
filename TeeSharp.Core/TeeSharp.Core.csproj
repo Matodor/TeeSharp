@@ -8,4 +8,8 @@
     <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
         <DefineConstants>_WINDOWS</DefineConstants>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Serilog" Version="2.10.0" />
+    </ItemGroup>
 </Project>
