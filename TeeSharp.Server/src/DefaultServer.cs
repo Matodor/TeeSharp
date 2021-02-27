@@ -2,6 +2,9 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
+using Serilog;
+using TeeSharp.Common.Config;
+using TeeSharp.Common.Storage;
 using TeeSharp.Network;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Core.MinIoC;
@@ -33,6 +36,21 @@ namespace TeeSharp.Server
             
             ServerState = ServerState.StartsUp;
             
+            // TODO
+            // Load serilog config from autoexec.json:
+            // LoggerConfiguration.ReadFrom.Configuration(configuration)
+            
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}][{Level:u3}]{Message}{NewLine}{Exception}")
+                .WriteTo.File(FSHelper.WorkingPath("log.txt"))
+                .CreateLogger();
+            
+            Storage = Container.Resolve<BaseStorage>();
+            Storage.Init(FSHelper.WorkingPath("storage.json"));
+            
+            Config = Container.Resolve<BaseConfiguration>();
+            Config.Init();
+            
             NetworkServer = Container.Resolve<BaseNetworkServer>();
             NetworkServer.Init();
         }
@@ -43,7 +61,7 @@ namespace TeeSharp.Server
                 ServerState = ServerState.Running;
             else
             {
-                // TODO: log already running
+                Log.Warning("[server] Server already in `Running` state");
                 return;    
             }
             
@@ -61,11 +79,14 @@ namespace TeeSharp.Server
             
             ServerState = ServerState.Stopping;
             NetworkLoopCancellationToken.Cancel();
+            Log.CloseAndFlush();
         }
 
         public override void ConfigureServices(Container services)
         {
             services.Register<BaseChunkFactory, ChunkFactory>();
+            services.Register<BaseStorage, Storage>().AsSingleton();
+            services.Register<BaseConfiguration, Configuration>().AsSingleton();
             services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
         }
 
@@ -169,7 +190,10 @@ namespace TeeSharp.Server
         protected virtual void Update()
         {
             if (Tick % TickRate == 0)
-                Console.WriteLine($"[{GameTimer.Elapsed:G}] Tick: {Tick}");
+            {
+                Log.Information($"[server] Tick: {Tick}");
+                // Log.Information($"[server][{GameTimer.Elapsed:G}] Tick: {Tick}");
+            }
         }
     }
 }

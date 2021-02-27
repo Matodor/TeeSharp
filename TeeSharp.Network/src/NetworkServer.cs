@@ -1,8 +1,5 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Sockets;
-using System.Security.Cryptography;
 using TeeSharp.Core.MinIoC;
 
 namespace TeeSharp.Network
@@ -50,7 +47,8 @@ namespace TeeSharp.Network
                 if (data.Length == 0)
                     continue;
 
-                // TODO check for banned IP address
+                // TODO
+                // Check for banned IP address
 
                 var isSixUp = false;
                 var securityToken = default(SecurityToken);
