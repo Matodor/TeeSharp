@@ -7,6 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Content Include="..\..\res\examples-data\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+    
+    <ItemGroup>
       <ProjectReference Include="..\..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
       <ProjectReference Include="..\..\TeeSharp.Network\TeeSharp.Network.csproj" />
       <ProjectReference Include="..\..\TeeSharp.Server\TeeSharp.Server.csproj" />
