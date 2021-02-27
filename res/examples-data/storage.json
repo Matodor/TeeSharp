@@ -1,0 +1,8 @@
+{
+  "saveDir": "%APP_DATA%/TeeSharp",
+  "paths1": [
+    "%APP_DATA%/TeeSharp",
+    "%CURRENT_DIR%/data",
+    "%CURRENT_DIR%"
+  ]
+}
