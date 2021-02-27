@@ -1,4 +1,6 @@
 using System;
+using TeeSharp.Common.Config;
+using TeeSharp.Common.Storage;
 using TeeSharp.Core.MinIoC;
 using TeeSharp.Network;
 
@@ -14,6 +16,8 @@ namespace TeeSharp.Server
         public abstract int Tick { get; protected set; }
         
         protected BaseNetworkServer NetworkServer { get; set; }
+        protected BaseConfiguration Config { get; set; }
+        protected BaseStorage Storage { get; set; }
         
         public abstract void Init();
         public abstract void Run();
