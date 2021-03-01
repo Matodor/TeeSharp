@@ -21,9 +21,62 @@ namespace TeeSharp.Common.Storage
             Setup();
         }
 
-        public override bool TryOpen(string fileName, FileAccess access)
+        public override bool TryOpen(string filePath, FileAccess access, out FileStream fs)
         {
-            throw new System.NotImplementedException();
+            if (access.HasFlag(FileAccess.Write) || 
+                access.HasFlag(FileAccess.ReadWrite))
+            {
+                if (Config.SaveDirectory == null)
+                {
+                    fs = null;
+                    Log.Warning("[storage] Cannot save file, `saveDir` is empty");
+                    return false;
+                }
+
+                try
+                {
+                    var path = Path.Combine(
+                        Config.SaveDirectory, filePath
+                    );
+
+                    fs = File.Open(
+                        Path.GetFullPath(path),
+                        FileMode.OpenOrCreate,
+                        access
+                    );
+                    
+                    return true;
+                }
+                catch
+                {
+                    fs = null;
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < Config.Paths.Count; i++)
+            {
+                var path = Path.GetFullPath(
+                    Path.Combine(Config.Paths[i], filePath)
+                );
+                    
+                if (!File.Exists(path))
+                    continue;
+                
+                try
+                {
+                    fs = File.Open(path, FileMode.Open, access);
+                    Log.Debug($"[storage] Open file at: {path}");
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    // nothing to do
+                }
+            }
+
+            fs = null;
+            return false;
         }
 
         public override void LoadConfig(string configPath)

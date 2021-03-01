@@ -16,7 +16,7 @@ namespace TeeSharp.Common.Storage
             public string SaveDirectory { get; set; }
 
             [JsonProperty("paths")]
-            public ICollection<string> Paths { get; set; }
+            public IList<string> Paths { get; set; }
         }
         
         public Container Container { get; set; }
@@ -24,7 +24,7 @@ namespace TeeSharp.Common.Storage
         protected StorageConfig Config { get; set; }
         
         public abstract void Init(string configPath);
-        public abstract bool TryOpen(string fileName, FileAccess access);
+        public abstract bool TryOpen(string filePath, FileAccess access, out FileStream fs);
         public abstract void LoadConfig(string configPath);
         public abstract void AddPath(string path);
         public abstract string FormatPath(string path);
