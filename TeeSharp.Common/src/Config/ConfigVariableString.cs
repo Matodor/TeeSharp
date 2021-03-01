@@ -1,3 +1,4 @@
+using System;
 using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Config
@@ -21,13 +22,24 @@ namespace TeeSharp.Common.Config
         public string Value
         {
             get => _value;
-            set => _value = value.Limit(MaxLength);
+            set
+            {
+                _value = value.Limit(MaxLength);
+                OnChange?.Invoke(_value);
+            }
         }
+
+        public event Action<string> OnChange;
 
         private string _defaultValue = string.Empty;
         private string _value = string.Empty;
         
         public override object GetValue()
+        {
+            return Value;
+        }
+
+        public override string ToString()
         {
             return Value;
         }

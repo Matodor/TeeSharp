@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Threading;
 using Serilog;
@@ -16,6 +17,8 @@ namespace TeeSharp.Server
     {
         public override int Tick { get; protected set; }
 
+        protected new ServerConfiguration Config => (ServerConfiguration) base.Config;
+        
         protected Stopwatch GameTimer { get; set; }
 
         protected const long TicksPerMillisecond = 10000;
@@ -37,22 +40,40 @@ namespace TeeSharp.Server
             ServerState = ServerState.StartsUp;
             
             // TODO
-            // Load serilog config from autoexec.json:
+            // Load serilog config from config.json:
             // LoggerConfiguration.ReadFrom.Configuration(configuration)
             
+            const string consoleLogFormat = 
+                "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}][{Level:u3}]{Message}{NewLine}{Exception}";
+            
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}][{Level:u3}]{Message}{NewLine}{Exception}")
+                .MinimumLevel.Debug()
+                .WriteTo.Console(outputTemplate: consoleLogFormat)
                 .WriteTo.File(FSHelper.WorkingPath("log.txt"))
                 .CreateLogger();
+            
+            Log.Information("[server] Start server initialization");
             
             Storage = Container.Resolve<BaseStorage>();
             Storage.Init(FSHelper.WorkingPath("storage.json"));
             
-            Config = Container.Resolve<BaseConfiguration>();
-            Config.Init();
+            base.Config = Container.Resolve<BaseConfiguration>();
+            base.Config.Init();
             
+            if (Storage.TryOpen("config.json", FileAccess.Read, out var fsConfig))
+                Config.LoadConfig(fsConfig);
+            
+            Config.ServerName.OnChange += OnServerNameChanged;
+
             NetworkServer = Container.Resolve<BaseNetworkServer>();
             NetworkServer.Init();
+            
+            Log.Information($"Server name = {Config.ServerName}");
+        }
+
+        private void OnServerNameChanged(string serverName)
+        {
+            Log.Information($"[server] New server name: {serverName}");
         }
 
         public override void Run()
@@ -86,7 +107,7 @@ namespace TeeSharp.Server
         {
             services.Register<BaseChunkFactory, ChunkFactory>();
             services.Register<BaseStorage, Storage>().AsSingleton();
-            services.Register<BaseConfiguration, Configuration>().AsSingleton();
+            services.Register<BaseConfiguration, ServerConfiguration>().AsSingleton();
             services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
         }
 
