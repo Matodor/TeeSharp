@@ -1,4 +1,5 @@
 // ReSharper disable ArgumentsStyleStringLiteral
+// ReSharper disable ArgumentsStyleLiteral
 using TeeSharp.Common.Config;
 
 namespace TeeSharp.Server
@@ -8,7 +9,7 @@ namespace TeeSharp.Server
         public ConfigVariableString ServerName { get; } = new ConfigVariableString(
             defaultValue: "[TeeSharp] Unnamed server",
             description: "Server name",
-            maxLength: 4
+            maxLength: 128
         );
     }
 }
