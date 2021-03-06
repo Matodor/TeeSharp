@@ -9,4 +9,12 @@ namespace TeeSharp.Common.Config
         
         public abstract object GetValue();
     }
+    
+    public abstract class ConfigVariable<T> : ConfigVariable
+    {
+        public abstract event Action<T> OnChange;
+        
+        public abstract T DefaultValue { get; }
+        public abstract T Value { get; set; }
+    }
 }

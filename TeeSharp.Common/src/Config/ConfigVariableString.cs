@@ -3,23 +3,23 @@ using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Config
 {
-    public class ConfigVariableString : ConfigVariable
+    public class ConfigVariableString : ConfigVariable<string>
     {
-        public int MaxLength { get; set; } = -1;
+        public override event Action<string> OnChange;
 
-        public string DefaultValue
+        public int MaxLength
         {
-            get => _defaultValue;
+            get => _maxLength;
             set
             {
-                if (string.IsNullOrEmpty(Value))
-                    Value = value;
-
-                _defaultValue = value;
+                Value = Value.Limit(value);
+                _maxLength = value;
             }
         }
 
-        public string Value
+        public override string DefaultValue { get; }
+
+        public override string Value
         {
             get => _value;
             set
@@ -29,10 +29,17 @@ namespace TeeSharp.Common.Config
             }
         }
 
-        public event Action<string> OnChange;
+        private string _value;
+        private int _maxLength;
 
-        private string _defaultValue = string.Empty;
-        private string _value = string.Empty;
+        public ConfigVariableString(string defaultValue, string description = "", int maxLength = -1)
+        {
+            DefaultValue = defaultValue;
+            Description = description;
+
+            _maxLength = maxLength;
+            _value = defaultValue.Limit(maxLength);
+        }
         
         public override object GetValue()
         {

@@ -6,6 +6,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Common.Config
 {
@@ -29,26 +30,43 @@ namespace TeeSharp.Common.Config
 
         public override void Init()
         {
+            var variableType = typeof(ConfigVariable);
+            var bindingFlags = 
+                BindingFlags.Instance |
+                BindingFlags.Public |
+                BindingFlags.GetProperty |
+                BindingFlags.GetField;
+            
+            var thatType = typeof(Configuration);
+            var baseType = typeof(BaseConfiguration);
+            
+            // ReSharper disable once ArrangeThisQualifier
+            var fields = this
+                .GetType()
+                .GetFields(bindingFlags)
+                .Where(f => 
+                    f.DeclaringType != thatType && 
+                    f.DeclaringType != baseType &&
+                    variableType.IsAssignableFrom(f.FieldType)
+                )
+                .ToArray();
+            
             // ReSharper disable once ArrangeThisQualifier
             var properties = this
                 .GetType()
-                .GetProperties(
-                    BindingFlags.Instance |
-                    BindingFlags.Public |
-                    BindingFlags.GetProperty
-                )
-                .Where(p =>
-                    p.PropertyType == typeof(ConfigVariableString) ||
-                    p.PropertyType == typeof(ConfigVariableFloat) ||
-                    p.PropertyType == typeof(ConfigVariableInteger)
+                .GetProperties(bindingFlags)
+                .Where(p => 
+                    p.DeclaringType != thatType && 
+                    p.DeclaringType != baseType &&
+                    variableType.IsAssignableFrom(p.PropertyType)
                 )
                 .ToArray();
 
+            foreach (var fieldInfo in fields)
+                Variables.Add(fieldInfo.Name, (ConfigVariable) fieldInfo.GetValue(this)); 
+            
             foreach (var propertyInfo in properties)
-            {
-                if (!ContainsKey(propertyInfo.Name))
-                    Variables.Add(propertyInfo.Name, (ConfigVariable) propertyInfo.GetValue(this));
-            }
+                Variables.Add(propertyInfo.Name, (ConfigVariable) propertyInfo.GetValue(this)); 
         }
 
         public override void LoadConfig(FileStream fs)
@@ -63,7 +81,7 @@ namespace TeeSharp.Common.Config
             }
 
             Log.Debug("[config] Start loading config from file stream");
-            
+
             using var streamReader = new StreamReader(fs);
             using var jsonReader = new JsonTextReader(streamReader);
             JObject config;
@@ -86,44 +104,84 @@ namespace TeeSharp.Common.Config
                     continue;
                 }
 
-                if (!TrySetValue(property))
+                if (!ContainsKey(property.Name))
+                {
+                    Log.Debug($"[config] Skip unknown variable `{property.Name}`");
                     continue;
-                
-                Log.Debug($"[config] Set `{property.Name}` = {this[property.Name].GetValue()}");
+                }
+
+                if (!TrySetValue(property))
+                {
+                    Log.Debug($"[config] Setting variable `{property.Name}` failed ({property.Value.Type} -> {this[property.Name].GetType().Name})");
+                    continue;
+                }
+
+                Log.Debug($"[config] Set `{property.Name}`: {this[property.Name].GetValue()}");
             }
-            
-            Log.Debug("[config] Config loaded succesfully");
+
+            Log.Information("[config] Config loaded succesfully");
         }
 
         public override bool TrySetValue(JProperty property)
         {
+            if (!ContainsKey(property.Name))
+                return false;
+
             switch (property.Value.Type)
             {
                 case JTokenType.String:
                     return TrySetValue(property.Name, property.Value.Value<string>());
+
                 case JTokenType.Float:
                     return TrySetValue(property.Name, property.Value.Value<float>());
+
                 case JTokenType.Integer:
-                    return TrySetValue(property.Name, property.Value.Value<int>());
+                    return Variables[property.Name] switch
+                    {
+                        ConfigVariableFloat _ => TrySetValue(property.Name, (float) property.Value.Value<int>()),
+                        ConfigVariableInteger _ => TrySetValue(property.Name, property.Value.Value<int>()),
+                        _ => false
+                    };
+
                 default:
                     Log.Warning($"[config] Ignore variable with type `{property.Value.Type}`, path `{property.Path}`");
                     return false;
             }
         }
 
+        public override bool TrySetValue(string variableName, ConfigVariable value)
+        {
+            if (!ContainsKey(variableName))
+                return false;
+
+            Variables[variableName] = value;
+            return true;
+        }
+
         public override bool TrySetValue(string variableName, string value)
         {
-            GetOrCreate<ConfigVariableString>(variableName).Value = value;
+            if (!TryGetValue<ConfigVariableString>(variableName, out var variable)) 
+                return false;
+            
+            variable.Value = value;
             return true;
         }
 
         public override bool TrySetValue(string variableName, float value)
         {
+            if (!TryGetValue<ConfigVariableFloat>(variableName, out var variable)) 
+                return false;
+            
+            variable.Value = value;
             return true;
         }
 
         public override bool TrySetValue(string variableName, int value)
         {
+            if (!TryGetValue<ConfigVariableInteger>(variableName, out var variable)) 
+                return false;
+            
+            variable.Value = value;
             return true;
         }
 
@@ -140,7 +198,7 @@ namespace TeeSharp.Common.Config
         {
             if (TryGetValue<T>(variableName, out var result))
                 return result;
-            
+
             Variables.Add(variableName, variable);
             return variable;
         }
@@ -162,16 +220,10 @@ namespace TeeSharp.Common.Config
 
         public override bool TryGetValue<T>(string variableName, out T value)
         {
-            if (TryGetValue(variableName, out var result))
+            if (TryGetValue(variableName, out var result) && result is T variable)
             {
-                // ReSharper disable once InvertIf
-                if (result is T variable)
-                {
-                    value = variable;
-                    return true;
-                }
-
-                throw new Exception($"The expected type of the variable is `{typeof(T).FullName}`");
+                value = variable;
+                return true;
             }
 
             value = null;
