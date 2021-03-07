@@ -1,5 +1,6 @@
 // ReSharper disable ArgumentsStyleStringLiteral
 // ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ClassNeverInstantiated.Global
 using TeeSharp.Common.Config;
 
 namespace TeeSharp.Server
