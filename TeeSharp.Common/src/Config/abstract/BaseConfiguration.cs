@@ -21,6 +21,7 @@ namespace TeeSharp.Common.Config
         public abstract void LoadConfig(FileStream fs);
         public abstract bool TrySetValue(JProperty property);
         public abstract bool TrySetValue(string variableName, ConfigVariable value);
+        public abstract bool TrySetValue(string variableName, bool value);
         public abstract bool TrySetValue(string variableName, string value);
         public abstract bool TrySetValue(string variableName, float value);
         public abstract bool TrySetValue(string variableName, int value);

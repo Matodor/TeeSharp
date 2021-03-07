@@ -6,7 +6,6 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
-using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Common.Config
 {
@@ -129,6 +128,9 @@ namespace TeeSharp.Common.Config
 
             switch (property.Value.Type)
             {
+                case JTokenType.Boolean:
+                    return TrySetValue(property.Name, property.Value.Value<bool>());
+                    
                 case JTokenType.String:
                     return TrySetValue(property.Name, property.Value.Value<string>());
 
@@ -155,6 +157,15 @@ namespace TeeSharp.Common.Config
                 return false;
 
             Variables[variableName] = value;
+            return true;
+        }
+
+        public override bool TrySetValue(string variableName, bool value)
+        {
+            if (!TryGetValue<ConfigVariableBoolean>(variableName, out var variable)) 
+                return false;
+            
+            variable.Value = value;
             return true;
         }
 
