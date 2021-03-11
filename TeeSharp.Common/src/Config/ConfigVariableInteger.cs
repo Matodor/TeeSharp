@@ -45,7 +45,6 @@ namespace TeeSharp.Common.Config
             }
         }
 
-        private int _defaultValue = 0;
         private int _value;
         private int _min;
         private int _max;
@@ -58,8 +57,8 @@ namespace TeeSharp.Common.Config
             _min = min;
             _max = max;
             _value = _min != _max
-                ? Math.Clamp(_defaultValue, _min, _max)
-                : _defaultValue;
+                ? Math.Clamp(defaultValue, _min, _max)
+                : defaultValue;
         }
         
         public override object GetValue()
@@ -71,5 +70,7 @@ namespace TeeSharp.Common.Config
         {
             return Value.ToString();
         }
+
+        public static implicit operator int(ConfigVariableInteger that) => that._value;
     }
 }

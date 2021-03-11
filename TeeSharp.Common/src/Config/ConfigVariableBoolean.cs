@@ -37,5 +37,7 @@ namespace TeeSharp.Common.Config
         {
             return Value.ToString();
         }
+        
+        public static implicit operator bool(ConfigVariableBoolean that) => that._value;
     }
 }

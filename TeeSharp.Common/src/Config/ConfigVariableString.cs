@@ -50,5 +50,7 @@ namespace TeeSharp.Common.Config
         {
             return Value;
         }
+        
+        public static implicit operator string(ConfigVariableString that) => that._value;
     }
 }
