@@ -35,62 +35,63 @@ namespace TeeSharp.Network
 
         public override bool Receive(out NetworkMessage netMsg, ref SecurityToken responseToken)
         {
-            while (true)
+            if (ChunkFactory.TryGetMessage(out netMsg))
+                return true;
+
+            // ReSharper disable once InconsistentNaming
+            var endPoint = default(IPEndPoint);
+            var data = Socket.Receive(ref endPoint).AsSpan();
+
+            if (data.Length == 0)
+                return false;
+
+            // TODO
+            // Check for banned IP address
+
+            var isSixUp = false;
+            var securityToken = default(SecurityToken);
+
+            responseToken = SecurityToken.TokenUnknown;
+
+            if (!NetworkBase.TryUnpackPacket(
+                data,
+                ChunkFactory.ChunksData,
+                ref isSixUp,
+                ref securityToken,
+                ref responseToken))
             {
-                if (ChunkFactory.TryGet(out netMsg))
-                    return true;
+                return false;
+            }
 
-                // ReSharper disable once InconsistentNaming
-                var endPoint = default(IPEndPoint);
-                var data = Socket.Receive(ref endPoint).AsSpan();
+            if (ChunkFactory.ChunksData.Flags.HasFlag(ChunkFlags.ConnectionLess))
+            {
+                if (isSixUp && securityToken != GetToken(endPoint))
+                    return false;
 
-                if (data.Length == 0)
-                    continue;
-
-                // TODO
-                // Check for banned IP address
-
-                var isSixUp = false;
-                var securityToken = default(SecurityToken);
-
-                responseToken = SecurityToken.TokenUnknown;
-
-                if (!NetworkBase.TryUnpackPacket(
-                    data,
-                    ChunkFactory.Chunks,
-                    ref isSixUp,
-                    ref securityToken,
-                    ref responseToken))
+                netMsg = new NetworkMessage
                 {
-                    continue;
+                    ClientId = -1,
+                    EndPoint = endPoint,
+                    Flags = MessageFlags.ConnectionLess,
+                    Data = new byte[ChunkFactory.ChunksData.DataSize],
+                };
+
+                ChunkFactory.ChunksData.Data
+                    .AsSpan()
+                    .Slice(0, ChunkFactory.ChunksData.DataSize)
+                    .CopyTo(netMsg.Data);
+
+                if (ChunkFactory.ChunksData.Flags.HasFlag(ChunkFlags.Extended))
+                {
+                    netMsg.Flags |= MessageFlags.Extended;
+                    netMsg.ExtraData = new byte[NetworkConstants.ExtraDataSize];
+                    
+                    ChunkFactory.ChunksData.ExtraData
+                        .AsSpan()
+                        .CopyTo(netMsg.ExtraData);
                 }
 
-                if (ChunkFactory.Chunks.Flags.HasFlag(ChunkFlags.ConnectionLess))
-                {
-                    if (isSixUp && securityToken != GetToken(endPoint))
-                        continue;
-
-                    netMsg = new NetworkMessage
-                    {
-                        ClientId = -1,
-                        EndPoint = endPoint,
-                        Flags = MessageFlags.ConnectionLess,
-                        DataSize = ChunkFactory.Chunks.DataSize,
-                        Data = ChunkFactory.Chunks.Data,
-                    };
-
-                    if (ChunkFactory.Chunks.Flags.HasFlag(ChunkFlags.Extended))
-                    {
-                        netMsg.Flags |= MessageFlags.Extended;
-                        netMsg.ExtraData = new byte[NetworkConstants.ExtraDataSize];
-                        ChunkFactory.Chunks.ExtraData.AsSpan().CopyTo(netMsg.ExtraData);
-                    }
-
-                    return true;
-
-                    // 192.168.66.1:13032
-                    // 138, 153, 106, 214, 139, 34, 32, 162, 24, 139, 49, 155, 18, 192, 231, 110
-                }
+                return true;
             }
 
             return true;
