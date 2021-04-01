@@ -7,7 +7,6 @@ namespace TeeSharp.Network
         public int ClientId { get; set; }
         public IPEndPoint EndPoint { get; set; }
         public MessageFlags Flags { get; set; }
-        public int DataSize { get; set; }
         public byte[] Data { get; set; }
         public byte[] ExtraData { get; set; }
     }
