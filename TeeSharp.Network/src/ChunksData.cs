@@ -1,6 +1,6 @@
 namespace TeeSharp.Network
 {
-    public class NetworkChunks
+    public class ChunksData
     {
         public ChunkFlags Flags { get; set; } = ChunkFlags.None;
         public int Ack { get; set; }
