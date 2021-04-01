@@ -2,14 +2,15 @@ using System.Net;
 
 namespace TeeSharp.Network
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class ChunkFactory : BaseChunkFactory
     {
         public override void Init()
         {
-            Chunks = new NetworkChunks
+            ChunksData = new ChunksData
             {
                 Data = new byte[NetworkConstants.MaxPayload], 
-                ExtraData = new byte[4],
+                ExtraData = new byte[NetworkConstants.ExtraDataSize],
             };
         }
 
@@ -31,7 +32,7 @@ namespace TeeSharp.Network
             ProcessedChunks = 0;
         }
 
-        public override bool TryGet(out NetworkMessage netMsg)
+        public override bool TryGetMessage(out NetworkMessage netMsg)
         {
             if (HasError)
             {
