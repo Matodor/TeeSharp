@@ -10,7 +10,7 @@ namespace TeeSharp.Network
     {
         public static bool TryUnpackPacket(
             Span<byte> data,
-            NetworkChunks chunks,
+            ChunksData chunksData,
             ref bool isSixUp,
             ref SecurityToken securityToken,
             ref SecurityToken responseToken)
@@ -21,9 +21,9 @@ namespace TeeSharp.Network
                 return true;
             }
 
-            chunks.Flags = (ChunkFlags) (data[0] >> 2);
+            chunksData.Flags = (ChunkFlags) (data[0] >> 2);
 
-            if (chunks.Flags.HasFlag(ChunkFlags.ConnectionLess))
+            if (chunksData.Flags.HasFlag(ChunkFlags.ConnectionLess))
             {
                 isSixUp = (data[0] & 0b_0000_0011) == 0b_0000_0001;
 
@@ -37,62 +37,64 @@ namespace TeeSharp.Network
                     responseToken = data.Slice(5, 4).Deserialize<SecurityToken>();
                 }
 
-                chunks.Flags = ChunkFlags.ConnectionLess;
-                chunks.Ack = 0;
-                chunks.Count = 0;
-                chunks.DataSize = data.Length - dataStart;
-                data.Slice(dataStart, chunks.DataSize).CopyTo(chunks.Data);
+                chunksData.Flags = ChunkFlags.ConnectionLess;
+                chunksData.Ack = 0;
+                chunksData.Count = 0;
+                chunksData.DataSize = data.Length - dataStart;
+                
+                data.Slice(dataStart, chunksData.DataSize)
+                    .CopyTo(chunksData.Data);
 
                 if (!isSixUp && data
                     .Slice(0, NetworkConstants.PacketHeaderExtended.Length)
                     .SequenceEqual(NetworkConstants.PacketHeaderExtended))
                 {
-                    chunks.Flags |= ChunkFlags.Extended;
-                    data.Slice(NetworkConstants.PacketHeaderExtended.Length, chunks.ExtraData.Length)
-                        .CopyTo(chunks.ExtraData);
+                    chunksData.Flags |= ChunkFlags.Extended;
+                    data.Slice(NetworkConstants.PacketHeaderExtended.Length, chunksData.ExtraData.Length)
+                        .CopyTo(chunksData.ExtraData);
                 }
             }
             else
             {
-                if (chunks.Flags.HasFlag(ChunkFlags.Unused))
+                if (chunksData.Flags.HasFlag(ChunkFlags.Unused))
                     isSixUp = true;
 
                 var dataStart = isSixUp ? 7 : NetworkConstants.PacketHeaderSize;
                 if (dataStart > data.Length)
                     return false;
 
-                chunks.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
-                chunks.Count = data[2];
-                chunks.DataSize = data.Length - dataStart;
+                chunksData.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
+                chunksData.Count = data[2];
+                chunksData.DataSize = data.Length - dataStart;
 
                 if (isSixUp)
                 {
-                    chunks.Flags = ChunkFlags.None;
+                    chunksData.Flags = ChunkFlags.None;
 
-                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Control))
-                        chunks.Flags |= ChunkFlags.Control;
-                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Resend))
-                        chunks.Flags |= ChunkFlags.Resend;
-                    if (((ChunkFlagsSixUp) chunks.Flags).HasFlag(ChunkFlagsSixUp.Compression))
-                        chunks.Flags |= ChunkFlags.Compression;
+                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Control))
+                        chunksData.Flags |= ChunkFlags.Control;
+                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Resend))
+                        chunksData.Flags |= ChunkFlags.Resend;
+                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Compression))
+                        chunksData.Flags |= ChunkFlags.Compression;
 
                     securityToken = data.Slice(3, 4).Deserialize<SecurityToken>();
                 }
 
-                if (chunks.Flags.HasFlag(ChunkFlags.Compression))
+                if (chunksData.Flags.HasFlag(ChunkFlags.Compression))
                 {
-                    if (chunks.Flags.HasFlag(ChunkFlags.Control))
+                    if (chunksData.Flags.HasFlag(ChunkFlags.Control))
                         return false;
                     
                     // TODO decomprassion
                 }
                 else
                 {
-                    data.Slice(dataStart, chunks.DataSize).CopyTo(chunks.Data);
+                    data.Slice(dataStart, chunksData.DataSize).CopyTo(chunksData.Data);
                 }
             }
 
-            return chunks.DataSize >= 0;
+            return chunksData.DataSize >= 0;
         }
 
         // ReSharper disable once InconsistentNaming
