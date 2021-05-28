@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -9,6 +11,7 @@ using TeeSharp.Common.Storage;
 using TeeSharp.Network;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Core.MinIoC;
+using TeeSharp.MasterServer;
 
 namespace TeeSharp.Server
 {
@@ -17,7 +20,7 @@ namespace TeeSharp.Server
     {
         public override int Tick { get; protected set; }
 
-        protected new ServerConfiguration Config => (ServerConfiguration) base.Config;
+        protected new ServerConfiguration Config { get; private set; }
         
         protected Stopwatch GameTimer { get; set; }
 
@@ -28,10 +31,19 @@ namespace TeeSharp.Server
         protected readonly TimeSpan MaxElapsedTime = TimeSpan.FromMilliseconds(500);
         protected TimeSpan AccumulatedElapsedTime;
         protected long PrevTicks = 0;
+
+        protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>> 
+            NetworkMessagesQueue;
+
+        public DefaultServer()
+        {
+            NetworkMessagesQueue = new ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>();
+        }
         
         protected CancellationTokenSource NetworkLoopCancellationToken { get; set; }
         protected Thread NetworkLoopThread { get; set; }
         
+        [SuppressMessage("ReSharper", "ArrangeThisQualifier")]
         public override void Init()
         {
             if (ServerState >= ServerState.StartsUp)
@@ -40,7 +52,8 @@ namespace TeeSharp.Server
             ServerState = ServerState.StartsUp;
             
             // TODO
-            // Load serilog config from config.json:
+            // https://docs.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#json-configuration-provider
+            // Load serilog config from appsettings:
             // LoggerConfiguration.ReadFrom.Configuration(configuration)
             
             const string consoleLogFormat = 
@@ -49,16 +62,17 @@ namespace TeeSharp.Server
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(outputTemplate: consoleLogFormat)
-                .WriteTo.File(FSHelper.WorkingPath("log.txt"))
+                .WriteTo.File(FileHelper.WorkingPath("log.txt"))
                 .CreateLogger();
             
-            Log.Information("[server] Start server initialization");
+            Log.Information("[server] Initialization");
             
             Storage = Container.Resolve<BaseStorage>();
-            Storage.Init(FSHelper.WorkingPath("storage.json"));
+            Storage.Init(FileHelper.WorkingPath("storage.json"));
             
             base.Config = Container.Resolve<BaseConfiguration>();
             base.Config.Init();
+            this.Config = (ServerConfiguration) base.Config;
             
             if (Storage.TryOpen("config.json", FileAccess.Read, out var fsConfig))
                 Config.LoadConfig(fsConfig);
@@ -67,8 +81,6 @@ namespace TeeSharp.Server
 
             NetworkServer = Container.Resolve<BaseNetworkServer>();
             NetworkServer.Init();
-            
-            Log.Information($"Server name = {Config.ServerName}");
         }
 
         private void OnServerNameChanged(string serverName)
@@ -111,6 +123,11 @@ namespace TeeSharp.Server
             services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
         }
 
+        public override void SendServerInfo(ServerInfoType type, IPEndPoint addr, SecurityToken token)
+        {
+            throw new NotImplementedException();
+        }
+
         protected virtual void RunNetworkServer()
         {
             // TODO make bind address from config
@@ -121,13 +138,15 @@ namespace TeeSharp.Server
             // ReSharper restore InconsistentNaming
 
             // ReSharper disable once InconsistentNaming
-            var localEP = new IPEndPoint(IPAddress.Any, 8303);
+            var localEP = new IPEndPoint(IPAddress.Any, Config.ServerPort);
             
             if (NetworkServer.Open(localEP))
             {
                 NetworkLoopCancellationToken = new CancellationTokenSource();
                 NetworkLoopThread = new Thread(RunNetworkLoop);
                 NetworkLoopThread.Start(NetworkLoopCancellationToken.Token);
+                
+                Log.Information($"[server] Local address: {NetworkServer.BindAddress}");
             }
             else
             {
@@ -143,26 +162,81 @@ namespace TeeSharp.Server
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
+                // TODO cancellationToken for Receive
+                
                 var responseToken = default(SecurityToken);
-                if (NetworkServer.Receive(out var msg, ref responseToken))
+                while (NetworkServer.Receive(out var msg, ref responseToken))
                 {
-                    Console.WriteLine("READ");
+                    NetworkMessagesQueue.Enqueue(
+                        new Tuple<NetworkMessage, SecurityToken>(msg, responseToken)
+                    );
                 }
             }
         }
 
-        protected virtual void NetworkUpdate()
+        protected override void ProcessNetworkMessage(NetworkMessage msg, SecurityToken responseToken)
         {
-            NetworkServer.Update();
+            if (msg.ClientId == -1)
+                ProcessMasterServerMessage(msg, responseToken);
+            else 
+                ProcessClientMessage(msg, responseToken);
+        }
+
+        protected override void ProcessMasterServerMessage(NetworkMessage msg, 
+            SecurityToken responseToken)
+        {
+            if (Packets.GetInfo.Length + 1 <= msg.Data.Length &&
+                Packets.GetInfo.AsSpan()
+                    .SequenceEqual(msg.Data.AsSpan(0, Packets.GetInfo.Length)))
+            {
+                if (msg.Flags.HasFlag(MessageFlags.Extended))
+                {
+                    var extraToken = (SecurityToken) (((msg.ExtraData[0] << 8) | msg.ExtraData[1]) << 8);
+                    var token = msg.Data[Packets.GetInfo.Length] | extraToken;
+                    SendServerInfo(ServerInfoType.Extended, msg.EndPoint, token);
+                }
+                else
+                {
+                    if (responseToken != SecurityToken.TokenUnknown && Config.UseSixUp)
+                    {
+                        throw new NotImplementedException();
+                        // SendServerInfo(ServerInfoType.Vanilla, msg.EndPoint, token);
+                    }
+                }
+                
+                return;
+            }
+
+            if (Packets.GetInfo64Legacy.Length + 1 <= msg.Data.Length &&
+                Packets.GetInfo64Legacy.AsSpan()
+                    .SequenceEqual(msg.Data.AsSpan(0, Packets.GetInfo64Legacy.Length)))
+            {
+                var token = msg.Data[Packets.GetInfo.Length];
+                SendServerInfo(ServerInfoType.Legacy64, msg.EndPoint, token);
+            }
         }
         
+        protected override void ProcessClientMessage(NetworkMessage msg, 
+            SecurityToken responseToken)
+        {
+            
+        }
+
+        protected virtual void NetworkUpdate()
+        {
+            while (NetworkMessagesQueue.TryDequeue(out var msgTuple))
+                ProcessNetworkMessage(msgTuple.Item1, msgTuple.Item2);
+
+            NetworkServer.Update();
+        }
+
         protected virtual void RunLoop()
         {
             while (true)
             {
                 BeginLoop:
                 
-                var currentTicks = GameTimer.ElapsedTicks;
+                var currentTicks = GameTimer.Elapsed.Ticks;
                 AccumulatedElapsedTime += TimeSpan.FromTicks(currentTicks - PrevTicks);
                 PrevTicks = currentTicks;
 
@@ -213,7 +287,7 @@ namespace TeeSharp.Server
             if (Tick % TickRate == 0)
             {
                 Log.Information($"[server] Tick: {Tick}");
-                // Log.Information($"[server][{GameTimer.Elapsed:G}] Tick: {Tick}");
+                Log.Information($"[server][{GameTimer.Elapsed:G}] Tick: {Tick}");
             }
         }
     }

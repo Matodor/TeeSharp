@@ -1,7 +1,9 @@
 using System;
+using System.Net;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
 using TeeSharp.Core.MinIoC;
+using TeeSharp.MasterServer;
 using TeeSharp.Network;
 
 namespace TeeSharp.Server
@@ -23,12 +25,14 @@ namespace TeeSharp.Server
         public abstract void Run();
         public abstract void Stop();
         public abstract void ConfigureServices(Container services);
-
+        public abstract void SendServerInfo(ServerInfoType type, 
+            IPEndPoint addr, SecurityToken token);
+        
         protected abstract void ProcessNetworkMessage(
             NetworkMessage msg, SecurityToken responseToken);
         protected abstract void ProcessMasterServerMessage(
             NetworkMessage msg, SecurityToken responseToken);
         protected abstract void ProcessClientMessage(
-            NetworkMessage msg);
+            NetworkMessage msg, SecurityToken responseToken);
     }
 }

@@ -20,5 +20,10 @@ namespace TeeSharp.Server
             min: ushort.MinValue,
             max: ushort.MaxValue
         );
+
+        public virtual ConfigVariableBoolean UseSixUp { get; } = new ConfigVariableBoolean(
+            defaultValue: true,
+            description: "Support 0.7+ network protocol"
+        );
     }
 }

@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\TeeSharp.Common\TeeSharp.Common.csproj" />
+        <ProjectReference Include="..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />
         <ProjectReference Include="..\TeeSharp.Network\TeeSharp.Network.csproj" />
         <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
     </ItemGroup>
