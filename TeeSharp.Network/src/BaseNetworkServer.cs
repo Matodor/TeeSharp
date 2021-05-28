@@ -8,6 +8,7 @@ namespace TeeSharp.Network
     public abstract class BaseNetworkServer : IContainerService
     {
         public Container Container { get; set; }
+        public EndPoint BindAddress => Socket?.Client.LocalEndPoint;
         
         protected BaseChunkFactory ChunkFactory { get; set; }
         protected UdpClient Socket { get; set; }
