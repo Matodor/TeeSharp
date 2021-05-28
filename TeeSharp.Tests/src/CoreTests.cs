@@ -39,6 +39,6 @@ namespace TeeSharp.Tests
             else
                 Assert.Fail();
         }
-    }
 #endif
+    }
 }
