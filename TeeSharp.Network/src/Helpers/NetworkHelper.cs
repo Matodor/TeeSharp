@@ -1,12 +1,11 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Network
 {
-    public static class NetworkBase
+    public static class NetworkHelper
     {
         public static bool TryUnpackPacket(
             Span<byte> data,
