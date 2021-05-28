@@ -127,8 +127,8 @@ namespace TeeSharp.Common.Storage
             if (path == null)
                 return null;
 
-            path = path.Replace(TokenAppData, FSHelper.AppDataPath());
-            path = path.Replace(TokenCurrentDir, FSHelper.WorkingPath());
+            path = path.Replace(TokenAppData, FileHelper.AppDataPath());
+            path = path.Replace(TokenCurrentDir, FileHelper.WorkingPath());
 
             return Path.GetFullPath(path);
         }
@@ -136,7 +136,7 @@ namespace TeeSharp.Common.Storage
         protected override void Setup()
         {
             if (string.IsNullOrWhiteSpace(Config.SaveDirectory))
-                Config.SaveDirectory = FormatPath(FSHelper.AppDataPath("TeeSharp"));
+                Config.SaveDirectory = FormatPath(FileHelper.AppDataPath("TeeSharp"));
 
             if (Config.Paths == null || Config.Paths.Count == 0)
             {

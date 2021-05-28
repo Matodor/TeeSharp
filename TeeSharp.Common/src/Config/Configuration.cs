@@ -79,7 +79,7 @@ namespace TeeSharp.Common.Config
                 return;
             }
 
-            Log.Debug("[config] Start loading config from file stream");
+            Log.Debug("[config] Loading config from file stream");
 
             using var streamReader = new StreamReader(fs);
             using var jsonReader = new JsonTextReader(streamReader);

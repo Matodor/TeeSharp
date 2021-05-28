@@ -6,7 +6,7 @@ namespace TeeSharp.Core.Helpers
     /// <summary>
     /// File system helper
     /// </summary>
-    public static class FSHelper
+    public static class FileHelper
     {
         public static string WorkingPath(string relativePath = null)
         {
