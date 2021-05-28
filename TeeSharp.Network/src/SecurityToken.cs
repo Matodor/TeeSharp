@@ -54,5 +54,30 @@ namespace TeeSharp.Network
         {
             return !left.Equals(right);
         }
+        
+        public static SecurityToken operator |(SecurityToken left, SecurityToken right)
+        {
+            return new SecurityToken(left._value | right._value);
+        }
+        
+        public static SecurityToken operator |(SecurityToken left, int right)
+        {
+            return new SecurityToken(left._value | right);
+        }
+        
+        public static SecurityToken operator |(SecurityToken left, byte right)
+        {
+            return new SecurityToken(left._value | right);
+        }
+        
+        public static SecurityToken operator |(int left, SecurityToken right)
+        {
+            return new SecurityToken(left | right._value);
+        }
+        
+        public static SecurityToken operator |(byte left, SecurityToken right)
+        {
+            return new SecurityToken(left | right._value);
+        }
     }
 }
