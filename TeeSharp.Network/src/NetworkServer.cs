@@ -24,7 +24,7 @@ namespace TeeSharp.Network
             if (localEP == null)
                 throw new ArgumentNullException(nameof(localEP));
             
-            if (!NetworkBase.TryGetUdpClient(localEP, out var socket))
+            if (!NetworkHelper.TryGetUdpClient(localEP, out var socket))
                 return false;
 
             Socket = socket;
@@ -53,7 +53,7 @@ namespace TeeSharp.Network
 
             responseToken = SecurityToken.TokenUnknown;
 
-            if (!NetworkBase.TryUnpackPacket(
+            if (!NetworkHelper.TryUnpackPacket(
                 data,
                 ChunkFactory.ChunksData,
                 ref isSixUp,
@@ -74,6 +74,7 @@ namespace TeeSharp.Network
                     EndPoint = endPoint,
                     Flags = MessageFlags.ConnectionLess,
                     Data = new byte[ChunkFactory.ChunksData.DataSize],
+                    ExtraData = null,
                 };
 
                 ChunkFactory.ChunksData.Data
@@ -92,6 +93,12 @@ namespace TeeSharp.Network
                 }
 
                 return true;
+            }
+
+            if (ChunkFactory.ChunksData.Flags.HasFlag(ChunkFlags.Control) &&
+                ChunkFactory.ChunksData.DataSize == 0)
+            {
+                return false;
             }
 
             return true;

@@ -4,6 +4,8 @@ namespace TeeSharp.MasterServer
 {
     public static class Packets
     {
+        public const int BufferOffset = 4;
+        
         public static readonly byte[] Heartbeat = Packet("bea2");
         public static readonly byte[] GetList = Packet("req2");
         public static readonly byte[] List = Packet("lis2");
@@ -22,12 +24,13 @@ namespace TeeSharp.MasterServer
 
         private static byte[] Packet(string symbols)
         {
-            var buffer = new Span<byte>(new byte[8]);
-            buffer.Slice(0, 4).Fill(255);
-            buffer[4] = (byte) symbols[0];
-            buffer[5] = (byte) symbols[1];
-            buffer[6] = (byte) symbols[2];
-            buffer[7] = (byte) symbols[3];
+            var buffer = new Span<byte>(new byte[BufferOffset + symbols.Length]);
+            buffer.Slice(0, BufferOffset).Fill(255);
+
+            var bufferRest = buffer.Slice(BufferOffset);
+            for (var i = 0; i < bufferRest.Length; i++)
+                bufferRest[i] = (byte) symbols[i];
+
             return buffer.ToArray();
         }
     }
