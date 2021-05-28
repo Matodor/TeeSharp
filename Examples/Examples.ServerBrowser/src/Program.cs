@@ -33,7 +33,7 @@ namespace Examples.ServerBrowser
                     }
                 };
 
-                NetworkBase.SendData(client, masterServerEndpoint, Packets.GetList);
+                NetworkHelper.SendData(client, masterServerEndpoint, Packets.GetList);
                 Thread.Sleep(2300);
 
                 if (client.Available > 0)

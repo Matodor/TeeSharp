@@ -21,15 +21,15 @@ namespace TeeSharp.Benchmark
                 typeof(CastIpEndpointBenchmark),
                 typeof(VirtualCallBenchmark),
                 typeof(HasFlagBenchmark),
+                typeof(ProcessMessagesBenchmark),
+                typeof(FindAddrBenchmark),
             };
 
             do
             {
                 Console.WriteLine("Select banchmark: ");
                 for (var i = 0; i < benchmarks.Length; i++)
-                {
                     Console.WriteLine($"\t{i} - {benchmarks[i].Name}");
-                }
 
                 Console.Write("\nWrite number: ");
                 result = Console.ReadLine();
