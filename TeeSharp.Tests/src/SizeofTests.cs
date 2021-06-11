@@ -1,6 +1,9 @@
+using System;
+using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Map;
+using TeeSharp.Network;
 
 namespace TeeSharp.Tests
 {
@@ -10,6 +13,7 @@ namespace TeeSharp.Tests
         public void CheckSize()
         {
             Assert.AreEqual(36, TypeHelper<DataFileHeader>.Size);
+            Assert.AreEqual(4, TypeHelper<SecurityToken>.Size);
         }
     }
 }

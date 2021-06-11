@@ -5,6 +5,6 @@ namespace TeeSharp.Server
         None,
         StartsUp,
         Running,
-        Stopping
+        Stopping,
     }
 }
