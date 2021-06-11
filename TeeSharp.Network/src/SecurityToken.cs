@@ -6,6 +6,10 @@ namespace TeeSharp.Network
     {
         public static readonly SecurityToken TokenUnknown = -1;
         public static readonly SecurityToken TokenUnsupported = 0;
+        public static readonly SecurityToken TokenMagic = new Span<byte>(new []
+        {
+            (byte) 'T', (byte) 'K', (byte) 'E', (byte) 'N',
+        });
         
         private readonly int _value;
         
@@ -14,12 +18,22 @@ namespace TeeSharp.Network
             _value = value;
         }
 
+        public Span<byte> AsSpan()
+        {
+            return BitConverter.GetBytes(_value);
+        }
+        
+        public static implicit operator Span<byte>(SecurityToken token)
+        {
+            return token.AsSpan();
+        }
+        
         public static implicit operator SecurityToken(int value)
         {
             return new SecurityToken(value);
         }
-
-        public static implicit operator SecurityToken(byte[] data)
+        
+        public static implicit operator SecurityToken(Span<byte> data)
         {
             // ReSharper disable once ArrangeRedundantParentheses
             return new SecurityToken(
@@ -43,6 +57,16 @@ namespace TeeSharp.Network
         public override int GetHashCode()
         {
             return _value;
+        }
+
+        public static bool operator ==(Span<byte> left, SecurityToken right)
+        {
+            return (SecurityToken) left == right;
+        }
+
+        public static bool operator !=(Span<byte> left, SecurityToken right)
+        {
+            return !(left == right);
         }
 
         public static bool operator ==(SecurityToken left, SecurityToken right)
