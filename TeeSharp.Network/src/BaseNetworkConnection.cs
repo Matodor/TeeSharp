@@ -6,5 +6,6 @@ namespace TeeSharp.Network
     public abstract class BaseNetworkConnection : IContainerService
     {
         public Container Container { get; set; }
+        public bool IsSixUp { get; set; }
     }
 }
