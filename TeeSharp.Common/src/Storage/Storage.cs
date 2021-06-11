@@ -66,7 +66,7 @@ namespace TeeSharp.Common.Storage
                 try
                 {
                     fs = File.Open(path, FileMode.Open, access);
-                    Log.Debug($"[storage] Open file at: {path}");
+                    Log.Debug("[storage] Open file at {Path}", path);
                     return true;
                 }
                 catch (Exception e)
@@ -119,7 +119,7 @@ namespace TeeSharp.Common.Storage
                 return;
 
             Config.Paths.Add(path);
-            Log.Information($"[storage] Add path: {path}");
+            Log.Information("[storage] Add path {Path}", path);
         }
 
         public override string FormatPath(string path)
@@ -151,7 +151,7 @@ namespace TeeSharp.Common.Storage
             }
             else
             {
-                Log.Information($"[storage] Using save path at: {Config.SaveDirectory}");
+                Log.Information("[storage] Using save path at {Dir}", Config.SaveDirectory);
                 Directory.CreateDirectory(Config.SaveDirectory);
             }
         }

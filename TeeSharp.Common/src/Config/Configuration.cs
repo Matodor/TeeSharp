@@ -99,23 +99,27 @@ namespace TeeSharp.Common.Config
             {
                 if (!(token is JProperty property))
                 {
-                    Log.Debug($"[config] Ignore variable at path `{token.Path}`");
+                    Log.Debug("[config] Ignore variable at path `{Path}`", token.Path);
                     continue;
                 }
 
                 if (!ContainsKey(property.Name))
                 {
-                    Log.Debug($"[config] Skip unknown variable `{property.Name}`");
+                    Log.Debug("[config] Skip unknown variable `{Name}`", property.Name);
                     continue;
                 }
 
                 if (!TrySetValue(property))
                 {
-                    Log.Debug($"[config] Setting variable `{property.Name}` failed ({property.Value.Type} -> {this[property.Name].GetType().Name})");
+                    Log.Debug("[config] Setting variable {Name} failed ({Type} -> {TypeName})",
+                        property.Name,
+                        property.Value.Type,
+                        this[property.Name].GetType().Name
+                    );
                     continue;
                 }
 
-                Log.Debug($"[config] Set `{property.Name}`: {this[property.Name].GetValue()}");
+                Log.Debug("[config] Set {Name} - {Value}", property.Name, this[property.Name].GetValue());
             }
 
             Log.Information("[config] Config loaded succesfully");
@@ -146,7 +150,7 @@ namespace TeeSharp.Common.Config
                     };
 
                 default:
-                    Log.Warning($"[config] Ignore variable with type `{property.Value.Type}`, path `{property.Path}`");
+                    Log.Warning("[config] Ignore variable with type `{Type}`, path `{Path}`", property.Value.Type, property.Path);
                     return false;
             }
         }
