@@ -1,8 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using TeeSharp.Network;
 
 namespace TeeSharp.MasterServer
@@ -40,12 +38,15 @@ namespace TeeSharp.MasterServer
         public static Span<byte> EndPointSerialize(IPEndPoint endPoint)
         {
             var buffer = new Span<byte>(new byte[SizeOfAddr]);
-            NetworkConstants.IpV4Mapping.AsSpan().CopyTo(buffer);
-            
             if (endPoint.Address.AddressFamily == AddressFamily.InterNetwork)
+            {
+                NetworkConstants.IpV4Mapping.AsSpan().CopyTo(buffer);
                 endPoint.Address.TryWriteBytes(buffer.Slice(12, 4), out _);
+            }
             else
+            {
                 endPoint.Address.TryWriteBytes(buffer, out _);
+            }
             
             buffer[16] = (byte) ((endPoint.Port >> 8) & 0b_11111111);
             buffer[17] = (byte) (endPoint.Port & 0b_11111111);
