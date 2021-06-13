@@ -1,12 +1,15 @@
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace TeeSharp.Network
 {
+    // TODO: make union trick
     public readonly struct SecurityToken : IEquatable<SecurityToken>
     {
-        public static readonly SecurityToken TokenUnknown = -1;
-        public static readonly SecurityToken TokenUnsupported = 0;
-        public static readonly SecurityToken TokenMagic = new Span<byte>(new []
+        public static readonly SecurityToken Unknown = -1;
+        public static readonly SecurityToken Unsupported = 0;
+        public static readonly SecurityToken Magic = BitConverter.ToInt32(new []
         {
             (byte) 'T', (byte) 'K', (byte) 'E', (byte) 'N',
         });
@@ -18,14 +21,14 @@ namespace TeeSharp.Network
             _value = value;
         }
 
-        public Span<byte> AsSpan()
+        public void CopyTo(Span<byte> buffer)
         {
-            return BitConverter.GetBytes(_value);
+            Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(buffer)) = _value;
         }
         
         public static implicit operator Span<byte>(SecurityToken token)
         {
-            return token.AsSpan();
+            return BitConverter.GetBytes(token._value);
         }
         
         public static implicit operator SecurityToken(int value)
@@ -35,13 +38,7 @@ namespace TeeSharp.Network
         
         public static implicit operator SecurityToken(Span<byte> data)
         {
-            // ReSharper disable once ArrangeRedundantParentheses
-            return new SecurityToken(
-                (data[0]) |
-                (data[1] << 8) |
-                (data[2] << 16) |
-                (data[3] << 24)
-            );
+            return new SecurityToken(BitConverter.ToInt32(data));
         }
 
         public bool Equals(SecurityToken other)
@@ -61,47 +58,47 @@ namespace TeeSharp.Network
 
         public static bool operator ==(Span<byte> left, SecurityToken right)
         {
-            return (SecurityToken) left == right;
+            return BitConverter.ToInt32(left) == right._value;
         }
-
+        
         public static bool operator !=(Span<byte> left, SecurityToken right)
         {
             return !(left == right);
         }
-
+        
         public static bool operator ==(SecurityToken left, SecurityToken right)
         {
             return left.Equals(right);
         }
-
+        
         public static bool operator !=(SecurityToken left, SecurityToken right)
         {
             return !left.Equals(right);
         }
         
-        public static SecurityToken operator |(SecurityToken left, SecurityToken right)
-        {
-            return new SecurityToken(left._value | right._value);
-        }
-        
-        public static SecurityToken operator |(SecurityToken left, int right)
-        {
-            return new SecurityToken(left._value | right);
-        }
-        
-        public static SecurityToken operator |(SecurityToken left, byte right)
-        {
-            return new SecurityToken(left._value | right);
-        }
-        
-        public static SecurityToken operator |(int left, SecurityToken right)
-        {
-            return new SecurityToken(left | right._value);
-        }
-        
-        public static SecurityToken operator |(byte left, SecurityToken right)
-        {
-            return new SecurityToken(left | right._value);
-        }
+        // public static SecurityToken operator |(SecurityToken left, SecurityToken right)
+        // {
+        //     return new SecurityToken(left._value | right._value);
+        // }
+        //
+        // public static SecurityToken operator |(SecurityToken left, int right)
+        // {
+        //     return new SecurityToken(left._value | right);
+        // }
+        //
+        // public static SecurityToken operator |(SecurityToken left, byte right)
+        // {
+        //     return new SecurityToken(left._value | right);
+        // }
+        //
+        // public static SecurityToken operator |(int left, SecurityToken right)
+        // {
+        //     return new SecurityToken(left | right._value);
+        // }
+        //
+        // public static SecurityToken operator |(byte left, SecurityToken right)
+        // {
+        //     return new SecurityToken(left | right._value);
+        // }
     }
 }

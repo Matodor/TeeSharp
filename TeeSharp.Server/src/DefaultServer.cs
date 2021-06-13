@@ -27,12 +27,14 @@ namespace TeeSharp.Server
         protected const long TicksPerMillisecond = 10000;
         protected const long TicksPerSecond = TicksPerMillisecond * 1000;
         
-        protected readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
-        protected readonly TimeSpan MaxElapsedTime = TimeSpan.FromMilliseconds(500);
+        protected readonly TimeSpan TargetElapsedTime = 
+            TimeSpan.FromTicks(TicksPerSecond / TickRate);
+        protected readonly TimeSpan MaxElapsedTime = 
+            TimeSpan.FromMilliseconds(500);
         protected TimeSpan AccumulatedElapsedTime;
         protected long PrevTicks = 0;
 
-        protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>> 
+        protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>  
             NetworkMessagesQueue;
 
         public DefaultServer()
@@ -80,12 +82,16 @@ namespace TeeSharp.Server
             Config.ServerName.OnChange += OnServerNameChanged;
 
             NetworkServer = Container.Resolve<BaseNetworkServer>();
-            NetworkServer.Init();
+            NetworkServer.Init(new NetworkServerConfig
+            {
+                MaxConnections = Config.MaxPlayers,
+                MaxConnectionsPerIp = Config.MaxPlayersPerIp,
+            });
         }
 
-        private void OnServerNameChanged(string serverName)
+        protected virtual void OnServerNameChanged(string serverName)
         {
-            Log.Information($"[server] New server name: {serverName}");
+            Log.Information("[server] Server name changed to - {ServerName}", serverName);
         }
 
         public override void Run()
@@ -118,6 +124,7 @@ namespace TeeSharp.Server
         public override void ConfigureServices(Container services)
         {
             services.Register<BaseChunkFactory, ChunkFactory>();
+            services.Register<BaseNetworkConnection, NetworkConnection>();
             services.Register<BaseStorage, Storage>().AsSingleton();
             services.Register<BaseConfiguration, ServerConfiguration>().AsSingleton();
             services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
@@ -146,7 +153,7 @@ namespace TeeSharp.Server
                 NetworkLoopThread = new Thread(RunNetworkLoop);
                 NetworkLoopThread.Start(NetworkLoopCancellationToken.Token);
                 
-                Log.Information($"[server] Local address: {NetworkServer.BindAddress}");
+                Log.Information("[server] Local address - {Address}", NetworkServer.BindAddress.ToString());
             }
             else
             {
@@ -162,7 +169,7 @@ namespace TeeSharp.Server
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                // TODO cancellationToken for Receive
+                // TODO cancellationToken for NetworkServer.Receive
                 
                 var responseToken = default(SecurityToken);
                 while (NetworkServer.Receive(out var msg, ref responseToken))
@@ -191,13 +198,15 @@ namespace TeeSharp.Server
             {
                 if (msg.Flags.HasFlag(MessageFlags.Extended))
                 {
-                    var extraToken = (SecurityToken) (((msg.ExtraData[0] << 8) | msg.ExtraData[1]) << 8);
-                    var token = msg.Data[Packets.GetInfo.Length] | extraToken;
-                    SendServerInfo(ServerInfoType.Extended, msg.EndPoint, token);
+                    // var extraToken = (SecurityToken) (((msg.ExtraData[0] << 8) | msg.ExtraData[1]) << 8);
+                    // var token = msg.Data[Packets.GetInfo.Length] | extraToken;
+                    // SendServerInfo(ServerInfoType.Extended, msg.EndPoint, token);
+                    
+                    throw new NotImplementedException();
                 }
                 else
                 {
-                    if (responseToken != SecurityToken.TokenUnknown && Config.UseSixUp)
+                    if (responseToken != SecurityToken.Unknown && Config.UseSixUp)
                     {
                         throw new NotImplementedException();
                         // SendServerInfo(ServerInfoType.Vanilla, msg.EndPoint, token);
@@ -286,8 +295,7 @@ namespace TeeSharp.Server
         {
             if (Tick % TickRate == 0)
             {
-                Log.Information($"[server] Tick: {Tick}");
-                Log.Information($"[server][{GameTimer.Elapsed:G}] Tick: {Tick}");
+                Log.Information("[server] Tick - {Tick}", Tick);
             }
         }
     }

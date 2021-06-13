@@ -1,6 +1,6 @@
 namespace TeeSharp.Network
 {
-    public enum ConnectionMessage
+    public enum ConnectionStateMsg
     {
         KeepAlive = 0,
         Connect,

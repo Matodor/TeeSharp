@@ -1,7 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using TeeSharp.Core.Extensions;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Network
 {
@@ -9,7 +11,7 @@ namespace TeeSharp.Network
     {
         public static bool TryUnpackPacket(
             Span<byte> data,
-            ChunksData chunksData,
+            NetworkPacket packet,
             ref bool isSixUp,
             ref SecurityToken securityToken,
             ref SecurityToken responseToken)
@@ -20,9 +22,9 @@ namespace TeeSharp.Network
                 return true;
             }
 
-            chunksData.Flags = (ChunkFlags) (data[0] >> 2);
+            packet.Flags = (PacketFlags) (data[0] >> 2);
 
-            if (chunksData.Flags.HasFlag(ChunkFlags.ConnectionLess))
+            if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
             {
                 isSixUp = (data[0] & 0b_0000_0011) == 0b_0000_0001;
 
@@ -36,64 +38,65 @@ namespace TeeSharp.Network
                     responseToken = data.Slice(5, 4).Deserialize<SecurityToken>();
                 }
 
-                chunksData.Flags = ChunkFlags.ConnectionLess;
-                chunksData.Ack = 0;
-                chunksData.Count = 0;
-                chunksData.DataSize = data.Length - dataStart;
+                packet.Flags = PacketFlags.ConnectionLess;
+                packet.Ack = 0;
+                packet.ChunksCount = 0;
+                packet.DataSize = data.Length - dataStart;
                 
-                data.Slice(dataStart, chunksData.DataSize)
-                    .CopyTo(chunksData.Data);
+                data.Slice(dataStart, packet.DataSize)
+                    .CopyTo(packet.Data);
 
                 if (!isSixUp && data
                     .Slice(0, NetworkConstants.PacketHeaderExtended.Length)
                     .SequenceEqual(NetworkConstants.PacketHeaderExtended))
                 {
-                    chunksData.Flags |= ChunkFlags.Extended;
-                    data.Slice(NetworkConstants.PacketHeaderExtended.Length, chunksData.ExtraData.Length)
-                        .CopyTo(chunksData.ExtraData);
+                    packet.Flags |= PacketFlags.Extended;
+                    data.Slice(NetworkConstants.PacketHeaderExtended.Length, packet.ExtraData.Length)
+                        .CopyTo(packet.ExtraData);
                 }
             }
             else
             {
-                if (chunksData.Flags.HasFlag(ChunkFlags.Unused))
+                if (packet.Flags.HasFlag(PacketFlags.Unused))
                     isSixUp = true;
 
                 var dataStart = isSixUp ? 7 : NetworkConstants.PacketHeaderSize;
                 if (dataStart > data.Length)
                     return false;
 
-                chunksData.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
-                chunksData.Count = data[2];
-                chunksData.DataSize = data.Length - dataStart;
+                packet.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
+                packet.ChunksCount = data[2];
+                packet.DataSize = data.Length - dataStart;
 
                 if (isSixUp)
                 {
-                    chunksData.Flags = ChunkFlags.None;
-
-                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Control))
-                        chunksData.Flags |= ChunkFlags.Control;
-                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Resend))
-                        chunksData.Flags |= ChunkFlags.Resend;
-                    if (((ChunkFlagsSixUp) chunksData.Flags).HasFlag(ChunkFlagsSixUp.Compression))
-                        chunksData.Flags |= ChunkFlags.Compression;
+                    packet.Flags = PacketFlags.None;
+                    
+                    var sixUpFlags = (PacketFlagsSixUp) packet.Flags;
+                    if (sixUpFlags.HasFlag(PacketFlagsSixUp.Connection))
+                        packet.Flags |= PacketFlags.ConnectionState;
+                    if (sixUpFlags.HasFlag(PacketFlagsSixUp.Resend))
+                        packet.Flags |= PacketFlags.Resend;
+                    if (sixUpFlags.HasFlag(PacketFlagsSixUp.Compression))
+                        packet.Flags |= PacketFlags.Compression;
 
                     securityToken = data.Slice(3, 4).Deserialize<SecurityToken>();
                 }
 
-                if (chunksData.Flags.HasFlag(ChunkFlags.Compression))
+                if (packet.Flags.HasFlag(PacketFlags.Compression))
                 {
-                    if (chunksData.Flags.HasFlag(ChunkFlags.Control))
+                    if (packet.Flags.HasFlag(PacketFlags.ConnectionState))
                         return false;
-                    
-                    // TODO decomprassion
+
+                    throw new NotImplementedException();
                 }
                 else
                 {
-                    data.Slice(dataStart, chunksData.DataSize).CopyTo(chunksData.Data);
+                    data.Slice(dataStart, packet.DataSize).CopyTo(packet.Data);
                 }
             }
 
-            return chunksData.DataSize >= 0;
+            return packet.DataSize >= 0;
         }
 
         // ReSharper disable once InconsistentNaming
@@ -130,17 +133,49 @@ namespace TeeSharp.Network
                 return false;
             }
         }
+
+        public static void SendPacket(UdpClient client, IPEndPoint endPoint,
+            NetworkPacket packet, SecurityToken securityToken, bool isSixUp)
+        {
+            var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
+            var headerSize = NetworkConstants.PacketHeaderSize;
+
+            if (isSixUp)
+            {
+                headerSize += TypeHelper<SecurityToken>.Size;
+                securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+            }
+            else if (securityToken != SecurityToken.Unsupported)
+            {
+                securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+                // asdasd
+            }
+        }
         
-        public static void SendData(UdpClient client, IPEndPoint endPoint, ReadOnlySpan<byte> data)
+        public static void SendData(UdpClient client, IPEndPoint endPoint, 
+            ReadOnlySpan<byte> data, 
+            ReadOnlySpan<byte> extraData = default)
         {
             var bufferSize = NetworkConstants.PacketConnLessDataOffset + data.Length;
             if (bufferSize > NetworkConstants.MaxPacketSize)
                 throw new Exception("Maximum packet size exceeded.");
 
-            var buffer = (Span<byte>) stackalloc byte[bufferSize];
-            buffer.Slice(0, NetworkConstants.PacketConnLessDataOffset).Fill(255);
-            data.CopyTo(buffer.Slice(NetworkConstants.PacketConnLessDataOffset));
+            var buffer = new Span<byte>(new byte[bufferSize]);
+            if (extraData.IsEmpty)
+            {
+                buffer
+                    .Slice(0, NetworkConstants.PacketConnLessDataOffset)
+                    .Fill(255);
+            }
+            else
+            {
+                NetworkConstants.PacketHeaderExtended.CopyTo(buffer);
+                extraData
+                    .Slice(0, NetworkConstants.PacketExtraDataSize)
+                    .CopyTo(buffer.Slice(NetworkConstants.PacketHeaderExtended.Length));
+            }
             
+            data.CopyTo(buffer.Slice(NetworkConstants.PacketConnLessDataOffset));
             client.BeginSend(
                 buffer.ToArray(), 
                 buffer.Length,
@@ -154,6 +189,44 @@ namespace TeeSharp.Network
         {
             var client = (UdpClient) result.AsyncState;
             client?.EndSend(result);
+        }
+        
+        public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint, 
+            ConnectionStateMsg state, SecurityToken token, int ack, 
+            bool isSixUp, string extraMsg)
+        {
+            if (string.IsNullOrEmpty(extraMsg))
+            {
+                SendConnStateMsg(client, endPoint, state, token, ack, isSixUp, Span<byte>.Empty);
+            }
+            else
+            {
+                var bufferLen = Encoding.UTF8.GetMaxByteCount(extraMsg.Length);
+                var buffer = new Span<byte>(new byte[bufferLen]);
+                var length = Encoding.UTF8.GetBytes(extraMsg.AsSpan(), buffer);
+                SendConnStateMsg(client, endPoint, state, token, ack, isSixUp, buffer.Slice(0, length));
+            }
+        }
+        
+        public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint, 
+            ConnectionStateMsg state, SecurityToken token, int ack, 
+            bool isSixUp, Span<byte> extraData)
+        {
+            var packet = new NetworkPacket
+            {
+                Flags = PacketFlags.ConnectionState,
+                Ack = ack,
+                ChunksCount = 0,
+                DataSize = 1 + extraData.Length,
+            };
+
+            packet.Data = new byte[packet.DataSize];
+            packet.Data[0] = (byte) state;
+
+            if (!extraData.IsEmpty)
+                extraData.CopyTo(packet.Data.AsSpan(1));
+            
+            // SendPacket(client, endPoint, packet);
         }
     }
 }

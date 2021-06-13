@@ -10,6 +10,9 @@ namespace TeeSharp.Server
 {
     public abstract class BaseServer : IServiceBinder, IContainerService
     {
+        /// <summary>
+        /// 50 Ticks per second
+        /// </summary>
         public const int TickRate = 50;
 
         public Container Container { get; set; }

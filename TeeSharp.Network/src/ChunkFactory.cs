@@ -7,10 +7,10 @@ namespace TeeSharp.Network
     {
         public override void Init()
         {
-            ChunksData = new ChunksData
+            NetworkPacket = new NetworkPacket
             {
                 Data = new byte[NetworkConstants.MaxPayload], 
-                ExtraData = new byte[NetworkConstants.ExtraDataSize],
+                ExtraData = new byte[NetworkConstants.PacketExtraDataSize],
             };
         }
 

@@ -6,7 +6,7 @@ namespace TeeSharp.Network
     public abstract class BaseChunkFactory : IContainerService
     {
         public Container Container { get; set; }
-        public ChunksData ChunksData { get; protected set; }
+        public NetworkPacket NetworkPacket { get; protected set; }
         
         protected bool HasError { get; set; }
         protected IPEndPoint EndPoint { get; set; }
