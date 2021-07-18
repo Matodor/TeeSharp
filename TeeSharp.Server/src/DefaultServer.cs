@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using Serilog;
+using TeeSharp.Common.Commands;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
 using TeeSharp.Network;
@@ -21,64 +22,66 @@ namespace TeeSharp.Server
         public override int Tick { get; protected set; }
 
         protected new ServerConfiguration Config { get; private set; }
-        
+
         protected Stopwatch GameTimer { get; set; }
 
         protected const long TicksPerMillisecond = 10000;
         protected const long TicksPerSecond = TicksPerMillisecond * 1000;
-        
-        protected readonly TimeSpan TargetElapsedTime = 
+
+        protected readonly TimeSpan TargetElapsedTime =
             TimeSpan.FromTicks(TicksPerSecond / TickRate);
-        protected readonly TimeSpan MaxElapsedTime = 
+
+        protected readonly TimeSpan MaxElapsedTime =
             TimeSpan.FromMilliseconds(500);
+
         protected TimeSpan AccumulatedElapsedTime;
         protected long PrevTicks = 0;
 
-        protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>  
+        protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>
             NetworkMessagesQueue;
 
         public DefaultServer()
         {
             NetworkMessagesQueue = new ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>();
         }
-        
+
         protected CancellationTokenSource NetworkLoopCancellationToken { get; set; }
         protected Thread NetworkLoopThread { get; set; }
-        
+
         [SuppressMessage("ReSharper", "ArrangeThisQualifier")]
         public override void Init()
         {
             if (ServerState >= ServerState.StartsUp)
                 return;
-            
+
             ServerState = ServerState.StartsUp;
-            
+
             // TODO
             // https://docs.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#json-configuration-provider
             // Load serilog config from appsettings:
             // LoggerConfiguration.ReadFrom.Configuration(configuration)
-            
-            const string consoleLogFormat = 
+
+            const string consoleLogFormat =
                 "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}][{Level:u3}]{Message}{NewLine}{Exception}";
-            
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(outputTemplate: consoleLogFormat)
                 .WriteTo.File(FileHelper.WorkingPath("log.txt"))
                 .CreateLogger();
-            
+
             Log.Information("[server] Initialization");
-            
+
             Storage = Container.Resolve<BaseStorage>();
             Storage.Init(FileHelper.WorkingPath("storage.json"));
-            
+
             base.Config = Container.Resolve<BaseConfiguration>();
             base.Config.Init();
             this.Config = (ServerConfiguration) base.Config;
-            
+
             if (Storage.TryOpen("config.json", FileAccess.Read, out var fsConfig))
                 Config.LoadConfig(fsConfig);
-            
+
             Config.ServerName.OnChange += OnServerNameChanged;
 
             NetworkServer = Container.Resolve<BaseNetworkServer>();
@@ -101,21 +104,21 @@ namespace TeeSharp.Server
             else
             {
                 Log.Warning("[server] Server already in `Running` state");
-                return;    
+                return;
             }
-            
+
             GameTimer = Stopwatch.StartNew();
             Tick = 0;
 
             RunNetworkServer();
             RunLoop();
         }
-        
+
         public override void Stop()
         {
             if (ServerState != ServerState.Running)
                 return;
-            
+
             ServerState = ServerState.Stopping;
             NetworkLoopCancellationToken.Cancel();
             Log.CloseAndFlush();
@@ -125,6 +128,7 @@ namespace TeeSharp.Server
         {
             services.Register<BaseChunkFactory, ChunkFactory>();
             services.Register<BaseNetworkConnection, NetworkConnection>();
+            services.Register<BaseCommandsDictionary, CommandsDictionary>();
             services.Register<BaseStorage, Storage>().AsSingleton();
             services.Register<BaseConfiguration, ServerConfiguration>().AsSingleton();
             services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
@@ -146,13 +150,13 @@ namespace TeeSharp.Server
 
             // ReSharper disable once InconsistentNaming
             var localEP = new IPEndPoint(IPAddress.Any, Config.ServerPort);
-            
+
             if (NetworkServer.Open(localEP))
             {
                 NetworkLoopCancellationToken = new CancellationTokenSource();
                 NetworkLoopThread = new Thread(RunNetworkLoop);
                 NetworkLoopThread.Start(NetworkLoopCancellationToken.Token);
-                
+
                 Log.Information("[server] Local address - {Address}", NetworkServer.BindAddress.ToString());
             }
             else
@@ -170,7 +174,7 @@ namespace TeeSharp.Server
                     break;
 
                 // TODO cancellationToken for NetworkServer.Receive
-                
+
                 var responseToken = default(SecurityToken);
                 while (NetworkServer.Receive(out var msg, ref responseToken))
                 {
@@ -185,11 +189,11 @@ namespace TeeSharp.Server
         {
             if (msg.ClientId == -1)
                 ProcessMasterServerMessage(msg, responseToken);
-            else 
+            else
                 ProcessClientMessage(msg, responseToken);
         }
 
-        protected override void ProcessMasterServerMessage(NetworkMessage msg, 
+        protected override void ProcessMasterServerMessage(NetworkMessage msg,
             SecurityToken responseToken)
         {
             if (Packets.GetInfo.Length + 1 <= msg.Data.Length &&
@@ -201,7 +205,7 @@ namespace TeeSharp.Server
                     // var extraToken = (SecurityToken) (((msg.ExtraData[0] << 8) | msg.ExtraData[1]) << 8);
                     // var token = msg.Data[Packets.GetInfo.Length] | extraToken;
                     // SendServerInfo(ServerInfoType.Extended, msg.EndPoint, token);
-                    
+
                     throw new NotImplementedException();
                 }
                 else
@@ -212,7 +216,7 @@ namespace TeeSharp.Server
                         // SendServerInfo(ServerInfoType.Vanilla, msg.EndPoint, token);
                     }
                 }
-                
+
                 return;
             }
 
@@ -224,11 +228,10 @@ namespace TeeSharp.Server
                 SendServerInfo(ServerInfoType.Legacy64, msg.EndPoint, token);
             }
         }
-        
-        protected override void ProcessClientMessage(NetworkMessage msg, 
+
+        protected override void ProcessClientMessage(NetworkMessage msg,
             SecurityToken responseToken)
         {
-            
         }
 
         protected virtual void NetworkUpdate()
@@ -244,7 +247,7 @@ namespace TeeSharp.Server
             while (true)
             {
                 BeginLoop:
-                
+
                 var currentTicks = GameTimer.Elapsed.Ticks;
                 AccumulatedElapsedTime += TimeSpan.FromTicks(currentTicks - PrevTicks);
                 PrevTicks = currentTicks;
@@ -252,7 +255,7 @@ namespace TeeSharp.Server
                 if (AccumulatedElapsedTime < TargetElapsedTime)
                 {
                     var sleepTime = (TargetElapsedTime - AccumulatedElapsedTime).TotalMilliseconds;
-#if _WINDOWS 
+#if _WINDOWS
                     ThreadsHelper.SleepForNoMoreThan(sleepTime);
 #else
                     if (sleepTime >= 2)
@@ -269,25 +272,24 @@ namespace TeeSharp.Server
                 {
                     AccumulatedElapsedTime -= TargetElapsedTime;
                     GameTime += TargetElapsedTime;
-                    
+
                     ++Tick;
                     ++stepCount;
-                    
+
                     Update();
                 }
 
                 if (stepCount > 0)
                 {
-                    
                 }
 
                 NetworkUpdate();
-                
+
                 if (ServerState == ServerState.Stopping)
                     break;
             }
         }
-        
+
         /// <summary>
         /// Game server tick
         /// </summary>
