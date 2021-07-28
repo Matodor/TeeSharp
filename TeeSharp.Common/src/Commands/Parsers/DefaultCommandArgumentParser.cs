@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TeeSharp.Common.Extensions;
+using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
