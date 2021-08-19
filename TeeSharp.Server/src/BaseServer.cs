@@ -15,7 +15,7 @@ namespace TeeSharp.Server
         /// </summary>
         public const int TickRate = 50;
 
-        public Container Container { get; set; }
+        public Container.IScope Container { get; set; }
         public TimeSpan GameTime { get; protected set; }
         public ServerState ServerState { get; protected set; }
         public abstract int Tick { get; protected set; }

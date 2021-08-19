@@ -1,21 +1,34 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using TeeSharp.Common.Config;
 
 namespace TeeSharp.Common.Commands
 {
-    public abstract class BaseCommandsDictionary : IEnumerable<Command>
+    public abstract class BaseCommandsDictionary : IDictionary<string, CommandInfo>
     {
-        public abstract event Action<Command> CommandAdded;
+        public abstract event Action<string, CommandInfo> CommandAdded;
+        public abstract event Action<string> CommandRemoved;
         
-        public abstract Command this[string command] { get; set; }
+        public abstract CommandInfo this[string key] { get; set; }
+        public abstract ICollection<string> Keys { get; }
+        public abstract ICollection<CommandInfo> Values { get; }
+        public abstract int Count { get; }
+        public abstract bool IsReadOnly { get; }
 
-        public abstract void Add(string cmd, string format, string description, CommandCallback callback);
-        public abstract void SetAccessLevel(int accessLevel, params string[] commands);
-        public abstract IEnumerable<KeyValuePair<string, Command>> Get(int accessLevel);
-        public abstract (bool Ok, Command Command, string Args) Parse(string line);
-        public abstract IEnumerator<Command> GetEnumerator();
+        public abstract void Init();
+        public abstract void Add(string cmd, string parametersPattern,
+            CommandHandler callback, string description = "");
+        public abstract void Add(string key, CommandInfo commandInfo);
+        public abstract void Add(KeyValuePair<string, CommandInfo> item);
+        public abstract bool TryGetValue(string key, out CommandInfo value);
+        public abstract bool Contains(KeyValuePair<string, CommandInfo> item);
+        public abstract bool ContainsKey(string key);
+        public abstract void CopyTo(KeyValuePair<string, CommandInfo>[] array, int arrayIndex);
+        public abstract bool Remove(KeyValuePair<string, CommandInfo> item);
+        public abstract bool Remove(string key);
+        public abstract void Clear();
+        public abstract IEnumerator<KeyValuePair<string, CommandInfo>> GetEnumerator();
+        
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

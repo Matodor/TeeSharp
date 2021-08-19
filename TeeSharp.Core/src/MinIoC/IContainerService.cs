@@ -2,6 +2,6 @@
 {
     public interface IContainerService
     {
-        Container Container { get; set; }
+        Container.IScope Container { get; set; }
     }
 }

@@ -1,3 +1,5 @@
+// ReSharper disable StringLiteralTypo
+
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -9,13 +11,15 @@ namespace TeeSharp.Tests
     public class CommandTests
     {
         private CommandsDictionary _store;
+        
         [OneTimeSetUp]
         public void Init()
         {
             _store = new CommandsDictionary();
-            _store.Dictionary.Add("rcon", new Command("rcon", string.Empty, "Rcon command"));
-            _store.Dictionary.Add("test", new Command("test", "ii", "Test command"));
+            _store.Dictionary.Add("rcon", new CommandInfo("rcon", string.Empty, "Rcon command"));
+            _store.Dictionary.Add("test", new CommandInfo("test", "ii", "Test command"));
         }
+        
         [Test]
         [TestCase("kotc9 test", "ss", new object[]{"kotc9", "test"})]
         [TestCase("kotc 9", "si", new object[]{"kotc", 9})]
@@ -25,10 +29,8 @@ namespace TeeSharp.Tests
         [TestCase("\"9 jk jk f", "r", new object[]{"9 jk jk fd"})]
         public void ShouldParseArgumentCommand_DefaultParser(string data, string pattern, IEnumerable<object> excepted)
         {
-            var parser = new DefaultCommandArgumentParser();
-
-            var result = parser.Parse(data, pattern)?.ToList();
-
+            var parser = new DefaultCommandArgumentsParser();
+            var result = parser.TryParse(data, pattern)?.ToList();
             var exceptedList = excepted.ToList();
             
             Assert.NotNull(result);
@@ -47,9 +49,8 @@ namespace TeeSharp.Tests
         [TestCase("kotc 9 jk jk fd", "sri")]
         public void ShouldNotParseArgumentCommand_DefaultParser_WithInvalidData(string data, string pattern)
         {
-            var parser = new DefaultCommandArgumentParser();
-
-            var result = parser.Parse(data, pattern);
+            var parser = new DefaultCommandArgumentsParser();
+            var result = parser.TryParse(data, pattern);
             
             Assert.Null(result);
         }
@@ -59,7 +60,7 @@ namespace TeeSharp.Tests
         [TestCase("test fdsf fdsfsd", "test")]
         public void ShouldParseCommand_DefaultParser(string data, string excepted)
         {
-            var parser = new DefaultCommandParser();
+            var parser = new DefaultCommandLineParser();
             var (ok, command, _) = _store.Parse(data);
             
             Assert.True(ok);

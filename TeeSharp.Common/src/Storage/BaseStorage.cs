@@ -19,7 +19,7 @@ namespace TeeSharp.Common.Storage
             public IList<string> Paths { get; set; }
         }
         
-        public Container Container { get; set; }
+        public Container.IScope Container { get; set; }
 
         protected StorageConfig Config { get; set; }
         

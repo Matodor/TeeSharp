@@ -5,34 +5,39 @@ using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
-    public class DefaultCommandArgumentParser : ICommandArgumentParser
+    public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     {
-        private const char ParameterString = 's';
-        private const char ParameterFloat = 'f';
-        private const char ParameterInt = 'i';
-        private const char ParameterRest = 'r';
-        private const char ParameterOptional = '?';
+        public const char ParameterString = 's';
+        public const char ParameterFloat = 'f';
+        public const char ParameterInt = 'i';
+        public const char ParameterRest = 'r';
+        public const char ParameterOptional = '?';
 
+        public bool TryParse(string input, string parametersPattern, out CommandArgs args)
+        {
+            throw new NotImplementedException();
+        }
+        
         /// <summary>
         /// 
         /// </summary>
         /// <param name="arguments"></param>
-        /// <param name="pattern"></param>
+        /// <param name="parametersPattern"></param>
         /// <returns></returns>
-        public IEnumerable<object> Parse(string arguments, string pattern)
+        public CommandArgs TryParse(string arguments, string parametersPattern)
         {
-            if (!Valid(pattern))
+            if (!Valid(parametersPattern))
             {
                 return null;
             }
 
             // no pattern
-            if (string.IsNullOrEmpty(pattern))
+            if (string.IsNullOrEmpty(parametersPattern))
             {
                 return new object[] {arguments};
             }
 
-            return Algo(arguments, pattern);
+            return Algo(arguments, parametersPattern);
         }
 
         private static IEnumerable<object> Algo(string arguments, string pattern)

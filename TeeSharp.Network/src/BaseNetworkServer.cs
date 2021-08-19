@@ -9,7 +9,7 @@ namespace TeeSharp.Network
 {
     public abstract class BaseNetworkServer : IContainerService
     {
-        public Container Container { get; set; }
+        public Container.IScope Container { get; set; }
         public EndPoint BindAddress => Socket?.Client.LocalEndPoint;
         public IReadOnlyList<BaseNetworkConnection> Connections { get; protected set; }
 

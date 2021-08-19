@@ -9,7 +9,7 @@ namespace TeeSharp.Common.Config
     public abstract class BaseConfiguration : IContainerService, 
         IReadOnlyDictionary<string, ConfigVariable>
     {
-        public Container Container { get; set; }
+        public Container.IScope Container { get; set; }
         public abstract int Count { get; }
         
         IEnumerator IEnumerable.GetEnumerator()

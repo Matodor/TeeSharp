@@ -3,14 +3,15 @@ using System.Collections.Generic;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
-    public interface ICommandArgumentParser
+    public interface ICommandArgumentsParser
     {
         /// <summary>
         /// 
         /// </summary>
         /// <param name="input"></param>
-        /// <param name="pattern"></param>
+        /// <param name="parametersPattern"></param>
         /// <returns></returns>
-        IEnumerable<object> Parse(string input, string pattern);
+        bool TryParse(string input, string parametersPattern, 
+            out CommandArgs args);
     }
 }
