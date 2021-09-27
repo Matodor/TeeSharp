@@ -10,6 +10,6 @@ namespace TeeSharp.Common.Commands
         protected ICommandArgumentsParser ArgumentsParser { get; set; }
 
         public abstract void Init();
-        public abstract bool Execute(string line);
+        public abstract ICommandResult Execute(string line);
     }
 }

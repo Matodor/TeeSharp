@@ -2,7 +2,12 @@ namespace TeeSharp.Common.Commands.Builders
 {
     public class ParameterBuilder
     {
-        internal ParameterInfo Build()
+        public ParameterBuilder()
+        {
+            
+        }
+        
+        public ParameterInfo Build()
         {
             return new ParameterInfo(this);
         }

@@ -1,3 +1,5 @@
+using TeeSharp.Common.Commands.Errors;
+
 namespace TeeSharp.Common.Commands
 {
     public interface ICommandResult
@@ -6,6 +8,11 @@ namespace TeeSharp.Common.Commands
         /// 
         /// </summary>
         CommandArgs Args { get; }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        CommandContext Context { get; }
 
         /// <summary>
         /// 
@@ -15,6 +22,6 @@ namespace TeeSharp.Common.Commands
         /// <summary>
         /// 
         /// </summary>
-        CommandResultError Error { get; }
+        CommandResultError? Error { get; }
     }
 }

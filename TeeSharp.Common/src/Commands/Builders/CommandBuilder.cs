@@ -1,8 +1,52 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
+
 namespace TeeSharp.Common.Commands.Builders
 {
-    public class CommandBuilder
+    public class CommandBuilder : ICommandInfo
     {
-        internal CommandInfo Build()
+        public IReadOnlyList<ParameterInfo> Parameters => throw new NotImplementedException();
+
+        public CommandHandler Callback { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+
+        public List<ParameterBuilder> ParametersBuilders { get; set; }
+        
+        public CommandBuilder()
+        {
+            ParametersBuilders = new List<ParameterBuilder>();
+        }
+
+        public CommandBuilder WithParam(Action<ParameterBuilder> factory)
+        {
+            var builder = new ParameterBuilder();
+            factory(builder);
+            ParametersBuilders.Add(builder);
+            return this;
+        }
+        
+        public CommandBuilder WithName(string name)
+        {
+            Name = name;
+            return this;
+        }
+        
+        public CommandBuilder WithDescription(string desc)
+        {
+            Description = desc;
+            return this;
+        }
+        
+        public CommandBuilder WithCallback(CommandHandler callback)
+        {
+            Callback = callback;
+            return this;
+        }
+        
+        public CommandInfo Build()
         {
             return new CommandInfo(this);
         }

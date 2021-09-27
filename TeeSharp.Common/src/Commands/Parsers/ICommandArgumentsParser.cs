@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace TeeSharp.Common.Commands.Parsers
 {
     public interface ICommandArgumentsParser
@@ -10,8 +7,10 @@ namespace TeeSharp.Common.Commands.Parsers
         /// </summary>
         /// <param name="input"></param>
         /// <param name="parametersPattern"></param>
+        /// <param name="args"></param>
+        /// <param name="error"></param>
         /// <returns></returns>
         bool TryParse(string input, string parametersPattern, 
-            out CommandArgs args);
+            out CommandArgs args, out ArgumentsParseError? error);
     }
 }

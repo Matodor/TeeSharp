@@ -13,33 +13,12 @@ namespace TeeSharp.Common.Commands.Parsers
         public const char ParameterRest = 'r';
         public const char ParameterOptional = '?';
 
-        public bool TryParse(string input, string parametersPattern, out CommandArgs args)
+        public bool TryParse(string input, string parametersPattern, 
+            out CommandArgs args, out ArgumentsParseError? error)
         {
             throw new NotImplementedException();
         }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="arguments"></param>
-        /// <param name="parametersPattern"></param>
-        /// <returns></returns>
-        public CommandArgs TryParse(string arguments, string parametersPattern)
-        {
-            if (!Valid(parametersPattern))
-            {
-                return null;
-            }
-
-            // no pattern
-            if (string.IsNullOrEmpty(parametersPattern))
-            {
-                return new object[] {arguments};
-            }
-
-            return Algo(arguments, parametersPattern);
-        }
-
         private static IEnumerable<object> Algo(string arguments, string pattern)
         {
             var parameterIndex = 0;

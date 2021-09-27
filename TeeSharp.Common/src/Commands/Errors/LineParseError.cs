@@ -1,4 +1,4 @@
-namespace TeeSharp.Common.Commands.Parsers
+namespace TeeSharp.Common.Commands.Errors
 {
     public enum LineParseError
     {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Serilog;
+using TeeSharp.Common.Commands.Builders;
 using TeeSharp.Common.Commands.Parsers;
 using TeeSharp.Common.Config;
 using TeeSharp.Core.MinIoC;
@@ -97,13 +98,13 @@ namespace TeeSharp.Common.Commands
             return true;
         }
         
-        public override void Add(string cmd, string parametersPattern, 
-            CommandHandler callback, string description = "")
+        public override void Add(Action<CommandBuilder> factory)
         {
-            var command = new CommandInfo(parametersPattern, description);
-            command.Executed += callback;
+            var builder = new CommandBuilder();
+            factory(builder);
+            var command = builder.Build();
             
-            Add(cmd, command);
+            Add(command.Name, command);
         }
 
         public override void Add(KeyValuePair<string, CommandInfo> item)
@@ -140,7 +141,7 @@ namespace TeeSharp.Common.Commands
                 return;
             }
 
-            if (commandInfo.ParametersPattern.Length > CommandInfo.MaxParamsLength)
+            if (commandInfo.Parameters.Count > CommandInfo.MaxParamsLength)
             {
                 Log.Warning("[commands] Command `{Cmd}` not added: maximum parameters length exceeded", key);
                 return;

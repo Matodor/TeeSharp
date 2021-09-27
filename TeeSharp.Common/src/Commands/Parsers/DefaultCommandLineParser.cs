@@ -1,15 +1,40 @@
+using System;
+using TeeSharp.Common.Commands.Errors;
+
 namespace TeeSharp.Common.Commands.Parsers
 {
     public class DefaultCommandLineParser : ICommandLineParser
     {
-        public string Prefix { get; set; } = "/";
-        public bool TrimLine { get; set; } = true;
+        public string Prefix
+        {
+            get => _prefix;
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    _prefix = "";
+                }
+                else
+                {
+                    if (value.StartsWith(' '))
+                        throw new Exception("Prefix cannot start with a space");
+                    
+                    _prefix = value;
+                }
+            } 
+        }
 
-        public bool TryParse(string line, out string command, out string args, 
+        private string _prefix;
+
+        public DefaultCommandLineParser(string prefix = "/")
+        {
+            Prefix = prefix;
+        }
+        
+        public virtual bool TryParse(string line, out string command, out string args, 
             out LineParseError? parseError)
         {
-            if (TrimLine) 
-                line = line?.Trim();
+            line = line?.Trim();
 
             if (!Valid(line, out var spaceIndex, out parseError))
             {
@@ -17,14 +42,24 @@ namespace TeeSharp.Common.Commands.Parsers
                 args = null;
                 return false;
             }
-            
-            command = spaceIndex < 0
-                ? line.Substring(Prefix.Length)
-                : line.Substring(Prefix.Length, spaceIndex - Prefix.Length);
 
+            // ReSharper disable PossibleNullReferenceException
+            command = spaceIndex < 0
+                ? (Prefix.Length == 0 
+                    ? line
+                    : line.Substring(Prefix.Length)
+                )
+                : (Prefix.Length == 0
+                    ? line.Substring(0, spaceIndex)
+                    : line.Substring(Prefix.Length, spaceIndex - Prefix.Length)
+                );
+            // ReSharper restore PossibleNullReferenceException
+
+            // ReSharper disable PossibleNullReferenceException
             args = spaceIndex < 0
                 ? null
-                : line.Substring(spaceIndex);
+                : line.Substring(spaceIndex + 1);
+            // ReSharper restore PossibleNullReferenceException
             
             return true;
         }
@@ -32,29 +67,31 @@ namespace TeeSharp.Common.Commands.Parsers
         protected virtual bool Valid(string line, out int spaceIndex, 
             out LineParseError? error)
         {
-            spaceIndex = -1;
-
             if (string.IsNullOrWhiteSpace(line))
             {
                 error = LineParseError.EmptyLine;
+                spaceIndex = -1;
                 return false;
             }
 
             if (line.Length < Prefix.Length + CommandInfo.MinCommandLength)
             {
                 error = LineParseError.BadLength;
+                spaceIndex = -1;
                 return false;
             }
             
-            if (!line.StartsWith(Prefix))
+            if (Prefix.Length != 0 && !line.StartsWith(Prefix))
             {
                 error = LineParseError.WrongPrefix;
+                spaceIndex = -1;
                 return false;
             }
 
             spaceIndex = line.IndexOf(' ', Prefix.Length);
 
-            if (spaceIndex < Prefix.Length + CommandInfo.MinCommandLength)
+            if (spaceIndex != -1 &&
+                spaceIndex < Prefix.Length + CommandInfo.MinCommandLength)
             {
                 error = LineParseError.BadLength;
                 spaceIndex = -1;
@@ -62,7 +99,7 @@ namespace TeeSharp.Common.Commands.Parsers
             }
 
             error = null;
-            return spaceIndex < 0;
+            return true;
         }
     }
 }

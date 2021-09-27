@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TeeSharp.Common.Commands.Builders;
 
 namespace TeeSharp.Common.Commands
 {
@@ -16,8 +17,7 @@ namespace TeeSharp.Common.Commands
         public abstract bool IsReadOnly { get; }
 
         public abstract void Init();
-        public abstract void Add(string cmd, string parametersPattern,
-            CommandHandler callback, string description = "");
+        public abstract void Add(Action<CommandBuilder> factory);
         public abstract void Add(string key, CommandInfo commandInfo);
         public abstract void Add(KeyValuePair<string, CommandInfo> item);
         public abstract bool TryGetValue(string key, out CommandInfo value);
