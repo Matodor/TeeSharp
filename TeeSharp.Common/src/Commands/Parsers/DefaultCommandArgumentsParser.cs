@@ -1,122 +1,119 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using TeeSharp.Core.Extensions;
+using TeeSharp.Common.Commands.Errors;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
     public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     {
-        public const char ParameterString = 's';
-        public const char ParameterFloat = 'f';
-        public const char ParameterInt = 'i';
-        public const char ParameterRest = 'r';
-        public const char ParameterOptional = '?';
-
-        public bool TryParse(string input, string parametersPattern, 
-            out CommandArgs args, out ArgumentsParseError? error)
+        public bool TryParse(string input, IReadOnlyList<ParameterInfo> parameters, 
+            out CommandArgs args, 
+            out ArgumentsParseError? error)
         {
-            throw new NotImplementedException();
-        }
-        
-        private static IEnumerable<object> Algo(string arguments, string pattern)
-        {
-            var parameterIndex = 0;
-            var optional = false;
-            var list = new List<object>();
-            ReadOnlySpan<char> argsSpan = arguments;
-
-            while (true)
+            if (parameters.Count == 0)
             {
-                if (parameterIndex >= pattern.Length)
+                args = CommandArgs.Empty;
+                error = null;
+                return true;
+            }
+
+            input = input?.Trim();
+
+            if (string.IsNullOrEmpty(input) && !parameters[0].IsOptional)
+            {
+                args = null;
+                error = ArgumentsParseError.MissingArgument;
+                return false;
+            }
+
+            var line = input.AsSpan();
+            for (var paramIndex = 0; paramIndex < parameters.Count; paramIndex++)
+            {
+                var result = GetFirstArgument(
+                    line, 
+                    parameters[paramIndex],
+                    out line,
+                    out var arg,
+                    out error
+                );
+
+                if (error != null)
+                {
+                    args = null;
+                    return false;
+                }
+
+                if (!result)
+                {
+                    if (paramIndex + 1 < parameters.Count && !parameters[paramIndex + 1].IsOptional)
+                    {
+                        args = null;
+                        error = ArgumentsParseError.MissingArgument;
+                        return false;
+                    }
+                    
                     break;
-
-                var parameterType = pattern[parameterIndex++];
-                if (parameterType == ParameterOptional)
-                {
-                    optional = true;
-                    continue;
-                }
-
-                argsSpan = argsSpan.SkipWhitespaces();
-
-                if (argsSpan.Length == 0)
-                {
-                    if (!optional)
-                    {
-                        return null;
-                    }
-
-                    break;
-                }
-
-                if (argsSpan[0] == '"')
-                {
-                    argsSpan = argsSpan[1..];
-
-                    for (var i = 0; i < argsSpan.Length; i++)
-                    {
-                        if (argsSpan[i] == '"')
-                        {
-                            list.Add(argsSpan[..i].ToString());
-                            argsSpan = argsSpan[(i + 1)..];
-                            break;
-                        }
-
-                        if (argsSpan[i] == '\\')
-                        {
-                            if (i + 1 < argsSpan.Length && (argsSpan[i + 1] == '\\' || argsSpan[i + 1] == '"'))
-                                i++;
-                        }
-                        else if (i + 1 == argsSpan.Length)
-                        {
-                            return null;
-                        }
-                    }
-                }
-                else
-                {
-                    if (parameterType == ParameterRest)
-                    {
-                        list.Add(argsSpan.ToString());
-                        break;
-                    }
-
-                    var temp = argsSpan.SkipToWhitespaces();
-                    var str = argsSpan[..^temp.Length];
-
-                    switch (parameterType)
-                    {
-                        case ParameterInt when int.TryParse(str, out var @int):
-                            list.Add(@int);
-                            break;
-                        case ParameterFloat when float.TryParse(str, out var @float):
-                            list.Add(@float);
-                            break;
-                        case ParameterString:
-                            list.Add(str.ToString());
-                            break;
-                    }
-
-                    argsSpan = temp;
                 }
             }
 
-            return list;
+            throw new NotImplementedException();
         }
 
-        private static bool Valid(string pattern)
+        protected bool GetFirstArgument(ReadOnlySpan<char> line, ParameterInfo parameterInfo,
+            out ReadOnlySpan<char> restLine,
+            out string arg,
+            out ArgumentsParseError? error)
         {
-            return
-                //valid pattern
-                !pattern.Any(parameterType =>
-                    parameterType != ParameterString &&
-                    parameterType != ParameterFloat &&
-                    parameterType != ParameterInt &&
-                    parameterType != ParameterRest &&
-                    parameterType != ParameterOptional)
-                // rest argument must be in end of the pattern
-                && (!pattern.Contains('r') || pattern.IndexOf('r') == pattern.Length - 1);
+            if (line == null || line.IsEmpty)
+            {
+                restLine = null;
+                arg = null;
+                error = parameterInfo.IsOptional 
+                    ? (ArgumentsParseError?) null 
+                    : ArgumentsParseError.MissingArgument;
+                
+                return false;
+            }
+            
+            var isQuoteable = line.Length > 1 && line[0] == '"';
+            if (isQuoteable)
+            {
+                var endIndex = 0;
+                
+                for (var i = 1; i < line.Length; i++)
+                {
+                    if (char.IsWhiteSpace(line[i]) ||
+                        line[i] == '"' && line[i - 1] != '\\')
+                    {
+                        endIndex = i - 1;
+                        break;
+                    }
+
+                    endIndex = i;
+                }
+
+                arg = line.Slice(1, endIndex - 1).ToString();
+                restLine = line.Slice(endIndex).TrimStart();
+                error = null;
+
+                return true;
+            }
+            
+            var spaceIndex = line.IndexOf(' ');
+            if (spaceIndex == -1)
+            {
+                arg = line.ToString();
+                restLine = null;
+                error = null;
+
+                return false;
+            }
+            
+            arg = line.Slice(0, spaceIndex).ToString();
+            restLine = line.Slice(spaceIndex).TrimStart();
+            error = null;
+
+            return true;
         }
     }
 }
