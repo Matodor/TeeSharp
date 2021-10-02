@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using TeeSharp.Common.Commands.Errors;
+
 namespace TeeSharp.Common.Commands.Parsers
 {
     public interface ICommandArgumentsParser
@@ -6,11 +9,11 @@ namespace TeeSharp.Common.Commands.Parsers
         /// 
         /// </summary>
         /// <param name="input"></param>
-        /// <param name="parametersPattern"></param>
+        /// <param name="parameters"></param>
         /// <param name="args"></param>
         /// <param name="error"></param>
         /// <returns></returns>
-        bool TryParse(string input, string parametersPattern, 
+        bool TryParse(string input, IReadOnlyList<ParameterInfo> parameters,
             out CommandArgs args, out ArgumentsParseError? error);
     }
 }
