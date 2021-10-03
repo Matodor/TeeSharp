@@ -17,10 +17,46 @@ namespace TeeSharp.Tests
         }
 
         [Test]
+        [TestCase("", new string[] {}, new object[] {})]
+        [TestCase("\"", new string[] {}, new object[] {})]
+        [TestCase("\"\"", new string[] {}, new object[] {})]
+        [TestCase("   ", new string[] {}, new object[] {})]
+        [TestCase("\"   \"", new string[] {"s"}, new object[] {"   "})]
         [TestCase("", new string[] {"?s"}, new object[] {})]
-        [TestCase("test", new string[] {"s", "?s"}, new object[] {"test", null})]
+        [TestCase("   ", new string[] {"?s"}, new object[] {})]
         [TestCase("test", new string[] {"s"}, new object[] {"test"})]
+        [TestCase("te\"st", new string[] {"s"}, new object[] {"te\"st"})]
+        [TestCase("\"te\"st\"", new string[] {"s"}, new object[] {"te\"st"})]
+        // "test"
+        [TestCase("\"test\"", new string[] {"s"}, new object[] {"test"})]
+        // \"test\"
+        [TestCase("\\\"test\\\"", new string[] {"s"}, new object[] {"\"test\""})]
+        // "\"test"
+        [TestCase("\"\\\"test\"", new string[] {"s"}, new object[] {"\"test"})]
+        // \"t\"e\"s\"t\"
+        [TestCase("\\\"t\\\"e\\\"s\\\"t\\\"", new string[] {"s"}, new object[] {"\"t\"e\"s\"t\""})]
+        // "\" t \" e \" s \" t \""
+        [TestCase("\"\\\" t \\\" e \\\" s \\\" t \\\"\"", new string[] {"s"}, new object[] {"\" t \" e \" s \" t \""})]
+        [TestCase("\"test\" test", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase("test \"test\"", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase("  test \"test\"", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" test  \"test\" ", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" \"test\" \"test\" ", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" \"test\" \"test\" ", new string[] {"?s", "?s"}, new object[] {"test", "test"})]
+        [TestCase("test \"test\"", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase("\"test test\"", new string[] {"s"}, new object[] {"test test"})]
+        [TestCase("  test", new string[] {"s"}, new object[] {"test"})]
+        [TestCase(" test ", new string[] {"s"}, new object[] {"test"})]
+        [TestCase("test  ", new string[] {"s"}, new object[] {"test"})]
+        [TestCase("test", new string[] {"s", "?s"}, new object[] {"test"})]
+        [TestCase("  test", new string[] {"s", "?s"}, new object[] {"test"})]
+        [TestCase(" test ", new string[] {"s", "?s"}, new object[] {"test"})]
+        [TestCase("test  ", new string[] {"s", "?s"}, new object[] {"test"})]
+        [TestCase("\\\" \\\"", new string[] {"s", "s"}, new object[] {"\"", "\""})]
         [TestCase("test test", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" test test", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" test  test", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        [TestCase(" test  test ", new string[] {"s", "s"}, new object[] {"test", "test"})]
         public void ShouldParseArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
         {
             var parameters = paramsPatterns
