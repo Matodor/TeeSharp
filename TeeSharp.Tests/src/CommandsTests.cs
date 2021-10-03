@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Common.Commands;
+using TeeSharp.Common.Commands.Builders;
 using TeeSharp.Common.Commands.Errors;
 using TeeSharp.Common.Commands.Parsers;
 
@@ -15,29 +16,25 @@ namespace TeeSharp.Tests
         public void Init()
         {
         }
-        
-        // [Test]
-        // [TestCase("kotc9 test", "ss", new object[]{"kotc9", "test"})]
-        // [TestCase("kotc 9", "si", new object[]{"kotc", 9})]
-        // [TestCase("kotc9 rewr", "ss?s", new object[]{"kotc9", "rewr"})]
-        // [TestCase("kotc 9 jk jk fd", "sir", new object[]{"kotc", 9, "jk jk fd"})]
-        // [TestCase("kotc \"9 jk jk fd\"", "ss", new object[]{"kotc", "9 jk jk fd"})]
-        // [TestCase("\"9 jk jk f", "r", new object[]{"9 jk jk fd"})]
-        // public void ShouldParseArgumentCommand_DefaultParser(string line, string pattern, IEnumerable<object> excepted)
-        // {
-        //     // var parser = new DefaultCommandArgumentsParser();
-        //     // var result = parser.TryParse()
-        //     //
-        //     // var exceptedList = excepted.ToList();
-        //     //
-        //     // Assert.NotNull(result);
-        //     // Assert.AreEqual(result.Count, exceptedList.Count());
-        //     //
-        //     // for(var i = 0; i < result.Count; i++)
-        //     // {
-        //     //     Assert.AreEqual(result[i], exceptedList[i]);
-        //     // }
-        // }
+
+        [Test]
+        [TestCase("", new string[] {"?s"}, new object[] {})]
+        [TestCase("test", new string[] {"s", "?s"}, new object[] {"test", null})]
+        [TestCase("test", new string[] {"s"}, new object[] {"test"})]
+        [TestCase("test test", new string[] {"s", "s"}, new object[] {"test", "test"})]
+        public void ShouldParseArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
+        {
+            var parameters = paramsPatterns
+                .Select(p => ParameterBuilder.FromPattern(p).Build())
+                .ToArray();
+
+            var parser = new DefaultCommandArgumentsParser();
+            var result = parser.TryParse(line, parameters, out var args, out var error);
+            
+            Assert.True(result);
+            Assert.AreEqual(new CommandArgs(expectedArgs), args);
+            Assert.AreEqual(null, error);
+        }
 
         [Test]
         [TestCase("//r", "r", null)]
