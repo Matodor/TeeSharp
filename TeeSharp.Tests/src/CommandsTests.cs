@@ -57,7 +57,8 @@ namespace TeeSharp.Tests
         [TestCase(" test test", new string[] {"s", "s"}, new object[] {"test", "test"})]
         [TestCase(" test  test", new string[] {"s", "s"}, new object[] {"test", "test"})]
         [TestCase(" test  test ", new string[] {"s", "s"}, new object[] {"test", "test"})]
-        public void ShouldParseArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
+        [TestCase(" test , test ", new string[] {"s", "s", "s"}, new object[] {"test", ",", "test"})]
+        public void ShouldParseStringArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
         {
             var parameters = paramsPatterns
                 .Select(p => ParameterBuilder.FromPattern(p).Build())
