@@ -29,14 +29,14 @@ namespace TeeSharp.Commands
             return GetEnumerator();
         }
 
-        public bool Equals(CommandArgs other)
+        public bool Equals(CommandArgs? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Arguments.SequenceEqual(other.Arguments);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -46,7 +46,7 @@ namespace TeeSharp.Commands
 
         public override int GetHashCode()
         {
-            return (Arguments != null ? Arguments.GetHashCode() : 0);
+            return Arguments.GetHashCode();
         }
     }
 }
