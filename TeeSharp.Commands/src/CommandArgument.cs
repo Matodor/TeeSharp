@@ -1,6 +1,6 @@
 using System;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public class CommandArgument
     {

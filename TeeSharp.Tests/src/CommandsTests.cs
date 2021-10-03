@@ -1,12 +1,11 @@
 // ReSharper disable StringLiteralTypo
 
-using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using TeeSharp.Common.Commands;
-using TeeSharp.Common.Commands.Builders;
-using TeeSharp.Common.Commands.Errors;
-using TeeSharp.Common.Commands.Parsers;
+using TeeSharp.Commands;
+using TeeSharp.Commands.Builders;
+using TeeSharp.Commands.Errors;
+using TeeSharp.Commands.Parsers;
 
 namespace TeeSharp.Tests
 {

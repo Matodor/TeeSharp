@@ -1,7 +1,7 @@
 using System;
-using TeeSharp.Common.Commands.ArgumentsReaders;
+using TeeSharp.Commands.ArgumentsReaders;
 
-namespace TeeSharp.Common.Commands.Builders
+namespace TeeSharp.Commands.Builders
 {
     public class ParameterBuilder : IParameterInfo
     {

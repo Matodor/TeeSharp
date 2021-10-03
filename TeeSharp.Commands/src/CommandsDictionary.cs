@@ -1,15 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Serilog;
-using TeeSharp.Common.Commands.Builders;
-using TeeSharp.Common.Commands.Parsers;
-using TeeSharp.Common.Config;
-using TeeSharp.Core.MinIoC;
+using TeeSharp.Commands.Builders;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     /// <summary>
     /// Commands store

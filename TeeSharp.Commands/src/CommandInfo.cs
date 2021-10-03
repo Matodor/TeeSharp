@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TeeSharp.Common.Commands.Builders;
+using TeeSharp.Commands.Builders;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public delegate Task CommandHandler(ICommandResult result);
     

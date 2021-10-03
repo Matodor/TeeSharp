@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using TeeSharp.Core.Helpers;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public static class ReadersContainer
     {

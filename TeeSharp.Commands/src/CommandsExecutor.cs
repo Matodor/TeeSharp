@@ -1,10 +1,7 @@
 using System;
-using Serilog;
-using TeeSharp.Common.Commands.Errors;
-using TeeSharp.Common.Commands.Parsers;
-using TeeSharp.Core.MinIoC;
+using TeeSharp.Commands.Parsers;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public class CommandsExecutor : BaseCommandsExecutor
     {

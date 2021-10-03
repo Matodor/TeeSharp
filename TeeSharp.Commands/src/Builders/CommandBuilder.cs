@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Threading.Tasks;
 
-namespace TeeSharp.Common.Commands.Builders
+namespace TeeSharp.Commands.Builders
 {
     public class CommandBuilder : ICommandInfo
     {

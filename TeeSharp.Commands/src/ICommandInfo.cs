@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public interface ICommandInfo
     {

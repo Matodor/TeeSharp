@@ -1,4 +1,4 @@
-namespace TeeSharp.Common.Commands.ArgumentsReaders
+namespace TeeSharp.Commands.ArgumentsReaders
 {
     public class StringReader : IArgumentReader
     {

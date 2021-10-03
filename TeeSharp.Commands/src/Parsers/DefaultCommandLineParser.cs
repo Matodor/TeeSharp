@@ -1,7 +1,7 @@
 using System;
-using TeeSharp.Common.Commands.Errors;
+using TeeSharp.Commands.Errors;
 
-namespace TeeSharp.Common.Commands.Parsers
+namespace TeeSharp.Commands.Parsers
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class DefaultCommandLineParser : ICommandLineParser

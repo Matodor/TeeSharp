@@ -1,6 +1,6 @@
-using TeeSharp.Common.Commands.Errors;
+using TeeSharp.Commands.Errors;
 
-namespace TeeSharp.Common.Commands.Parsers
+namespace TeeSharp.Commands.Parsers
 {
     public interface ICommandLineParser
     {

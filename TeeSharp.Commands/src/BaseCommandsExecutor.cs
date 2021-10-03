@@ -1,6 +1,6 @@
-using TeeSharp.Common.Commands.Parsers;
+using TeeSharp.Commands.Parsers;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public abstract class BaseCommandsExecutor
     {

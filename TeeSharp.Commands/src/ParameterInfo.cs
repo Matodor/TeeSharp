@@ -1,6 +1,6 @@
-using TeeSharp.Common.Commands.Builders;
+using TeeSharp.Commands.Builders;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public class ParameterInfo : IParameterInfo
     {

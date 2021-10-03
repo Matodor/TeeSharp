@@ -1,6 +1,6 @@
-using TeeSharp.Common.Commands.Errors;
+using TeeSharp.Commands.Errors;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public class CommandResult : ICommandResult
     {

@@ -1,4 +1,4 @@
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public interface IArgumentReader
     {

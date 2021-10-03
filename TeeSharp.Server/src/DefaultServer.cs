@@ -6,7 +6,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using Serilog;
-using TeeSharp.Common.Commands;
+using TeeSharp.Commands;
 using TeeSharp.Common.Config;
 using TeeSharp.Common.Storage;
 using TeeSharp.Network;

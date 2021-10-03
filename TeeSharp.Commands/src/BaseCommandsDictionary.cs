@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using TeeSharp.Common.Commands.Builders;
+using TeeSharp.Commands.Builders;
 
-namespace TeeSharp.Common.Commands
+namespace TeeSharp.Commands
 {
     public abstract class BaseCommandsDictionary : IDictionary<string, CommandInfo>
     {
