@@ -177,7 +177,7 @@ namespace TeeSharp.Benchmark
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
             };
 
-            var size = TypeHelper<TestStruct2>.Size;
+            var size = StructHelper<TestStruct2>.Size;
             var array = new IPEndPoint[data.Length / size];
 
             for (int i = 0; i < size; i++)

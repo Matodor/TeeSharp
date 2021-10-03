@@ -36,8 +36,8 @@ namespace TeeSharp.Map
 
             // ReSharper disable ArrangeRedundantParentheses
             var fileSize =
-                (TypeHelper<DataFileHeader>.Size) +
-                (header.ItemTypesCount * TypeHelper<DataFileItemTypeInfo>.Size) +
+                (StructHelper<DataFileHeader>.Size) +
+                (header.ItemTypesCount * StructHelper<DataFileItemTypeInfo>.Size) +
                 (header.ItemsCount + header.RawDataBlocks + header.RawDataBlocks) * sizeof(int) +
                 (header.ItemsSize) +
                 (header.RawDataBlocksSize);

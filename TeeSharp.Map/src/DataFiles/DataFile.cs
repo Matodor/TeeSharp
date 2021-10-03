@@ -124,7 +124,7 @@ namespace TeeSharp.Map
                 return (T[]) data;
             
             var buffer = GetDataBuffer(index);
-            DataItems.Add(index, buffer.Deserialize<T>(buffer.Length / TypeHelper<T>.Size).ToArray());
+            DataItems.Add(index, buffer.Deserialize<T>(buffer.Length / StructHelper<T>.Size).ToArray());
             
             return (T[]) DataItems[index];
         }

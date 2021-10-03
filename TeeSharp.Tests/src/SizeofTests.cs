@@ -12,8 +12,8 @@ namespace TeeSharp.Tests
         [Test]
         public void CheckSize()
         {
-            Assert.AreEqual(36, TypeHelper<DataFileHeader>.Size);
-            Assert.AreEqual(4, TypeHelper<SecurityToken>.Size);
+            Assert.AreEqual(36, StructHelper<DataFileHeader>.Size);
+            Assert.AreEqual(4, StructHelper<SecurityToken>.Size);
         }
     }
 }

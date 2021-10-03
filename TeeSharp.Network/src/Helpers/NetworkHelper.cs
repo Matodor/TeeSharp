@@ -142,7 +142,7 @@ namespace TeeSharp.Network
 
             if (isSixUp)
             {
-                headerSize += TypeHelper<SecurityToken>.Size;
+                headerSize += StructHelper<SecurityToken>.Size;
                 securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
             }
             else if (securityToken != SecurityToken.Unsupported)

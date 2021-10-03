@@ -11,8 +11,8 @@ namespace TeeSharp.Core.Extensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Span<T> Deserialize<T>(this Span<byte> data, int count) where T : struct
         {
-            if (TypeHelper<T>.IsArray == false &&
-                TypeHelper<T>.ElementSize * count <= data.Length)
+            if (StructHelper<T>.IsArray == false &&
+                StructHelper<T>.ElementSize * count <= data.Length)
             {
                 return MemoryMarshal.Cast<byte, T>(data);
             }
@@ -24,8 +24,8 @@ namespace TeeSharp.Core.Extensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Deserialize<T>(this Span<byte> data) where T : struct
         {
-            if (TypeHelper<T>.IsArray == false &&
-                TypeHelper<T>.Size <= data.Length)
+            if (StructHelper<T>.IsArray == false &&
+                StructHelper<T>.Size <= data.Length)
             {
                 return MemoryMarshal.Read<T>(data);
             }

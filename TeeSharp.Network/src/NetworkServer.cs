@@ -193,14 +193,14 @@ namespace TeeSharp.Network
             }
 
             if (packet.Data[0] == (int) ConnectionStateMsg.Connect &&
-                packet.DataSize >= 1 + TypeHelper<SecurityToken>.Size * 2 &&
-                packet.Data.AsSpan(1, TypeHelper<SecurityToken>.Size) == SecurityToken.Magic)
+                packet.DataSize >= 1 + StructHelper<SecurityToken>.Size * 2 &&
+                packet.Data.AsSpan(1, StructHelper<SecurityToken>.Size) == SecurityToken.Magic)
             {
                 return true;
             }
                 
             if (packet.Data[0] == (int) ConnectionStateMsg.Accept &&
-                packet.DataSize >= 1 + TypeHelper<SecurityToken>.Size)
+                packet.DataSize >= 1 + StructHelper<SecurityToken>.Size)
             {
                 return true;
             }

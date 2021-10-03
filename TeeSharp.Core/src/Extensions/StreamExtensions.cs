@@ -8,15 +8,15 @@ namespace TeeSharp.Core.Extensions
     {
         public static bool Get<T>(this Stream stream, out T output, int readSize = 0) where T : struct
         {
-            if (TypeHelper<T>.IsArray || readSize < 0)
+            if (StructHelper<T>.IsArray || readSize < 0)
             {
                 output = default;
                 return false;
             }
 
             readSize = readSize > 0 
-                ? Math.Min(readSize, TypeHelper<T>.Size) 
-                : TypeHelper<T>.Size;
+                ? Math.Min(readSize, StructHelper<T>.Size) 
+                : StructHelper<T>.Size;
             
             if (stream.Position + readSize >= stream.Length)
             {
@@ -24,8 +24,8 @@ namespace TeeSharp.Core.Extensions
                 return false;
             }
 
-            var buffer = new Span<byte>(new byte[TypeHelper<T>.Size]);
-            var readBuffer = readSize != TypeHelper<T>.Size
+            var buffer = new Span<byte>(new byte[StructHelper<T>.Size]);
+            var readBuffer = readSize != StructHelper<T>.Size
                 ? buffer.Slice(0, readSize)
                 : buffer;
             
@@ -41,9 +41,9 @@ namespace TeeSharp.Core.Extensions
 
         public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
         {
-            var size = TypeHelper<T>.ElementSize;
+            var size = StructHelper<T>.ElementSize;
 
-            if (TypeHelper<T>.IsArray || 
+            if (StructHelper<T>.IsArray || 
                 stream.Position + size * count >= stream.Length)
             {
                 output = null;
