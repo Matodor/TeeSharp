@@ -3,6 +3,7 @@ using TeeSharp.Common.Commands.Errors;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class DefaultCommandLineParser : ICommandLineParser
     {
         public string Prefix
@@ -45,14 +46,12 @@ namespace TeeSharp.Common.Commands.Parsers
 
             // ReSharper disable PossibleNullReferenceException
             command = spaceIndex < 0
-                ? (Prefix.Length == 0 
+                ? Prefix.Length == 0 
                     ? line
                     : line.Substring(Prefix.Length)
-                )
-                : (Prefix.Length == 0
+                : Prefix.Length == 0
                     ? line.Substring(0, spaceIndex)
-                    : line.Substring(Prefix.Length, spaceIndex - Prefix.Length)
-                );
+                    : line.Substring(Prefix.Length, spaceIndex - Prefix.Length);
             // ReSharper restore PossibleNullReferenceException
 
             // ReSharper disable PossibleNullReferenceException

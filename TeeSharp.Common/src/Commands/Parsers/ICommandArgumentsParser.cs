@@ -13,7 +13,7 @@ namespace TeeSharp.Common.Commands.Parsers
         /// <param name="args"></param>
         /// <param name="error"></param>
         /// <returns></returns>
-        bool TryParse(string input, IReadOnlyList<ParameterInfo> parameters,
+        bool TryParse(string input, IReadOnlyList<IParameterInfo> parameters,
             out CommandArgs args, out ArgumentsParseError? error);
     }
 }

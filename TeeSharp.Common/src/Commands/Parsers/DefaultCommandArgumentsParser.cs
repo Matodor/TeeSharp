@@ -4,9 +4,12 @@ using TeeSharp.Common.Commands.Errors;
 
 namespace TeeSharp.Common.Commands.Parsers
 {
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     {
-        public bool TryParse(string input, IReadOnlyList<ParameterInfo> parameters, 
+        public virtual bool TryParse(
+            string input, 
+            IReadOnlyList<IParameterInfo> parameters, 
             out CommandArgs args, 
             out ArgumentsParseError? error)
         {
@@ -19,60 +22,62 @@ namespace TeeSharp.Common.Commands.Parsers
 
             input = input?.Trim();
 
-            if (string.IsNullOrEmpty(input) && !parameters[0].IsOptional)
+            if (string.IsNullOrEmpty(input))
             {
-                args = null;
-                error = ArgumentsParseError.MissingArgument;
-                return false;
-            }
-
-            var line = input.AsSpan();
-            for (var paramIndex = 0; paramIndex < parameters.Count; paramIndex++)
-            {
-                var result = GetFirstArgument(
-                    line, 
-                    parameters[paramIndex],
-                    out line,
-                    out var arg,
-                    out error
-                );
-
-                if (error != null)
+                if (!parameters[0].IsOptional)
                 {
                     args = null;
+                    error = ArgumentsParseError.MissingArgument;
                     return false;
                 }
+                
+                args = CommandArgs.Empty;
+                error = null;
+                return true;
+            }
 
-                if (!result)
+            var values = new List<object>(parameters.Count);
+            var line = input.AsSpan();
+            
+            foreach (var parameter in parameters)
+            {
+                var arg = GetFirstArgument(line, out line);
+
+                if (string.IsNullOrEmpty(arg))
                 {
-                    if (paramIndex + 1 < parameters.Count && !parameters[paramIndex + 1].IsOptional)
+                    if (!parameter.IsOptional)
                     {
                         args = null;
                         error = ArgumentsParseError.MissingArgument;
                         return false;
                     }
-                    
-                    break;
+                }
+                else
+                {
+                    if (parameter.ArgumentReader.TryRead(arg, out var value))
+                        values.Add(value);
+                    else
+                    {
+                        args = null;
+                        error = ArgumentsParseError.ReadArgumentFailed;
+                        return false;
+                    }
                 }
             }
 
-            throw new NotImplementedException();
+            args = new CommandArgs(values);
+            error = null;
+            return true;
         }
 
-        protected bool GetFirstArgument(ReadOnlySpan<char> line, ParameterInfo parameterInfo,
-            out ReadOnlySpan<char> restLine,
-            out string arg,
-            out ArgumentsParseError? error)
+        protected virtual string? GetFirstArgument(
+            ReadOnlySpan<char> line, 
+            out ReadOnlySpan<char> restLine)
         {
             if (line == null || line.IsEmpty)
             {
                 restLine = null;
-                arg = null;
-                error = parameterInfo.IsOptional 
-                    ? (ArgumentsParseError?) null 
-                    : ArgumentsParseError.MissingArgument;
-                
-                return false;
+                return null;
             }
             
             var isQuoteable = line.Length > 1 && line[0] == '"';
@@ -92,28 +97,19 @@ namespace TeeSharp.Common.Commands.Parsers
                     endIndex = i;
                 }
 
-                arg = line.Slice(1, endIndex - 1).ToString();
                 restLine = line.Slice(endIndex).TrimStart();
-                error = null;
-
-                return true;
+                return line.Slice(1, endIndex - 1).ToString();
             }
             
             var spaceIndex = line.IndexOf(' ');
             if (spaceIndex == -1)
             {
-                arg = line.ToString();
                 restLine = null;
-                error = null;
-
-                return false;
+                return line.ToString();
             }
             
-            arg = line.Slice(0, spaceIndex).ToString();
             restLine = line.Slice(spaceIndex).TrimStart();
-            error = null;
-
-            return true;
+            return line.Slice(0, spaceIndex).ToString();
         }
     }
 }
