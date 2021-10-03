@@ -8,9 +8,9 @@ namespace TeeSharp.Commands.Parsers
     public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     {
         public virtual bool TryParse(
-            string input, 
+            string? input, 
             IReadOnlyList<IParameterInfo> parameters, 
-            out CommandArgs args, 
+            out CommandArgs? args, 
             out ArgumentsParseError? error)
         {
             if (parameters.Count == 0)
@@ -41,27 +41,37 @@ namespace TeeSharp.Commands.Parsers
             
             foreach (var parameter in parameters)
             {
-                var arg = GetFirstArgument(line, out line);
+                var arg = parameter.IsRemain 
+                    ? line.TrimStart().ToString()
+                    : GetFirstChunk(line, out line);
 
                 if (string.IsNullOrEmpty(arg))
                 {
-                    if (!parameter.IsOptional)
-                    {
-                        args = null;
-                        error = ArgumentsParseError.MissingArgument;
-                        return false;
-                    }
+                    if (parameter.IsOptional) 
+                        continue;
+                    
+                    args = null;
+                    error = ArgumentsParseError.MissingArgument;
+                    return false;
                 }
+
+                if (arg[0] == '"' && (arg.Length == 1 || arg[^1] != '"' || arg[^2] == '\\') ||
+                    arg[^1] == '"' && (arg.Length == 1 || arg[^2] != '\\' && arg[0] != '"'))
+                {
+                    args = null;
+                    error = ArgumentsParseError.MissingQuote;
+                    return false;
+                }
+
+                arg = arg.Replace("\\\"", "\"");
+                
+                if (parameter.ArgumentReader.TryRead(arg, out var value))
+                    values.Add(value);
                 else
                 {
-                    if (parameter.ArgumentReader.TryRead(arg, out var value))
-                        values.Add(value);
-                    else
-                    {
-                        args = null;
-                        error = ArgumentsParseError.ReadArgumentFailed;
-                        return false;
-                    }
+                    args = null;
+                    error = ArgumentsParseError.ReadArgumentFailed;
+                    return false;
                 }
             }
 
@@ -70,7 +80,7 @@ namespace TeeSharp.Commands.Parsers
             return true;
         }
 
-        protected virtual string? GetFirstArgument(
+        protected virtual string? GetFirstChunk(
             ReadOnlySpan<char> line, 
             out ReadOnlySpan<char> restLine)
         {
@@ -83,22 +93,34 @@ namespace TeeSharp.Commands.Parsers
             var isQuoteable = line.Length > 1 && line[0] == '"';
             if (isQuoteable)
             {
-                var endIndex = 0;
+                var firstSpaceIndex = -1;
                 
                 for (var i = 1; i < line.Length; i++)
                 {
-                    if (char.IsWhiteSpace(line[i]) ||
-                        line[i] == '"' && line[i - 1] != '\\')
+                    if (firstSpaceIndex == -1 && char.IsWhiteSpace(line[i]))
                     {
-                        endIndex = i - 1;
-                        break;
+                        firstSpaceIndex = i - 1;
+                        continue;
                     }
 
-                    endIndex = i;
+                    // ReSharper disable once InvertIf
+                    if (line[i] == '"'
+                        && line[i - 1] != '\\'
+                        && (i + 1 == line.Length || line[i + 1] == ' '))
+                    {
+                        restLine = line.Slice(i + 1).TrimStart();
+                        return line.Slice(1, i - 1).ToString();
+                    }
                 }
 
-                restLine = line.Slice(endIndex).TrimStart();
-                return line.Slice(1, endIndex - 1).ToString();
+                if (firstSpaceIndex == -1)
+                {
+                    restLine = null;
+                    return line.ToString();
+                }
+
+                restLine = line.Slice(firstSpaceIndex).TrimStart();
+                return line.Slice(0, firstSpaceIndex).ToString();
             }
             
             var spaceIndex = line.IndexOf(' ');
