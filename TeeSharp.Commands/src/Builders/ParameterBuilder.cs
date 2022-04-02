@@ -76,9 +76,9 @@ public class ParameterBuilder : IParameterInfo
         return this;
     }
         
-    public ParameterBuilder WithReader<T>() where T : class, IArgumentReader, new()
+    public ParameterBuilder WithReader<TReader>() where TReader : class, IArgumentReader, new()
     {
-        ArgumentReader = ReadersContainer.GetInstance<T>();
+        ArgumentReader = new TReader();
         return this;
     }
         
