@@ -12,7 +12,7 @@ namespace TeeSharp.Tests
         [Test]
         public void ShouldServerIncreaseTicks()
         {
-            const int error = 5;
+            const int error = 15;
             const int delay = 10000;
                         
             var server = new DefaultServer();

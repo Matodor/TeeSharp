@@ -30,9 +30,10 @@ namespace TeeSharp.Tests
         {
             const int millis = 5000;
             
-            var error = 5;
+            var error = 15;
             var sw = Stopwatch.StartNew();
             ThreadsHelper.SleepForNoMoreThan(millis);
+            sw.Stop();
             
             if (sw.ElapsedMilliseconds <= millis + error)
                 Assert.Pass();

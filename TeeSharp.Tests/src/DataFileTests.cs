@@ -1,7 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using NUnit.Framework;
 using TeeSharp.Core.Extensions;
 using TeeSharp.Map;
@@ -17,7 +14,7 @@ namespace TeeSharp.Tests
             var data = (Span<byte>) new byte[]
             {
                 68, 65, 84, 65, 4, 0, 0, 0, 215, 93, 4, 0, 212, 11, 0, 0, 6, 0, 0, 0, 34, 0, 0, 0, 41, 0, 0, 0, 168, 9,
-                0, 0, 3, 82, 4, 0
+                0, 0, 3, 82, 4, 0,
             };
 
             var header = data.Deserialize<DataFileHeader>();

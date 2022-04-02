@@ -1,4 +1,5 @@
 // ReSharper disable StringLiteralTypo
+// ReSharper disable RedundantExplicitArrayCreation
 
 using System.Linq;
 using NUnit.Framework;
