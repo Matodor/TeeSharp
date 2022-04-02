@@ -1,7 +1,6 @@
-namespace TeeSharp.Commands
+namespace TeeSharp.Commands;
+
+public interface IArgumentReader
 {
-    public interface IArgumentReader
-    {
-        public bool TryRead(string arg, out object value);
-    }
+    public bool TryRead(string arg, out object value);
 }

@@ -1,9 +1,8 @@
-namespace TeeSharp.Commands.Errors
+namespace TeeSharp.Commands.Errors;
+
+public enum CommandResultError
 {
-    public enum CommandResultError
-    {
-        CommandNotFound,
-        ParseFailed,
-        BadArgumentsCount,
-    }
+    CommandNotFound,
+    ParseFailed,
+    BadArgumentsCount,
 }

@@ -5,27 +5,26 @@ using System.Runtime.InteropServices;
 using System.Text;
 using TeeSharp.Core.Extensions;
 
-namespace TeeSharp.Map
-{
-    public struct DataFileHeader
-    {
-        public unsafe Span<byte> Signature => new Span<byte>(Unsafe.AsPointer(ref _signature[0]), 4);
+namespace TeeSharp.Map;
 
-        public bool IsValidSignature => 
-            Encoding.ASCII.GetString(Signature) == "DATA" || 
-            Encoding.ASCII.GetString(Signature) == "ATAD"; 
+public struct DataFileHeader
+{
+    public unsafe Span<byte> Signature => new Span<byte>(Unsafe.AsPointer(ref _signature[0]), 4);
+
+    public bool IsValidSignature => 
+        Encoding.ASCII.GetString(Signature) == "DATA" || 
+        Encoding.ASCII.GetString(Signature) == "ATAD"; 
         
-        public bool IsValidVersion => Version == 4;
+    public bool IsValidVersion => Version == 4;
         
-        private unsafe fixed byte _signature[4];
+    private unsafe fixed byte _signature[4];
         
-        public int Version;
-        public int Size;
-        public int SwapLength;
-        public int ItemTypesCount;
-        public int ItemsCount;
-        public int RawDataBlocks;
-        public int ItemsSize;
-        public int RawDataBlocksSize;
-    }
+    public int Version;
+    public int Size;
+    public int SwapLength;
+    public int ItemTypesCount;
+    public int ItemsCount;
+    public int RawDataBlocks;
+    public int ItemsSize;
+    public int RawDataBlocksSize;
 }

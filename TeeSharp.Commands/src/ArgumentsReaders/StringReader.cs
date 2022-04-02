@@ -1,11 +1,10 @@
-namespace TeeSharp.Commands.ArgumentsReaders
+namespace TeeSharp.Commands.ArgumentsReaders;
+
+public class StringReader : IArgumentReader
 {
-    public class StringReader : IArgumentReader
+    public bool TryRead(string arg, out object value)
     {
-        public bool TryRead(string arg, out object value)
-        {
-            value = arg;
-            return true;
-        }
+        value = arg;
+        return true;
     }
 }

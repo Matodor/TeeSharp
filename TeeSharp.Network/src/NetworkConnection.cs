@@ -1,7 +1,6 @@
-namespace TeeSharp.Network
+namespace TeeSharp.Network;
+
+public class NetworkConnection : BaseNetworkConnection
 {
-    public class NetworkConnection : BaseNetworkConnection
-    {
         
-    }
 }

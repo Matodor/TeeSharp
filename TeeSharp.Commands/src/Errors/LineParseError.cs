@@ -1,9 +1,8 @@
-namespace TeeSharp.Commands.Errors
+namespace TeeSharp.Commands.Errors;
+
+public enum LineParseError
 {
-    public enum LineParseError
-    {
-        EmptyLine,
-        BadLength,
-        WrongPrefix,
-    }
+    EmptyLine,
+    BadLength,
+    WrongPrefix,
 }

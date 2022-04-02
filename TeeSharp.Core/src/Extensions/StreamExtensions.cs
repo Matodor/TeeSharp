@@ -2,63 +2,62 @@ using System;
 using System.IO;
 using TeeSharp.Core.Helpers;
 
-namespace TeeSharp.Core.Extensions
+namespace TeeSharp.Core.Extensions;
+
+public static class StreamExtensions
 {
-    public static class StreamExtensions
+    public static bool Get<T>(this Stream stream, out T output, int readSize = 0) where T : struct
     {
-        public static bool Get<T>(this Stream stream, out T output, int readSize = 0) where T : struct
+        if (StructHelper<T>.IsArray || readSize < 0)
         {
-            if (StructHelper<T>.IsArray || readSize < 0)
-            {
-                output = default;
-                return false;
-            }
-
-            readSize = readSize > 0 
-                ? Math.Min(readSize, StructHelper<T>.Size) 
-                : StructHelper<T>.Size;
-            
-            if (stream.Position + readSize >= stream.Length)
-            {
-                output = default;
-                return false;
-            }
-
-            var buffer = new Span<byte>(new byte[StructHelper<T>.Size]);
-            var readBuffer = readSize != StructHelper<T>.Size
-                ? buffer.Slice(0, readSize)
-                : buffer;
-            
-            if (readBuffer.Length != stream.Read(readBuffer))
-            {
-                output = default;
-                return false;
-            }
-
-            output = buffer.Deserialize<T>();
-            return true;
+            output = default;
+            return false;
         }
 
-        public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
-        {
-            var size = StructHelper<T>.ElementSize;
-
-            if (StructHelper<T>.IsArray || 
-                stream.Position + size * count >= stream.Length)
-            {
-                output = null;
-                return false;
-            }
+        readSize = readSize > 0 
+            ? Math.Min(readSize, StructHelper<T>.Size) 
+            : StructHelper<T>.Size;
             
-            var buffer = new Span<byte>(new byte[size * count]);
-            if (buffer.Length != stream.Read(buffer))
-            {
-                output = null;
-                return false;
-            }
-
-            output = buffer.Deserialize<T>(count);
-            return true;
+        if (stream.Position + readSize >= stream.Length)
+        {
+            output = default;
+            return false;
         }
+
+        var buffer = new Span<byte>(new byte[StructHelper<T>.Size]);
+        var readBuffer = readSize != StructHelper<T>.Size
+            ? buffer.Slice(0, readSize)
+            : buffer;
+            
+        if (readBuffer.Length != stream.Read(readBuffer))
+        {
+            output = default;
+            return false;
+        }
+
+        output = buffer.Deserialize<T>();
+        return true;
+    }
+
+    public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
+    {
+        var size = StructHelper<T>.ElementSize;
+
+        if (StructHelper<T>.IsArray || 
+            stream.Position + size * count >= stream.Length)
+        {
+            output = null;
+            return false;
+        }
+            
+        var buffer = new Span<byte>(new byte[size * count]);
+        if (buffer.Length != stream.Read(buffer))
+        {
+            output = null;
+            return false;
+        }
+
+        output = buffer.Deserialize<T>(count);
+        return true;
     }
 }

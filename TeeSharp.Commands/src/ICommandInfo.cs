@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 
-namespace TeeSharp.Commands
+namespace TeeSharp.Commands;
+
+public interface ICommandInfo
 {
-    public interface ICommandInfo
-    {
-        public IReadOnlyList<ParameterInfo> Parameters { get; }
-        public CommandHandler Callback { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-    }
+    public IReadOnlyList<ParameterInfo> Parameters { get; }
+    public CommandHandler Callback { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
 }

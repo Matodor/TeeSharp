@@ -1,7 +1,6 @@
-namespace TeeSharp.Commands
+namespace TeeSharp.Commands;
+
+public abstract class CommandContext
 {
-    public abstract class CommandContext
-    {
         
-    }
 }

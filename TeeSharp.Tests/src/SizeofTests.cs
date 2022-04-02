@@ -5,15 +5,14 @@ using TeeSharp.Core.Helpers;
 using TeeSharp.Map;
 using TeeSharp.Network;
 
-namespace TeeSharp.Tests
+namespace TeeSharp.Tests;
+
+public class SizeofTests
 {
-    public class SizeofTests
+    [Test]
+    public void CheckSize()
     {
-        [Test]
-        public void CheckSize()
-        {
-            Assert.AreEqual(36, StructHelper<DataFileHeader>.Size);
-            Assert.AreEqual(4, StructHelper<SecurityToken>.Size);
-        }
+        Assert.AreEqual(36, StructHelper<DataFileHeader>.Size);
+        Assert.AreEqual(4, StructHelper<SecurityToken>.Size);
     }
 }

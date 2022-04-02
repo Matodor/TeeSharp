@@ -1,13 +1,12 @@
 using System.Net;
 
-namespace TeeSharp.Network
+namespace TeeSharp.Network;
+
+public class NetworkMessage
 {
-    public class NetworkMessage
-    {
-        public int ClientId { get; set; }
-        public IPEndPoint EndPoint { get; set; }
-        public MessageFlags Flags { get; set; }
-        public byte[] Data { get; set; }
-        public byte[] ExtraData { get; set; }
-    }
+    public int ClientId { get; set; }
+    public IPEndPoint EndPoint { get; set; }
+    public MessageFlags Flags { get; set; }
+    public byte[] Data { get; set; }
+    public byte[] ExtraData { get; set; }
 }

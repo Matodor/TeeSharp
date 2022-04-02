@@ -1,13 +1,12 @@
-namespace TeeSharp.Map
+namespace TeeSharp.Map;
+
+public enum MapItemType
 {
-    public enum MapItemType
-    {
-        Version = 0,
-        Info,
-        Image,
-        Envelope,
-        Group,
-        Layer,
-        EnvelopePoints
-    }
+    Version = 0,
+    Info,
+    Image,
+    Envelope,
+    Group,
+    Layer,
+    EnvelopePoints
 }

@@ -1,7 +1,6 @@
-﻿namespace TeeSharp.Core.MinIoC
+﻿namespace TeeSharp.Core.MinIoC;
+
+public interface IServiceBinder
 {
-    public interface IServiceBinder
-    {
-        void ConfigureServices(Container services);
-    }
+    void ConfigureServices(Container services);
 }

@@ -1,52 +1,51 @@
 using System;
 
-namespace TeeSharp.Core.Extensions
+namespace TeeSharp.Core.Extensions;
+
+public static class StringExtensions
 {
-    public static class StringExtensions
+    public static string ToString(this ReadOnlySpan<char> array)
     {
-        public static string ToString(this ReadOnlySpan<char> array)
-        {
-            return array.ToString();
-        }
+        return array.ToString();
+    }
         
-        public static string Limit(this string source, int maxLength)
-        {
-            return maxLength <= 0 || source.Length <= maxLength
-                ? source
-                : source.Substring(0, maxLength);
-        }
+    public static string Limit(this string source, int maxLength)
+    {
+        return maxLength <= 0 || source.Length <= maxLength
+            ? source
+            : source.Substring(0, maxLength);
+    }
 
-        public static ReadOnlySpan<char> SkipToWhitespaces(this ReadOnlySpan<char> input)
+    public static ReadOnlySpan<char> SkipToWhitespaces(this ReadOnlySpan<char> input)
+    {
+        int index;
+        for (index = 0; index < input.Length; index++)
         {
-            int index;
-            for (index = 0; index < input.Length; index++)
+            if (input[index] == ' ' ||
+                input[index] == '\t' ||
+                input[index] == '\n')
             {
-                if (input[index] == ' ' ||
-                    input[index] == '\t' ||
-                    input[index] == '\n')
-                {
-                    break;
-                }
+                break;
             }
-
-            return input[index..];
         }
 
-        public static ReadOnlySpan<char> SkipWhitespaces(this ReadOnlySpan<char> input)
+        return input[index..];
+    }
+
+    public static ReadOnlySpan<char> SkipWhitespaces(this ReadOnlySpan<char> input)
+    {
+        int index;
+        for (index = 0; index < input.Length; index++)
         {
-            int index;
-            for (index = 0; index < input.Length; index++)
+            if (input[index] != ' ' &&
+                input[index] != '\t' &&
+                input[index] != '\n' &&
+                input[index] != '\r')
             {
-                if (input[index] != ' ' &&
-                    input[index] != '\t' &&
-                    input[index] != '\n' &&
-                    input[index] != '\r')
-                {
-                    break;
-                }
+                break;
             }
-
-            return input[index..];
         }
+
+        return input[index..];
     }
 }
