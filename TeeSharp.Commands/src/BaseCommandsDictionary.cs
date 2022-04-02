@@ -7,8 +7,8 @@ namespace TeeSharp.Commands
 {
     public abstract class BaseCommandsDictionary : IDictionary<string, CommandInfo>
     {
-        public abstract event Action<string, CommandInfo> CommandAdded;
-        public abstract event Action<string> CommandRemoved;
+        public abstract event Action<string, CommandInfo>? CommandAdded;
+        public abstract event Action<string>? CommandRemoved;
         
         public abstract CommandInfo this[string key] { get; set; }
         public abstract ICollection<string> Keys { get; }

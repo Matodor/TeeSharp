@@ -13,6 +13,9 @@ namespace TeeSharp.Commands
     /// </summary>
     public class CommandsDictionary : BaseCommandsDictionary
     {
+        public override event Action<string, CommandInfo>? CommandAdded;
+        public override event Action<string>? CommandRemoved;
+
         public override CommandInfo this[string key]
         {
             get => Dictionary[key];
@@ -29,9 +32,6 @@ namespace TeeSharp.Commands
             }
         }
         
-        public override event Action<string, CommandInfo> CommandAdded;
-        public override event Action<string> CommandRemoved;
-        
         public override ICollection<string> Keys => Dictionary.Keys;
 
         public override ICollection<CommandInfo> Values => Dictionary.Values;
@@ -40,12 +40,11 @@ namespace TeeSharp.Commands
 
         public override bool IsReadOnly => Dictionary.IsReadOnly;
         
-        protected IDictionary<string, CommandInfo> Dictionary { get; set; } 
-            = new Dictionary<string, CommandInfo>();
+        protected IDictionary<string, CommandInfo> Dictionary { get; set; }
 
         public override void Init()
         {
-            
+            Dictionary = new Dictionary<string, CommandInfo>();
         }
 
         public override void Clear()
