@@ -22,11 +22,7 @@ public class ParameterBuilder : IParameterInfo
     // ReSharper disable once MemberCanBePrivate.Global
     public bool IsRemain { get; protected set; }
     // ReSharper disable once MemberCanBePrivate.Global
-    public IArgumentReader ArgumentReader { get; protected set; }
-        
-    public ParameterBuilder()
-    {
-    }
+    public IArgumentReader ArgumentReader { get; protected set; } = null!;
 
     public static ParameterBuilder FromPattern(string pattern)
     {
