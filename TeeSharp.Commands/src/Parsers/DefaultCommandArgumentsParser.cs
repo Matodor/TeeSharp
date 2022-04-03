@@ -64,7 +64,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             }
 
             arg = arg.Replace("\\\"", "\"");
-                
+
             if (parameter.ArgumentReader.TryRead(arg, out var value))
                 values.Add(value);
             else
@@ -84,7 +84,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
         ReadOnlySpan<char> line, 
         out ReadOnlySpan<char> restLine)
     {
-        if (line == null || line.IsEmpty)
+        if (line.IsEmpty)
         {
             restLine = null;
             return null;
