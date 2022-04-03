@@ -4,6 +4,7 @@
 using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Commands;
+using TeeSharp.Commands.ArgumentsReaders;
 using TeeSharp.Commands.Builders;
 using TeeSharp.Commands.Errors;
 using TeeSharp.Commands.Parsers;
@@ -15,6 +16,93 @@ public class CommandsTests
     [OneTimeSetUp]
     public void Init()
     {
+    }
+    
+    [Test]
+    [TestCase("a", "a")]
+    [TestCase("b", "b")]
+    [TestCase("c", "c")]
+    public void StringReaderShouldParseArgument(string arg, string expected)
+    {
+        var argumentReader = new StringReader();
+        var result = argumentReader.TryRead(arg, out var value);
+        
+        Assert.True(result);
+        Assert.AreEqual(value, expected);
+    }
+    
+    [Test]
+    [TestCase("1", 1)]
+    [TestCase("2", 2)]
+    [TestCase("123", 123)]
+    [TestCase("2147483647", 2147483647)]
+    [TestCase("2,147,483,647", 2147483647)]
+    public void IntReaderShouldParseArgument(string arg, int expected)
+    {
+        var argumentReader = new IntReader();
+        var result = argumentReader.TryRead(arg, out var value);
+        
+        Assert.True(result);
+        Assert.AreEqual(value, expected);
+    }
+    
+    [Test]
+    [TestCase("a")]
+    [TestCase("1 1")]
+    [TestCase("11a")]
+    [TestCase("a11")]
+    [TestCase("11,")]
+    [TestCase("11,,")]
+    [TestCase(",11")]
+    [TestCase("11.")]
+    [TestCase(".11")]
+    [TestCase("3.5")]
+    [TestCase(".5")]
+    [TestCase("1/")]
+    [TestCase("214748364123")]
+    public void IntReaderShouldNotParseArgument(string arg)
+    {
+        var argumentReader = new IntReader();
+        var result = argumentReader.TryRead(arg, out _);
+        
+        Assert.False(result);
+    }
+    
+    [Test]
+    [TestCase("1", 1)]
+    [TestCase("1.5", 1.5f)]
+    [TestCase("2.123123", 2.123123f)]
+    [TestCase("2.999999", 2.999999f)]
+    [TestCase("123", 123)]
+    [TestCase("123,456", 123456)]
+    [TestCase("123,456.99", 123456.99f)]
+    [TestCase("340282300000000000000000000000000000000", 340282300000000000000000000000000000000f)]
+    public void FloatReaderShouldParseArgument(string arg, float expected)
+    {
+        var argumentReader = new FloatReader();
+        var result = argumentReader.TryRead(arg, out var value);
+        
+        Assert.True(result);
+        Assert.AreEqual(value, expected);
+    }
+    
+    [Test]
+    [TestCase("a")]
+    [TestCase("1 1")]
+    [TestCase("3 .5")]
+    [TestCase(".5")]
+    [TestCase("5.")]
+    [TestCase("5,")]
+    [TestCase(",5.")]
+    [TestCase("5.12.123")]
+    [TestCase("5.12,213")]
+    [TestCase("1/")]
+    public void FloatReaderShouldNotParseArgument(string arg)
+    {
+        var argumentReader = new FloatReader();
+        var result = argumentReader.TryRead(arg, out _);
+        
+        Assert.False(result);
     }
 
     [Test]
