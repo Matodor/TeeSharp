@@ -1,10 +1,12 @@
+using System;
+
 namespace TeeSharp.Commands.ArgumentsReaders;
 
 public class StringReader : IArgumentReader
 {
-    public bool TryRead(string arg, out object value)
+    public bool TryRead(ReadOnlySpan<char> arg, out object value)
     {
-        value = arg;
+        value = arg.ToString();
         return true;
     }
 }
