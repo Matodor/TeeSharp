@@ -3,26 +3,20 @@ using TeeSharp.Commands.ArgumentsReaders;
 
 namespace TeeSharp.Commands.Builders;
 
-public class ParameterBuilder : IParameterInfo
+public class ParameterBuilder
 {
-    // ReSharper disable once MemberCanBePrivate.Global
     public const char ParameterString = 's';
-    // ReSharper disable once MemberCanBePrivate.Global
     public const char ParameterFloat = 'f';
-    // ReSharper disable once MemberCanBePrivate.Global
     public const char ParameterInt = 'i';
-        
-    // ReSharper disable once MemberCanBePrivate.Global
+
     public const char ParameterRemain = 'r';
-    // ReSharper disable once MemberCanBePrivate.Global
     public const char ParameterOptional = '?';
-        
-    // ReSharper disable once MemberCanBePrivate.Global
-    public bool IsOptional { get; protected set; } = false;
-    // ReSharper disable once MemberCanBePrivate.Global
-    public bool IsRemain { get; protected set; }
-    // ReSharper disable once MemberCanBePrivate.Global
-    public IArgumentReader ArgumentReader { get; protected set; } = null!;
+
+    internal string? Name { get; set; }
+    internal string? Description { get; set; }
+    internal bool IsOptional { get; set; }
+    internal bool IsRemain { get; set; }
+    internal IArgumentReader ArgumentReader { get; set; } = null!;
 
     public static ParameterBuilder FromPattern(string pattern)
     {
@@ -58,40 +52,63 @@ public class ParameterBuilder : IParameterInfo
             case ParameterString:
                 builder.WithReader<StringReader>();
                 break;
-                    
+
+            case ParameterFloat:
+                builder.WithReader<FloatReader>();
+                break;
+
+            case ParameterInt:
+                builder.WithReader<IntReader>();
+                break;
+
             default:
                 throw new ArgumentException("Wrong parameter pattern type");
         }
-            
+
         return builder;
     }
-        
+
     public ParameterBuilder WithReader(Func<ParameterBuilder, IArgumentReader> factory)
     {
         ArgumentReader = factory(this);
         return this;
     }
-        
+
     public ParameterBuilder WithReader<TReader>() where TReader : class, IArgumentReader, new()
     {
         ArgumentReader = new TReader();
         return this;
     }
-        
+
+    public ParameterBuilder WithName(string name)
+    {
+        Name = name.Trim();
+        return this;
+    }
+
+    public ParameterBuilder WithDescription(string desc)
+    {
+        Description = desc.Trim();
+        return this;
+    }
+
     public ParameterBuilder WithOptional(bool isOptional)
     {
         IsOptional = isOptional;
         return this;
     }
-        
+
     public ParameterBuilder WithRemain(bool isRemain)
     {
         IsRemain = isRemain;
         return this;
     }
-        
-    public ParameterInfo Build()
+
+    public IParameterInfo Build()
     {
+        if (string.IsNullOrEmpty(Name))
+            throw new NullReferenceException(nameof(Name));
+
         return new ParameterInfo(this);
     }
 }

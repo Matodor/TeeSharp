@@ -8,9 +8,9 @@ namespace TeeSharp.Commands.Parsers;
 public class DefaultCommandArgumentsParser : ICommandArgumentsParser
 {
     public virtual bool TryParse(
-        string? input, 
-        IReadOnlyList<IParameterInfo> parameters, 
-        out CommandArgs? args, 
+        string? input,
+        IReadOnlyList<IParameterInfo> parameters,
+        out CommandArgs? args,
         out ArgumentsParseError? error)
     {
         if (parameters.Count == 0)
@@ -30,26 +30,26 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
                 error = ArgumentsParseError.MissingArgument;
                 return false;
             }
-                
+
             args = CommandArgs.Empty;
             error = null;
             return true;
         }
 
-        var values = new List<object>(parameters.Count);
+        var values = new Dictionary<string, object>(parameters.Count);
         var line = input.AsSpan();
-            
+
         foreach (var parameter in parameters)
         {
-            var arg = parameter.IsRemain 
+            var arg = parameter.IsRemain
                 ? line.TrimStart().ToString()
                 : GetFirstChunk(line, out line);
 
             if (string.IsNullOrEmpty(arg))
             {
-                if (parameter.IsOptional) 
+                if (parameter.IsOptional)
                     continue;
-                    
+
                 args = null;
                 error = ArgumentsParseError.MissingArgument;
                 return false;
@@ -66,7 +66,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             arg = arg.Replace("\\\"", "\"");
 
             if (parameter.ArgumentReader.TryRead(arg, out var value))
-                values.Add(value);
+                values.Add(parameter.Name, value);
             else
             {
                 args = null;
@@ -81,7 +81,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     }
 
     protected virtual string? GetFirstChunk(
-        ReadOnlySpan<char> line, 
+        ReadOnlySpan<char> line,
         out ReadOnlySpan<char> restLine)
     {
         if (line.IsEmpty)
@@ -89,12 +89,12 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             restLine = null;
             return null;
         }
-            
+
         var isQuoteable = line.Length > 1 && line[0] == '"';
         if (isQuoteable)
         {
             var firstSpaceIndex = -1;
-                
+
             for (var i = 1; i < line.Length; i++)
             {
                 if (firstSpaceIndex == -1 && char.IsWhiteSpace(line[i]))
@@ -122,14 +122,14 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             restLine = line.Slice(firstSpaceIndex).TrimStart();
             return line.Slice(0, firstSpaceIndex).ToString();
         }
-            
+
         var spaceIndex = line.IndexOf(' ');
         if (spaceIndex == -1)
         {
             restLine = null;
             return line.ToString();
         }
-            
+
         restLine = line.Slice(spaceIndex).TrimStart();
         return line.Slice(0, spaceIndex).ToString();
     }

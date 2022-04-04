@@ -17,7 +17,7 @@ public class CommandsTests
     public void Init()
     {
     }
-    
+
     [Test]
     [TestCase("a", "a")]
     [TestCase("b", "b")]
@@ -26,11 +26,11 @@ public class CommandsTests
     {
         var argumentReader = new StringReader();
         var result = argumentReader.TryRead(arg, out var value);
-        
+
         Assert.True(result);
         Assert.AreEqual(value, expected);
     }
-    
+
     [Test]
     [TestCase("1", 1)]
     [TestCase("2", 2)]
@@ -41,11 +41,11 @@ public class CommandsTests
     {
         var argumentReader = new IntReader();
         var result = argumentReader.TryRead(arg, out var value);
-        
+
         Assert.True(result);
         Assert.AreEqual(value, expected);
     }
-    
+
     [Test]
     [TestCase("a")]
     [TestCase("1 1")]
@@ -64,10 +64,10 @@ public class CommandsTests
     {
         var argumentReader = new IntReader();
         var result = argumentReader.TryRead(arg, out _);
-        
+
         Assert.False(result);
     }
-    
+
     [Test]
     [TestCase("1", 1)]
     [TestCase("1.5", 1.5f)]
@@ -81,11 +81,11 @@ public class CommandsTests
     {
         var argumentReader = new FloatReader();
         var result = argumentReader.TryRead(arg, out var value);
-        
+
         Assert.True(result);
         Assert.AreEqual(value, expected);
     }
-    
+
     [Test]
     [TestCase("a")]
     [TestCase("1 1")]
@@ -101,7 +101,7 @@ public class CommandsTests
     {
         var argumentReader = new FloatReader();
         var result = argumentReader.TryRead(arg, out _);
-        
+
         Assert.False(result);
     }
 
@@ -150,14 +150,21 @@ public class CommandsTests
     public void ShouldParseStringArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
     {
         var parameters = paramsPatterns
-            .Select(p => ParameterBuilder.FromPattern(p).Build())
+            .Select((p, i) => ParameterBuilder.FromPattern(p).WithName(i.ToString()).Build())
             .ToArray();
 
         var parser = new DefaultCommandArgumentsParser();
         var result = parser.TryParse(line, parameters, out var args, out var error);
-            
+
         Assert.True(result);
-        Assert.AreEqual(new CommandArgs(expectedArgs), args);
+        Assert.AreEqual(
+            new CommandArgs(
+                expectedArgs
+                    .Select((arg, idx) => (arg, idx: idx.ToString()))
+                    .ToDictionary(t => t.idx, t => t.arg)
+            ),
+            args
+        );
         Assert.AreEqual(null, error);
     }
 
@@ -176,7 +183,7 @@ public class CommandsTests
         Assert.AreEqual(expectedArgs, args);
         Assert.AreEqual(null, error);
     }
-        
+
     [Test]
     [TestCase("", null, null, LineParseError.EmptyLine)]
     [TestCase("/", null, null, LineParseError.BadLength)]
@@ -187,7 +194,7 @@ public class CommandsTests
     [TestCase("/ a", null, null, LineParseError.WrongPrefix)]
     [TestCase("**a", null, null, LineParseError.WrongPrefix)]
     [TestCase("[[a", null, null, LineParseError.WrongPrefix)]
-    public void ShouldParseCommandLineWithErrors(string line, string expectedCmd, 
+    public void ShouldParseCommandLineWithErrors(string line, string expectedCmd,
         string expectedArgs, LineParseError expectedError)
     {
         var parser = new DefaultCommandLineParser("//");
