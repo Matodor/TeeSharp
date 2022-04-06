@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using TeeSharp.Commands.Errors;
 
-namespace TeeSharp.Commands.Parsers;
+namespace TeeSharp.Commands;
 
 public interface ICommandArgumentsParser
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="input"></param>
     /// <param name="parameters"></param>

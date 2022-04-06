@@ -23,7 +23,7 @@ public class CommandInfo : ICommandInfo
     {
         Parameters = builder.Parameters.Select(b => b.Build()).ToList();
         Callback = builder.Callback;
-        Name = builder.Name;
+        Name = builder.Name!;
         Description = builder.Description;
     }
 }

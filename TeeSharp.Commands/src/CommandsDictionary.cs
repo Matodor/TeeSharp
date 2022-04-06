@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Serilog;
 using TeeSharp.Commands.Builders;
 
@@ -7,16 +9,13 @@ namespace TeeSharp.Commands;
 
 /// <summary>
 /// Commands store
-/// Command example - /login name pass
-/// key - login
-/// value - Command from "/login name pass"
 /// </summary>
-public class CommandsDictionary : BaseCommandsDictionary
+public class CommandsDictionary : ICommandsDictionary
 {
-    public override event Action<string, CommandInfo>? CommandAdded;
-    public override event Action<string>? CommandRemoved;
+    public event Action<string, CommandInfo>? CommandAdded;
+    public event Action<string>? CommandRemoved;
 
-    public override CommandInfo this[string key]
+    public virtual CommandInfo this[string key]
     {
         get => Dictionary[key];
         set
@@ -31,104 +30,102 @@ public class CommandsDictionary : BaseCommandsDictionary
             }
         }
     }
-        
-    public override ICollection<string> Keys => Dictionary.Keys;
 
-    public override ICollection<CommandInfo> Values => Dictionary.Values;
+    public virtual ICollection<string> Keys => Dictionary.Keys;
 
-    public override int Count => Dictionary.Count;
+    public virtual ICollection<CommandInfo> Values => Dictionary.Values;
 
-    public override bool IsReadOnly => Dictionary.IsReadOnly;
-        
-    protected IDictionary<string, CommandInfo> Dictionary { get; set; }
+    public virtual int Count => Dictionary.Count;
 
-    public override void Init()
+    public virtual bool IsReadOnly => Dictionary.IsReadOnly;
+
+    protected virtual IDictionary<string, CommandInfo> Dictionary { get; set; } = null!;
+
+    public virtual void Init()
     {
         Dictionary = new Dictionary<string, CommandInfo>();
     }
 
-    public override void Clear()
+    public virtual void Clear()
     {
         Dictionary.Clear();
     }
 
-    public override IEnumerator<KeyValuePair<string, CommandInfo>> GetEnumerator()
+    public virtual IEnumerator<KeyValuePair<string, CommandInfo>> GetEnumerator()
     {
         return Dictionary.GetEnumerator();
     }
 
-    public override bool TryGetValue(string key, out CommandInfo value)
+    public virtual bool TryGetValue(string key, [MaybeNullWhen(false)] out CommandInfo value)
     {
         return Dictionary.TryGetValue(key, out value);
     }
 
-    public override bool Contains(KeyValuePair<string, CommandInfo> item)
+    public virtual bool Contains(KeyValuePair<string, CommandInfo> item)
     {
         return Dictionary.Contains(item);
     }
 
-    public override bool ContainsKey(string key)
+    public virtual bool ContainsKey(string key)
     {
         return Dictionary.ContainsKey(key);
     }
 
-    public override void CopyTo(KeyValuePair<string, CommandInfo>[] array, int arrayIndex)
+    public virtual void CopyTo(KeyValuePair<string, CommandInfo>[] array, int arrayIndex)
     {
         Dictionary.CopyTo(array, arrayIndex);
     }
 
-    public override bool Remove(KeyValuePair<string, CommandInfo> item)
+    public virtual bool Remove(KeyValuePair<string, CommandInfo> item)
     {
         return Remove(item.Key);
     }
-        
-    public override bool Remove(string key)
+
+    public virtual bool Remove(string key)
     {
-        if (!Dictionary.Remove(key)) 
+        if (!Dictionary.Remove(key))
             return false;
-            
+
         CommandRemoved?.Invoke(key);
         return true;
     }
-        
-    public override void Add(Action<CommandBuilder> factory)
+
+    public virtual void Add(Action<CommandBuilder> factory)
     {
         var builder = new CommandBuilder();
         factory(builder);
         var command = builder.Build();
-            
+
         Add(command.Name, command);
     }
 
-    public override void Add(KeyValuePair<string, CommandInfo> item)
+    public virtual void Add(KeyValuePair<string, CommandInfo> item)
     {
         Add(item.Key, item.Value);
     }
 
-    public override void Add(string key, CommandInfo commandInfo)
+    public virtual void Add(string key, CommandInfo commandInfo)
     {
         key = key.Trim();
-        commandInfo.Description = commandInfo.Description.Trim();
-            
+        commandInfo.Description = commandInfo.Description?.Trim();
+
         if (ContainsKey(key))
         {
             Log.Warning("[commands] Command `{Cmd}` not added (already exist)", key);
             return;
         }
 
-        if (key.Length < CommandInfo.MinCommandLength)
+        switch (key.Length)
         {
-            Log.Warning("[commands] Command `{Cmd}` not added: minimum length not reached", key);
-            return;
+            case < CommandInfo.MinCommandLength:
+                Log.Warning("[commands] Command `{Cmd}` not added: minimum length not reached", key);
+                return;
+            case > CommandInfo.MaxCommandLength:
+                Log.Warning("[commands] Command `{Cmd}` not added: maximum cmd length exceeded", key);
+                return;
         }
 
-        if (key.Length > CommandInfo.MaxCommandLength)
-        {
-            Log.Warning("[commands] Command `{Cmd}` not added: maximum cmd length exceeded", key);
-            return;
-        }
-
-        if (commandInfo.Description.Length > CommandInfo.MaxDescriptionLength)
+        if (commandInfo.Description?.Length > CommandInfo.MaxDescriptionLength)
         {
             Log.Warning("[commands] Command `{Cmd}` not added: maximum description length exceeded", key);
             return;
@@ -139,8 +136,13 @@ public class CommandsDictionary : BaseCommandsDictionary
             Log.Warning("[commands] Command `{Cmd}` not added: maximum parameters length exceeded", key);
             return;
         }
-            
+
         Dictionary.Add(key, commandInfo);
         CommandAdded?.Invoke(key, commandInfo);
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable)Dictionary).GetEnumerator();
     }
 }

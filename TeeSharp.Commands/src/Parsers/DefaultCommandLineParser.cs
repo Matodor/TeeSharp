@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands.Parsers;
@@ -11,28 +12,23 @@ public class DefaultCommandLineParser : ICommandLineParser
         get => _prefix;
         set
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                _prefix = "";
-            }
-            else
-            {
-                if (value.StartsWith(' '))
-                    throw new Exception("Prefix cannot start with a space");
-                    
-                _prefix = value;
-            }
-        } 
+            _prefix = string.IsNullOrEmpty(value)
+                ? string.Empty
+                : value.Trim();
+        }
     }
 
-    private string _prefix;
+    private string _prefix = string.Empty;
 
     public DefaultCommandLineParser(string prefix = "/")
     {
         Prefix = prefix;
     }
-        
-    public virtual bool TryParse(string line, out string command, out string args, 
+
+    public virtual bool TryParse(
+        string? line,
+        out string? command,
+        out string? args,
         out LineParseError? parseError)
     {
         line = line?.Trim();
@@ -44,29 +40,30 @@ public class DefaultCommandLineParser : ICommandLineParser
             return false;
         }
 
-        // ReSharper disable PossibleNullReferenceException
+        if (line == null)
+            throw new NullReferenceException(nameof(line));
+
         command = spaceIndex < 0
-            ? Prefix.Length == 0 
+            ? Prefix.Length == 0
                 ? line
                 : line.Substring(Prefix.Length)
             : Prefix.Length == 0
                 ? line.Substring(0, spaceIndex)
                 : line.Substring(Prefix.Length, spaceIndex - Prefix.Length);
-        // ReSharper restore PossibleNullReferenceException
 
-        // ReSharper disable PossibleNullReferenceException
         args = spaceIndex < 0
             ? null
             : line.Substring(spaceIndex + 1);
-        // ReSharper restore PossibleNullReferenceException
-            
+
         return true;
     }
 
-    protected virtual bool Valid(string line, out int spaceIndex, 
+    protected virtual bool Valid(
+        string? line,
+        out int spaceIndex,
         out LineParseError? error)
     {
-        if (string.IsNullOrWhiteSpace(line))
+        if (string.IsNullOrEmpty(line))
         {
             error = LineParseError.EmptyLine;
             spaceIndex = -1;
@@ -79,7 +76,7 @@ public class DefaultCommandLineParser : ICommandLineParser
             spaceIndex = -1;
             return false;
         }
-            
+
         if (Prefix.Length != 0 && !line.StartsWith(Prefix))
         {
             error = LineParseError.WrongPrefix;

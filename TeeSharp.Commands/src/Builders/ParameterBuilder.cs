@@ -1,5 +1,5 @@
 using System;
-using TeeSharp.Commands.ArgumentsReaders;
+using TeeSharp.Commands.ArgumentReaders;
 
 namespace TeeSharp.Commands.Builders;
 

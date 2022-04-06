@@ -1,6 +1,6 @@
 using System;
 
-namespace TeeSharp.Commands.ArgumentsReaders;
+namespace TeeSharp.Commands.ArgumentReaders;
 
 public class StringReader : IArgumentReader
 {

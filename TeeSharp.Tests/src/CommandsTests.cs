@@ -4,7 +4,7 @@
 using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Commands;
-using TeeSharp.Commands.ArgumentsReaders;
+using TeeSharp.Commands.ArgumentReaders;
 using TeeSharp.Commands.Builders;
 using TeeSharp.Commands.Errors;
 using TeeSharp.Commands.Parsers;

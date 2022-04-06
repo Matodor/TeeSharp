@@ -3,16 +3,20 @@ using TeeSharp.Commands.Parsers;
 
 namespace TeeSharp.Commands;
 
-public class CommandsExecutor : BaseCommandsExecutor
+public class CommandsExecutor : ICommandsExecutor
 {
-    public override void Init()
+    public virtual ICommandsDictionary Commands { get; protected set; } = null!;
+    public virtual ICommandLineParser LineParser { get; protected set; } = null!;
+    public virtual ICommandArgumentsParser ArgumentsParser { get; protected set; } = null!;
+
+    public virtual void Init()
     {
         Commands = new CommandsDictionary();
         LineParser = new DefaultCommandLineParser();
         ArgumentsParser = new DefaultCommandArgumentsParser();
     }
 
-    public override ICommandResult Execute(string line)
+    public virtual ICommandResult Execute(string line)
     {
         throw new NotImplementedException();
         // if (!LineParser.TryParse(line, out var command, out var args, out var error))

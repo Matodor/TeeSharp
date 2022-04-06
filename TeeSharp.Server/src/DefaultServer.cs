@@ -128,7 +128,7 @@ public class DefaultServer : BaseServer
     {
         services.Register<BaseChunkFactory, ChunkFactory>();
         services.Register<BaseNetworkConnection, NetworkConnection>();
-        services.Register<BaseCommandsDictionary, CommandsDictionary>();
+        services.Register<ICommandsDictionary, CommandsDictionary>();
         services.Register<BaseStorage, Storage>().AsSingleton();
         services.Register<BaseConfiguration, ServerConfiguration>().AsSingleton();
         services.Register<BaseNetworkServer, NetworkServer>().AsSingleton();
@@ -143,8 +143,8 @@ public class DefaultServer : BaseServer
     {
         // TODO make bind address from config
         // ReSharper disable InconsistentNaming
-        // var localEP = NetworkBase.TryGetLocalIP(out var localIP) 
-        //     ? new IPEndPoint(localIP, 8303) 
+        // var localEP = NetworkBase.TryGetLocalIP(out var localIP)
+        //     ? new IPEndPoint(localIP, 8303)
         //     : new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8303);
         // ReSharper restore InconsistentNaming
 
