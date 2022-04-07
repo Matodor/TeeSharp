@@ -169,6 +169,96 @@ public class CommandsTests
     }
 
     [Test]
+    [TestCase("", new string[] {}, new object[] {})]
+    [TestCase("   ", new string[] {"?i"}, new object[] {})]
+    [TestCase("123", new string[] {"i"}, new object[] {123})]
+    [TestCase("\"123\"", new string[] {"i"}, new object[] {123})]
+    [TestCase("\"123\" 456", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase("123 \"456\"", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase("  123 \"456\"", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" 123  \"456\" ", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" \"123\" \"456\" ", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" \"123\" \"456\" ", new string[] {"?i", "?i"}, new object[] {123, 456})]
+    [TestCase("123 \"456\"", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase("  123", new string[] {"i"}, new object[] {123})]
+    [TestCase(" 123 ", new string[] {"i"}, new object[] {123})]
+    [TestCase("123  ", new string[] {"i"}, new object[] {123})]
+    [TestCase("123", new string[] {"i", "?i"}, new object[] {123})]
+    [TestCase("  123", new string[] {"i", "?i"}, new object[] {123})]
+    [TestCase(" 123 ", new string[] {"i", "?i"}, new object[] {123})]
+    [TestCase("123  ", new string[] {"i", "?i"}, new object[] {123})]
+    [TestCase("123 456", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" 123 456", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" 123  456", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" 123  456 ", new string[] {"i", "i"}, new object[] {123, 456})]
+    [TestCase(" 123 , 456 ", new string[] {"i", "s", "i"}, new object[] {123, ",", 456})]
+    public void ShouldParseIntArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
+    {
+        var parameters = paramsPatterns
+            .Select((p, i) => ParameterBuilder.FromPattern(p).WithName(i.ToString()).Build())
+            .ToArray();
+
+        var parser = new DefaultCommandArgumentsParser();
+        var result = parser.TryParse(line, parameters, out var args, out var error);
+
+        Assert.True(result);
+        Assert.AreEqual(
+            new CommandArgs(
+                expectedArgs
+                    .Select((arg, idx) => (arg, idx: idx.ToString()))
+                    .ToDictionary(t => t.idx, t => t.arg)
+            ),
+            args
+        );
+        Assert.AreEqual(null, error);
+    }
+
+    [Test]
+    [TestCase("", new string[] {}, new object[] {})]
+    [TestCase("   ", new string[] {"?f"}, new object[] {})]
+    [TestCase("123.777", new string[] {"f"}, new object[] {123.777f})]
+    [TestCase("\"123.777\"", new string[] {"f"}, new object[] {123.777f})]
+    [TestCase("\"123.777\" 456.99", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase("123.777 \"456.99\"", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase("  123.777 \"456.99\"", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" 123.777  \"456.99\" ", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" \"123.777\" \"456.99\" ", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" \"123.777\" \"456.99\" ", new string[] {"?f", "?f"}, new object[] {123.777f, 456.99f})]
+    [TestCase("123.777 \"456.99\"", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase("  123.777", new string[] {"f"}, new object[] {123.777f})]
+    [TestCase(" 123.777 ", new string[] {"f"}, new object[] {123.777f})]
+    [TestCase("123.777  ", new string[] {"f"}, new object[] {123.777f})]
+    [TestCase("123.777", new string[] {"f", "?f"}, new object[] {123.777f})]
+    [TestCase("  123.777", new string[] {"f", "?f"}, new object[] {123.777f})]
+    [TestCase(" 123.777 ", new string[] {"f", "?f"}, new object[] {123.777f})]
+    [TestCase("123.777  ", new string[] {"f", "?f"}, new object[] {123.777f})]
+    [TestCase("123.777 456.99", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" 123.777 456.99", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" 123.777  456.99", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" 123.777  456.99 ", new string[] {"f", "f"}, new object[] {123.777f, 456.99f})]
+    [TestCase(" 123.777 , 456.99 ", new string[] {"f", "s", "f"}, new object[] {123.777f, ",", 456.99f})]
+    public void ShouldParseFloatArgumentsLine(string line, string[] paramsPatterns, object[] expectedArgs)
+    {
+        var parameters = paramsPatterns
+            .Select((p, i) => ParameterBuilder.FromPattern(p).WithName(i.ToString()).Build())
+            .ToArray();
+
+        var parser = new DefaultCommandArgumentsParser();
+        var result = parser.TryParse(line, parameters, out var args, out var error);
+
+        Assert.True(result);
+        Assert.AreEqual(
+            new CommandArgs(
+                expectedArgs
+                    .Select((arg, idx) => (arg, idx: idx.ToString()))
+                    .ToDictionary(t => t.idx, t => t.arg)
+            ),
+            args
+        );
+        Assert.AreEqual(null, error);
+    }
+
+    [Test]
     [TestCase("//r", "r", null)]
     [TestCase("//r ", "r", null)]
     [TestCase(" //r ", "r", null)]
