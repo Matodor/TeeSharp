@@ -1,6 +1,7 @@
 // ReSharper disable StringLiteralTypo
 // ReSharper disable RedundantExplicitArrayCreation
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Commands;
@@ -263,14 +264,14 @@ public class CommandsTests
     [TestCase("//r ", "r", null)]
     [TestCase(" //r ", "r", null)]
     [TestCase("//reg login pass", "reg", "login pass")]
-    public void ShouldParseCommandLine(string line, string expectedCmd, string expectedArgs)
+    public void ShouldParseCommandNameFromLine(string line, string? expectedCmd, string? expectedArgs)
     {
         var parser = new DefaultCommandLineParser("//");
         var result = parser.TryParse(line, out var command, out var args, out var error);
 
         Assert.True(result);
-        Assert.AreEqual(expectedCmd, command);
-        Assert.AreEqual(expectedArgs, args);
+        Assert.AreEqual(expectedCmd.AsSpan().ToString(), command.ToString());
+        Assert.AreEqual(expectedArgs.AsSpan().ToString(), args.ToString());
         Assert.AreEqual(null, error);
     }
 
@@ -284,15 +285,18 @@ public class CommandsTests
     [TestCase("/ a", null, null, LineParseError.WrongPrefix)]
     [TestCase("**a", null, null, LineParseError.WrongPrefix)]
     [TestCase("[[a", null, null, LineParseError.WrongPrefix)]
-    public void ShouldParseCommandLineWithErrors(string line, string expectedCmd,
-        string expectedArgs, LineParseError expectedError)
+    public void ShouldParseCommandLineWithErrors(
+        string line,
+        string? expectedCmd,
+        string? expectedArgs,
+        LineParseError expectedError)
     {
         var parser = new DefaultCommandLineParser("//");
         var result = parser.TryParse(line, out var command, out var args, out var error);
 
         Assert.False(result);
-        Assert.AreEqual(expectedCmd, command);
-        Assert.AreEqual(expectedArgs, args);
+        Assert.AreEqual(expectedCmd.AsSpan().ToString(), command.ToString());
+        Assert.AreEqual(expectedArgs.AsSpan().ToString(), args.ToString());
         Assert.AreEqual(expectedError, error);
     }
 }
