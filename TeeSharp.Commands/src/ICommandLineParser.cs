@@ -1,3 +1,4 @@
+using System;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands;
@@ -7,8 +8,8 @@ public interface ICommandLineParser
     string Prefix { get; set; }
 
     bool TryParse(
-        string? line,
-        out string? command,
-        out string? args,
+        ReadOnlySpan<char> line,
+        out ReadOnlySpan<char> command,
+        out ReadOnlySpan<char> args,
         out LineParseError? parseError);
 }

@@ -16,7 +16,7 @@ public class CommandsExecutor : ICommandsExecutor
         ArgumentsParser = new DefaultCommandArgumentsParser();
     }
 
-    public virtual ICommandResult Execute(string line)
+    public virtual ICommandResult Execute(ReadOnlySpan<char> line)
     {
         throw new NotImplementedException();
         // if (!LineParser.TryParse(line, out var command, out var args, out var error))

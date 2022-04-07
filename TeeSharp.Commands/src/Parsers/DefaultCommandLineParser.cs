@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands.Parsers;
@@ -26,44 +25,36 @@ public class DefaultCommandLineParser : ICommandLineParser
     }
 
     public virtual bool TryParse(
-        string? line,
-        out string? command,
-        out string? args,
+        ReadOnlySpan<char> line,
+        out ReadOnlySpan<char> command,
+        out ReadOnlySpan<char> args,
         out LineParseError? parseError)
     {
-        line = line?.Trim();
+        line = line.Trim();
 
         if (!Valid(line, out var spaceIndex, out parseError))
         {
-            command = null;
-            args = null;
+            command = default;
+            args = default;
             return false;
         }
 
-        if (line == null)
-            throw new NullReferenceException(nameof(line));
+        command = spaceIndex != -1
+            ? line.Slice(Prefix.Length, spaceIndex - Prefix.Length)
+            : line.Slice(Prefix.Length);
 
-        command = spaceIndex < 0
-            ? Prefix.Length == 0
-                ? line
-                : line.Substring(Prefix.Length)
-            : Prefix.Length == 0
-                ? line.Substring(0, spaceIndex)
-                : line.Substring(Prefix.Length, spaceIndex - Prefix.Length);
-
-        args = spaceIndex < 0
-            ? null
-            : line.Substring(spaceIndex + 1);
+        args = spaceIndex != -1
+            ? line.Slice(spaceIndex + 1)
+            : default;
 
         return true;
     }
 
-    protected virtual bool Valid(
-        string? line,
+    protected virtual bool Valid(ReadOnlySpan<char> line,
         out int spaceIndex,
         out LineParseError? error)
     {
-        if (string.IsNullOrEmpty(line))
+        if (line.IsEmpty)
         {
             error = LineParseError.EmptyLine;
             spaceIndex = -1;
@@ -77,14 +68,14 @@ public class DefaultCommandLineParser : ICommandLineParser
             return false;
         }
 
-        if (Prefix.Length != 0 && !line.StartsWith(Prefix))
+        if (Prefix.Length > 0 && !line.StartsWith(Prefix))
         {
             error = LineParseError.WrongPrefix;
             spaceIndex = -1;
             return false;
         }
 
-        spaceIndex = line.IndexOf(' ', Prefix.Length);
+        spaceIndex = line.IndexOf(' ');
 
         if (spaceIndex != -1 &&
             spaceIndex < Prefix.Length + CommandInfo.MinCommandLength)

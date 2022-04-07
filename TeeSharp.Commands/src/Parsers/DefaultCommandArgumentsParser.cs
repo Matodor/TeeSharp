@@ -8,7 +8,7 @@ namespace TeeSharp.Commands.Parsers;
 public class DefaultCommandArgumentsParser : ICommandArgumentsParser
 {
     public virtual bool TryParse(
-        string? input,
+        ReadOnlySpan<char> input,
         IReadOnlyList<IParameterInfo> parameters,
         out CommandArgs? args,
         out ArgumentsParseError? error)
@@ -20,9 +20,9 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             return true;
         }
 
-        input = input?.Trim();
+        input = input.Trim();
 
-        if (string.IsNullOrEmpty(input))
+        if (input.IsEmpty)
         {
             if (!parameters[0].IsOptional)
             {
@@ -37,15 +37,14 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
         }
 
         var values = new Dictionary<string, object>(parameters.Count);
-        var line = input.AsSpan();
 
         foreach (var parameter in parameters)
         {
             var arg = parameter.IsRemain
-                ? line.TrimStart().ToString()
-                : GetFirstChunk(line, out line);
+                ? input.TrimStart()
+                : GetFirstChunk(input, out input);
 
-            if (string.IsNullOrEmpty(arg))
+            if (arg.IsEmpty)
             {
                 if (parameter.IsOptional)
                     continue;
@@ -63,7 +62,10 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
                 return false;
             }
 
-            arg = arg.Replace("\\\"", "\"");
+            // TODO optimize this
+            arg = arg.ToString()
+                .Replace("\\\"", "\"")
+                .AsSpan();
 
             if (parameter.ArgumentReader.TryRead(arg, out var value))
                 values.Add(parameter.Name, value);
@@ -80,14 +82,14 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
         return true;
     }
 
-    protected virtual string? GetFirstChunk(
+    protected virtual ReadOnlySpan<char> GetFirstChunk(
         ReadOnlySpan<char> line,
         out ReadOnlySpan<char> restLine)
     {
         if (line.IsEmpty)
         {
-            restLine = null;
-            return null;
+            restLine = default;
+            return default;
         }
 
         var isQuoteable = line.Length > 1 && line[0] == '"';
@@ -109,28 +111,28 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
                     && (i + 1 == line.Length || line[i + 1] == ' '))
                 {
                     restLine = line.Slice(i + 1).TrimStart();
-                    return line.Slice(1, i - 1).ToString();
+                    return line.Slice(1, i - 1);
                 }
             }
 
             if (firstSpaceIndex == -1)
             {
-                restLine = null;
-                return line.ToString();
+                restLine = default;
+                return line;
             }
 
             restLine = line.Slice(firstSpaceIndex).TrimStart();
-            return line.Slice(0, firstSpaceIndex).ToString();
+            return line.Slice(0, firstSpaceIndex);
         }
 
         var spaceIndex = line.IndexOf(' ');
         if (spaceIndex == -1)
         {
-            restLine = null;
-            return line.ToString();
+            restLine = default;
+            return line;
         }
 
         restLine = line.Slice(spaceIndex).TrimStart();
-        return line.Slice(0, spaceIndex).ToString();
+        return line.Slice(0, spaceIndex);
     }
 }

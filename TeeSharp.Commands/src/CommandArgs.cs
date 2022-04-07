@@ -57,6 +57,11 @@ public class CommandArgs : EventArgs,
             Arguments.All(kv =>
                 other.TryGetValue(kv.Key, out var otherValue) && (
                     kv.Value == otherValue ||
+                    // TODO useless?
+                    // kv.Value is float f1 && otherValue is float f2 && string.Equals(
+                    //     f1.ToString(CultureInfo.CurrentCulture),
+                    //     f2.ToString(CultureInfo.CurrentCulture)
+                    // ) ||
                     kv.Value.Equals(otherValue)
                 )
             );
