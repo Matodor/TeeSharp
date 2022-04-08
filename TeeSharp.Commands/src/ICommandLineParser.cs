@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands;
@@ -11,5 +12,5 @@ public interface ICommandLineParser
         ReadOnlySpan<char> line,
         out ReadOnlySpan<char> command,
         out ReadOnlySpan<char> args,
-        out LineParseError? parseError);
+        [NotNullWhen(false)] out LineParseError? parseError);
 }
