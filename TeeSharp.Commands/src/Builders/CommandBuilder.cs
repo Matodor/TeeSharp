@@ -16,6 +16,14 @@ public class CommandBuilder
         Parameters = new List<ParameterBuilder>();
     }
 
+    public CommandBuilder WithParam(string pattern, Action<ParameterBuilder> factory)
+    {
+        var builder = ParameterBuilder.FromPattern(pattern);
+        factory(builder);
+        Parameters.Add(builder);
+        return this;
+    }
+
     public CommandBuilder WithParam(Action<ParameterBuilder> factory)
     {
         var builder = new ParameterBuilder();
