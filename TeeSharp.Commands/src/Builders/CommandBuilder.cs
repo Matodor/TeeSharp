@@ -7,7 +7,7 @@ namespace TeeSharp.Commands.Builders;
 public class CommandBuilder
 {
     internal List<ParameterBuilder> Parameters { get; set; }
-    internal CommandHandler Callback { get; set; } = null!;
+    internal CommandHandler? Callback { get; set; }
     internal string? Name { get; set; }
     internal string? Description { get; set; }
 
@@ -46,6 +46,17 @@ public class CommandBuilder
     {
         if (string.IsNullOrEmpty(Name))
             throw new NullReferenceException(nameof(Name));
+
+        switch (Name.Length)
+        {
+            case < CommandInfo.MinCommandLength:
+                throw new Exception("Command name minimum length not reached");
+            case > CommandInfo.MaxCommandLength:
+                throw new Exception("Command name maximum length exceeded");
+        }
+
+        if (Callback == null)
+            throw new NullReferenceException("Callback for command not set");
 
         Parameters.ForEach(pb =>
         {
