@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands;
@@ -17,6 +18,6 @@ public interface ICommandArgumentsParser
     bool TryParse(
         ReadOnlySpan<char> input,
         IReadOnlyList<IParameterInfo> parameters,
-        out CommandArgs? args,
-        out ArgumentsParseError? error);
+        out CommandArgs args,
+        [NotNullWhen(false)] out ArgumentsParseError? error);
 }
