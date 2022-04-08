@@ -10,9 +10,9 @@ public delegate Task CommandHandler(ICommandResult result);
 public class CommandInfo : ICommandInfo
 {
     public const int MinCommandLength = 1;
-    public const int MaxCommandLength = 32;
-    public const int MaxDescriptionLength = 96;
-    public const int MaxParamsLength = 16;
+    public const int MaxCommandLength = 64;
+    public const int MaxDescriptionLength = 256;
+    public const int MaxParamsLength = 32;
 
     public IReadOnlyList<IParameterInfo> Parameters { get; }
     public CommandHandler Callback { get; set; }
@@ -22,7 +22,7 @@ public class CommandInfo : ICommandInfo
     internal CommandInfo(CommandBuilder builder)
     {
         Parameters = builder.Parameters.Select(b => b.Build()).ToList();
-        Callback = builder.Callback;
+        Callback = builder.Callback!;
         Name = builder.Name!;
         Description = builder.Description;
     }
