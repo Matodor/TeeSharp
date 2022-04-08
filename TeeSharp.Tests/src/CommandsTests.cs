@@ -22,6 +22,51 @@ public class CommandsTests
     }
 
     [Test]
+    public void ShouldExecuteCommandWithParams()
+    {
+        var sum = 0f;
+        var executor = new CommandsExecutor();
+
+        executor.LineParser.Prefix = "/";
+        executor.Commands.Add(builder =>
+        {
+            builder
+                .WithName("sum")
+                .WithParam("i", parameterBuilder =>
+                {
+                    parameterBuilder.WithName("x");
+                })
+                .WithParam("f", parameterBuilder =>
+                {
+                    parameterBuilder.WithName("y");
+                })
+                .WithParam("?s", parameterBuilder =>
+                {
+                    parameterBuilder.WithName("z");
+                })
+                .WithCallback((args, _, _) =>
+                {
+                    sum += (int)args["x"];
+                    sum += (float)args["y"];
+                    return Task.CompletedTask;
+                });
+        });
+
+        var result = executor.Execute("/sum 10 656.99", CommandContext.Default, CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Args.ContainsKey("x"));
+        Assert.True(result.Args.ContainsKey("y"));
+        Assert.False(result.Args.ContainsKey("z"));
+
+        Assert.Null(result.LineParseError);
+        Assert.Null(result.ArgumentsParseError);
+        Assert.Null(result.Error);
+        Assert.AreEqual(sum, 666.99f);
+        Assert.AreEqual(result.Args["x"], 10);
+        Assert.AreEqual(result.Args["y"], 656.99f);
+    }
+
+    [Test]
     public void ShouldExecuteCommand()
     {
         var sum = 0;
