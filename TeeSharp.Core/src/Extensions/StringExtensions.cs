@@ -1,19 +1,46 @@
 using System;
 
-namespace TeeSharp.Core.Extensions
+namespace TeeSharp.Core.Extensions;
+
+public static class StringExtensions
 {
-    public static class StringExtensions
+    public static string Limit(this string source, int maxLength)
     {
-        public static string ToString(this ReadOnlySpan<char> array)
+        return maxLength <= 0 || source.Length <= maxLength
+            ? source
+            : source.Substring(0, maxLength);
+    }
+
+    public static ReadOnlySpan<char> SkipToWhitespaces(this ReadOnlySpan<char> input)
+    {
+        int index;
+        for (index = 0; index < input.Length; index++)
         {
-            return array.ToString();
+            if (input[index] == ' ' ||
+                input[index] == '\t' ||
+                input[index] == '\n')
+            {
+                break;
+            }
         }
-        
-        public static string Limit(this string source, int maxLength)
+
+        return input[index..];
+    }
+
+    public static ReadOnlySpan<char> SkipWhitespaces(this ReadOnlySpan<char> input)
+    {
+        int index;
+        for (index = 0; index < input.Length; index++)
         {
-            return maxLength <= 0 || source.Length <= maxLength
-                ? source
-                : source.Substring(0, maxLength);
+            if (input[index] != ' ' &&
+                input[index] != '\t' &&
+                input[index] != '\n' &&
+                input[index] != '\r')
+            {
+                break;
+            }
         }
+
+        return input[index..];
     }
 }

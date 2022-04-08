@@ -1,9 +1,8 @@
 using System.Runtime.InteropServices;
 
-namespace TeeSharp.Map
+namespace TeeSharp.Map;
+
+public struct MapItemVersion : IDataFileItem
 {
-    public struct MapItemVersion : IDataFileItem
-    {
-        public int Version;
-    }
+    public int Version;
 }

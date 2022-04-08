@@ -1,14 +1,13 @@
 using System;
 
-namespace TeeSharp.Network
+namespace TeeSharp.Network;
+
+[Flags]
+public enum MessageFlags
 {
-    [Flags]
-    public enum MessageFlags
-    {
-        None   = 0,
-        Vital  = 1 << 0,
-        ConnectionLess = 1 << 1,
-        Flush = 1 << 2,
-        Extended = 1 << 3,
-    }
+    None   = 0,
+    Vital  = 1 << 0,
+    ConnectionLess = 1 << 1,
+    Flush = 1 << 2,
+    Extended = 1 << 3,
 }

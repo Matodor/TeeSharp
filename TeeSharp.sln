@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{45
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Server", "TeeSharp.Server\TeeSharp.Server.csproj", "{8D14BD01-DC0C-452E-ACA5-A8FF7AA15913}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeeSharp.Commands", "TeeSharp.Commands\TeeSharp.Commands.csproj", "{F8C7A906-DB1A-42B7-B551-6E37554D1E7A}"
+EndProject
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,6 +81,10 @@ Global
 		{8D14BD01-DC0C-452E-ACA5-A8FF7AA15913}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D14BD01-DC0C-452E-ACA5-A8FF7AA15913}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D14BD01-DC0C-452E-ACA5-A8FF7AA15913}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8C7A906-DB1A-42B7-B551-6E37554D1E7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8C7A906-DB1A-42B7-B551-6E37554D1E7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8C7A906-DB1A-42B7-B551-6E37554D1E7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C7A906-DB1A-42B7-B551-6E37554D1E7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8A45BB91-43F7-4A42-88BF-028B370B0678} = {45A2FF2A-0495-4D63-BACD-FAB97ACC2AA9}

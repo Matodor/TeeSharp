@@ -4,12 +4,11 @@
 
 using System;
 
-namespace TeeSharp.Core.MinIoC
+namespace TeeSharp.Core.MinIoC;
+
+public partial class Container
 {
-    public partial class Container
+    public interface IScope : IDisposable, IServiceProvider
     {
-        public interface IScope : IDisposable, IServiceProvider
-        {
-        }
     }
 }

@@ -1,10 +1,9 @@
-namespace TeeSharp.Server
+namespace TeeSharp.Server;
+
+public enum ServerState
 {
-    public enum ServerState
-    {
-        None,
-        StartsUp,
-        Running,
-        Stopping,
-    }
+    None,
+    StartsUp,
+    Running,
+    Stopping,
 }

@@ -1,10 +1,9 @@
-namespace TeeSharp.Common.Config
+namespace TeeSharp.Common.Config;
+
+public class CommonConfiguration : Configuration
 {
-    public class CommonConfiguration : Configuration
-    {
-        public virtual ConfigVariableBoolean Debug { get; } = new ConfigVariableBoolean(
-            defaultValue: false,
-            description: "Debug"
-        );
-    }
+    public virtual ConfigVariableBoolean Debug { get; } = new ConfigVariableBoolean(
+        defaultValue: false,
+        description: "Debug"
+    );
 }

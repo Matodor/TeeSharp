@@ -4,14 +4,13 @@
 
 using System;
 
-namespace TeeSharp.Core.MinIoC
+namespace TeeSharp.Core.MinIoC;
+
+public partial class Container
 {
-    public partial class Container
+    private interface ILifetime : IScope
     {
-        private interface ILifetime : IScope
-        {
-            object GetServiceAsSingletone(Type type, Func<ILifetime, object> factory);
-            object GetServicePerScope(Type type, Func<ILifetime, object> factory);
-        }
+        object GetServiceAsSingletone(Type type, Func<ILifetime, object> factory);
+        object GetServicePerScope(Type type, Func<ILifetime, object> factory);
     }
 }

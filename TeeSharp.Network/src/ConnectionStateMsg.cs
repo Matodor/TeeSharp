@@ -1,11 +1,10 @@
-namespace TeeSharp.Network
+namespace TeeSharp.Network;
+
+public enum ConnectionStateMsg
 {
-    public enum ConnectionStateMsg
-    {
-        KeepAlive = 0,
-        Connect,
-        ConnectAccept,
-        Accept,
-        Close,
-    }
+    KeepAlive = 0,
+    Connect,
+    ConnectAccept,
+    Accept,
+    Close,
 }

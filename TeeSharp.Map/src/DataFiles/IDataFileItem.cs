@@ -1,6 +1,5 @@
-namespace TeeSharp.Map
+namespace TeeSharp.Map;
+
+public interface IDataFileItem
 {
-    public interface IDataFileItem
-    {
-    }
 }

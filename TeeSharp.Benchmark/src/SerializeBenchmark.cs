@@ -1,7 +1,6 @@
-namespace TeeSharp.Benchmark
+namespace TeeSharp.Benchmark;
+
+public class SerializationBenchmark
 {
-    public class SerializationBenchmark
-    {
         
-    }
 }

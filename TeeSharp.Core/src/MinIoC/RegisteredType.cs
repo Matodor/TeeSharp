@@ -4,36 +4,35 @@
 
 using System;
 
-namespace TeeSharp.Core.MinIoC
+namespace TeeSharp.Core.MinIoC;
+
+public partial class Container
 {
-    public partial class Container
+    private class RegisteredType : IRegisteredType
     {
-        private class RegisteredType : IRegisteredType
+        private readonly Type _itemType;
+        private readonly Action<Func<ILifetime, object>> _registerFactory;
+        private readonly Func<ILifetime, object> _factory;
+
+        public RegisteredType(
+            Type itemType, 
+            Action<Func<ILifetime, object>> registerFactory,
+            Func<ILifetime, object> factory)
         {
-            private readonly Type _itemType;
-            private readonly Action<Func<ILifetime, object>> _registerFactory;
-            private readonly Func<ILifetime, object> _factory;
+            _itemType = itemType;
+            _registerFactory = registerFactory;
+            _registerFactory(factory);
+            _factory = factory;
+        }
 
-            public RegisteredType(
-                Type itemType, 
-                Action<Func<ILifetime, object>> registerFactory,
-                Func<ILifetime, object> factory)
-            {
-                _itemType = itemType;
-                _registerFactory = registerFactory;
-                _registerFactory(factory);
-                _factory = factory;
-            }
+        public void AsSingleton()
+        {
+            _registerFactory(lifetime => lifetime.GetServiceAsSingletone(_itemType, _factory));
+        }
 
-            public void AsSingleton()
-            {
-                _registerFactory(lifetime => lifetime.GetServiceAsSingletone(_itemType, _factory));
-            }
-
-            public void PerScope()
-            {
-                _registerFactory(lifetime => lifetime.GetServicePerScope(_itemType, _factory));
-            }
+        public void PerScope()
+        {
+            _registerFactory(lifetime => lifetime.GetServicePerScope(_itemType, _factory));
         }
     }
 }

@@ -1,14 +1,13 @@
 using System;
 using BenchmarkDotNet.Attributes;
 
-namespace TeeSharp.Benchmark
+namespace TeeSharp.Benchmark;
+
+public class ProcessMessagesBenchmark
 {
-    public class ProcessMessagesBenchmark
+    [Benchmark(Description = "Test1")]
+    public void Test1()
     {
-        [Benchmark(Description = "Test1")]
-        public void Test1()
-        {
             
-        }
     }
 }

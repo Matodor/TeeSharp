@@ -1,7 +1,6 @@
-﻿namespace TeeSharp.Core.MinIoC
+﻿namespace TeeSharp.Core.MinIoC;
+
+public interface IContainerService
 {
-    public interface IContainerService
-    {
-        Container Container { get; set; }
-    }
+    Container.IScope Container { get; set; }
 }
