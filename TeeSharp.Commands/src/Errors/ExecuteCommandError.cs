@@ -1,6 +1,6 @@
 namespace TeeSharp.Commands.Errors;
 
-public enum CommandResultError
+public enum ExecuteCommandError
 {
     CommandNotFound,
     ParseFailed,

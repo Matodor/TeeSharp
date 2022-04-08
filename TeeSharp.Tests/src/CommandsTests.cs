@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using TeeSharp.Commands;
@@ -21,6 +22,35 @@ public class CommandsTests
     }
 
     [Test]
+    public void ShouldExecuteCommand()
+    {
+        var sum = 0;
+        var executor = new CommandsExecutor();
+
+        executor.LineParser.Prefix = "/";
+        executor.Commands.Add(builder =>
+        {
+            builder
+                .WithName("add")
+                .WithCallback((_, _, _) =>
+                {
+                    sum += 1;
+                    sum += 1;
+                    sum += 1;
+                    return Task.CompletedTask;
+                });
+        });
+
+        var result = executor.Execute("/add", CommandContext.Default, CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.LineParseError);
+        Assert.Null(result.ArgumentsParseError);
+        Assert.Null(result.Error);
+        Assert.AreEqual(result.Args, CommandArgs.Empty);
+        Assert.AreEqual(sum, 3);
+    }
+
+    [Test]
     public void ShouldContainsCommand()
     {
         var dictionary = new CommandsDictionary
@@ -29,13 +59,13 @@ public class CommandsTests
             {
                 builder
                     .WithName("test")
-                    .WithCallback(_ => Task.CompletedTask);
+                    .WithCallback((_, _, _) => Task.CompletedTask);
             },
             builder =>
             {
                 builder
                     .WithName("r")
-                    .WithCallback(_ => Task.CompletedTask);
+                    .WithCallback((_, _, _) => Task.CompletedTask);
             },
         };
 

@@ -6,11 +6,11 @@ using System.Linq;
 
 namespace TeeSharp.Commands;
 
-public class CommandArgs : EventArgs,
+public class CommandArgs :
     IReadOnlyDictionary<string, object>,
     IEquatable<CommandArgs>
 {
-    public static new readonly CommandArgs Empty = new(new Dictionary<string, object>());
+    public static readonly CommandArgs Empty = new(new Dictionary<string, object>());
 
     public int Count => Arguments.Count;
     public object this[string key] => Arguments[key];

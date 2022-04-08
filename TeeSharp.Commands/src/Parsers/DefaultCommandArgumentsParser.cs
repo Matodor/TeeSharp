@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands.Parsers;
@@ -10,8 +11,8 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
     public virtual bool TryParse(
         ReadOnlySpan<char> input,
         IReadOnlyList<IParameterInfo> parameters,
-        out CommandArgs? args,
-        out ArgumentsParseError? error)
+        out CommandArgs args,
+        [NotNullWhen(false)] out ArgumentsParseError? error)
     {
         if (parameters.Count == 0)
         {
@@ -26,7 +27,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
         {
             if (!parameters[0].IsOptional)
             {
-                args = null;
+                args = CommandArgs.Empty;
                 error = ArgumentsParseError.MissingArgument;
                 return false;
             }
@@ -49,7 +50,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
                 if (parameter.IsOptional)
                     continue;
 
-                args = null;
+                args = CommandArgs.Empty;
                 error = ArgumentsParseError.MissingArgument;
                 return false;
             }
@@ -57,7 +58,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
             if (arg[0] == '"' && (arg.Length == 1 || arg[^1] != '"' || arg[^2] == '\\') ||
                 arg[^1] == '"' && (arg.Length == 1 || arg[^2] != '\\' && arg[0] != '"'))
             {
-                args = null;
+                args = CommandArgs.Empty;
                 error = ArgumentsParseError.MissingQuote;
                 return false;
             }
@@ -71,7 +72,7 @@ public class DefaultCommandArgumentsParser : ICommandArgumentsParser
                 values.Add(parameter.Name, value);
             else
             {
-                args = null;
+                args = CommandArgs.Empty;
                 error = ArgumentsParseError.ReadArgumentFailed;
                 return false;
             }

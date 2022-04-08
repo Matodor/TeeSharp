@@ -1,6 +1,6 @@
 namespace TeeSharp.Commands;
 
-public abstract class CommandContext
+public class CommandContext
 {
-        
+    public static readonly CommandContext Default = new();
 }

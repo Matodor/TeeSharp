@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using TeeSharp.Commands.Errors;
 
 namespace TeeSharp.Commands.Parsers;
@@ -28,7 +29,7 @@ public class DefaultCommandLineParser : ICommandLineParser
         ReadOnlySpan<char> line,
         out ReadOnlySpan<char> command,
         out ReadOnlySpan<char> args,
-        out LineParseError? parseError)
+        [NotNullWhen(false)] out LineParseError? parseError)
     {
         line = line.Trim();
 
@@ -52,7 +53,7 @@ public class DefaultCommandLineParser : ICommandLineParser
 
     protected virtual bool Valid(ReadOnlySpan<char> line,
         out int spaceIndex,
-        out LineParseError? error)
+        [NotNullWhen(false)] out LineParseError? error)
     {
         if (line.IsEmpty)
         {

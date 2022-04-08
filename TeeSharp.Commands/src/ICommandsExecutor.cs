@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace TeeSharp.Commands;
 
@@ -8,6 +9,8 @@ public interface ICommandsExecutor
     ICommandLineParser LineParser { get; }
     ICommandArgumentsParser ArgumentsParser { get; }
 
-    public void Init();
-    public ICommandResult Execute(ReadOnlySpan<char> line);
+    public IExecuteCommandResult Execute(
+        ReadOnlySpan<char> line,
+        CommandContext context,
+        CancellationToken cancellationToken);
 }
