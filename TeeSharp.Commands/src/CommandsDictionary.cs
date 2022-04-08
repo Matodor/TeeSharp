@@ -39,9 +39,9 @@ public class CommandsDictionary : ICommandsDictionary
 
     public virtual bool IsReadOnly => Dictionary.IsReadOnly;
 
-    protected virtual IDictionary<string, CommandInfo> Dictionary { get; set; } = null!;
+    protected virtual IDictionary<string, CommandInfo> Dictionary { get; set; }
 
-    public virtual void Init()
+    public CommandsDictionary()
     {
         Dictionary = new Dictionary<string, CommandInfo>();
     }

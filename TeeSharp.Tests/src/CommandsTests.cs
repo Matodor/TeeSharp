@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using TeeSharp.Commands;
 using TeeSharp.Commands.ArgumentReaders;
@@ -17,6 +18,28 @@ public class CommandsTests
     [OneTimeSetUp]
     public void Init()
     {
+    }
+
+    [Test]
+    public void ShouldContainsCommand()
+    {
+        var dictionary = new CommandsDictionary
+        {
+            builder =>
+            {
+                builder
+                    .WithName("test")
+                    .WithCallback(_ => Task.CompletedTask);
+            },
+            builder =>
+            {
+                builder
+                    .WithName("r")
+                    .WithCallback(_ => Task.CompletedTask);
+            },
+        };
+
+        Assert.True(dictionary.ContainsKey("test"));
     }
 
     [Test]
