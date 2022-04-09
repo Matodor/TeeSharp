@@ -19,8 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Serilog" Version="2.10.0" />
-      <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
-      <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00909" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0-preview.2.22152.2" />
+      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0-preview.2.22152.2" />
     </ItemGroup>
 </Project>

@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using TeeSharp.MasterServer;
-using TeeSharp.Network;
+using TeeSharp.Network.Helpers;
 
 namespace Examples.ServerBrowser;
 
@@ -43,7 +43,7 @@ class Program
                 var test = string.Join(',', data.Select(b => $"{b}"));
             }
         }
-            
+
         Console.WriteLine("Hello World!");
     }
 }

@@ -11,11 +11,14 @@ public class CommandsExecutor : ICommandsExecutor
     public virtual ICommandLineParser LineParser { get; protected set; }
     public virtual ICommandArgumentsParser ArgumentsParser { get; protected set; }
 
-    public CommandsExecutor()
+    public CommandsExecutor(
+        ICommandsDictionary commandsDictionary,
+        ICommandLineParser lineParser,
+        ICommandArgumentsParser argumentsParser)
     {
-        Commands = new CommandsDictionary();
-        LineParser = new DefaultCommandLineParser();
-        ArgumentsParser = new DefaultCommandArgumentsParser();
+        Commands = commandsDictionary;
+        LineParser = lineParser;
+        ArgumentsParser = argumentsParser;
     }
 
     public virtual IExecuteCommandResult Execute(

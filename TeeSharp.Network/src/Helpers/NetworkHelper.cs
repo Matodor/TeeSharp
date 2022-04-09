@@ -5,7 +5,7 @@ using System.Text;
 using TeeSharp.Core.Extensions;
 using TeeSharp.Core.Helpers;
 
-namespace TeeSharp.Network;
+namespace TeeSharp.Network.Helpers;
 
 public static class NetworkHelper
 {
@@ -42,7 +42,7 @@ public static class NetworkHelper
             packet.Ack = 0;
             packet.ChunksCount = 0;
             packet.DataSize = data.Length - dataStart;
-                
+
             data.Slice(dataStart, packet.DataSize)
                 .CopyTo(packet.Data);
 
@@ -71,7 +71,7 @@ public static class NetworkHelper
             if (isSixUp)
             {
                 packet.Flags = PacketFlags.None;
-                    
+
                 var sixUpFlags = (PacketFlagsSixUp) packet.Flags;
                 if (sixUpFlags.HasFlag(PacketFlagsSixUp.Connection))
                     packet.Flags |= PacketFlags.ConnectionState;
@@ -116,14 +116,14 @@ public static class NetworkHelper
             return false;
         }
     }
-        
+
     // ReSharper disable once InconsistentNaming
     public static bool TryGetUdpClient(IPEndPoint localEP, out UdpClient client)
     {
         try
         {
-            client = localEP == null 
-                ? new UdpClient() 
+            client = localEP == null
+                ? new UdpClient()
                 : new UdpClient(localEP);
             return true;
         }
@@ -151,9 +151,9 @@ public static class NetworkHelper
             // asdasd
         }
     }
-        
-    public static void SendData(UdpClient client, IPEndPoint endPoint, 
-        ReadOnlySpan<byte> data, 
+
+    public static void SendData(UdpClient client, IPEndPoint endPoint,
+        ReadOnlySpan<byte> data,
         ReadOnlySpan<byte> extraData = default)
     {
         var bufferSize = NetworkConstants.PacketConnLessDataOffset + data.Length;
@@ -174,13 +174,13 @@ public static class NetworkHelper
                 .Slice(0, NetworkConstants.PacketExtraDataSize)
                 .CopyTo(buffer.Slice(NetworkConstants.PacketHeaderExtended.Length));
         }
-            
+
         data.CopyTo(buffer.Slice(NetworkConstants.PacketConnLessDataOffset));
         client.BeginSend(
-            buffer.ToArray(), 
+            buffer.ToArray(),
             buffer.Length,
-            endPoint, 
-            EndSendCallback, 
+            endPoint,
+            EndSendCallback,
             client
         );
     }
@@ -190,9 +190,9 @@ public static class NetworkHelper
         var client = (UdpClient) result.AsyncState;
         client?.EndSend(result);
     }
-        
-    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint, 
-        ConnectionStateMsg state, SecurityToken token, int ack, 
+
+    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint,
+        ConnectionStateMsg state, SecurityToken token, int ack,
         bool isSixUp, string extraMsg)
     {
         if (string.IsNullOrEmpty(extraMsg))
@@ -207,9 +207,9 @@ public static class NetworkHelper
             SendConnStateMsg(client, endPoint, state, token, ack, isSixUp, buffer.Slice(0, length));
         }
     }
-        
-    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint, 
-        ConnectionStateMsg state, SecurityToken token, int ack, 
+
+    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint,
+        ConnectionStateMsg state, SecurityToken token, int ack,
         bool isSixUp, Span<byte> extraData)
     {
         var packet = new NetworkPacket
@@ -225,7 +225,7 @@ public static class NetworkHelper
 
         if (!extraData.IsEmpty)
             extraData.CopyTo(packet.Data.AsSpan(1));
-            
+
         // SendPacket(client, endPoint, packet);
     }
 }

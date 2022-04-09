@@ -3,7 +3,7 @@ using System.Net;
 namespace TeeSharp.Network;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class ChunkFactory : BaseChunkFactory
+public class ChunkFactoryOld : BaseChunkFactoryOld
 {
     public override void Init()
     {
@@ -19,16 +19,16 @@ public class ChunkFactory : BaseChunkFactory
         HasError = true;
         EndPoint = null;
         ClientId = -1;
-        Connection = null;
+        ConnectionOld = null;
         ProcessedChunks = 0;
     }
 
-    public override void Start(IPEndPoint endPoint, BaseNetworkConnection connection, int clientId)
+    public override void Start(IPEndPoint endPoint, BaseNetworkConnectionOld connectionOld, int clientId)
     {
         HasError = false;
         EndPoint = endPoint;
         ClientId = clientId;
-        Connection = connection;
+        ConnectionOld = connectionOld;
         ProcessedChunks = 0;
     }
 

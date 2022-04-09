@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using Serilog;
 using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Common.Storage;
@@ -23,13 +22,13 @@ public class Storage : BaseStorage
 
     public override bool TryOpen(string filePath, FileAccess access, out FileStream fs)
     {
-        if (access.HasFlag(FileAccess.Write) || 
+        if (access.HasFlag(FileAccess.Write) ||
             access.HasFlag(FileAccess.ReadWrite))
         {
             if (Config.SaveDirectory == null)
             {
                 fs = null;
-                Log.Warning("[storage] Cannot save file, `saveDir` is empty");
+                // Log.Warning("[storage] Cannot save file, `saveDir` is empty");
                 return false;
             }
 
@@ -44,7 +43,7 @@ public class Storage : BaseStorage
                     FileMode.OpenOrCreate,
                     access
                 );
-                    
+
                 return true;
             }
             catch
@@ -59,14 +58,14 @@ public class Storage : BaseStorage
             var path = Path.GetFullPath(
                 Path.Combine(Config.Paths[i], filePath)
             );
-                    
+
             if (!File.Exists(path))
                 continue;
-                
+
             try
             {
                 fs = File.Open(path, FileMode.Open, access);
-                Log.Debug("[storage] Open file at {Path}", path);
+                // Log.Debug("[storage] Open file at {Path}", path);
                 return true;
             }
             catch (Exception e)
@@ -119,7 +118,7 @@ public class Storage : BaseStorage
             return;
 
         Config.Paths.Add(path);
-        Log.Information("[storage] Add path {Path}", path);
+        // Log.Information("[storage] Add path {Path}", path);
     }
 
     public override string FormatPath(string path)
@@ -140,18 +139,18 @@ public class Storage : BaseStorage
 
         if (Config.Paths == null || Config.Paths.Count == 0)
         {
-            Log.Information("[storage] Config `paths` is empty, default paths will be used");
+            // Log.Information("[storage] Config `paths` is empty, default paths will be used");
             LoadDefaultPaths();
         }
 
         if (File.Exists(Config.SaveDirectory))
         {
-            Log.Error("[storage] Config `saveDir` is existing file, saving files won't work");
+            // Log.Error("[storage] Config `saveDir` is existing file, saving files won't work");
             Config.SaveDirectory = null;
         }
         else
         {
-            Log.Information("[storage] Using save path at {Dir}", Config.SaveDirectory);
+            // Log.Information("[storage] Using save path at {Dir}", Config.SaveDirectory);
             Directory.CreateDirectory(Config.SaveDirectory);
         }
     }

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-Examples.BasicServer-104FCA72-93C0-4DD1-AEE8-51757A0AFC5E</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+        <PackageReference Include="Serilog" Version="2.11.0-dev-01380" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="5.0.0-dev-00095" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.1-dev-00296" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.0.2-dev-00890" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00947" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\res\examples-data\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\..\TeeSharp.Server\TeeSharp.Server.csproj" />
+    </ItemGroup>
+</Project>
