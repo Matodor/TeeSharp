@@ -5,8 +5,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using TeeSharp.Commands;
@@ -14,29 +12,24 @@ using TeeSharp.Commands.ArgumentReaders;
 using TeeSharp.Commands.Builders;
 using TeeSharp.Commands.Errors;
 using TeeSharp.Commands.Parsers;
+using TeeSharp.Core;
 
 namespace TeeSharp.Tests;
 
 public class CommandsTests
 {
-    private IServiceProvider _services = null!;
-
     [OneTimeSetUp]
     public void Init()
     {
-        _services = new ServiceCollection()
-            .AddTransient(typeof(ILogger<>), typeof(NullLogger<>))
-            .AddTransient<ILogger, NullLogger>()
-            .AddTransient<ILoggerFactory, NullLoggerFactory>()
-            .AddCommands()
-            .BuildServiceProvider();
+        Tee.Logger = NullLogger.Instance;
+        Tee.LoggerFactory = NullLoggerFactory.Instance;
     }
 
     [Test]
     public void ShouldExecuteCommandWithParams()
     {
         var sum = 0f;
-        var executor = _services.GetRequiredService<ICommandsExecutor>();
+        var executor = new CommandsExecutor();
 
         executor.Commands.Add(builder =>
         {
@@ -80,7 +73,7 @@ public class CommandsTests
     public void ShouldExecuteCommand()
     {
         var sum = 0;
-        var executor = _services.GetRequiredService<ICommandsExecutor>();
+        var executor = new CommandsExecutor();
 
         executor.Commands.Add(builder =>
         {
@@ -107,7 +100,7 @@ public class CommandsTests
     [Test]
     public void ShouldContainsCommand()
     {
-        var dictionary = new CommandsDictionary(new NullLoggerFactory())
+        var dictionary = new CommandsDictionary()
         {
             builder =>
             {

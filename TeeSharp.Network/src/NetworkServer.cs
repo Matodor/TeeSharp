@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TeeSharp.Core;
+using TeeSharp.Core.Settings;
 
 namespace TeeSharp.Network;
 
@@ -11,9 +13,10 @@ public class NetworkServer : INetworkServer
 
     private readonly ILogger _logger;
 
-    public NetworkServer(ILoggerFactory loggerFactory)
+    public NetworkServer(
+        ISettingsChangesNotifier<NetworkServerSettings> settingsChangesNotifier)
     {
-        _logger = loggerFactory.CreateLogger("GameServer");
+        _logger = Tee.LoggerFactory.CreateLogger("Network");
     }
 
     public virtual async Task RunAsync(CancellationToken cancellationToken)

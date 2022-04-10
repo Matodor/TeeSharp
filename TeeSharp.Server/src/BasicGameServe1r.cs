@@ -27,10 +27,6 @@
 //         NetworkMessagesQueue = new ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>();
 //     }
 //
-//     protected CancellationTokenSource NetworkLoopCancellationToken { get; set; }
-//     protected Thread NetworkLoopThread { get; set; }
-//
-//     [SuppressMessage("ReSharper", "ArrangeThisQualifier")]
 //     public override void Init()
 //     {
 //         Storage = Container.Resolve<BaseStorage>();
@@ -58,61 +54,9 @@
 //         Log.Information("Server name changed to - {ServerName}", serverName);
 //     }
 //
-//     public override void Run()
-//     {
-//         if (ServerState != ServerState.Running)
-//             ServerState = ServerState.Running;
-//         else
-//         {
-//             Log.Warning("Server already in `Running` state");
-//             return;
-//         }
-//
-//         GameTimer = Stopwatch.StartNew();
-//         Tick = 0;
-//
-//         RunNetworkServer();
-//         RunLoop();
-//     }
-//
-//     public override void Stop()
-//     {
-//         if (ServerState != ServerState.Running)
-//             return;
-//
-//         ServerState = ServerState.Stopping;
-//         NetworkLoopCancellationToken.Cancel();
-//     }
-//
 //     public override void SendServerInfo(ServerInfoType type, IPEndPoint addr, SecurityToken token)
 //     {
 //         throw new NotImplementedException();
-//     }
-//
-//     protected virtual void RunNetworkServer()
-//     {
-//         // TODO make bind address from config
-//         // ReSharper disable InconsistentNaming
-//         // var localEP = NetworkBase.TryGetLocalIP(out var localIP)
-//         //     ? new IPEndPoint(localIP, 8303)
-//         //     : new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8303);
-//         // ReSharper restore InconsistentNaming
-//
-//         // ReSharper disable once InconsistentNaming
-//         var localEP = new IPEndPoint(IPAddress.Any, Config.ServerPort);
-//
-//         if (NetworkServer.Open(localEP))
-//         {
-//             NetworkLoopCancellationToken = new CancellationTokenSource();
-//             NetworkLoopThread = new Thread(RunNetworkLoop);
-//             NetworkLoopThread.Start(NetworkLoopCancellationToken.Token);
-//
-//             Log.Information("Local address - {Address}", NetworkServer.BindAddress.ToString());
-//         }
-//         else
-//         {
-//             throw new Exception("Can't run network server");
-//         }
 //     }
 //
 //     protected virtual void RunNetworkLoop(object obj)

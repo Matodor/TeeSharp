@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Commands.Builders;
+using TeeSharp.Core;
 
 namespace TeeSharp.Commands;
 
@@ -41,12 +42,11 @@ public class CommandsDictionary : ICommandsDictionary
 
     protected virtual IDictionary<string, CommandInfo> Dictionary { get; set; }
 
-    private readonly ILogger _logger;
+    protected virtual ILogger Logger { get; set; }
 
-    public CommandsDictionary(ILoggerFactory loggerFactory)
+    public CommandsDictionary()
     {
-        _logger = loggerFactory.CreateLogger("Commands");
-
+        Logger = Tee.LoggerFactory.CreateLogger("Commands");
         Dictionary = new Dictionary<string, CommandInfo>();
     }
 
@@ -115,29 +115,29 @@ public class CommandsDictionary : ICommandsDictionary
 
         if (ContainsKey(key))
         {
-            _logger.LogWarning("Command `{Cmd}` not added (already exist)", key);
+            Logger.LogWarning("Command `{Cmd}` not added (already exist)", key);
             return;
         }
 
         switch (key.Length)
         {
             case < CommandInfo.MinCommandLength:
-                _logger.LogWarning("Command `{Cmd}` not added: minimum length not reached", key);
+                Logger.LogWarning("Command `{Cmd}` not added: minimum length not reached", key);
                 return;
             case > CommandInfo.MaxCommandLength:
-                _logger.LogWarning("Command `{Cmd}` not added: maximum cmd length exceeded", key);
+                Logger.LogWarning("Command `{Cmd}` not added: maximum cmd length exceeded", key);
                 return;
         }
 
         if (commandInfo.Description?.Length > CommandInfo.MaxDescriptionLength)
         {
-            _logger.LogWarning("Command `{Cmd}` not added: maximum description length exceeded", key);
+            Logger.LogWarning("Command `{Cmd}` not added: maximum description length exceeded", key);
             return;
         }
 
         if (commandInfo.Parameters.Count > CommandInfo.MaxParamsLength)
         {
-            _logger.LogWarning("Command `{Cmd}` not added: maximum parameters length exceeded", key);
+            Logger.LogWarning("Command `{Cmd}` not added: maximum parameters length exceeded", key);
             return;
         }
 

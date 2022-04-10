@@ -1,5 +1,6 @@
 using Examples.BasicServer;
 using Serilog;
+using TeeSharp.Network;
 using TeeSharp.Server;
 
 const string consoleLogFormat =
@@ -18,12 +19,16 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddGameServer(context.Configuration);
+        var serverSettings = context.Configuration.GetSection("TeeSharp:Server");
+        var networkSettings = context.Configuration.GetSection("TeeSharp:Network");
+
+        services.Configure<ServerSettings>(serverSettings);
+        services.Configure<NetworkServerSettings>(networkSettings);
         services.AddHostedService<ServerWorker>();
-        services.AddSingleton<IGameServer, BasicGameServer>();
     })
     .UseSerilog()
     .Build();
 
 await host.RunAsync();
 
+Log.CloseAndFlush();

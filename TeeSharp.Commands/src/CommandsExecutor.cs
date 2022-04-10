@@ -1,7 +1,9 @@
 using System;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using TeeSharp.Commands.Errors;
 using TeeSharp.Commands.Parsers;
+using TeeSharp.Core;
 
 namespace TeeSharp.Commands;
 
@@ -11,14 +13,17 @@ public class CommandsExecutor : ICommandsExecutor
     public virtual ICommandLineParser LineParser { get; protected set; }
     public virtual ICommandArgumentsParser ArgumentsParser { get; protected set; }
 
+    protected virtual ILogger Logger { get; set; }
+
     public CommandsExecutor(
-        ICommandsDictionary commandsDictionary,
-        ICommandLineParser lineParser,
-        ICommandArgumentsParser argumentsParser)
+        ICommandsDictionary? commandsDictionary = null,
+        ICommandLineParser? lineParser = null,
+        ICommandArgumentsParser? argumentsParser = null)
     {
-        Commands = commandsDictionary;
-        LineParser = lineParser;
-        ArgumentsParser = argumentsParser;
+        Logger = Tee.LoggerFactory.CreateLogger("Commands");
+        Commands = commandsDictionary ?? new CommandsDictionary();
+        LineParser = lineParser ?? new DefaultCommandLineParser();
+        ArgumentsParser = argumentsParser ?? new DefaultCommandArgumentsParser();
     }
 
     public virtual IExecuteCommandResult Execute(

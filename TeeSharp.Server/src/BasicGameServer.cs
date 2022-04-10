@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
+using TeeSharp.Core.Settings;
 using TeeSharp.Network;
 
 namespace TeeSharp.Server;
@@ -18,9 +18,7 @@ public class BasicGameServer : IGameServer, IDisposable
     public TimeSpan GameTime { get; private set; }
     public ServerState ServerState { get; private set; }
 
-    public ServerSettings Settings => _settings.Value;
-
-    protected event EventHandler<string>? ServerNameChanged;
+    public ServerSettings Settings { get; protected set; }
 
     protected INetworkServer NetworkServer { get; }
 
@@ -36,54 +34,42 @@ public class BasicGameServer : IGameServer, IDisposable
 
     private CancellationTokenSource? _ctsServer;
     private readonly ILogger _logger;
-    private readonly IOptions<ServerSettings> _settings;
-    private readonly IOptionsMonitor<ServerSettings> _settingsMonitor;
-    private readonly IDisposable? _settingsMonitorListener;
 
     public BasicGameServer(
-        ILoggerFactory loggerFactory,
-        INetworkServer networkServer,
-        IOptions<ServerSettings> settings,
-        IOptionsMonitor<ServerSettings> settingsMonitor)
+        ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
+        ISettingsChangesNotifier<NetworkServerSettings> networkSettingsNotifier)
     {
-        _logger = loggerFactory.CreateLogger("GameServer");
-        _gameTimer = new Stopwatch();
-        _settings = settings;
-        _settingsMonitor = settingsMonitor;
-        _settingsMonitorListener = _settingsMonitor.OnChange(
-            Debouncer.Debounce<ServerSettings, string?>(
-                OnChangeSettings,
-                TimeSpan.FromSeconds(1)
-            )
-        );
+        serverSettingsNotifier.Subscribe(OnChangeSettings);
 
-        NetworkServer = networkServer;
+        _logger = Tee.LoggerFactory.CreateLogger("GameServer");
+        _gameTimer = new Stopwatch();
+
+        Settings = serverSettingsNotifier.Current;
+        NetworkServer = CreateNetworkServer(networkSettingsNotifier);
         ServerState = ServerState.StartsUp;
     }
 
-    protected virtual void OnChangeSettings(ServerSettings changedSettings, string? name)
+    protected virtual INetworkServer CreateNetworkServer(
+        ISettingsChangesNotifier<NetworkServerSettings> settingsChangesNotifier)
+    {
+        return new NetworkServer(settingsChangesNotifier);
+    }
+
+    protected virtual void OnChangeSettings(ServerSettings changedSettings)
     {
         if (Settings.UseHotReload)
         {
-            DetectSettingChanges(changedSettings);
+            Settings.UseHotReload = changedSettings.UseHotReload;
+
+            if (Settings.Name != changedSettings.Name)
+                Settings.Name = changedSettings.Name;
+
+            _logger.LogInformation("The settings changes have been applied");
         }
         else
         {
             _logger.LogInformation("Hot reload disabled, changes ignored");
         }
-    }
-
-    protected virtual void DetectSettingChanges(ServerSettings changedSettings)
-    {
-        Settings.UseHotReload = changedSettings.UseHotReload;
-
-        if (Settings.Name != changedSettings.Name)
-        {
-            Settings.Name = changedSettings.Name;
-            ServerNameChanged?.Invoke(this, changedSettings.Name);
-        }
-
-        _logger.LogInformation("The settings changes have been applied");
     }
 
     public virtual async Task RunAsync(CancellationToken cancellationToken)
@@ -101,25 +87,64 @@ public class BasicGameServer : IGameServer, IDisposable
         ServerState = ServerState.Running;
         Tick = 0;
 
-        var runTask = await Task.WhenAny(
-            Task.Run(() => RunNetworkServerAsync(_ctsServer.Token), _ctsServer.Token),
-            Task.Run(() => RunGameLoopAsync(_ctsServer.Token), _ctsServer.Token)
+        var runResult = await Task.WhenAny(
+            Task
+                .Run(() => RunNetworkServer(_ctsServer.Token), _ctsServer.Token)
+                .ContinueWith(task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        _logger.LogError("Network server stopped with ERROR");
+                        throw task.Exception!;
+                    }
+
+                    _logger.LogInformation("Network server stopped");
+                }, CancellationToken.None),
+            Task
+                .Run(() => RunGameLoop(_ctsServer.Token), _ctsServer.Token)
+                .ContinueWith(task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        _logger.LogError("Game loop stopped with ERROR");
+                        throw task.Exception!;
+                    }
+
+                    _logger.LogInformation("Game loop stopped");
+                }, CancellationToken.None)
         );
 
-        if (runTask.IsFaulted && !_ctsServer.IsCancellationRequested)
+        if (runResult.IsFaulted)
         {
             _ctsServer.Cancel();
-            throw runTask.Exception!;
+            await Task.Delay(TimeSpan.FromSeconds(1), CancellationToken.None);
+            throw runResult.Exception!;
         }
+
+        ServerState = ServerState.Stopped;
     }
 
-    protected virtual async Task RunNetworkServerAsync(CancellationToken cancellationToken)
+    protected virtual async Task RunNetworkServer(CancellationToken cancellationToken)
     {
+        // // TODO make bind address from config
+        // // ReSharper disable InconsistentNaming
+        // // var localEP = NetworkBase.TryGetLocalIP(out var localIP)
+        // //     ? new IPEndPoint(localIP, 8303)
+        // //     : new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8303);
+        // // ReSharper restore InconsistentNaming
+        //
+        // // ReSharper disable once InconsistentNaming
+        // var localEP = new IPEndPoint(IPAddress.Any, Config.ServerPort);
+        //
+        // if (NetworkServer.Open(localEP))
+        // {
+        // Log.Information("Local address - {Address}", NetworkServer.BindAddress.ToString());
+        // }
+
         await NetworkServer.RunAsync(cancellationToken);
-        _logger.LogInformation("Network server stopped");
     }
 
-    protected virtual Task RunGameLoopAsync(CancellationToken cancellationToken)
+    protected virtual void RunGameLoop(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -165,9 +190,6 @@ public class BasicGameServer : IGameServer, IDisposable
             if (ServerState == ServerState.Stopping)
                 break;
         }
-
-        _logger.LogInformation("Game loop stopped");
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -177,11 +199,8 @@ public class BasicGameServer : IGameServer, IDisposable
     {
         if (Tick % TickRate == 0)
         {
-            Settings.Name = $"NAME {Tick}";
-
             _logger.LogInformation("Tick - {Tick}", Tick);
-            _logger.LogInformation("Current name: {ServerName}", _settingsMonitor.CurrentValue.Name);
-            _logger.LogInformation("Name: {ServerName}", _settings.Value.Name);
+            _logger.LogInformation("Name: {ServerName}", Settings.Name);
         }
     }
 
@@ -189,6 +208,5 @@ public class BasicGameServer : IGameServer, IDisposable
     {
         _ctsServer?.Dispose();
         _ctsServer = null;
-        _settingsMonitorListener?.Dispose();
     }
 }
