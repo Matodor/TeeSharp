@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,18 +10,27 @@ namespace TeeSharp.Network;
 
 public class NetworkServer : INetworkServer
 {
-    public IReadOnlyList<INetworkConnection> Connections { get; }
+    public IReadOnlyList<INetworkConnection> Connections { get; protected set; }
 
-    private readonly ILogger _logger;
+    protected ILogger Logger { get; set; }
 
     public NetworkServer(
         ISettingsChangesNotifier<NetworkServerSettings> settingsChangesNotifier)
     {
-        _logger = Tee.LoggerFactory.CreateLogger("Network");
+        Logger = Tee.LoggerFactory.CreateLogger("Network");
     }
 
     public virtual async Task RunAsync(CancellationToken cancellationToken)
     {
-        await Task.Delay(Timeout.Infinite, cancellationToken);
+        try
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+        }
+        catch (TaskCanceledException e)
+        {
+            // ignore
+        }
+
+        Logger.LogDebug("Network server stopped");
     }
 }
