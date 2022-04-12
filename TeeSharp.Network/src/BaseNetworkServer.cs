@@ -30,7 +30,6 @@ public abstract class BaseNetworkServer
 
     public abstract void Init(NetworkServerConfig config);
     public abstract void Update();
-    // ReSharper disable once InconsistentNaming
     public abstract bool Open(IPEndPoint localEP);
     public abstract bool Receive(out NetworkMessage netMsg, ref SecurityToken responseToken);
     public abstract SecurityToken GetToken(IPEndPoint endPoint);

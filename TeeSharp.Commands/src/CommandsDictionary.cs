@@ -44,9 +44,9 @@ public class CommandsDictionary : ICommandsDictionary
 
     protected virtual ILogger Logger { get; set; }
 
-    public CommandsDictionary()
+    public CommandsDictionary(ILogger? logger = null)
     {
-        Logger = Tee.LoggerFactory.CreateLogger("Commands");
+        Logger = logger ?? Tee.LoggerFactory.CreateLogger("Commands");
         Dictionary = new Dictionary<string, CommandInfo>();
     }
 

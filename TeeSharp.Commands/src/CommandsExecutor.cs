@@ -18,9 +18,10 @@ public class CommandsExecutor : ICommandsExecutor
     public CommandsExecutor(
         ICommandsDictionary? commandsDictionary = null,
         ICommandLineParser? lineParser = null,
-        ICommandArgumentsParser? argumentsParser = null)
+        ICommandArgumentsParser? argumentsParser = null,
+        ILogger? logger = null)
     {
-        Logger = Tee.LoggerFactory.CreateLogger("Commands");
+        Logger = logger ?? Tee.LoggerFactory.CreateLogger("Commands");
         Commands = commandsDictionary ?? new CommandsDictionary();
         LineParser = lineParser ?? new DefaultCommandLineParser();
         ArgumentsParser = argumentsParser ?? new DefaultCommandArgumentsParser();

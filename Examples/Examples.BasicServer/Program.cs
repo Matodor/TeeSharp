@@ -20,10 +20,8 @@ var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
         var serverSettings = context.Configuration.GetSection("TeeSharp:Server");
-        var networkSettings = context.Configuration.GetSection("TeeSharp:Network");
 
         services.Configure<ServerSettings>(serverSettings);
-        services.Configure<NetworkServerSettings>(networkSettings);
         services.AddHostedService<ServerWorker>();
     })
     .UseSerilog()

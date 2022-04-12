@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,8 @@ using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Core.Settings;
 using TeeSharp.Network;
+using TeeSharp.Network.Abstract;
+using TeeSharp.Network.Concrete;
 
 namespace TeeSharp.Server;
 
@@ -19,35 +22,35 @@ public class BasicGameServer : IGameServer
     public int Tick { get; protected set; }
     public TimeSpan GameTime { get; protected set; }
     public ServerState ServerState { get; protected set; }
-    public ServerSettings Settings { get; protected set; }
+    public ServerSettings Settings { get; private set; }
 
     protected ILogger Logger { get; set; }
-    protected long PrevTicks { get; set; }
     protected INetworkServer NetworkServer { get; set; }
+    protected long PrevTicks { get; set; }
 
     private readonly TimeSpan _targetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
     private readonly TimeSpan _maxElapsedTime = TimeSpan.FromMilliseconds(500);
 
+    private readonly IDisposable? _settingsChangesListener;
     private CancellationTokenSource? _ctsServer;
     private Task? _runNetworkTask;
     private Task? _runGameLoopTask;
 
     public BasicGameServer(
         ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
-        ISettingsChangesNotifier<NetworkServerSettings> networkSettingsNotifier)
+        ILogger? logger = null)
     {
-        serverSettingsNotifier.Subscribe(OnChangeSettings);
+        _settingsChangesListener = serverSettingsNotifier.Subscribe(OnChangeSettings);
 
-        Logger = Tee.LoggerFactory.CreateLogger("GameServer");
+        Logger = logger ?? Tee.LoggerFactory.CreateLogger("GameServer");
         Settings = serverSettingsNotifier.Current;
-        NetworkServer = CreateNetworkServer(networkSettingsNotifier);
         ServerState = ServerState.StartsUp;
+        NetworkServer = CreateNetworkServer();
     }
 
-    protected virtual INetworkServer CreateNetworkServer(
-        ISettingsChangesNotifier<NetworkServerSettings> settingsChangesNotifier)
+    protected virtual INetworkServer CreateNetworkServer()
     {
-        return new NetworkServer(settingsChangesNotifier);
+        return new NetworkServer();
     }
 
     protected virtual void OnChangeSettings(ServerSettings changedSettings)
@@ -67,9 +70,28 @@ public class BasicGameServer : IGameServer
         }
     }
 
-    protected virtual Task BeforeRun(CancellationToken cancellationToken)
+    protected virtual void BeforeRun()
     {
-        return Task.CompletedTask;
+    }
+
+    protected virtual bool TryInitNetworkServer()
+    {
+        // ReSharper disable once InconsistentNaming
+        IPEndPoint localEP;
+
+        if (string.IsNullOrEmpty(Settings.BindAddress))
+        {
+            // TODO: Is it really necessary?
+            localEP = NetworkHelper.TryGetLocalIpAddress(out var local)
+                ? new IPEndPoint(local, Settings.Port)
+                : new IPEndPoint(IPAddress.Loopback, Settings.Port);
+        }
+        else
+        {
+            localEP = new IPEndPoint(IPAddress.Parse(Settings.BindAddress), Settings.Port);
+        }
+
+        return NetworkServer.TryInit(localEP);
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -81,33 +103,20 @@ public class BasicGameServer : IGameServer
         }
 
         _ctsServer = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        await BeforeRun(_ctsServer.Token);
+        BeforeRun();
+
+        if (!TryInitNetworkServer())
+        {
+            await StopAsync();
+            return;
+        }
 
         Logger.LogInformation("Server name: {ServerName}", Settings.Name);
         ServerState = ServerState.Running;
         Tick = 0;
 
-        _runNetworkTask = Task
-            .Run(() => RunNetworkServer(_ctsServer.Token), _ctsServer.Token)
-            .ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    Logger.LogError("Network server stopped with ERROR");
-                    throw task.Exception!;
-                }
-            }, CancellationToken.None);
-
-        _runGameLoopTask = Task
-            .Run(() => RunGameLoop(_ctsServer.Token), _ctsServer.Token)
-            .ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    Logger.LogError("Game loop stopped with ERROR");
-                    throw task.Exception!;
-                }
-            }, CancellationToken.None);
+        _runNetworkTask = Task.Run(() => RunNetworkLoop(_ctsServer.Token), _ctsServer.Token);
+        _runGameLoopTask = Task.Run(() => RunGameLoop(_ctsServer.Token), _ctsServer.Token);
 
         await Task.WhenAny(
             _runNetworkTask,
@@ -117,16 +126,16 @@ public class BasicGameServer : IGameServer
         await StopAsync();
     }
 
-    protected virtual Task BeforeStop()
+    protected virtual void BeforeStop()
     {
-        return Task.CompletedTask;
     }
 
     public async Task StopAsync()
     {
         _ctsServer!.Cancel();
 
-        await BeforeStop();
+        BeforeStop();
+
         await Task.WhenAll(
             _runNetworkTask!,
             _runGameLoopTask!
@@ -135,24 +144,13 @@ public class BasicGameServer : IGameServer
         ServerState = ServerState.Stopped;
     }
 
-    protected virtual async Task RunNetworkServer(CancellationToken cancellationToken)
+    protected virtual void RunNetworkLoop(CancellationToken cancellationToken)
     {
-        // // TODO make bind address from config
-        // // ReSharper disable InconsistentNaming
-        // // var localEP = NetworkBase.TryGetLocalIP(out var localIP)
-        // //     ? new IPEndPoint(localIP, 8303)
-        // //     : new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8303);
-        // // ReSharper restore InconsistentNaming
-        //
-        // // ReSharper disable once InconsistentNaming
-        // var localEP = new IPEndPoint(IPAddress.Any, Config.ServerPort);
-        //
-        // if (NetworkServer.Open(localEP))
-        // {
-        // Log.Information("Local address - {Address}", NetworkServer.BindAddress.ToString());
-        // }
+        while (!cancellationToken.IsCancellationRequested)
+        {
+        }
 
-        await NetworkServer.RunAsync(cancellationToken);
+        Logger.LogDebug("Network loop stopped");
     }
 
     protected virtual void RunGameLoop(CancellationToken cancellationToken)
@@ -223,6 +221,7 @@ public class BasicGameServer : IGameServer
 
     public void Dispose()
     {
+        _settingsChangesListener?.Dispose();
         _ctsServer?.Dispose();
         _ctsServer = null;
     }

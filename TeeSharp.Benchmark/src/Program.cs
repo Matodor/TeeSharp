@@ -8,7 +8,7 @@ internal static class Program
     static void Main(string[] args)
     {
         // new SecurityTokensBenchmark().Setup();
-            
+
         string result;
         int number;
 
@@ -26,6 +26,7 @@ internal static class Program
             typeof(HashBenchmark),
             typeof(SecurityTokensBenchmark),
             typeof(StringToBytesArrayBenchmark),
+            typeof(ImplicitCastBenchmark),
         };
 
         do

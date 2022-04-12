@@ -4,15 +4,13 @@ namespace TeeSharp.Server;
 
 public class ServerSettings
 {
-    public event Action<string> NameChanged = delegate {  };
+    public bool UseHotReload = true;
 
-    public bool UseHotReload { get; set; } = true;
+    public string Name = "[TeeSharp] Unnamed server";
 
-    public string Name
-    {
-        get => _name;
-        set => NameChanged.Invoke(_name = value);
-    }
+    public ushort Port { get; set; }
+    public string BindAddress { get; set; } = string.Empty;
 
-    private string _name = "[TeeSharp] Unnamed server";
+    public int MaxConnections { get; set; } = 64;
+    public int MaxConnectionsPerIp { get; set; } = 4;
 }

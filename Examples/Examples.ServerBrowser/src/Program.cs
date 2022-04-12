@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using TeeSharp.MasterServer;
-using TeeSharp.Network.Helpers;
+using TeeSharp.Network;
 
 namespace Examples.ServerBrowser;
 

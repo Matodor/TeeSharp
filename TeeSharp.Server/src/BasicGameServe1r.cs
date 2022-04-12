@@ -17,16 +17,6 @@
 //
 // public class B1asicGameServer : IGameServer
 // {
-//
-//
-//     protected readonly ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>
-//         NetworkMessagesQueue;
-//
-//     public BasicGameServer()
-//     {
-//         NetworkMessagesQueue = new ConcurrentQueue<Tuple<NetworkMessage, SecurityToken>>();
-//     }
-//
 //     public override void Init()
 //     {
 //         Storage = Container.Resolve<BaseStorage>();

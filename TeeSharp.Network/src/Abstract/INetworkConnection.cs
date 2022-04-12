@@ -1,6 +1,6 @@
-namespace TeeSharp.Network;
+namespace TeeSharp.Network.Abstract;
 
 public interface INetworkConnection
 {
-    
+
 }

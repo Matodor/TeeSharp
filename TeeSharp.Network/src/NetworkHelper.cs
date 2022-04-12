@@ -1,11 +1,13 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using TeeSharp.Core.Extensions;
 using TeeSharp.Core.Helpers;
 
-namespace TeeSharp.Network.Helpers;
+namespace TeeSharp.Network;
 
 public static class NetworkHelper
 {
@@ -99,26 +101,54 @@ public static class NetworkHelper
         return packet.DataSize >= 0;
     }
 
-    // ReSharper disable once InconsistentNaming
-    public static bool TryGetLocalIP(out IPAddress ip)
+    public static bool TryGetLocalIpAddress([NotNullWhen(true)] out IPAddress? result)
     {
-        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
-        socket.Connect("8.8.8.8", 65530);
+        UnicastIPAddressInformation? mostSuitableIp = null;
+        var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 
-        try
+        foreach (var network in networkInterfaces)
         {
-            ip = ((IPEndPoint) socket.LocalEndPoint).Address;
-            return true;
+            if (network.OperationalStatus != OperationalStatus.Up)
+                continue;
+
+            var properties = network.GetIPProperties();
+            if (properties.GatewayAddresses.Count == 0)
+                continue;
+
+            foreach (var address in properties.UnicastAddresses)
+            {
+                if (address.Address.AddressFamily != AddressFamily.InterNetwork)
+                    continue;
+
+                if (IPAddress.IsLoopback(address.Address))
+                    continue;
+
+                if (!address.IsDnsEligible)
+                {
+                    mostSuitableIp ??= address;
+                    continue;
+                }
+
+                // The best IP is the IP got from DHCP server
+                if (address.PrefixOrigin != PrefixOrigin.Dhcp)
+                {
+                    if (mostSuitableIp is not { IsDnsEligible: true })
+                        mostSuitableIp = address;
+
+                    continue;
+                }
+
+                result = address.Address;
+                return true;
+            }
         }
-        catch
-        {
-            ip = default;
-            return false;
-        }
+
+        result = mostSuitableIp?.Address;
+        return mostSuitableIp != null;
     }
 
-    // ReSharper disable once InconsistentNaming
-    public static bool TryGetUdpClient(IPEndPoint localEP, out UdpClient client)
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public static bool TryGetUdpClient(IPEndPoint? localEP, [NotNullWhen(true)] out UdpClient? client)
     {
         try
         {

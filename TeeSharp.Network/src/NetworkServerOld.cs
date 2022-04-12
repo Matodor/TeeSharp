@@ -4,7 +4,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using TeeSharp.Core.Helpers;
-using TeeSharp.Network.Helpers;
 
 namespace TeeSharp.Network;
 
@@ -29,7 +28,6 @@ public class NetworkServerOld : BaseNetworkServer
 
     }
 
-    // ReSharper disable once InconsistentNaming
     public override bool Open(IPEndPoint localEP)
     {
         if (localEP == null)
@@ -50,7 +48,6 @@ public class NetworkServerOld : BaseNetworkServer
         if (ChunkFactoryOld.TryGetMessage(out netMsg))
             return true;
 
-        // ReSharper disable once InconsistentNaming
         var endPoint = default(IPEndPoint);
         var data = Socket.Receive(ref endPoint).AsSpan();
 
