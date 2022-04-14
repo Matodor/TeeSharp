@@ -4,7 +4,7 @@ namespace TeeSharp.Network;
 
 public abstract class BaseChunkFactoryOld
 {
-    public NetworkPacket NetworkPacket { get; protected set; }
+    public NetworkPacketOld NetworkPacket { get; protected set; }
 
     protected bool HasError { get; set; }
     protected IPEndPoint EndPoint { get; set; }

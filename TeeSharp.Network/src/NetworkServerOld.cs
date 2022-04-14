@@ -54,20 +54,19 @@ public class NetworkServerOld : BaseNetworkServer
         if (data.Length == 0)
             return false;
 
-        // TODO
-        // Check for banned IP address
+        // TODO: Check for banned IP address
 
         var isSixUp = false;
         var securityToken = default(SecurityToken);
 
         responseToken = SecurityToken.Unknown;
 
-        if (!NetworkHelper.TryUnpackPacket(
-                data,
-                ChunkFactoryOld.NetworkPacket,
-                ref isSixUp,
-                ref securityToken,
-                ref responseToken))
+        if (!NetworkHelper.TryUnpackPacketOld(
+            data,
+            ChunkFactoryOld.NetworkPacket,
+            ref isSixUp,
+            ref securityToken,
+            ref responseToken))
         {
             return false;
         }
@@ -170,16 +169,16 @@ public class NetworkServerOld : BaseNetworkServer
     public override void SendConnStateMsg(IPEndPoint endPoint, ConnectionStateMsg connState,
         SecurityToken token, int ack = 0, bool isSixUp = false, string msg = null)
     {
-        NetworkHelper.SendConnStateMsg(Socket, endPoint, connState, token, ack, isSixUp, msg);
+        NetworkHelper.SendConnectionStateMsg(Socket, endPoint, connState, token, ack, isSixUp, msg);
     }
 
     public override void SendConnStateMsg(IPEndPoint endPoint, ConnectionStateMsg connState,
         SecurityToken token, int ack = 0, bool isSixUp = false, Span<byte> extraData = default)
     {
-        NetworkHelper.SendConnStateMsg(Socket, endPoint, connState, token, ack, isSixUp, extraData);
+        NetworkHelper.SendConnectionStateMsg(Socket, endPoint, connState, token, ack, isSixUp, extraData);
     }
 
-    protected virtual bool IsConnStateMsgWithToken(NetworkPacket packet)
+    protected virtual bool IsConnStateMsgWithToken(NetworkPacketOld packet)
     {
         if (ChunkFactoryOld.NetworkPacket.DataSize == 0 ||
             !ChunkFactoryOld.NetworkPacket.Flags.HasFlag(PacketFlags.ConnectionState))
@@ -206,7 +205,7 @@ public class NetworkServerOld : BaseNetworkServer
     /**
          * Note: Dont use this method on existing connections for the specified `endPoint`
          */
-    protected virtual void ProcessConnStateMsgWithToken(IPEndPoint endPoint, NetworkPacket packet)
+    protected virtual void ProcessConnStateMsgWithToken(IPEndPoint endPoint, NetworkPacketOld packet)
     {
         var msg = (ConnectionStateMsg) packet.Data[0];
         switch (msg)

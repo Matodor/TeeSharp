@@ -39,16 +39,6 @@
 //         });
 //     }
 //
-//     protected virtual void OnServerNameChanged(string serverName)
-//     {
-//         Log.Information("Server name changed to - {ServerName}", serverName);
-//     }
-//
-//     public override void SendServerInfo(ServerInfoType type, IPEndPoint addr, SecurityToken token)
-//     {
-//         throw new NotImplementedException();
-//     }
-//
 //     protected virtual void RunNetworkLoop(object obj)
 //     {
 //         var cancellationToken = (CancellationToken) obj;

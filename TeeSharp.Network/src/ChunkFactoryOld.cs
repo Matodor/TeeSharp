@@ -7,9 +7,9 @@ public class ChunkFactoryOld : BaseChunkFactoryOld
 {
     public override void Init()
     {
-        NetworkPacket = new NetworkPacket
+        NetworkPacket = new NetworkPacketOld
         {
-            Data = new byte[NetworkConstants.MaxPayload], 
+            Data = new byte[NetworkConstants.MaxPayload],
             ExtraData = new byte[NetworkConstants.PacketExtraDataSize],
         };
     }
@@ -39,7 +39,7 @@ public class ChunkFactoryOld : BaseChunkFactoryOld
             netMsg = null;
             return false;
         }
-            
+
         netMsg = null;
         return false;
     }

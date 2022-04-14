@@ -1,19 +1,45 @@
+using System;
+
 namespace TeeSharp.Network;
 
 public class NetworkPacket
 {
-    public PacketFlags Flags { get; set; } = PacketFlags.None;
-        
-    public int Ack { get; set; }
-        
-    public int ChunksCount { get; set; }
-        
-    public int DataSize { get; set; }
-        
-    public byte[] Data { get; set; }
-        
+    /// <summary>
+    ///
+    /// </summary>
+    public PacketFlags Flags { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public int Ack { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public int ChunksCount { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public byte[] Data { get; }
+
     /// <summary>
     /// Used only for master server info extended
     /// </summary>
-    public byte[] ExtraData { get; set; }
+    public byte[] ExtraData { get; }
+
+    public NetworkPacket(
+        PacketFlags flags,
+        int ack,
+        int chunksCount,
+        byte[] data,
+        byte[] extraData)
+    {
+        Flags = flags;
+        Ack = ack;
+        ChunksCount = chunksCount;
+        Data = data;
+        ExtraData = extraData;
+    }
 }

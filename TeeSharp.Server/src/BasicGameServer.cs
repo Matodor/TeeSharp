@@ -118,11 +118,7 @@ public class BasicGameServer : IGameServer
         _runNetworkTask = Task.Run(() => RunNetworkLoop(_ctsServer.Token), _ctsServer.Token);
         _runGameLoopTask = Task.Run(() => RunGameLoop(_ctsServer.Token), _ctsServer.Token);
 
-        await Task.WhenAny(
-            _runNetworkTask,
-            _runGameLoopTask
-        );
-
+        await Task.WhenAny(_runNetworkTask, _runGameLoopTask);
         await StopAsync();
     }
 
@@ -132,22 +128,32 @@ public class BasicGameServer : IGameServer
 
     public async Task StopAsync()
     {
-        _ctsServer!.Cancel();
+        if (ServerState == ServerState.Stopping)
+            return;
 
+        ServerState = ServerState.Stopping;
+        _ctsServer!.Cancel();
         BeforeStop();
 
-        await Task.WhenAll(
-            _runNetworkTask!,
-            _runGameLoopTask!
-        );
+        await Task.WhenAll(_runNetworkTask!, _runGameLoopTask!);
+
+        _runNetworkTask = null;
+        _runGameLoopTask = null;
 
         ServerState = ServerState.Stopped;
+        Logger.LogInformation("Stopped");
     }
 
     protected virtual void RunNetworkLoop(CancellationToken cancellationToken)
     {
+        // Logger: current thread id
+
         while (!cancellationToken.IsCancellationRequested)
         {
+            if (NetworkServer.TryReceive(out var responseToken))
+            {
+
+            }
         }
 
         Logger.LogDebug("Network loop stopped");
@@ -210,8 +216,8 @@ public class BasicGameServer : IGameServer
     {
         if (Tick % TickRate == 0)
         {
-            Logger.LogInformation("Tick: {Tick}", Tick);
-            Logger.LogInformation("Name: {ServerName}", Settings.Name);
+            // Logger.LogInformation("Tick: {Tick}", Tick);
+            // Logger.LogInformation("Name: {ServerName}", Settings.Name);
         }
     }
 

@@ -11,9 +11,9 @@ namespace TeeSharp.Network;
 
 public static class NetworkHelper
 {
-    public static bool TryUnpackPacket(
+    public static bool TryUnpackPacketOld(
         Span<byte> data,
-        NetworkPacket packet,
+        NetworkPacketOld packet,
         ref bool isSixUp,
         ref SecurityToken securityToken,
         ref SecurityToken responseToken)
@@ -30,7 +30,7 @@ public static class NetworkHelper
         {
             isSixUp = (data[0] & 0b_0000_0011) == 0b_0000_0001;
 
-            var dataStart = isSixUp ? 9 : NetworkConstants.PacketConnLessDataOffset;
+            var dataStart = isSixUp ? 9 : NetworkConstants.PacketConnectionLessDataOffset;
             if (dataStart > data.Length)
                 return false;
 
@@ -165,7 +165,7 @@ public static class NetworkHelper
     }
 
     public static void SendPacket(UdpClient client, IPEndPoint endPoint,
-        NetworkPacket packet, SecurityToken securityToken, bool isSixUp)
+        NetworkPacketOld packet, SecurityToken securityToken, bool isSixUp)
     {
         var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
         var headerSize = NetworkConstants.PacketHeaderSize;
@@ -186,7 +186,7 @@ public static class NetworkHelper
         ReadOnlySpan<byte> data,
         ReadOnlySpan<byte> extraData = default)
     {
-        var bufferSize = NetworkConstants.PacketConnLessDataOffset + data.Length;
+        var bufferSize = NetworkConstants.PacketConnectionLessDataOffset + data.Length;
         if (bufferSize > NetworkConstants.MaxPacketSize)
             throw new Exception("Maximum packet size exceeded.");
 
@@ -194,7 +194,7 @@ public static class NetworkHelper
         if (extraData.IsEmpty)
         {
             buffer
-                .Slice(0, NetworkConstants.PacketConnLessDataOffset)
+                .Slice(0, NetworkConstants.PacketConnectionLessDataOffset)
                 .Fill(255);
         }
         else
@@ -205,7 +205,7 @@ public static class NetworkHelper
                 .CopyTo(buffer.Slice(NetworkConstants.PacketHeaderExtended.Length));
         }
 
-        data.CopyTo(buffer.Slice(NetworkConstants.PacketConnLessDataOffset));
+        data.CopyTo(buffer.Slice(NetworkConstants.PacketConnectionLessDataOffset));
         client.BeginSend(
             buffer.ToArray(),
             buffer.Length,
@@ -221,28 +221,38 @@ public static class NetworkHelper
         client?.EndSend(result);
     }
 
-    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint,
-        ConnectionStateMsg state, SecurityToken token, int ack,
-        bool isSixUp, string extraMsg)
+    public static void SendConnectionStateMsg(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ConnectionStateMsg state,
+        SecurityToken token,
+        int ack,
+        bool isSixUp,
+        string extraMsg)
     {
         if (string.IsNullOrEmpty(extraMsg))
         {
-            SendConnStateMsg(client, endPoint, state, token, ack, isSixUp, Span<byte>.Empty);
+            SendConnectionStateMsg(client, endPoint, state, token, ack, isSixUp, Span<byte>.Empty);
         }
         else
         {
             var bufferLen = Encoding.UTF8.GetMaxByteCount(extraMsg.Length);
             var buffer = new Span<byte>(new byte[bufferLen]);
             var length = Encoding.UTF8.GetBytes(extraMsg.AsSpan(), buffer);
-            SendConnStateMsg(client, endPoint, state, token, ack, isSixUp, buffer.Slice(0, length));
+            SendConnectionStateMsg(client, endPoint, state, token, ack, isSixUp, buffer.Slice(0, length));
         }
     }
 
-    public static void SendConnStateMsg(UdpClient client, IPEndPoint endPoint,
-        ConnectionStateMsg state, SecurityToken token, int ack,
-        bool isSixUp, Span<byte> extraData)
+    public static void SendConnectionStateMsg(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ConnectionStateMsg state,
+        SecurityToken token,
+        int ack,
+        bool isSixUp,
+        Span<byte> extraData)
     {
-        var packet = new NetworkPacket
+        var packet = new NetworkPacketOld
         {
             Flags = PacketFlags.ConnectionState,
             Ack = ack,

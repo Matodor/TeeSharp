@@ -12,14 +12,14 @@ public static class ThreadsHelper
         out uint maximumResolution,
         out uint currentResolution);
 
-    private static readonly double _lowestSleepThreshold;
+    private static readonly double LowestSleepThreshold;
 #endif
-        
+
     static ThreadsHelper()
     {
 #if _WINDOWS
         NtQueryTimerResolution(out _, out var max, out _);
-        _lowestSleepThreshold = 1.0 + (max / 10000.0);
+        LowestSleepThreshold = 1.0 + (max / 10000.0);
 #endif
     }
 
@@ -39,7 +39,7 @@ public static class ThreadsHelper
     public static void SleepForNoMoreThan(double milliseconds)
     {
         // Assumption is that Thread.Sleep(t) will sleep for at least (t), and at most (t + timerResolution)
-        if (milliseconds < _lowestSleepThreshold)
+        if (milliseconds < LowestSleepThreshold)
             return;
 
         var sleepTime = (int) (milliseconds - GetCurrentResolution());
