@@ -7,7 +7,7 @@ public interface INetworkPacketUnpacker
 {
     bool TryUnpack(Span<byte> data,
         [NotNullWhen(true)] out NetworkPacket? packet,
-        ref bool isSixUp,
-        ref SecurityToken securityToken,
-        ref SecurityToken responseToken);
+        out bool isSixUp,
+        out SecurityToken? securityToken,
+        out SecurityToken? responseToken);
 }

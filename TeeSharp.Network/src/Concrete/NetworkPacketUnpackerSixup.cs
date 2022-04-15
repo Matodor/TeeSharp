@@ -9,13 +9,16 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
 {
     public bool TryUnpack(Span<byte> data,
         [NotNullWhen(true)] out NetworkPacket? packet,
-        ref bool isSixUp,
-        ref SecurityToken securityToken,
-        ref SecurityToken responseToken)
+        out bool isSixUp,
+        out SecurityToken? securityToken,
+        out SecurityToken? responseToken)
     {
         if (data.Length is < NetworkConstants.PacketHeaderSize or > NetworkConstants.MaxPacketSize)
         {
             packet = null;
+            isSixUp = false;
+            securityToken = null;
+            responseToken = null;
             return false;
         }
 
@@ -37,6 +40,8 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
             if (dataStart > data.Length)
             {
                 packet = null;
+                securityToken = null;
+                responseToken = null;
                 return false;
             }
 
@@ -72,13 +77,17 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
         }
         else
         {
-            if (packetFlags.HasFlag(PacketFlags.Unused))
-                isSixUp = true;
+            isSixUp = packetFlags.HasFlag(PacketFlags.Unused);
 
-            var dataStart = isSixUp ? 7 : NetworkConstants.PacketHeaderSize;
+            var dataStart = isSixUp
+                ? NetworkConstants.PacketHeaderSizeSixup
+                : NetworkConstants.PacketHeaderSize;
+
             if (dataStart > data.Length)
             {
                 packet = null;
+                securityToken = null;
+                responseToken = null;
                 return false;
             }
 
@@ -109,6 +118,8 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
                 if (packetFlags.HasFlag(PacketFlags.ConnectionState))
                 {
                     packet = null;
+                    securityToken = null;
+                    responseToken = null;
                     return false;
                 }
 
@@ -129,6 +140,8 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
             packetExtraData
         );
 
+        securityToken = null;
+        responseToken = null;
         return true;
     }
 }

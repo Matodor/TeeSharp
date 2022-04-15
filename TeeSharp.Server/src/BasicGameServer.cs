@@ -57,11 +57,7 @@ public class BasicGameServer : IGameServer
     {
         if (Settings.UseHotReload)
         {
-            Settings.UseHotReload = changedSettings.UseHotReload;
-
-            if (Settings.Name != changedSettings.Name)
-                Settings.Name = changedSettings.Name;
-
+            // TODO
             Logger.LogInformation("The settings changes have been applied");
         }
         else
@@ -76,22 +72,19 @@ public class BasicGameServer : IGameServer
 
     protected virtual bool TryInitNetworkServer()
     {
-        // ReSharper disable once InconsistentNaming
-        IPEndPoint localEP;
+        // localEP = NetworkHelper.TryGetLocalIpAddress(out var local)
+        //     ? new IPEndPoint(local, Settings.Port)
+        //     : new IPEndPoint(IPAddress.Loopback, Settings.Port);
 
-        if (string.IsNullOrEmpty(Settings.BindAddress))
-        {
-            // TODO: Is it really necessary?
-            localEP = NetworkHelper.TryGetLocalIpAddress(out var local)
-                ? new IPEndPoint(local, Settings.Port)
-                : new IPEndPoint(IPAddress.Loopback, Settings.Port);
-        }
-        else
-        {
-            localEP = new IPEndPoint(IPAddress.Parse(Settings.BindAddress), Settings.Port);
-        }
+        var localEP = string.IsNullOrEmpty(Settings.BindAddress)
+            ? new IPEndPoint(IPAddress.Any, Settings.Port)
+            : new IPEndPoint(IPAddress.Parse(Settings.BindAddress), Settings.Port);
 
-        return NetworkServer.TryInit(localEP);
+        return NetworkServer.TryInit(
+            localEP: localEP,
+            maxConnections: Settings.MaxConnections,
+            maxConnectionsPerIp: Settings.MaxConnectionsPerIp
+        );
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -107,7 +100,7 @@ public class BasicGameServer : IGameServer
 
         if (!TryInitNetworkServer())
         {
-            await StopAsync();
+            Logger.LogError("Error during network server initialization");
             return;
         }
 
@@ -150,7 +143,9 @@ public class BasicGameServer : IGameServer
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (NetworkServer.TryReceive(out var responseToken))
+            if (NetworkServer.TryReceive(
+                out var networkMessage,
+                out var responseToken))
             {
 
             }

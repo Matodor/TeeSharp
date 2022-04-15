@@ -4,103 +4,12 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using TeeSharp.Core.Extensions;
 using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Network;
 
 public static class NetworkHelper
 {
-    public static bool TryUnpackPacketOld(
-        Span<byte> data,
-        NetworkPacketOld packet,
-        ref bool isSixUp,
-        ref SecurityToken securityToken,
-        ref SecurityToken responseToken)
-    {
-        if (data.Length < NetworkConstants.PacketHeaderSize ||
-            data.Length > NetworkConstants.MaxPacketSize)
-        {
-            return true;
-        }
-
-        packet.Flags = (PacketFlags) (data[0] >> 2);
-
-        if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
-        {
-            isSixUp = (data[0] & 0b_0000_0011) == 0b_0000_0001;
-
-            var dataStart = isSixUp ? 9 : NetworkConstants.PacketConnectionLessDataOffset;
-            if (dataStart > data.Length)
-                return false;
-
-            if (isSixUp)
-            {
-                securityToken = data.Slice(1, 4).Deserialize<SecurityToken>();
-                responseToken = data.Slice(5, 4).Deserialize<SecurityToken>();
-            }
-
-            packet.Flags = PacketFlags.ConnectionLess;
-            packet.Ack = 0;
-            packet.ChunksCount = 0;
-            packet.DataSize = data.Length - dataStart;
-
-            data.Slice(dataStart, packet.DataSize)
-                .CopyTo(packet.Data);
-
-            if (!isSixUp && data
-                    .Slice(0, NetworkConstants.PacketHeaderExtended.Length)
-                    .SequenceEqual(NetworkConstants.PacketHeaderExtended))
-            {
-                packet.Flags |= PacketFlags.Extended;
-                data.Slice(NetworkConstants.PacketHeaderExtended.Length, packet.ExtraData.Length)
-                    .CopyTo(packet.ExtraData);
-            }
-        }
-        else
-        {
-            if (packet.Flags.HasFlag(PacketFlags.Unused))
-                isSixUp = true;
-
-            var dataStart = isSixUp ? 7 : NetworkConstants.PacketHeaderSize;
-            if (dataStart > data.Length)
-                return false;
-
-            packet.Ack = ((data[0] & 0b_0000_0011) << 8) | data[1];
-            packet.ChunksCount = data[2];
-            packet.DataSize = data.Length - dataStart;
-
-            if (isSixUp)
-            {
-                packet.Flags = PacketFlags.None;
-
-                var sixUpFlags = (PacketFlagsSixUp) packet.Flags;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Connection))
-                    packet.Flags |= PacketFlags.ConnectionState;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Resend))
-                    packet.Flags |= PacketFlags.Resend;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Compression))
-                    packet.Flags |= PacketFlags.Compression;
-
-                securityToken = data.Slice(3, 4).Deserialize<SecurityToken>();
-            }
-
-            if (packet.Flags.HasFlag(PacketFlags.Compression))
-            {
-                if (packet.Flags.HasFlag(PacketFlags.ConnectionState))
-                    return false;
-
-                throw new NotImplementedException();
-            }
-            else
-            {
-                data.Slice(dataStart, packet.DataSize).CopyTo(packet.Data);
-            }
-        }
-
-        return packet.DataSize >= 0;
-    }
-
     public static bool TryGetLocalIpAddress([NotNullWhen(true)] out IPAddress? result)
     {
         UnicastIPAddressInformation? mostSuitableIp = null;
@@ -157,7 +66,7 @@ public static class NetworkHelper
                 : new UdpClient(localEP);
             return true;
         }
-        catch
+        catch (Exception e)
         {
             client = null;
             return false;
@@ -165,7 +74,7 @@ public static class NetworkHelper
     }
 
     public static void SendPacket(UdpClient client, IPEndPoint endPoint,
-        NetworkPacketOld packet, SecurityToken securityToken, bool isSixUp)
+        NetworkPacket packet, SecurityToken securityToken, bool isSixUp)
     {
         var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
         var headerSize = NetworkConstants.PacketHeaderSize;
@@ -252,20 +161,23 @@ public static class NetworkHelper
         bool isSixUp,
         Span<byte> extraData)
     {
-        var packet = new NetworkPacketOld
-        {
-            Flags = PacketFlags.ConnectionState,
-            Ack = ack,
-            ChunksCount = 0,
-            DataSize = 1 + extraData.Length,
-        };
-
-        packet.Data = new byte[packet.DataSize];
-        packet.Data[0] = (byte) state;
-
-        if (!extraData.IsEmpty)
-            extraData.CopyTo(packet.Data.AsSpan(1));
-
-        // SendPacket(client, endPoint, packet);
+        // var packet = new NetworkPacket(
+        //     flags: PacketFlags.ConnectionState,
+        //     ack: ack,
+        //     chunksCount: 0,
+        // );
+        //
+        // {
+        //     ChunksCount = 0,
+        //     DataSize = 1 + extraData.Length,
+        // };
+        //
+        // packet.Data = new byte[packet.DataSize];
+        // packet.Data[0] = (byte) state;
+        //
+        // if (!extraData.IsEmpty)
+        //     extraData.CopyTo(packet.Data.AsSpan(1));
+        //
+        // // SendPacket(client, endPoint, packet);
     }
 }
