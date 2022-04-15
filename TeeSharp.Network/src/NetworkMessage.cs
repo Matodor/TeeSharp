@@ -4,9 +4,43 @@ namespace TeeSharp.Network;
 
 public class NetworkMessage
 {
-    public int ClientId { get; set; }
-    public IPEndPoint EndPoint { get; set; }
-    public MessageFlags Flags { get; set; }
-    public byte[] Data { get; set; }
-    public byte[] ExtraData { get; set; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public int ConnectionId { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public IPEndPoint EndPoint { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public NetworkMessageFlags Flags { get; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    public byte[] Data { get; }
+
+    /// <summary>
+    /// Used only for master server info extended
+    /// </summary>
+    public byte[] ExtraData { get; }
+
+    public NetworkMessage(
+        int connectionId,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags,
+        byte[] data,
+        byte[] extraData)
+    {
+        ConnectionId = connectionId;
+        EndPoint = endPoint;
+        Flags = flags;
+        Data = data;
+        ExtraData = extraData;
+    }
 }
