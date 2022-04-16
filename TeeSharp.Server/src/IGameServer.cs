@@ -11,6 +11,6 @@ public interface IGameServer : IDisposable
     ServerState ServerState { get; }
     ServerSettings Settings { get; }
 
-    Task RunAsync(CancellationToken cancellationToken);
-    Task StopAsync();
+    void Run(CancellationToken cancellationToken);
+    void Stop();
 }

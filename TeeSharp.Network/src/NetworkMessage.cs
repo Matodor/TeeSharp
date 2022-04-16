@@ -4,7 +4,6 @@ namespace TeeSharp.Network;
 
 public class NetworkMessage
 {
-
     /// <summary>
     ///
     /// </summary>

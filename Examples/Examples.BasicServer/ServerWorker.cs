@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using TeeSharp.Core;
-using TeeSharp.Network;
 using TeeSharp.Server;
 
 namespace Examples.BasicServer;
@@ -27,10 +26,13 @@ public class ServerWorker : BackgroundService
         );
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _gameServer.RunAsync(stoppingToken);
-        _applicationLifetime.StopApplication();
+        return Task.Run(() =>
+        {
+            _gameServer.Run(stoppingToken);
+            _applicationLifetime.StopApplication();
+        }, stoppingToken);
     }
 
     public override void Dispose()

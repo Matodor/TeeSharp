@@ -5,6 +5,7 @@ namespace TeeSharp.Server;
 public class ServerSettings
 {
     public bool UseHotReload = true;
+    public bool UseSixup = true;
 
     public string Name = "[TeeSharp] Unnamed server";
 

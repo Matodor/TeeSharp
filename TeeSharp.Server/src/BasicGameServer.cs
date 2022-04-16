@@ -2,11 +2,11 @@
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Core.Settings;
+using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
 using TeeSharp.Network.Concrete;
@@ -27,14 +27,12 @@ public class BasicGameServer : IGameServer
     protected ILogger Logger { get; set; }
     protected INetworkServer NetworkServer { get; set; }
     protected long PrevTicks { get; set; }
+    protected CancellationTokenSource? CtsServer { get; private set; }
 
-    private readonly TimeSpan _targetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
-    private readonly TimeSpan _maxElapsedTime = TimeSpan.FromMilliseconds(500);
+    protected TimeSpan TargetElapsedTime { get; set; } = TimeSpan.FromTicks(TicksPerSecond / TickRate);
+    protected TimeSpan MaxElapsedTime { get; set; } = TimeSpan.FromMilliseconds(500);
 
     private readonly IDisposable? _settingsChangesListener;
-    private CancellationTokenSource? _ctsServer;
-    private Task? _runNetworkTask;
-    private Task? _runGameLoopTask;
 
     public BasicGameServer(
         ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
@@ -70,33 +68,32 @@ public class BasicGameServer : IGameServer
     {
     }
 
-    protected virtual bool TryInitNetworkServer()
+    protected virtual IPEndPoint GetNetworkServerBindAddress()
     {
-        // localEP = NetworkHelper.TryGetLocalIpAddress(out var local)
-        //     ? new IPEndPoint(local, Settings.Port)
-        //     : new IPEndPoint(IPAddress.Loopback, Settings.Port);
-
-        var localEP = string.IsNullOrEmpty(Settings.BindAddress)
+        return string.IsNullOrEmpty(Settings.BindAddress)
             ? new IPEndPoint(IPAddress.Any, Settings.Port)
             : new IPEndPoint(IPAddress.Parse(Settings.BindAddress), Settings.Port);
+    }
 
+    protected virtual bool TryInitNetworkServer()
+    {
         return NetworkServer.TryInit(
-            localEP: localEP,
+            localEP: GetNetworkServerBindAddress(),
             maxConnections: Settings.MaxConnections,
             maxConnectionsPerIp: Settings.MaxConnectionsPerIp
         );
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public void Run(CancellationToken cancellationToken)
     {
-        if (ServerState != ServerState.StartsUp)
+        if (ServerState is ServerState.Running or ServerState.Stopping)
         {
-            Logger.LogWarning("Already in `Running` state");
+            Logger.LogWarning("Unable to start the server");
+            Logger.LogWarning("Current server state: {ServerState}", ServerState);
             return;
         }
 
-        _ctsServer = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        BeforeRun();
+        CtsServer = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         if (!TryInitNetworkServer())
         {
@@ -108,54 +105,84 @@ public class BasicGameServer : IGameServer
         ServerState = ServerState.Running;
         Tick = 0;
 
-        _runNetworkTask = Task.Run(() => RunNetworkLoop(_ctsServer.Token), _ctsServer.Token);
-        _runGameLoopTask = Task.Run(() => RunGameLoop(_ctsServer.Token), _ctsServer.Token);
+        RunMainLoop(CtsServer.Token);
+        Stop();
 
-        await Task.WhenAny(_runNetworkTask, _runGameLoopTask);
-        await StopAsync();
+        ServerState = ServerState.Stopped;
+        Logger.LogInformation("Stopped");
     }
 
     protected virtual void BeforeStop()
     {
     }
 
-    public async Task StopAsync()
+    public void Stop()
     {
-        if (ServerState == ServerState.Stopping)
+        if (ServerState is ServerState.Stopping or ServerState.Stopped)
             return;
 
-        ServerState = ServerState.Stopping;
-        _ctsServer!.Cancel();
         BeforeStop();
-
-        await Task.WhenAll(_runNetworkTask!, _runGameLoopTask!);
-
-        _runNetworkTask = null;
-        _runGameLoopTask = null;
-
-        ServerState = ServerState.Stopped;
-        Logger.LogInformation("Stopped");
+        ServerState = ServerState.Stopping;
+        CtsServer!.Cancel();
     }
 
-    protected virtual void RunNetworkLoop(CancellationToken cancellationToken)
+    protected virtual void UpdateNetwork()
     {
-        // Logger: current thread id
+        if (CtsServer!.IsCancellationRequested)
+            return;
 
-        while (!cancellationToken.IsCancellationRequested)
+        foreach (var message in NetworkServer.GetMessages(CtsServer.Token))
         {
-            if (NetworkServer.TryReceive(
-                out var networkMessage,
-                out var responseToken))
-            {
-
-            }
+            ProcessNetworkMessage(message);
         }
-
-        Logger.LogDebug("Network loop stopped");
     }
 
-    protected virtual void RunGameLoop(CancellationToken cancellationToken)
+    protected virtual void ProcessNetworkMessage(NetworkMessage message)
     {
+        if (message.ConnectionId == -1)
+            ProcessMasterServerMessage(message);
+        else
+            ProcessClientMessage(message);
+    }
+
+    protected virtual void ProcessMasterServerMessage(NetworkMessage message)
+    {
+        // if (MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
+        //     MasterServerPackets.GetInfo.AsSpan()
+        //         .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
+        // {
+        //     if (message.ExtraData.Length > 0)
+        //     {
+        //         var extraToken = (SecurityToken) (((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8);
+        //         var extraToken2 = (SecurityToken) Unsafe.As<>()
+        //         // var token = message.Data[Packets.GetInfo.Length] | extraToken;
+        //         // SendServerInfo(ServerInfoType.Extended, message.EndPoint, token);
+        //
+        //         throw new NotImplementedException();
+        //     }
+        //     else
+        //     {
+        //         if (responseToken != SecurityToken.Unknown && Settings.UseSixUp)
+        //         {
+        //             throw new NotImplementedException();
+        //             // SendServerInfo(ServerInfoType.Vanilla, message.EndPoint, token);
+        //         }
+        //     }
+        //
+        //     return;
+        // }
+    }
+
+    protected virtual void ProcessClientMessage(NetworkMessage message)
+    {
+    }
+
+    protected virtual void RunMainLoop(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        BeforeRun();
+
         var accumulatedElapsedTime = TimeSpan.Zero;
         var gameTimer = Stopwatch.StartNew();
 
@@ -167,9 +194,9 @@ public class BasicGameServer : IGameServer
             accumulatedElapsedTime += TimeSpan.FromTicks(currentTicks - PrevTicks);
             PrevTicks = currentTicks;
 
-            if (accumulatedElapsedTime < _targetElapsedTime)
+            if (accumulatedElapsedTime < TargetElapsedTime)
             {
-                var sleepTime = (_targetElapsedTime - accumulatedElapsedTime).TotalMilliseconds;
+                var sleepTime = (TargetElapsedTime - accumulatedElapsedTime).TotalMilliseconds;
 #if _WINDOWS
                 ThreadsHelper.SleepForNoMoreThan(sleepTime);
 #else
@@ -179,13 +206,13 @@ public class BasicGameServer : IGameServer
                 goto BeginLoop;
             }
 
-            if (accumulatedElapsedTime > _maxElapsedTime)
-                accumulatedElapsedTime = _maxElapsedTime;
+            if (accumulatedElapsedTime > MaxElapsedTime)
+                accumulatedElapsedTime = MaxElapsedTime;
 
-            while (accumulatedElapsedTime >= _targetElapsedTime)
+            while (accumulatedElapsedTime >= TargetElapsedTime)
             {
-                accumulatedElapsedTime -= _targetElapsedTime;
-                GameTime += _targetElapsedTime;
+                accumulatedElapsedTime -= TargetElapsedTime;
+                GameTime += TargetElapsedTime;
 
                 ++Tick;
 
@@ -193,11 +220,13 @@ public class BasicGameServer : IGameServer
                 Update();
                 AfterUpdate();
             }
+
+            UpdateNetwork();
         }
 
         gameTimer.Stop();
-        Logger.LogDebug("Game loop stopped");
-        Logger.LogInformation("Game loop complete after: {Elapsed}", gameTimer.Elapsed.ToString("g"));
+        Logger.LogDebug("Main loop stopped");
+        Logger.LogInformation("Main loop complete after: {Elapsed}", gameTimer.Elapsed.ToString("g"));
     }
 
     protected virtual void BeforeUpdate()
@@ -211,8 +240,8 @@ public class BasicGameServer : IGameServer
     {
         if (Tick % TickRate == 0)
         {
-            // Logger.LogInformation("Tick: {Tick}", Tick);
-            // Logger.LogInformation("Name: {ServerName}", Settings.Name);
+            Logger.LogInformation("Tick: {Tick}", Tick);
+            Logger.LogInformation("GameTime: {GameTime}", GameTime);
         }
     }
 
@@ -223,7 +252,7 @@ public class BasicGameServer : IGameServer
     public void Dispose()
     {
         _settingsChangesListener?.Dispose();
-        _ctsServer?.Dispose();
-        _ctsServer = null;
+        CtsServer?.Dispose();
+        CtsServer = null;
     }
 }

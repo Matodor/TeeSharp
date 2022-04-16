@@ -29,11 +29,6 @@ public readonly struct SecurityToken : IEquatable<SecurityToken>
         Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(buffer)) = _value;
     }
 
-    public static implicit operator Span<byte>(SecurityToken token)
-    {
-        return BitConverter.GetBytes(token._value);
-    }
-
     public static implicit operator SecurityToken(int value)
     {
         return new SecurityToken(value);

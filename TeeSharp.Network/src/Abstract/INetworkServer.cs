@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Threading;
 
 namespace TeeSharp.Network.Abstract;
 
@@ -18,11 +19,9 @@ public interface INetworkServer : IDisposable
         int maxConnections = 64,
         int maxConnectionsPerIp = 4);
 
-    bool TryReceive(
-        [NotNullWhen(true)] out NetworkMessage? message,
-        [NotNullWhen(true)] out SecurityToken? responseToken);
-
     bool TryGetConnection(
         IPEndPoint endPoint,
         [NotNullWhen(true)] out INetworkConnection? connection);
+
+    IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
 }

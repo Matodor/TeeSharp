@@ -54,7 +54,7 @@ public class NetworkServer : INetworkServer
 
         Socket = socket;
         Socket.Client.Blocking = true;
-        Socket.Client.ReceiveTimeout = 1000;
+        Socket.Client.ReceiveTimeout = 10;
 
         MaxConnections = maxConnections;
         MaxConnectionsPerIp = maxConnectionsPerIp;
@@ -77,105 +77,6 @@ public class NetworkServer : INetworkServer
         return new NetworkConnection(id);
     }
 
-    public bool TryReceive(
-        [NotNullWhen(true)] out NetworkMessage? message,
-        [NotNullWhen(true)] out SecurityToken? responseToken)
-    {
-        Span<byte> data;
-        var endPoint = default(IPEndPoint);
-
-        try
-        {
-            data = Socket!.Receive(ref endPoint).AsSpan();
-        }
-        catch (SocketException e)
-        {
-            if (e.ErrorCode != (int) SocketError.TimedOut)
-                throw;
-
-            responseToken = null;
-            message = null;
-            return false;
-        }
-
-        if (data.Length == 0)
-        {
-            responseToken = null;
-            message = null;
-            return false;
-        }
-
-        if (!PacketUnpacker.TryUnpack(
-            data,
-            out var packet,
-            out var isSixUp,
-            out var securityToken,
-            out responseToken))
-        {
-            responseToken = null;
-            message = null;
-            return false;
-        }
-
-        securityToken ??= default;
-        responseToken ??= SecurityToken.Unknown;
-
-        if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
-        {
-            if (isSixUp && securityToken != GetToken(endPoint))
-            {
-                responseToken = null;
-                message = null;
-                return false;
-            }
-
-            message = new NetworkMessage(
-                connectionId: -1,
-                endPoint: endPoint,
-                flags: NetworkMessageFlags.ConnectionLess,
-                data: packet.Data,
-                extraData: packet.ExtraData
-            );
-
-            return true;
-        }
-
-        if (packet.Data.Length == 0 &&
-            packet.Flags.HasFlag(PacketFlags.ConnectionState))
-        {
-            responseToken = null;
-            message = null;
-            return false;
-        }
-
-        if (TryGetConnection(endPoint, out var connection))
-        {
-            if (!isSixUp && connection.IsSixUp)
-            {
-                throw new NotImplementedException();
-            }
-
-            throw new NotImplementedException();
-        }
-        else
-        {
-            if (isSixUp)
-            {
-                throw new NotImplementedException();
-            }
-
-            // if (IsConnStateMsgWithToken(packet))
-            // {
-            //     ProcessConnStateMsgWithToken(endPoint, packet);
-            //     return false;
-            // }
-
-            throw new NotImplementedException();
-        }
-
-        return true;
-    }
-
     public bool TryGetConnection(
         IPEndPoint endPoint,
         [NotNullWhen(true)] out INetworkConnection? connection)
@@ -188,6 +89,88 @@ public class NetworkServer : INetworkServer
 
         connection = null;
         return false;
+    }
+
+    public IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken)
+    {
+        var endPoint = default(IPEndPoint);
+
+        while (!cancellationToken.IsCancellationRequested &&
+            Socket!.Available > 0)
+        {
+            Span<byte> data;
+
+            try
+            {
+                data = Socket!.Receive(ref endPoint).AsSpan();
+            }
+            catch (SocketException e)
+            {
+                if (e.ErrorCode != (int)SocketError.TimedOut)
+                {
+                    throw;
+                }
+
+                yield break;
+            }
+
+            if (!PacketUnpacker.TryUnpack(data, out var packet))
+            {
+                yield break;
+            }
+
+            SecurityToken securityToken = packet.SecurityToken ?? default;
+            SecurityToken responseToken = packet.ResponseToken ?? SecurityToken.Unknown;
+
+            if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
+            {
+                if (packet.IsSixup && packet.SecurityToken != GetToken(endPoint))
+                {
+                    yield break;
+                }
+
+                yield return new NetworkMessage(
+                    connectionId: -1,
+                    endPoint: endPoint,
+                    flags: NetworkMessageFlags.ConnectionLess,
+                    data: packet.Data,
+                    extraData: packet.ExtraData
+                );
+
+                yield break;
+            }
+
+            if (packet.Data.Length == 0 &&
+                packet.Flags.HasFlag(PacketFlags.ConnectionState))
+            {
+                yield break;
+            }
+
+            if (TryGetConnection(endPoint, out var connection))
+            {
+                if (!packet.IsSixup && connection.IsSixUp)
+                {
+                    throw new NotImplementedException();
+                }
+
+                throw new NotImplementedException();
+            }
+            else
+            {
+                if (packet.IsSixup)
+                {
+                    throw new NotImplementedException();
+                }
+
+                // if (IsConnStateMsgWithToken(packet))
+                // {
+                //     ProcessConnStateMsgWithToken(endPoint, packet);
+                //     return false;
+                // }
+
+                throw new NotImplementedException();
+            }
+        }
     }
 
     protected virtual SecurityToken GetToken(IPEndPoint endPoint)
