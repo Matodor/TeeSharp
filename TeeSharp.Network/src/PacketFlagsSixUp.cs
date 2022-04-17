@@ -3,7 +3,7 @@ using System;
 namespace TeeSharp.Network;
 
 [Flags]
-public enum PacketFlagsSixUp
+public enum PacketFlagsSixup
 {
     None           = 0,
     Connection     = 1 << 0,

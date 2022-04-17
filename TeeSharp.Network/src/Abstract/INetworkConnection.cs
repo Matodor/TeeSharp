@@ -3,5 +3,5 @@ namespace TeeSharp.Network.Abstract;
 public interface INetworkConnection
 {
     int Id { get; }
-    bool IsSixUp { get; set; }
+    bool IsSixup { get; set; }
 }

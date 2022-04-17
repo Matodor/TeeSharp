@@ -15,13 +15,13 @@ namespace TeeSharp.Server;
 
 public class BasicGameServer : IGameServer
 {
-    public const int TickRate = 50;
-    public const long TicksPerMillisecond = 10000;
+public const long TicksPerMillisecond = 10000;
     public const long TicksPerSecond = TicksPerMillisecond * 1000;
 
-    public int Tick { get; protected set; }
-    public TimeSpan GameTime { get; protected set; }
-    public ServerState ServerState { get; protected set; }
+    public int TickRate { get; }
+    public int Tick { get; private set; }
+    public TimeSpan GameTime { get; private set; }
+    public ServerState ServerState { get; private set; }
     public ServerSettings Settings { get; private set; }
 
     protected ILogger Logger { get; set; }
@@ -29,16 +29,21 @@ public class BasicGameServer : IGameServer
     protected long PrevTicks { get; set; }
     protected CancellationTokenSource? CtsServer { get; private set; }
 
-    protected TimeSpan TargetElapsedTime { get; set; } = TimeSpan.FromTicks(TicksPerSecond / TickRate);
-    protected TimeSpan MaxElapsedTime { get; set; } = TimeSpan.FromMilliseconds(500);
+    protected TimeSpan TargetElapsedTime { get; }
+    protected TimeSpan MaxElapsedTime { get; }
 
     private readonly IDisposable? _settingsChangesListener;
 
     public BasicGameServer(
         ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        int tickRate = 50)
     {
         _settingsChangesListener = serverSettingsNotifier.Subscribe(OnChangeSettings);
+
+        TickRate = tickRate;
+        TargetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
+        MaxElapsedTime = TimeSpan.FromMilliseconds(500);
 
         Logger = logger ?? Tee.LoggerFactory.CreateLogger("GameServer");
         Settings = serverSettingsNotifier.Current;
@@ -147,34 +152,32 @@ public class BasicGameServer : IGameServer
 
     protected virtual void ProcessMasterServerMessage(NetworkMessage message)
     {
-        // if (MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
-        //     MasterServerPackets.GetInfo.AsSpan()
-        //         .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
-        // {
-        //     if (message.ExtraData.Length > 0)
-        //     {
-        //         var extraToken = (SecurityToken) (((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8);
-        //         var extraToken2 = (SecurityToken) Unsafe.As<>()
-        //         // var token = message.Data[Packets.GetInfo.Length] | extraToken;
-        //         // SendServerInfo(ServerInfoType.Extended, message.EndPoint, token);
-        //
-        //         throw new NotImplementedException();
-        //     }
-        //     else
-        //     {
-        //         if (responseToken != SecurityToken.Unknown && Settings.UseSixUp)
-        //         {
-        //             throw new NotImplementedException();
-        //             // SendServerInfo(ServerInfoType.Vanilla, message.EndPoint, token);
-        //         }
-        //     }
-        //
-        //     return;
-        // }
+        if (MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
+            MasterServerPackets.GetInfo.AsSpan()
+                .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
+        {
+            if (message.ExtraData.Length > 0)
+            {
+                var extraToken = (((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8);
+                var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
+                throw new NotImplementedException();
+            }
+            else if (Settings.UseSixup && message.ResponseToken != SecurityToken.Unknown)
+            {
+                throw new NotImplementedException();
+            }
+
+            return;
+        }
     }
 
     protected virtual void ProcessClientMessage(NetworkMessage message)
     {
+    }
+
+    protected virtual void SendServerInformation()
+    {
+
     }
 
     protected virtual void RunMainLoop(CancellationToken cancellationToken)

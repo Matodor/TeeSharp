@@ -19,9 +19,7 @@ public interface INetworkServer : IDisposable
         int maxConnections = 64,
         int maxConnectionsPerIp = 4);
 
-    bool TryGetConnection(
-        IPEndPoint endPoint,
-        [NotNullWhen(true)] out INetworkConnection? connection);
+    bool TryGetConnectionId(IPEndPoint endPoint, out int id);
 
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
 }

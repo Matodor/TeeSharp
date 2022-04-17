@@ -5,7 +5,7 @@ namespace TeeSharp.Network.Concrete;
 public class NetworkConnection : INetworkConnection
 {
     public int Id { get; }
-    public bool IsSixUp { get; set; }
+    public bool IsSixup { get; set; }
 
     public NetworkConnection(int id)
     {

@@ -7,7 +7,6 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
 {
-
     public bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacket? packet)
     {
         if (buffer.Length is < NetworkConstants.PacketHeaderSize or > NetworkConstants.MaxPacketSize)
@@ -52,18 +51,19 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
             data = new byte[buffer.Length - dataStart];
 
             buffer
-                .Slice(dataStart, data.Length)
-                .CopyTo(data);
+               .Slice(dataStart, data.Length)
+               .CopyTo(data);
 
-            if (!isSixup &&
-                buffer.Slice(0, NetworkConstants.PacketHeaderExtended.Length)
-                    .SequenceEqual(NetworkConstants.PacketHeaderExtended))
+            if (!isSixup
+                && buffer.Slice(0, NetworkConstants.PacketHeaderExtended.Length)
+                   .SequenceEqual(NetworkConstants.PacketHeaderExtended))
             {
                 flags |= PacketFlags.Extended;
                 extraData = new byte[NetworkConstants.PacketExtraDataSize];
 
-                buffer.Slice(NetworkConstants.PacketHeaderExtended.Length, extraData.Length)
-                    .CopyTo(extraData);
+                buffer
+                   .Slice(NetworkConstants.PacketHeaderExtended.Length, extraData.Length)
+                   .CopyTo(extraData);
             }
             else
             {
@@ -91,16 +91,16 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
 
             if (isSixup)
             {
+                var flagsSixup = (PacketFlagsSixup) flags;
                 flags = PacketFlags.None;
 
-                // TODO: fix
-
-                var sixUpFlags = (PacketFlagsSixUp) flags;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Connection))
+                if (flagsSixup.HasFlag(PacketFlagsSixup.Connection))
                     flags |= PacketFlags.ConnectionState;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Resend))
+
+                if (flagsSixup.HasFlag(PacketFlagsSixup.Resend))
                     flags |= PacketFlags.Resend;
-                if (sixUpFlags.HasFlag(PacketFlagsSixUp.Compression))
+
+                if (flagsSixup.HasFlag(PacketFlagsSixup.Compression))
                     flags |= PacketFlags.Compression;
 
                 securityToken = buffer.Slice(3, 4).Deserialize<SecurityToken>();
@@ -118,8 +118,9 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
             }
             else
             {
-                buffer.Slice(dataStart, data.Length)
-                    .CopyTo(data);
+                buffer
+                   .Slice(dataStart, data.Length)
+                   .CopyTo(data);
             }
         }
 

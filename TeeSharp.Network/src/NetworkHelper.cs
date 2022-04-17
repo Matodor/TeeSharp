@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Network;
 
@@ -21,6 +20,7 @@ public static class NetworkHelper
                 continue;
 
             var properties = network.GetIPProperties();
+
             if (properties.GatewayAddresses.Count == 0)
                 continue;
 
@@ -64,6 +64,7 @@ public static class NetworkHelper
             client = localEP == null
                 ? new UdpClient()
                 : new UdpClient(localEP);
+
             return true;
         }
         catch (Exception e)
@@ -73,24 +74,6 @@ public static class NetworkHelper
         }
     }
 
-    // public static void SendPacket(UdpClient client, IPEndPoint endPoint,
-    //     NetworkPacket packet, SecurityToken securityToken, bool isSixUp)
-    // {
-    //     var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
-    //     var headerSize = NetworkConstants.PacketHeaderSize;
-    //
-    //     if (isSixUp)
-    //     {
-    //         headerSize += StructHelper<SecurityToken>.Size;
-    //         securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-    //     }
-    //     else if (securityToken != SecurityToken.Unsupported)
-    //     {
-    //         securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-    //         // asdasd
-    //     }
-    // }
-    //
     // public static void SendData(UdpClient client, IPEndPoint endPoint,
     //     ReadOnlySpan<byte> data,
     //     ReadOnlySpan<byte> extraData = default)
@@ -129,55 +112,80 @@ public static class NetworkHelper
     //     var client = (UdpClient) result.AsyncState;
     //     client?.EndSend(result);
     // }
-    //
-    // public static void SendConnectionStateMsg(
-    //     UdpClient client,
-    //     IPEndPoint endPoint,
-    //     ConnectionStateMsg state,
-    //     SecurityToken token,
-    //     int ack,
-    //     bool isSixUp,
-    //     string extraMsg)
-    // {
-    //     if (string.IsNullOrEmpty(extraMsg))
-    //     {
-    //         SendConnectionStateMsg(client, endPoint, state, token, ack, isSixUp, Span<byte>.Empty);
-    //     }
-    //     else
-    //     {
-    //         var bufferLen = Encoding.UTF8.GetMaxByteCount(extraMsg.Length);
-    //         var buffer = new Span<byte>(new byte[bufferLen]);
-    //         var length = Encoding.UTF8.GetBytes(extraMsg.AsSpan(), buffer);
-    //         SendConnectionStateMsg(client, endPoint, state, token, ack, isSixUp, buffer.Slice(0, length));
-    //     }
-    // }
 
-    // public static void SendConnectionStateMsg(
-    //     UdpClient client,
-    //     IPEndPoint endPoint,
-    //     ConnectionStateMsg state,
-    //     SecurityToken token,
-    //     int ack,
-    //     bool isSixUp,
-    //     Span<byte> extraData)
-    // {
-    //     // var packet = new NetworkPacket(
-    //     //     flags: PacketFlags.ConnectionState,
-    //     //     ack: ack,
-    //     //     chunksCount: 0,
-    //     // );
-    //     //
-    //     // {
-    //     //     ChunksCount = 0,
-    //     //     DataSize = 1 + extraData.Length,
-    //     // };
-    //     //
-    //     // packet.Data = new byte[packet.DataSize];
-    //     // packet.Data[0] = (byte) state;
-    //     //
-    //     // if (!extraData.IsEmpty)
-    //     //     extraData.CopyTo(packet.Data.AsSpan(1));
-    //     //
-    //     // // SendPacket(client, endPoint, packet);
-    // }
+    public static void SendConnectionStateMsg(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ConnectionStateMsg msg,
+        SecurityToken token,
+        int ack,
+        bool isSixup,
+        string? extraMsg = null)
+    {
+        SendConnectionStateMsg(
+            client,
+            endPoint,
+            msg,
+            token,
+            ack,
+            isSixup,
+            extraData: extraMsg == null
+                ? Array.Empty<byte>()
+                : Encoding.UTF8.GetBytes(extraMsg)
+        );
+    }
+
+    public static void SendConnectionStateMsg(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ConnectionStateMsg msg,
+        SecurityToken? token,
+        int ack,
+        bool isSixup,
+        byte[] extraData)
+    {
+        var data = new byte[1 + extraData.Length];
+
+        var packet = new NetworkPacket(
+            flags: PacketFlags.ConnectionState,
+            ack: ack,
+            chunksCount: 0,
+            isSixup: isSixup,
+            securityToken: token,
+            responseToken: null,
+            data: data,
+            extraData: Array.Empty<byte>()
+        ) { Data = { [0] = (byte) msg } };
+
+        if (extraData.Length > 0)
+            extraData.CopyTo(data, 1);
+
+        SendPacket(client, endPoint, packet);
+    }
+
+    public static void SendPacket(
+        UdpClient client,
+        IPEndPoint endPoint,
+        NetworkPacket packet)
+    {
+        if (packet.Data.Length == 0)
+            return;
+
+
+        throw new NotImplementedException();
+
+        // var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
+        // var headerSize = NetworkConstants.PacketHeaderSize;
+        //
+        // if (isSixup)
+        // {
+        //     headerSize += StructHelper<SecurityToken>.Size;
+        //     securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+        // }
+        // else if (securityToken != SecurityToken.Unsupported)
+        // {
+        //     securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+        //     // asdasd
+        // }
+    }
 }

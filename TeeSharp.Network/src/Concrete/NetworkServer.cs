@@ -63,9 +63,10 @@ public class NetworkServer : INetworkServer
         Logger.LogInformation("Local address: {EndPoint}", EndPoint!.ToString());
 
         MapClients = new Dictionary<int, int>(MaxConnections);
+
         Connections = Enumerable.Range(0, MaxConnections)
-            .Select(CreateEmptyConnection)
-            .ToArray();
+           .Select(CreateEmptyConnection)
+           .ToArray();
 
         RefreshSecurityTokenSeed();
 
@@ -77,26 +78,16 @@ public class NetworkServer : INetworkServer
         return new NetworkConnection(id);
     }
 
-    public bool TryGetConnection(
-        IPEndPoint endPoint,
-        [NotNullWhen(true)] out INetworkConnection? connection)
+    public bool TryGetConnectionId(IPEndPoint endPoint, out int id)
     {
-        if (MapClients.TryGetValue(endPoint.GetHashCode(), out var id))
-        {
-            connection = Connections[id];
-            return true;
-        }
-
-        connection = null;
-        return false;
+        return MapClients.TryGetValue(endPoint.GetHashCode(), out id);
     }
 
     public IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken)
     {
         var endPoint = default(IPEndPoint);
 
-        while (!cancellationToken.IsCancellationRequested &&
-            Socket!.Available > 0)
+        while (!cancellationToken.IsCancellationRequested && Socket!.Available > 0)
         {
             Span<byte> data;
 
@@ -106,17 +97,17 @@ public class NetworkServer : INetworkServer
             }
             catch (SocketException e)
             {
-                if (e.ErrorCode != (int)SocketError.TimedOut)
+                if (e.ErrorCode != (int) SocketError.TimedOut)
                 {
                     throw;
                 }
 
-                yield break;
+                continue;
             }
 
             if (!PacketUnpacker.TryUnpack(data, out var packet))
             {
-                yield break;
+                continue;
             }
 
             SecurityToken securityToken = packet.SecurityToken ?? default;
@@ -126,29 +117,29 @@ public class NetworkServer : INetworkServer
             {
                 if (packet.IsSixup && packet.SecurityToken != GetToken(endPoint))
                 {
-                    yield break;
+                    continue;
                 }
 
                 yield return new NetworkMessage(
                     connectionId: -1,
                     endPoint: endPoint,
                     flags: NetworkMessageFlags.ConnectionLess,
+                    responseToken: responseToken,
                     data: packet.Data,
                     extraData: packet.ExtraData
                 );
 
-                yield break;
+                continue;
             }
 
-            if (packet.Data.Length == 0 &&
-                packet.Flags.HasFlag(PacketFlags.ConnectionState))
+            if (packet.Data.Length == 0 && packet.Flags.HasFlag(PacketFlags.ConnectionState))
             {
-                yield break;
+                continue;
             }
 
-            if (TryGetConnection(endPoint, out var connection))
+            if (TryGetConnectionId(endPoint, out var connectionId))
             {
-                if (!packet.IsSixup && connection.IsSixUp)
+                if (!packet.IsSixup && Connections[connectionId].IsSixup)
                 {
                     throw new NotImplementedException();
                 }
@@ -161,16 +152,84 @@ public class NetworkServer : INetworkServer
                 {
                     throw new NotImplementedException();
                 }
-
-                // if (IsConnStateMsgWithToken(packet))
-                // {
-                //     ProcessConnStateMsgWithToken(endPoint, packet);
-                //     return false;
-                // }
-
-                throw new NotImplementedException();
+                else
+                {
+                    ProcessConnectionStateMessage(endPoint, packet);
+                }
             }
         }
+    }
+
+    protected virtual void ProcessConnectionStateMessage(
+        IPEndPoint endPoint,
+        NetworkPacket packet)
+    {
+        if (packet.Data.Length == 0 || !packet.Flags.HasFlag(PacketFlags.ConnectionState))
+        {
+            return;
+        }
+
+        switch ((ConnectionStateMsg) packet.Data[0])
+        {
+            case ConnectionStateMsg.Connect:
+                if (packet.Data.Length >= 1 + StructHelper<SecurityToken>.Size * 2
+                    && packet.Data.AsSpan(1, StructHelper<SecurityToken>.Size) == SecurityToken.Magic)
+                {
+                    SendConnectionStateMsg(
+                        endPoint: endPoint,
+                        msg: ConnectionStateMsg.ConnectAccept,
+                        token: GetToken(endPoint),
+                        isSixup: packet.IsSixup,
+                        extraData: SecurityToken.Magic
+                    );
+                }
+
+                break;
+
+            case ConnectionStateMsg.Accept:
+                if (packet.Data.Length >= 1 + StructHelper<SecurityToken>.Size)
+                {
+                    return;
+                }
+
+                break;
+        }
+    }
+
+    protected virtual void SendConnectionStateMsg(
+        IPEndPoint endPoint,
+        ConnectionStateMsg msg,
+        SecurityToken token,
+        bool isSixup,
+        string? extraMsg = null)
+    {
+        NetworkHelper.SendConnectionStateMsg(
+            Socket!,
+            endPoint,
+            msg,
+            token,
+            0,
+            isSixup,
+            extraMsg
+        );
+    }
+
+    protected virtual void SendConnectionStateMsg(
+        IPEndPoint endPoint,
+        ConnectionStateMsg msg,
+        SecurityToken? token,
+        bool isSixup,
+        byte[] extraData)
+    {
+        NetworkHelper.SendConnectionStateMsg(
+            Socket!,
+            endPoint,
+            msg,
+            token,
+            0,
+            isSixup,
+            extraData
+        );
     }
 
     protected virtual SecurityToken GetToken(IPEndPoint endPoint)

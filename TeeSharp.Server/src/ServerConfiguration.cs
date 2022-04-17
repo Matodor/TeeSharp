@@ -34,7 +34,7 @@ namespace TeeSharp.Server;
 //         max: 1024
 //     );
 //
-//     public virtual ConfigVariableBoolean UseSixUp { get; } = new ConfigVariableBoolean(
+//     public virtual ConfigVariableBoolean UseSixup { get; } = new ConfigVariableBoolean(
 //         defaultValue: true,
 //         description: "Support 0.7+ network protocol"
 //     );

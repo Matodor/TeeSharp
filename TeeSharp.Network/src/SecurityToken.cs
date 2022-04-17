@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace TeeSharp.Network;
 
-// TODO: make union trick
 public readonly struct SecurityToken : IEquatable<SecurityToken>
 {
     public static readonly SecurityToken Unknown = -1;
@@ -34,9 +33,19 @@ public readonly struct SecurityToken : IEquatable<SecurityToken>
         return new SecurityToken(value);
     }
 
-    public static implicit operator SecurityToken(Span<byte> data)
+    public static explicit operator SecurityToken(byte[] data)
+    {
+        return new SecurityToken(BitConverter.ToInt32(data, 0));
+    }
+
+    public static explicit operator SecurityToken(Span<byte> data)
     {
         return new SecurityToken(BitConverter.ToInt32(data));
+    }
+
+    public static implicit operator byte[](SecurityToken token)
+    {
+        return BitConverter.GetBytes(token._value);
     }
 
     public bool Equals(SecurityToken other)
