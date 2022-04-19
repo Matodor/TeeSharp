@@ -5,5 +5,5 @@ namespace TeeSharp.Network.Abstract;
 
 public interface INetworkPacketUnpacker
 {
-    bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacket? packet);
+    bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacketIn? packet);
 }

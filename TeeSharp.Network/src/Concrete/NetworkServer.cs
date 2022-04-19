@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
@@ -110,9 +109,6 @@ public class NetworkServer : INetworkServer
                 continue;
             }
 
-            SecurityToken securityToken = packet.SecurityToken ?? default;
-            SecurityToken responseToken = packet.ResponseToken ?? SecurityToken.Unknown;
-
             if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
             {
                 if (packet.IsSixup && packet.SecurityToken != GetToken(endPoint))
@@ -124,7 +120,7 @@ public class NetworkServer : INetworkServer
                     connectionId: -1,
                     endPoint: endPoint,
                     flags: NetworkMessageFlags.ConnectionLess,
-                    responseToken: responseToken,
+                    responseToken: packet.ResponseToken,
                     data: packet.Data,
                     extraData: packet.ExtraData
                 );
@@ -132,7 +128,7 @@ public class NetworkServer : INetworkServer
                 continue;
             }
 
-            if (packet.Data.Length == 0 && packet.Flags.HasFlag(PacketFlags.ConnectionState))
+            if (packet.Data.Length == 0 && packet.Flags.HasFlag(PacketFlags.Connection))
             {
                 continue;
             }
@@ -162,24 +158,24 @@ public class NetworkServer : INetworkServer
 
     protected virtual void ProcessConnectionStateMessage(
         IPEndPoint endPoint,
-        NetworkPacket packet)
+        NetworkPacketIn packetIn)
     {
-        if (packet.Data.Length == 0 || !packet.Flags.HasFlag(PacketFlags.ConnectionState))
+        if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(PacketFlags.Connection))
         {
             return;
         }
 
-        switch ((ConnectionStateMsg) packet.Data[0])
+        switch ((ConnectionStateMsg) packetIn.Data[0])
         {
             case ConnectionStateMsg.Connect:
-                if (packet.Data.Length >= 1 + StructHelper<SecurityToken>.Size * 2
-                    && packet.Data.AsSpan(1, StructHelper<SecurityToken>.Size) == SecurityToken.Magic)
+                if (packetIn.Data.Length >= 1 + StructHelper<SecurityToken>.Size * 2
+                    && packetIn.Data.AsSpan(1, StructHelper<SecurityToken>.Size) == SecurityToken.Magic)
                 {
                     SendConnectionStateMsg(
                         endPoint: endPoint,
                         msg: ConnectionStateMsg.ConnectAccept,
                         token: GetToken(endPoint),
-                        isSixup: packet.IsSixup,
+                        isSixup: packetIn.IsSixup,
                         extraData: SecurityToken.Magic
                     );
                 }
@@ -187,7 +183,7 @@ public class NetworkServer : INetworkServer
                 break;
 
             case ConnectionStateMsg.Accept:
-                if (packet.Data.Length >= 1 + StructHelper<SecurityToken>.Size)
+                if (packetIn.Data.Length >= 1 + StructHelper<SecurityToken>.Size)
                 {
                     return;
                 }
@@ -217,7 +213,7 @@ public class NetworkServer : INetworkServer
     protected virtual void SendConnectionStateMsg(
         IPEndPoint endPoint,
         ConnectionStateMsg msg,
-        SecurityToken? token,
+        SecurityToken token,
         bool isSixup,
         byte[] extraData)
     {
@@ -236,7 +232,7 @@ public class NetworkServer : INetworkServer
     {
         const int offset = sizeof(int);
         var buffer = (Span<byte>) new byte[offset + SecurityTokenSeed.Length];
-        Unsafe.As<byte, int>(ref buffer[0]) = endPoint.GetHashCode();
+        Unsafe.WriteUnaligned(ref MemoryMarshal.GetReference(buffer), endPoint.GetHashCode());
         SecurityTokenSeed.CopyTo(buffer.Slice(offset));
 
         return SecurityHelper.KnuthHash(buffer).GetHashCode();

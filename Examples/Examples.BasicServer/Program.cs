@@ -1,6 +1,5 @@
 using Examples.BasicServer;
 using Serilog;
-using TeeSharp.Network;
 using TeeSharp.Server;
 
 const string consoleLogFormat =

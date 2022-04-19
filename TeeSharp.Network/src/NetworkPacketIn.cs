@@ -1,6 +1,6 @@
 namespace TeeSharp.Network;
 
-public class NetworkPacket
+public class NetworkPacketIn
 {
     /// <summary>
     ///
@@ -20,12 +20,12 @@ public class NetworkPacket
     /// <summary>
     ///
     /// </summary>
-    public SecurityToken? SecurityToken { get; }
+    public SecurityToken SecurityToken { get; }
 
     /// <summary>
     ///
     /// </summary>
-    public SecurityToken? ResponseToken { get; }
+    public SecurityToken ResponseToken { get; }
 
     /// <summary>
     ///
@@ -42,13 +42,13 @@ public class NetworkPacket
     /// </summary>
     public byte[] ExtraData { get; }
 
-    public NetworkPacket(
+    public NetworkPacketIn(
         PacketFlags flags,
         int ack,
         int chunksCount,
         bool isSixup,
-        SecurityToken? securityToken,
-        SecurityToken? responseToken,
+        SecurityToken securityToken,
+        SecurityToken responseToken,
         byte[] data,
         byte[] extraData)
     {

@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Network;
 
@@ -139,53 +140,108 @@ public static class NetworkHelper
         UdpClient client,
         IPEndPoint endPoint,
         ConnectionStateMsg msg,
-        SecurityToken? token,
+        SecurityToken token,
         int ack,
         bool isSixup,
         byte[] extraData)
     {
-        var data = new byte[1 + extraData.Length];
+        if (1 + extraData.Length > NetworkConstants.MaxPayload)
+            return;
 
-        var packet = new NetworkPacket(
-            flags: PacketFlags.ConnectionState,
+        var packet = new NetworkPacketOut(
+            flags: PacketFlags.Connection,
             ack: ack,
             chunksCount: 0,
             isSixup: isSixup,
-            securityToken: token,
-            responseToken: null,
-            data: data,
-            extraData: Array.Empty<byte>()
-        ) { Data = { [0] = (byte) msg } };
+            dataSize: 1 + extraData.Length
+        );
+
+        packet.Data[0] = (byte) msg;
 
         if (extraData.Length > 0)
-            extraData.CopyTo(data, 1);
+            extraData.CopyTo(packet.Data.Slice(1));
 
-        SendPacket(client, endPoint, packet);
+        SendPacket(
+            client,
+            endPoint,
+            token,
+            packet,
+            false
+        );
     }
 
     public static void SendPacket(
         UdpClient client,
         IPEndPoint endPoint,
-        NetworkPacket packet)
+        SecurityToken token,
+        NetworkPacketOut packet,
+        bool useCompression)
     {
         if (packet.Data.Length == 0)
             return;
 
+        var bufferSize = -1;
+        var buffer = (Span<byte>) new byte[NetworkConstants.MaxPacketSize];
+        var compressedSize = -1;
+        var headerSize = packet.IsSixup
+            ? NetworkConstants.PacketHeaderSizeSixup
+            : NetworkConstants.PacketHeaderSize;
 
-        throw new NotImplementedException();
+        if (packet.IsSixup)
+        {
+            token.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+        }
+        else if (token != SecurityToken.Unsupported)
+        {
+            token.CopyTo(packet.Data.Slice(packet.DataSize));
+            packet.DataSize += StructHelper<SecurityToken>.Size;
+        }
 
-        // var buffer = new Span<byte>(new byte[NetworkConstants.MaxPacketSize]);
-        // var headerSize = NetworkConstants.PacketHeaderSize;
-        //
-        // if (isSixup)
-        // {
-        //     headerSize += StructHelper<SecurityToken>.Size;
-        //     securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-        // }
-        // else if (securityToken != SecurityToken.Unsupported)
-        // {
-        //     securityToken.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-        //     // asdasd
-        // }
+        if (useCompression)
+        {
+            compressedSize = 4; // TODO
+            bufferSize = compressedSize;
+            packet.Flags |= PacketFlags.Compression;
+        }
+
+        if (compressedSize <= 0 || compressedSize >= packet.Data.Length)
+        {
+            bufferSize = packet.DataSize;
+            packet.Data.CopyTo(buffer.Slice(headerSize));
+            packet.Flags ^= PacketFlags.Compression;
+        }
+
+        if (packet.IsSixup)
+        {
+            var flagsSixup = PacketFlagsSixup.None;
+
+            if (packet.Flags.HasFlag(PacketFlags.Connection))
+                flagsSixup |= PacketFlagsSixup.Connection;
+
+            if (packet.Flags.HasFlag(PacketFlags.Resend))
+                flagsSixup |= PacketFlagsSixup.Resend;
+
+            if (packet.Flags.HasFlag(PacketFlags.Compression))
+                flagsSixup |= PacketFlagsSixup.Compression;
+
+            packet.Flags = (PacketFlags) flagsSixup;
+        }
+
+        if (bufferSize < 0)
+            return;
+
+        bufferSize += headerSize;
+        buffer[0] = (byte) ((((int) packet.Flags << 2) & 0b1111_1100) | ((packet.Ack >> 8) & 0b0000_0011));
+        buffer[1] = (byte) (packet.Ack & 0b1111_1111);
+        buffer[2] = (byte) (packet.ChunksCount & 0b1111_1111);
+
+        try
+        {
+            client.Send(buffer.Slice(0, bufferSize), endPoint);
+        }
+        catch
+        {
+            // ignore
+        }
     }
 }

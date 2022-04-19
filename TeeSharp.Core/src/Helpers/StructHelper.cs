@@ -6,7 +6,7 @@ namespace TeeSharp.Core.Helpers;
 public static class StructHelper<T> where T : struct
 {
     // ReSharper disable StaticMemberInGenericType
-    public static readonly int  Size;
+    public static readonly int Size;
     public static readonly int ElementSize;
     public static readonly bool IsArray;
     public static readonly Type Type;

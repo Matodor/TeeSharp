@@ -7,7 +7,7 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
 {
-    public bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacket? packet)
+    public bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacketIn? packet)
     {
         if (buffer.Length is < NetworkConstants.PacketHeaderSize or > NetworkConstants.MaxPacketSize)
         {
@@ -16,14 +16,14 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
         }
 
         var flags = (PacketFlags) (buffer[0] >> 2);
+        var securityToken = default(SecurityToken);
+        var responseToken = SecurityToken.Unknown;
 
         bool isSixup;
         int ack;
         int chunksCount;
         byte[] data;
         byte[] extraData;
-        SecurityToken? securityToken = null;
-        SecurityToken? responseToken = null;
 
         if (flags.HasFlag(PacketFlags.ConnectionLess))
         {
@@ -95,7 +95,7 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
                 flags = PacketFlags.None;
 
                 if (flagsSixup.HasFlag(PacketFlagsSixup.Connection))
-                    flags |= PacketFlags.ConnectionState;
+                    flags |= PacketFlags.Connection;
 
                 if (flagsSixup.HasFlag(PacketFlagsSixup.Resend))
                     flags |= PacketFlags.Resend;
@@ -108,7 +108,7 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
 
             if (flags.HasFlag(PacketFlags.Compression))
             {
-                if (flags.HasFlag(PacketFlags.ConnectionState))
+                if (flags.HasFlag(PacketFlags.Connection))
                 {
                     packet = null;
                     return false;
@@ -124,7 +124,7 @@ public class NetworkPacketUnpackerSixup : INetworkPacketUnpacker
             }
         }
 
-        packet = new NetworkPacket(
+        packet = new NetworkPacketIn(
             flags,
             ack,
             chunksCount,
