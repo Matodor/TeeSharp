@@ -208,7 +208,7 @@ public static class NetworkHelper
         {
             bufferSize = packet.DataSize;
             packet.Data.CopyTo(buffer.Slice(headerSize));
-            packet.Flags ^= PacketFlags.Compression;
+            packet.Flags &= ~PacketFlags.Compression;
         }
 
         if (packet.IsSixup)
