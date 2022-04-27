@@ -63,21 +63,37 @@ public readonly struct SecurityToken : IEquatable<SecurityToken>
         return _value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(Span<byte> left, SecurityToken right)
     {
         return BitConverter.ToInt32(left) == right._value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(Span<byte> left, SecurityToken right)
     {
         return !(left == right);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator ==(SecurityToken left, Span<byte> right)
+    {
+        return right == left;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator !=(SecurityToken left, Span<byte> right)
+    {
+        return !(right == left);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(SecurityToken left, SecurityToken right)
     {
         return left.Equals(right);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(SecurityToken left, SecurityToken right)
     {
         return !left.Equals(right);

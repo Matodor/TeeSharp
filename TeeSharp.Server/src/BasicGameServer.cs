@@ -158,7 +158,7 @@ public const long TicksPerMillisecond = 10000;
         {
             if (message.ExtraData.Length > 0)
             {
-                var extraToken = (((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8);
+                var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
                 var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
                 throw new NotImplementedException();
             }
