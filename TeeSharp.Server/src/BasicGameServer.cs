@@ -175,11 +175,6 @@ public const long TicksPerMillisecond = 10000;
     {
     }
 
-    protected virtual void SendServerInformation()
-    {
-
-    }
-
     protected virtual void RunMainLoop(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
