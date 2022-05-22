@@ -56,20 +56,33 @@ public class NetworkConnection : INetworkConnection
     {
         var data = packet.Data.AsSpan();
 
-        if (State != ConnectionState.Offline
-            && !IsSixup
-            && SecurityToken != SecurityToken.Unknown
-            && SecurityToken != SecurityToken.Unsupported)
+        if (State != ConnectionState.Offline)
         {
-            if (data.Length < StructHelper<SecurityToken>.Size)
-                yield break;
-
-            var token = (SecurityToken) data.Slice(data.Length - StructHelper<SecurityToken>.Size);
-
-            if (SecurityToken != token)
+            if (IsSixup)
             {
-                Logger.LogDebug("Token mismatch, expected {TokenExpected} got {TokenGot}", SecurityToken, token);
-                yield break;
+                // if (SecurityToken != зфс)
+            }
+            else
+            {
+                if (SecurityToken != SecurityToken.Unknown
+                    && SecurityToken != SecurityToken.Unsupported)
+                {
+                    if (data.Length < StructHelper<SecurityToken>.Size)
+                        yield break;
+
+                    var token = (SecurityToken) data.Slice(data.Length - StructHelper<SecurityToken>.Size);
+
+                    if (SecurityToken != token)
+                    {
+                        Logger.LogDebug(
+                            "Token mismatch, expected {TokenExpected} got {TokenGot}",
+                            SecurityToken,
+                            token
+                        );
+
+                        yield break;
+                    }
+                }
             }
         }
 
