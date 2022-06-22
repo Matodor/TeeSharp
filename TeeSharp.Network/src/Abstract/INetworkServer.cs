@@ -11,7 +11,6 @@ public interface INetworkServer : IDisposable
 
     int MaxConnections { get; set; }
     int MaxConnectionsPerIp { get; set; }
-    bool AcceptSixupConnections { get; set; }
 
     INetworkPacketUnpacker PacketUnpacker { get; }
     IReadOnlyList<INetworkConnection> Connections { get; }
@@ -19,8 +18,7 @@ public interface INetworkServer : IDisposable
     bool TryInit(
         IPEndPoint localEP,
         int maxConnections = 64,
-        int maxConnectionsPerIp = 4,
-        bool acceptSixupConnections = true);
+        int maxConnectionsPerIp = 4);
 
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
 

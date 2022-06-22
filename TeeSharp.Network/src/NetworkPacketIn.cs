@@ -5,7 +5,7 @@ public class NetworkPacketIn
     /// <summary>
     ///
     /// </summary>
-    public PacketFlags Flags { get; }
+    public NetworkPacketInFlags Flags { get; }
 
     /// <summary>
     ///
@@ -28,7 +28,7 @@ public class NetworkPacketIn
     public byte[] ExtraData { get; }
 
     public NetworkPacketIn(
-        PacketFlags flags,
+        NetworkPacketInFlags flags,
         int ack,
         int chunksCount,
         byte[] data,

@@ -22,11 +22,6 @@ public class NetworkMessage
     /// <summary>
     ///
     /// </summary>
-    public SecurityToken ResponseToken { get; }
-
-    /// <summary>
-    ///
-    /// </summary>
     public byte[] Data { get; }
 
     /// <summary>
@@ -38,14 +33,12 @@ public class NetworkMessage
         int connectionId,
         IPEndPoint endPoint,
         NetworkMessageFlags flags,
-        SecurityToken responseToken,
         byte[] data,
         byte[] extraData)
     {
         ConnectionId = connectionId;
         EndPoint = endPoint;
         Flags = flags;
-        ResponseToken = responseToken;
         Data = data;
         ExtraData = extraData;
     }

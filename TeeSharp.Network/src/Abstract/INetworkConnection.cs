@@ -6,11 +6,8 @@ namespace TeeSharp.Network.Abstract;
 public interface INetworkConnection
 {
     ConnectionState State { get; }
-
     IPEndPoint EndPoint { get; }
 
-    bool IsSixup { get; }
-
-    void Init(IPEndPoint endPoint, SecurityToken securityToken, bool isSixup);
-    IEnumerable<NetworkMessage> ProcessPacket(NetworkPacketIn packet);
+    void Init(IPEndPoint endPoint, SecurityToken securityToken);
+    IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet);
 }

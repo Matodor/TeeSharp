@@ -7,7 +7,7 @@ public ref struct NetworkPacketOut
     /// <summary>
     ///
     /// </summary>
-    public PacketFlags Flags;
+    public NetworkPacketInFlags Flags;
 
     /// <summary>
     ///
@@ -22,11 +22,6 @@ public ref struct NetworkPacketOut
     /// <summary>
     ///
     /// </summary>
-    public bool IsSixup;
-
-    /// <summary>
-    ///
-    /// </summary>
     public readonly Span<byte> Data = new byte[NetworkConstants.MaxPayload];
 
     /// <summary>
@@ -35,7 +30,7 @@ public ref struct NetworkPacketOut
     public int DataSize;
 
     public NetworkPacketOut(
-        PacketFlags flags = PacketFlags.None,
+        NetworkPacketInFlags flags = NetworkPacketInFlags.None,
         int ack = 0,
         int chunksCount = 0,
         bool isSixup = false,
@@ -44,7 +39,6 @@ public ref struct NetworkPacketOut
         Flags = flags;
         Ack = ack;
         ChunksCount = chunksCount;
-        IsSixup = isSixup;
         DataSize = dataSize;
     }
 }

@@ -21,7 +21,6 @@ public class NetworkServer : INetworkServer
 
     public int MaxConnections { get; set; }
     public int MaxConnectionsPerIp { get; set; }
-    public bool AcceptSixupConnections { get; set; }
     public INetworkPacketUnpacker PacketUnpacker { get; protected set; } = null!;
     public IReadOnlyList<INetworkConnection> Connections { get; protected set; } = null!;
 
@@ -39,15 +38,14 @@ public class NetworkServer : INetworkServer
 
     protected virtual INetworkPacketUnpacker CreatePacketUnpacker()
     {
-        return new NetworkPacketUnpackerSixup();
+        return new NetworkPacketUnpacker();
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public virtual bool TryInit(
         IPEndPoint localEP,
         int maxConnections = 64,
-        int maxConnectionsPerIp = 4,
-        bool acceptSixupConnections = true)
+        int maxConnectionsPerIp = 4)
     {
         if (!NetworkHelper.TryGetUdpClient(localEP, out var socket))
         {
@@ -61,7 +59,6 @@ public class NetworkServer : INetworkServer
 
         MaxConnections = maxConnections;
         MaxConnectionsPerIp = maxConnectionsPerIp;
-        AcceptSixupConnections = acceptSixupConnections;
 
         Logger.LogDebug("The network server has been successfully initialized");
         Logger.LogInformation("Local address: {EndPoint}", EndPoint!.ToString());
@@ -114,18 +111,12 @@ public class NetworkServer : INetworkServer
                 continue;
             }
 
-            if (packet.Flags.HasFlag(PacketFlags.ConnectionLess))
+            if (packet.Flags.HasFlag(NetworkPacketInFlags.ConnectionLess))
             {
-                if (packet.IsSixup && packet.SecurityToken != GetToken(endPoint))
-                {
-                    continue;
-                }
-
                 yield return new NetworkMessage(
                     connectionId: -1,
                     endPoint: endPoint,
                     flags: NetworkMessageFlags.ConnectionLess,
-                    responseToken: packet.ResponseToken,
                     data: packet.Data,
                     extraData: packet.ExtraData
                 );
@@ -133,7 +124,8 @@ public class NetworkServer : INetworkServer
                 continue;
             }
 
-            if (packet.Data.Length == 0 && packet.Flags.HasFlag(PacketFlags.Connection))
+            if (packet.Data.Length == 0 &&
+                packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
             {
                 continue;
             }
@@ -148,25 +140,18 @@ public class NetworkServer : INetworkServer
                 //     throw new NotImplementedException();
                 // }
 
-                if (packet.Flags.HasFlag(PacketFlags.Connection))
+                if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
                 {
                     // TODO ????
                     // throw new NotImplementedException();
                 }
 
-                foreach (var message in Connections[connectionId].ProcessPacket(packet))
+                foreach (var message in Connections[connectionId].ProcessPacket(endPoint, packet))
                     yield return message;
             }
             else
             {
-                if (packet.IsSixup)
-                {
-                    throw new NotImplementedException();
-                }
-                else
-                {
-                    ProcessConnectionStateMessage(endPoint, packet);
-                }
+                ProcessConnectionStateMessage(endPoint, packet);
             }
         }
     }
@@ -175,7 +160,7 @@ public class NetworkServer : INetworkServer
         IPEndPoint endPoint,
         NetworkPacketIn packetIn)
     {
-        if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(PacketFlags.Connection))
+        if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(NetworkPacketInFlags.Connection))
         {
             return;
         }
@@ -209,7 +194,6 @@ public class NetworkServer : INetworkServer
             endPoint: endPoint,
             msg: ConnectionStateMsg.ConnectAccept,
             token: GetToken(endPoint),
-            isSixup: packetIn.IsSixup,
             extraData: SecurityToken.Magic
         );
     }
@@ -221,22 +205,15 @@ public class NetworkServer : INetworkServer
         var token = (SecurityToken) packetIn.Data.AsSpan(1);
 
         if (token == GetToken(endPoint))
-            TryAcceptConnection(endPoint, token, packetIn.IsSixup);
+            TryAcceptConnection(endPoint, token);
         else
-            Logger.LogDebug("Invalid token for EndPoint: {EndPoint}", endPoint);
+            Logger.LogDebug("Invalid token ({EndPoint})", endPoint);
     }
 
     protected virtual bool TryAcceptConnection(
         IPEndPoint endPoint,
-        SecurityToken token,
-        bool isSixup)
+        SecurityToken token)
     {
-        if (isSixup && !AcceptSixupConnections)
-        {
-            OnRejectConnectionSixupNotAllowed(endPoint, token);
-            return false;
-        }
-
         if (GetConnectionsCountWithSameAddress(endPoint, out var emptyConnectionId) + 1 > MaxConnectionsPerIp)
         {
             OnRejectConnectionToManySameIP(endPoint, token);
@@ -249,26 +226,13 @@ public class NetworkServer : INetworkServer
             return false;
         }
 
-        Connections[emptyConnectionId].Init(endPoint, token, isSixup);
+        Connections[emptyConnectionId].Init(endPoint, token);
         MapConnections.Add(endPoint.GetHashCode(), emptyConnectionId);
 
-        Logger.LogDebug("Connection accepted for endpoint: {EndPoint}", endPoint);
+        Logger.LogDebug("Connection accepted ({EndPoint})", endPoint);
         ConnectionAccepted(Connections[emptyConnectionId]);
 
         return true;
-    }
-
-    protected virtual void OnRejectConnectionSixupNotAllowed(
-        IPEndPoint endPoint,
-        SecurityToken token)
-    {
-        SendConnectionStateMsg(
-            endPoint: endPoint,
-            msg: ConnectionStateMsg.Close,
-            token: token,
-            isSixup: true,
-            extraMsg: "0.7 connections are not accepted at this time"
-        );
     }
 
     protected virtual void OnRejectConnectionToManySameIP(
@@ -279,7 +243,6 @@ public class NetworkServer : INetworkServer
             endPoint: endPoint,
             msg: ConnectionStateMsg.Close,
             token: token,
-            isSixup: true,
             extraMsg: $"Only {MaxConnectionsPerIp} players with the same IP are allowed"
         );
     }
@@ -292,7 +255,6 @@ public class NetworkServer : INetworkServer
             endPoint: endPoint,
             msg: ConnectionStateMsg.Close,
             token: token,
-            isSixup: true,
             extraMsg: "This server is full"
         );
     }
@@ -302,7 +264,7 @@ public class NetworkServer : INetworkServer
         var count = 0;
         emptyConnectionId = -1;
 
-        for (var id = 0; id < Connections.Count; id++)
+        for (var id = Connections.Count - 1; id >= 0; id--)
         {
             if (Connections[id].State == ConnectionState.Offline)
             {
@@ -310,7 +272,7 @@ public class NetworkServer : INetworkServer
                 continue;
             }
 
-            if (Connections[id].EndPoint!.Equals(endPoint))
+            if (Connections[id].EndPoint.Address.Equals(endPoint.Address))
                 count++;
         }
 
@@ -321,7 +283,6 @@ public class NetworkServer : INetworkServer
         IPEndPoint endPoint,
         ConnectionStateMsg msg,
         SecurityToken token,
-        bool isSixup,
         string? extraMsg = null)
     {
         NetworkHelper.SendConnectionStateMsg(
@@ -330,7 +291,6 @@ public class NetworkServer : INetworkServer
             msg,
             token,
             0,
-            isSixup,
             extraMsg
         );
     }
@@ -339,7 +299,6 @@ public class NetworkServer : INetworkServer
         IPEndPoint endPoint,
         ConnectionStateMsg msg,
         SecurityToken token,
-        bool isSixup,
         byte[] extraData)
     {
         NetworkHelper.SendConnectionStateMsg(
@@ -348,7 +307,6 @@ public class NetworkServer : INetworkServer
             msg,
             token,
             0,
-            isSixup,
             extraData
         );
     }

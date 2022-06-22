@@ -98,4 +98,9 @@ public readonly struct SecurityToken : IEquatable<SecurityToken>
     {
         return !left.Equals(right);
     }
+
+    public override string ToString()
+    {
+        return _value.ToString("x8");
+    }
 }

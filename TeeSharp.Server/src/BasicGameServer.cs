@@ -152,23 +152,32 @@ public const long TicksPerMillisecond = 10000;
 
     protected virtual void ProcessMasterServerMessage(NetworkMessage message)
     {
-        if (MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
+        if (message.ExtraData.Length > 0 &&
+            MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
             MasterServerPackets.GetInfo.AsSpan()
                 .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
         {
-            if (message.ExtraData.Length > 0)
-            {
-                var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
-                var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
-                throw new NotImplementedException();
-            }
-            else if (Settings.UseSixup && message.ResponseToken != SecurityToken.Unknown)
-            {
-                throw new NotImplementedException();
-            }
+            var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
+            var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
 
-            return;
+            SendServerInfoConnectionLess(message.EndPoint, token);
         }
+    }
+
+    protected virtual void SendServerInfoConnectionLess(
+        IPEndPoint endPoint,
+        SecurityToken token)
+    {
+        // TODO
+        SendServerInfo(endPoint, token, true);
+    }
+
+    protected virtual void SendServerInfo(
+        IPEndPoint endPoint,
+        SecurityToken token,
+        bool sendClients)
+    {
+
     }
 
     protected virtual void ProcessClientMessage(NetworkMessage message)

@@ -9,7 +9,5 @@ public static class NetworkConstants
     public const int MaxPacketSize = 1400;
     public const int PacketExtraDataSize = 4;
     public const int PacketHeaderSize = 3;
-    public const int PacketHeaderSizeSixup = 7;
     public const int PacketConnectionLessDataOffset = 6;
-    public const int PacketConnectionLessDataOffsetSixup = 9;
 }

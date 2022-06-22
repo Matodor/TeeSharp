@@ -120,16 +120,14 @@ public static class NetworkHelper
         ConnectionStateMsg msg,
         SecurityToken token,
         int ack,
-        bool isSixup,
         string? extraMsg = null)
     {
         SendConnectionStateMsg(
-            client,
-            endPoint,
-            msg,
-            token,
-            ack,
-            isSixup,
+            client: client,
+            endPoint: endPoint,
+            msg: msg,
+            token: token,
+            ack: ack,
             extraData: extraMsg == null
                 ? Array.Empty<byte>()
                 : Encoding.UTF8.GetBytes(extraMsg)
@@ -142,17 +140,15 @@ public static class NetworkHelper
         ConnectionStateMsg msg,
         SecurityToken token,
         int ack,
-        bool isSixup,
         byte[] extraData)
     {
         if (1 + extraData.Length > NetworkConstants.MaxPayload)
             return;
 
         var packet = new NetworkPacketOut(
-            flags: PacketFlags.Connection,
+            flags: NetworkPacketInFlags.Connection,
             ack: ack,
             chunksCount: 0,
-            isSixup: isSixup,
             dataSize: 1 + extraData.Length
         );
 
@@ -162,11 +158,11 @@ public static class NetworkHelper
             extraData.CopyTo(packet.Data.Slice(1));
 
         SendPacket(
-            client,
-            endPoint,
-            token,
-            packet,
-            false
+            client: client,
+            endPoint: endPoint,
+            token: token,
+            packet: packet,
+            useCompression: false
         );
     }
 
@@ -183,15 +179,8 @@ public static class NetworkHelper
         var bufferSize = -1;
         var buffer = (Span<byte>) new byte[NetworkConstants.MaxPacketSize];
         var compressedSize = -1;
-        var headerSize = packet.IsSixup
-            ? NetworkConstants.PacketHeaderSizeSixup
-            : NetworkConstants.PacketHeaderSize;
 
-        if (packet.IsSixup)
-        {
-            token.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-        }
-        else if (token != SecurityToken.Unsupported)
+        if (token != SecurityToken.Unsupported)
         {
             token.CopyTo(packet.Data.Slice(packet.DataSize));
             packet.DataSize += StructHelper<SecurityToken>.Size;
@@ -201,36 +190,20 @@ public static class NetworkHelper
         {
             compressedSize = 4; // TODO
             bufferSize = compressedSize;
-            packet.Flags |= PacketFlags.Compression;
+            packet.Flags |= NetworkPacketInFlags.Compression;
         }
 
         if (compressedSize <= 0 || compressedSize >= packet.Data.Length)
         {
             bufferSize = packet.DataSize;
-            packet.Data.CopyTo(buffer.Slice(headerSize));
-            packet.Flags &= ~PacketFlags.Compression;
-        }
-
-        if (packet.IsSixup)
-        {
-            var flagsSixup = PacketFlagsSixup.None;
-
-            if (packet.Flags.HasFlag(PacketFlags.Connection))
-                flagsSixup |= PacketFlagsSixup.Connection;
-
-            if (packet.Flags.HasFlag(PacketFlags.Resend))
-                flagsSixup |= PacketFlagsSixup.Resend;
-
-            if (packet.Flags.HasFlag(PacketFlags.Compression))
-                flagsSixup |= PacketFlagsSixup.Compression;
-
-            packet.Flags = (PacketFlags) flagsSixup;
+            packet.Data.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+            packet.Flags &= ~NetworkPacketInFlags.Compression;
         }
 
         if (bufferSize < 0)
             return;
 
-        bufferSize += headerSize;
+        bufferSize += NetworkConstants.PacketHeaderSize;
         buffer[0] = (byte) ((((int) packet.Flags << 2) & 0b1111_1100) | ((packet.Ack >> 8) & 0b0000_0011));
         buffer[1] = (byte) (packet.Ack & 0b1111_1111);
         buffer[2] = (byte) (packet.ChunksCount & 0b1111_1111);
