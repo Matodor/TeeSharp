@@ -142,8 +142,7 @@ public class NetworkServer : INetworkServer
 
                 if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
                 {
-                    // TODO ????
-                    // throw new NotImplementedException();
+                    throw new NotImplementedException();
                 }
 
                 foreach (var message in Connections[connectionId].ProcessPacket(endPoint, packet))
@@ -214,6 +213,13 @@ public class NetworkServer : INetworkServer
         IPEndPoint endPoint,
         SecurityToken token)
     {
+        if (token == SecurityToken.Unknown ||
+            token == SecurityToken.Unsupported)
+        {
+            OnRejectConnectionUnsupportedToken(endPoint, token);
+            return false;
+        }
+
         if (GetConnectionsCountWithSameAddress(endPoint, out var emptyConnectionId) + 1 > MaxConnectionsPerIp)
         {
             OnRejectConnectionToManySameIP(endPoint, token);
@@ -233,6 +239,18 @@ public class NetworkServer : INetworkServer
         ConnectionAccepted(Connections[emptyConnectionId]);
 
         return true;
+    }
+
+    protected virtual void OnRejectConnectionUnsupportedToken(
+        IPEndPoint endPoint,
+        SecurityToken token)
+    {
+        SendConnectionStateMsg(
+            endPoint: endPoint,
+            msg: ConnectionStateMsg.Close,
+            token: token,
+            extraMsg: "Unsupported or Unknown security token"
+        );
     }
 
     protected virtual void OnRejectConnectionToManySameIP(

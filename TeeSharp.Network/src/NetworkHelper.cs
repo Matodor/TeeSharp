@@ -148,7 +148,7 @@ public static class NetworkHelper
         var packet = new NetworkPacketOut(
             flags: NetworkPacketInFlags.Connection,
             ack: ack,
-            chunksCount: 0,
+            numberOfMessages: 0,
             dataSize: 1 + extraData.Length
         );
 
@@ -206,7 +206,7 @@ public static class NetworkHelper
         bufferSize += NetworkConstants.PacketHeaderSize;
         buffer[0] = (byte) ((((int) packet.Flags << 2) & 0b1111_1100) | ((packet.Ack >> 8) & 0b0000_0011));
         buffer[1] = (byte) (packet.Ack & 0b1111_1111);
-        buffer[2] = (byte) (packet.ChunksCount & 0b1111_1111);
+        buffer[2] = (byte) (packet.NumberOfMessages & 0b1111_1111);
 
         try
         {

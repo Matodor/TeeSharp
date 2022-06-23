@@ -35,7 +35,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         }
 
         var ack = ((buffer[0] & 0b_0000_0011) << 8) | buffer[1];
-        var chunksCount = buffer[2];
+        var numberOfMessages = buffer[2];
         var data = new byte[buffer.Length - NetworkConstants.PacketHeaderSize];
         var extraData = Array.Empty<byte>();
 
@@ -60,7 +60,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         packet = new NetworkPacketIn(
             flags: flags,
             ack: ack,
-            chunksCount: chunksCount,
+            numberOfMessages: numberOfMessages,
             data: data,
             extraData: extraData
         );
@@ -106,7 +106,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         packet = new NetworkPacketIn(
             flags: NetworkPacketInFlags.ConnectionLess,
             ack: 0,
-            chunksCount: 0,
+            numberOfMessages: 0,
             data: data,
             extraData: extraData
         );

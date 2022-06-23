@@ -15,7 +15,7 @@ public class NetworkPacketIn
     /// <summary>
     ///
     /// </summary>
-    public int ChunksCount { get; }
+    public int NumberOfMessages { get; }
 
     /// <summary>
     ///
@@ -30,13 +30,13 @@ public class NetworkPacketIn
     public NetworkPacketIn(
         NetworkPacketInFlags flags,
         int ack,
-        int chunksCount,
+        int numberOfMessages,
         byte[] data,
         byte[] extraData)
     {
         Flags = flags;
         Ack = ack;
-        ChunksCount = chunksCount;
+        NumberOfMessages = numberOfMessages;
         Data = data;
         ExtraData = extraData;
     }

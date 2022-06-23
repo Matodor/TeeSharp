@@ -17,7 +17,7 @@ public ref struct NetworkPacketOut
     /// <summary>
     ///
     /// </summary>
-    public int ChunksCount;
+    public int NumberOfMessages;
 
     /// <summary>
     ///
@@ -32,13 +32,13 @@ public ref struct NetworkPacketOut
     public NetworkPacketOut(
         NetworkPacketInFlags flags = NetworkPacketInFlags.None,
         int ack = 0,
-        int chunksCount = 0,
+        int numberOfMessages = 0,
         bool isSixup = false,
         int dataSize = 0)
     {
         Flags = flags;
         Ack = ack;
-        ChunksCount = chunksCount;
+        NumberOfMessages = numberOfMessages;
         DataSize = dataSize;
     }
 }
