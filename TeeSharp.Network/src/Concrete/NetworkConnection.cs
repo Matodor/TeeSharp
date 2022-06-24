@@ -12,6 +12,7 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkConnection : INetworkConnection
 {
+    public int Id { get; private set; }
     public ConnectionState State { get; protected set; }
     public IPEndPoint EndPoint { get; protected set; }
 
@@ -36,10 +37,11 @@ public class NetworkConnection : INetworkConnection
         EndPoint = null!;
     }
 
-    public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
+    public virtual void Init(int id, IPEndPoint endPoint, SecurityToken securityToken)
     {
         Reset();
 
+        Id = id;
         State = ConnectionState.Online;
         EndPoint = endPoint;
         SecurityToken = securityToken;
@@ -99,11 +101,6 @@ public class NetworkConnection : INetworkConnection
             return Enumerable.Empty<NetworkMessage>();
         }
 
-        if (packet.Flags.HasFlag(NetworkPacketInFlags.Resend))
-        {
-            ResendMessages();
-        }
-
         if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
         {
             var msg = (ConnectionStateMsg)data[0];
@@ -138,11 +135,41 @@ public class NetworkConnection : INetworkConnection
 
         var header = new NetworkMessageHeader();
         var messages = new List<NetworkMessage>(numberOfMessages);
-        var message = 0;
 
-        for (int i = 0; i < numberOfMessages; i++)
+        for (var i = 0; i < numberOfMessages; i++)
         {
+            data = header.Unpack(data);
 
+            if (data.Length < header.Size)
+                return messages;
+
+            if (header.Flags.HasFlag(NetworkMessageFlags.Vital))
+            {
+                if (header.Sequence == (Ack + 1) % NetworkConstants.MaxSequence)
+                {
+                    Ack = header.Sequence;
+                }
+                else
+                {
+                    if (NetworkHelper.IsSequenceInBackroom(header.Sequence, Ack))
+                        continue;
+
+                    Logger.LogDebug("Asking for resend {Sequence} {Ack}",
+                        header.Sequence, (Ack + 1) % NetworkConstants.MaxSequence);
+                    ResendMessages();
+                    continue;
+                }
+            }
+
+            messages.Add(new NetworkMessage(
+                connectionId: Id,
+                endPoint: EndPoint,
+                flags: header.Flags,
+                data: data.Slice(0, header.Size).ToArray(),
+                extraData: Array.Empty<byte>()
+            ));
+
+            data = data.Slice(header.Size);
         }
 
         return messages;
@@ -173,7 +200,7 @@ public class NetworkConnection : INetworkConnection
 
     protected virtual void AckMessages(int ack)
     {
-        throw new NotImplementedException();
+        // TODO implement this
     }
 
     protected virtual void ResendMessages()

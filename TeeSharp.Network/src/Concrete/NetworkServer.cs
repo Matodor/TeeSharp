@@ -232,7 +232,7 @@ public class NetworkServer : INetworkServer
             return false;
         }
 
-        Connections[emptyConnectionId].Init(endPoint, token);
+        Connections[emptyConnectionId].Init(emptyConnectionId, endPoint, token);
         MapConnections.Add(endPoint.GetHashCode(), emptyConnectionId);
 
         Logger.LogDebug("Connection accepted ({EndPoint})", endPoint);
