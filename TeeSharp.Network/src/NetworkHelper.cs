@@ -217,4 +217,23 @@ public static class NetworkHelper
             // ignore
         }
     }
+
+    public static bool IsSequenceInBackroom(int sequence, int ack)
+    {
+        var bottom = ack - NetworkConstants.MaxSequence / 2;
+        if (bottom < 0)
+        {
+            if (sequence <= ack ||
+                sequence >= (bottom + NetworkConstants.MaxSequence))
+            {
+                return true;
+            }
+        }
+        else if (sequence <= ack && sequence >= bottom)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
