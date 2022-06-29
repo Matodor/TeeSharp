@@ -3,13 +3,15 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
-using TeeSharp.Core.Settings;
+using TeeSharp.Common.Settings;
 using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
 using TeeSharp.Network.Concrete;
+using Uuids;
 
 namespace TeeSharp.Server;
 
@@ -131,6 +133,11 @@ public const long TicksPerMillisecond = 10000;
         CtsServer!.Cancel();
     }
 
+    public void RegisterMessageHandler(ProtocolMessage msgId, IGameServer.MessageHandler handler)
+    {
+        throw new NotImplementedException();
+    }
+
     protected virtual void UpdateNetwork()
     {
         if (CtsServer!.IsCancellationRequested)
@@ -182,6 +189,33 @@ public const long TicksPerMillisecond = 10000;
 
     protected virtual void ProcessClientMessage(NetworkMessage message)
     {
+        var unPacker = new UnPacker(message.Data);
+        if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
+        {
+
+        }
+        else
+        {
+            ProcessUnknownClientMessage(
+                message.ConnectionId,
+                msgId,
+                msgUuid,
+                unPacker,
+                message.EndPoint,
+                message.Flags
+            );
+        }
+    }
+
+    protected virtual void ProcessUnknownClientMessage(
+        int connectionId,
+        ProtocolMessage msgId,
+        Uuid msgUuid,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+        // ignore
     }
 
     protected virtual void RunMainLoop(CancellationToken cancellationToken)
