@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using TeeSharp.Core;
-using TeeSharp.Core.Settings;
+using TeeSharp.Common.Settings;
 
 namespace Examples.BasicServer;
 

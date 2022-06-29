@@ -1,6 +1,6 @@
 using System;
 
-namespace TeeSharp.Core.Settings;
+namespace TeeSharp.Common.Settings;
 
 public interface ISettingsChangesNotifier<out TSettings>
 {

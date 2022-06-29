@@ -9,7 +9,7 @@ internal static class Program
     {
         // new SecurityTokensBenchmark().Setup();
 
-        string result;
+        string? result;
         int number;
 
         var benchmarks = new[]
@@ -27,6 +27,7 @@ internal static class Program
             typeof(SecurityTokensBenchmark),
             typeof(StringToBytesArrayBenchmark),
             typeof(ImplicitCastBenchmark),
+            typeof(UuidBenchmark),
         };
 
         do
