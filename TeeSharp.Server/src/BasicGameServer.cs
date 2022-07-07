@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
@@ -7,6 +8,7 @@ using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Common.Settings;
+using TeeSharp.Core.Extensions;
 using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
@@ -17,7 +19,7 @@ namespace TeeSharp.Server;
 
 public class BasicGameServer : IGameServer
 {
-public const long TicksPerMillisecond = 10000;
+    public const long TicksPerMillisecond = 10000;
     public const long TicksPerSecond = TicksPerMillisecond * 1000;
 
     public int TickRate { get; }
@@ -34,6 +36,15 @@ public const long TicksPerMillisecond = 10000;
     protected TimeSpan TargetElapsedTime { get; }
     protected TimeSpan MaxElapsedTime { get; }
 
+    protected Dictionary<Uuid, UuidMessageCallback> ClientUuidMessageHandlers { get; set; }
+
+    protected delegate void UuidMessageCallback(
+        int connectionId,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags
+    );
+
     private readonly IDisposable? _settingsChangesListener;
 
     public BasicGameServer(
@@ -47,10 +58,18 @@ public const long TicksPerMillisecond = 10000;
         TargetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
         MaxElapsedTime = TimeSpan.FromMilliseconds(500);
 
+        ClientUuidMessageHandlers = new Dictionary<Uuid, UuidMessageCallback>();
+        SetClientUuidMessageHandlers();
+
         Logger = logger ?? Tee.LoggerFactory.CreateLogger("GameServer");
         Settings = serverSettingsNotifier.Current;
         ServerState = ServerState.StartsUp;
         NetworkServer = CreateNetworkServer();
+    }
+
+    protected virtual void SetClientUuidMessageHandlers()
+    {
+        SetClientUuidMessageHandler(UuidManager.DDNet.ClientVersion, OnUuidDDNetClientVersionMessage);
     }
 
     protected virtual INetworkServer CreateNetworkServer()
@@ -133,9 +152,11 @@ public const long TicksPerMillisecond = 10000;
         CtsServer!.Cancel();
     }
 
-    public void RegisterMessageHandler(ProtocolMessage msgId, IGameServer.MessageHandler handler)
+    protected virtual void SetClientUuidMessageHandler(
+        Uuid msgUuid,
+        UuidMessageCallback callback)
     {
-        throw new NotImplementedException();
+        ClientUuidMessageHandlers.AddOrOverride(msgUuid, callback);
     }
 
     protected virtual void UpdateNetwork()
@@ -192,7 +213,29 @@ public const long TicksPerMillisecond = 10000;
         var unPacker = new UnPacker(message.Data);
         if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
         {
-
+            if (isSystemMsg)
+            {
+                if (msgId == ProtocolMessage.Empty)
+                {
+                    ProcessClientSystemUuidMessage(
+                        message.ConnectionId,
+                        msgUuid,
+                        unPacker,
+                        message.EndPoint,
+                        message.Flags
+                    );
+                }
+                else
+                {
+                    ProcessClientSystemMessage(
+                        message.ConnectionId,
+                        msgId,
+                        unPacker,
+                        message.EndPoint,
+                        message.Flags
+                    );
+                }
+            }
         }
         else
         {
@@ -205,6 +248,47 @@ public const long TicksPerMillisecond = 10000;
                 message.Flags
             );
         }
+    }
+
+    protected virtual void ProcessClientSystemUuidMessage(
+        int connectionId,
+        Uuid msgUuid,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+        if (ClientUuidMessageHandlers.TryGetValue(msgUuid, out var callback))
+        {
+            callback(connectionId, unPacker, endPoint, flags);
+        }
+        else
+        {
+            Logger.LogDebug("Unknown uuid message: {Uuid}", msgUuid);
+        }
+    }
+
+    protected virtual void OnUuidDDNetClientVersionMessage(
+        int connectionId,
+        UnPacker unPacker,
+        IPEndPoint endpoint,
+        NetworkMessageFlags flags)
+    {
+        if (!unPacker.TryGetUuid(out var connectionUuid))
+            return;
+        if (!unPacker.TryGetInteger(out var version))
+            return;
+        if (!unPacker.TryGetString(out var versionStr))
+            return;
+    }
+
+    protected virtual void ProcessClientSystemMessage(
+        int connectionId,
+        ProtocolMessage msgId,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+
     }
 
     protected virtual void ProcessUnknownClientMessage(
