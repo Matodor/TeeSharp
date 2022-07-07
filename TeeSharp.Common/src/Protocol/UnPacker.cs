@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using TeeSharp.Core;
 using Uuids;
 
@@ -8,13 +10,14 @@ public ref struct UnPacker
 {
     public bool HasError { get; private set; }
 
-    private readonly Span<byte> _dataOriginal;
+    public readonly Span<byte> DataOriginal;
+
     private Span<byte> _data;
 
     public UnPacker(byte[] data)
     {
         _data = data;
-        _dataOriginal = _data;
+        DataOriginal = _data;
         HasError = false;
     }
 
@@ -79,6 +82,30 @@ public ref struct UnPacker
 
         result = _data.Slice(0, size);
         _data = _data.Slice(size);
+        return true;
+    }
+
+    public bool TryGetString([NotNullWhen(true)] out string? result)
+    {
+        if (HasError)
+        {
+            HasError = true;
+            result = default;
+            return false;
+        }
+
+        var endIndex = _data.IndexOf((byte)0);
+        if (endIndex == -1)
+        {
+            result = Encoding.UTF8.GetString(_data);
+            _data = Span<byte>.Empty;
+        }
+        else
+        {
+            result = Encoding.UTF8.GetString(_data.Slice(0, endIndex));
+            _data = _data.Slice(endIndex + 1);
+        }
+
         return true;
     }
 }
