@@ -1,23 +1,21 @@
-using System.Net;
-
 namespace TeeSharp.Network;
 
-public class NetworkMessage
+public class NetworkPacketIn
 {
     /// <summary>
     ///
     /// </summary>
-    public int ConnectionId { get; }
+    public NetworkPacketInFlags Flags { get; }
 
     /// <summary>
     ///
     /// </summary>
-    public IPEndPoint EndPoint { get; }
+    public int Ack { get; }
 
     /// <summary>
     ///
     /// </summary>
-    public NetworkMessageFlags Flags { get; }
+    public int NumberOfMessages { get; }
 
     /// <summary>
     ///
@@ -29,16 +27,16 @@ public class NetworkMessage
     /// </summary>
     public byte[] ExtraData { get; }
 
-    public NetworkMessage(
-        int connectionId,
-        IPEndPoint endPoint,
-        NetworkMessageFlags flags,
+    public NetworkPacketIn(
+        NetworkPacketInFlags flags,
+        int ack,
+        int numberOfMessages,
         byte[] data,
         byte[] extraData)
     {
-        ConnectionId = connectionId;
-        EndPoint = endPoint;
         Flags = flags;
+        Ack = ack;
+        NumberOfMessages = numberOfMessages;
         Data = data;
         ExtraData = extraData;
     }

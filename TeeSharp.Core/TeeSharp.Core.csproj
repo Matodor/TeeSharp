@@ -11,6 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Serilog" Version="2.10.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0-preview.2.22152.2" />
     </ItemGroup>
 </Project>

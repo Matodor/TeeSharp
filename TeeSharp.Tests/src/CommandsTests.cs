@@ -5,12 +5,14 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using TeeSharp.Commands;
 using TeeSharp.Commands.ArgumentReaders;
 using TeeSharp.Commands.Builders;
 using TeeSharp.Commands.Errors;
 using TeeSharp.Commands.Parsers;
+using TeeSharp.Core;
 
 namespace TeeSharp.Tests;
 
@@ -19,6 +21,8 @@ public class CommandsTests
     [OneTimeSetUp]
     public void Init()
     {
+        Tee.Logger = NullLogger.Instance;
+        Tee.LoggerFactory = NullLoggerFactory.Instance;
     }
 
     [Test]
@@ -27,7 +31,6 @@ public class CommandsTests
         var sum = 0f;
         var executor = new CommandsExecutor();
 
-        executor.LineParser.Prefix = "/";
         executor.Commands.Add(builder =>
         {
             builder
@@ -72,7 +75,6 @@ public class CommandsTests
         var sum = 0;
         var executor = new CommandsExecutor();
 
-        executor.LineParser.Prefix = "/";
         executor.Commands.Add(builder =>
         {
             builder
@@ -98,7 +100,7 @@ public class CommandsTests
     [Test]
     public void ShouldContainsCommand()
     {
-        var dictionary = new CommandsDictionary
+        var dictionary = new CommandsDictionary()
         {
             builder =>
             {

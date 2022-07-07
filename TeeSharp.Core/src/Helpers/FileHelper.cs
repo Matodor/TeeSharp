@@ -8,7 +8,7 @@ namespace TeeSharp.Core.Helpers;
 /// </summary>
 public static class FileHelper
 {
-    public static string WorkingPath(string relativePath = null)
+    public static string WorkingPath(string? relativePath = null)
     {
         return FirstOrCombine(
             dir: AppDomain.CurrentDomain.BaseDirectory,
@@ -16,7 +16,7 @@ public static class FileHelper
         );
     }
 
-    public static string AppDataPath(string relativePath = null)
+    public static string AppDataPath(string? relativePath = null)
     {
         return FirstOrCombine(
             dir: Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -24,7 +24,7 @@ public static class FileHelper
         );
     }
 
-    public static string FirstOrCombine(string dir, string relativePath)
+    public static string FirstOrCombine(string dir, string? relativePath)
     {
         return string.IsNullOrEmpty(relativePath)
             ? dir

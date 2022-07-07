@@ -1,0 +1,383 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Threading;
+using Microsoft.Extensions.Logging;
+using TeeSharp.Common.Protocol;
+using TeeSharp.Core;
+using TeeSharp.Core.Helpers;
+using TeeSharp.Common.Settings;
+using TeeSharp.Core.Extensions;
+using TeeSharp.MasterServer;
+using TeeSharp.Network;
+using TeeSharp.Network.Abstract;
+using TeeSharp.Network.Concrete;
+using Uuids;
+
+namespace TeeSharp.Server;
+
+public class BasicGameServer : IGameServer
+{
+    public const long TicksPerMillisecond = 10000;
+    public const long TicksPerSecond = TicksPerMillisecond * 1000;
+
+    public int TickRate { get; }
+    public int Tick { get; private set; }
+    public TimeSpan GameTime { get; private set; }
+    public ServerState ServerState { get; private set; }
+    public ServerSettings Settings { get; private set; }
+
+    protected ILogger Logger { get; set; }
+    protected INetworkServer NetworkServer { get; set; }
+    protected long PrevTicks { get; set; }
+    protected CancellationTokenSource? CtsServer { get; private set; }
+
+    protected TimeSpan TargetElapsedTime { get; }
+    protected TimeSpan MaxElapsedTime { get; }
+
+    protected Dictionary<Uuid, UuidMessageCallback> ClientUuidMessageHandlers { get; set; }
+
+    protected delegate void UuidMessageCallback(
+        int connectionId,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags
+    );
+
+    private readonly IDisposable? _settingsChangesListener;
+
+    public BasicGameServer(
+        ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
+        ILogger? logger = null,
+        int tickRate = 50)
+    {
+        _settingsChangesListener = serverSettingsNotifier.Subscribe(OnChangeSettings);
+
+        TickRate = tickRate;
+        TargetElapsedTime = TimeSpan.FromTicks(TicksPerSecond / TickRate);
+        MaxElapsedTime = TimeSpan.FromMilliseconds(500);
+
+        ClientUuidMessageHandlers = new Dictionary<Uuid, UuidMessageCallback>();
+        SetClientUuidMessageHandlers();
+
+        Logger = logger ?? Tee.LoggerFactory.CreateLogger("GameServer");
+        Settings = serverSettingsNotifier.Current;
+        ServerState = ServerState.StartsUp;
+        NetworkServer = CreateNetworkServer();
+    }
+
+    protected virtual void SetClientUuidMessageHandlers()
+    {
+        SetClientUuidMessageHandler(UuidManager.DDNet.ClientVersion, OnUuidDDNetClientVersionMessage);
+    }
+
+    protected virtual INetworkServer CreateNetworkServer()
+    {
+        return new NetworkServer();
+    }
+
+    protected virtual void OnChangeSettings(ServerSettings changedSettings)
+    {
+        if (Settings.UseHotReload)
+        {
+            // TODO
+            Logger.LogInformation("The settings changes have been applied");
+        }
+        else
+        {
+            Logger.LogInformation("Hot reload disabled, changes ignored");
+        }
+    }
+
+    protected virtual void BeforeRun()
+    {
+    }
+
+    protected virtual IPEndPoint GetNetworkServerBindAddress()
+    {
+        return string.IsNullOrEmpty(Settings.BindAddress)
+            ? new IPEndPoint(IPAddress.Any, Settings.Port)
+            : new IPEndPoint(IPAddress.Parse(Settings.BindAddress), Settings.Port);
+    }
+
+    protected virtual bool TryInitNetworkServer()
+    {
+        return NetworkServer.TryInit(
+            localEP: GetNetworkServerBindAddress(),
+            maxConnections: Settings.MaxConnections,
+            maxConnectionsPerIp: Settings.MaxConnectionsPerIp
+        );
+    }
+
+    public void Run(CancellationToken cancellationToken)
+    {
+        if (ServerState is ServerState.Running or ServerState.Stopping)
+        {
+            Logger.LogWarning("Unable to start the server");
+            Logger.LogWarning("Current server state: {ServerState}", ServerState);
+            return;
+        }
+
+        CtsServer = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        if (!TryInitNetworkServer())
+        {
+            Logger.LogError("Error during network server initialization");
+            return;
+        }
+
+        Logger.LogInformation("Server name: {ServerName}", Settings.Name);
+        ServerState = ServerState.Running;
+        Tick = 0;
+
+        RunMainLoop(CtsServer.Token);
+        Stop();
+
+        ServerState = ServerState.Stopped;
+        Logger.LogInformation("Stopped");
+    }
+
+    protected virtual void BeforeStop()
+    {
+    }
+
+    public void Stop()
+    {
+        if (ServerState is ServerState.Stopping or ServerState.Stopped)
+            return;
+
+        BeforeStop();
+        ServerState = ServerState.Stopping;
+        CtsServer!.Cancel();
+    }
+
+    protected virtual void SetClientUuidMessageHandler(
+        Uuid msgUuid,
+        UuidMessageCallback callback)
+    {
+        ClientUuidMessageHandlers.AddOrOverride(msgUuid, callback);
+    }
+
+    protected virtual void UpdateNetwork()
+    {
+        if (CtsServer!.IsCancellationRequested)
+            return;
+
+        foreach (var message in NetworkServer.GetMessages(CtsServer.Token))
+        {
+            ProcessNetworkMessage(message);
+        }
+    }
+
+    protected virtual void ProcessNetworkMessage(NetworkMessage message)
+    {
+        if (message.ConnectionId == -1)
+            ProcessMasterServerMessage(message);
+        else
+            ProcessClientMessage(message);
+    }
+
+    protected virtual void ProcessMasterServerMessage(NetworkMessage message)
+    {
+        if (message.ExtraData.Length > 0 &&
+            MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
+            MasterServerPackets.GetInfo.AsSpan()
+                .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
+        {
+            var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
+            var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
+
+            SendServerInfoConnectionLess(message.EndPoint, token);
+        }
+    }
+
+    protected virtual void SendServerInfoConnectionLess(
+        IPEndPoint endPoint,
+        SecurityToken token)
+    {
+        // TODO
+        SendServerInfo(endPoint, token, true);
+    }
+
+    protected virtual void SendServerInfo(
+        IPEndPoint endPoint,
+        SecurityToken token,
+        bool sendClients)
+    {
+
+    }
+
+    protected virtual void ProcessClientMessage(NetworkMessage message)
+    {
+        var unPacker = new UnPacker(message.Data);
+        if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
+        {
+            if (isSystemMsg)
+            {
+                if (msgId == ProtocolMessage.Empty)
+                {
+                    ProcessClientSystemUuidMessage(
+                        message.ConnectionId,
+                        msgUuid,
+                        unPacker,
+                        message.EndPoint,
+                        message.Flags
+                    );
+                }
+                else
+                {
+                    ProcessClientSystemMessage(
+                        message.ConnectionId,
+                        msgId,
+                        unPacker,
+                        message.EndPoint,
+                        message.Flags
+                    );
+                }
+            }
+        }
+        else
+        {
+            ProcessUnknownClientMessage(
+                message.ConnectionId,
+                msgId,
+                msgUuid,
+                unPacker,
+                message.EndPoint,
+                message.Flags
+            );
+        }
+    }
+
+    protected virtual void ProcessClientSystemUuidMessage(
+        int connectionId,
+        Uuid msgUuid,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+        if (ClientUuidMessageHandlers.TryGetValue(msgUuid, out var callback))
+        {
+            callback(connectionId, unPacker, endPoint, flags);
+        }
+        else
+        {
+            Logger.LogDebug("Unknown uuid message: {Uuid}", msgUuid);
+        }
+    }
+
+    protected virtual void OnUuidDDNetClientVersionMessage(
+        int connectionId,
+        UnPacker unPacker,
+        IPEndPoint endpoint,
+        NetworkMessageFlags flags)
+    {
+        if (!unPacker.TryGetUuid(out var connectionUuid))
+            return;
+        if (!unPacker.TryGetInteger(out var version))
+            return;
+        if (!unPacker.TryGetString(out var versionStr))
+            return;
+    }
+
+    protected virtual void ProcessClientSystemMessage(
+        int connectionId,
+        ProtocolMessage msgId,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+
+    }
+
+    protected virtual void ProcessUnknownClientMessage(
+        int connectionId,
+        ProtocolMessage msgId,
+        Uuid msgUuid,
+        UnPacker unPacker,
+        IPEndPoint endPoint,
+        NetworkMessageFlags flags)
+    {
+        // ignore
+    }
+
+    protected virtual void RunMainLoop(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        BeforeRun();
+
+        var accumulatedElapsedTime = TimeSpan.Zero;
+        var gameTimer = Stopwatch.StartNew();
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            BeginLoop:
+
+            var currentTicks = gameTimer.Elapsed.Ticks;
+            accumulatedElapsedTime += TimeSpan.FromTicks(currentTicks - PrevTicks);
+            PrevTicks = currentTicks;
+
+            if (accumulatedElapsedTime < TargetElapsedTime)
+            {
+                var sleepTime = (TargetElapsedTime - accumulatedElapsedTime).TotalMilliseconds;
+#if _WINDOWS
+                ThreadsHelper.SleepForNoMoreThan(sleepTime);
+#else
+                if (sleepTime >= 2)
+                    Thread.Sleep(1);
+#endif
+                goto BeginLoop;
+            }
+
+            if (accumulatedElapsedTime > MaxElapsedTime)
+                accumulatedElapsedTime = MaxElapsedTime;
+
+            while (accumulatedElapsedTime >= TargetElapsedTime)
+            {
+                accumulatedElapsedTime -= TargetElapsedTime;
+                GameTime += TargetElapsedTime;
+
+                ++Tick;
+
+                BeforeUpdate();
+                Update();
+                AfterUpdate();
+            }
+
+            UpdateNetwork();
+        }
+
+        gameTimer.Stop();
+        Logger.LogDebug("Main loop stopped");
+        Logger.LogInformation("Main loop complete after: {Elapsed}", gameTimer.Elapsed.ToString("g"));
+    }
+
+    protected virtual void BeforeUpdate()
+    {
+    }
+
+    /// <summary>
+    /// Game server tick
+    /// </summary>
+    protected virtual void Update()
+    {
+        if (Tick % TickRate == 0)
+        {
+            Logger.LogInformation("Tick: {Tick}", Tick);
+            Logger.LogInformation("GameTime: {GameTime}", GameTime);
+        }
+    }
+
+    protected virtual void AfterUpdate()
+    {
+    }
+
+    public void Dispose()
+    {
+        _settingsChangesListener?.Dispose();
+        CtsServer?.Dispose();
+        CtsServer = null;
+    }
+}

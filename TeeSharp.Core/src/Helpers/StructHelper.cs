@@ -17,7 +17,6 @@ public static class StructHelper<T> where T : struct
         Type = typeof(T);
         IsArray = Type.IsArray;
         Size = Marshal.SizeOf(Type);
-        // ReSharper disable once AssignNullToNotNullAttribute
-        ElementSize = Type.IsArray ? Marshal.SizeOf(Type.GetElementType()) : Size;
+        ElementSize = Type.IsArray ? Marshal.SizeOf(Type.GetElementType()!) : Size;
     }
 }

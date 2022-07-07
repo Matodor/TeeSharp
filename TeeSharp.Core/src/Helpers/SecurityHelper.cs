@@ -4,7 +4,7 @@ namespace TeeSharp.Core.Helpers;
 
 public static class SecurityHelper
 {
-    public static ulong KnuthHash(Span<byte> buffer)
+    public static ulong KnuthHash(ReadOnlySpan<byte> buffer)
     {
         var hashedValue = 3074457345618258791ul;
         for (var i = 0; i < buffer.Length; i++)
@@ -14,8 +14,8 @@ public static class SecurityHelper
         }
         return hashedValue;
     }
-        
-    public static ulong KnuthHash(ulong hashedValue, Span<byte> buffer)
+
+    public static ulong KnuthHash(ulong hashedValue, ReadOnlySpan<byte> buffer)
     {
         for (var i = 0; i < buffer.Length; i++)
         {
