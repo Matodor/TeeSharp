@@ -28,6 +28,7 @@ internal static class Program
             typeof(StringToBytesArrayBenchmark),
             typeof(ImplicitCastBenchmark),
             typeof(UuidBenchmark),
+            typeof(TupleBenchmark),
         };
 
         do
