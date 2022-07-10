@@ -9,6 +9,6 @@ public interface INetworkConnection
     ConnectionState State { get; }
     IPEndPoint EndPoint { get; }
 
-    void Init(int id, IPEndPoint endPoint, SecurityToken securityToken);
+    void Init(IPEndPoint endPoint, SecurityToken securityToken);
     IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet);
 }

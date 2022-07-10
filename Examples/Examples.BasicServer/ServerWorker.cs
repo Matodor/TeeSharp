@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
 using TeeSharp.Core;
 using TeeSharp.Server;
+using TeeSharp.Server.Abstract;
+using TeeSharp.Server.Concrete;
 
 namespace Examples.BasicServer;
 
@@ -8,7 +10,7 @@ public class ServerWorker : BackgroundService
 {
     private readonly IOptionsMonitor<ServerSettings> _serverSettingsMonitor;
     private readonly IHostApplicationLifetime _applicationLifetime;
-    private readonly IGameServer _gameServer;
+    private readonly IServer _server;
 
     public ServerWorker(
         ILoggerFactory loggerFactory,
@@ -21,7 +23,7 @@ public class ServerWorker : BackgroundService
         _serverSettingsMonitor = serverSettingsMonitor;
         _applicationLifetime = applicationLifetime;
 
-        _gameServer = new BasicGameServer(
+        _server = new TeeSharp.Server.Concrete.BasicServer(
             new SettingsChangesNotifier<ServerSettings>(serverSettingsMonitor)
         );
     }
@@ -30,7 +32,7 @@ public class ServerWorker : BackgroundService
     {
         return Task.Run(() =>
         {
-            _gameServer.Run(stoppingToken);
+            _server.Run(stoppingToken);
             _applicationLifetime.StopApplication();
         }, stoppingToken);
     }
@@ -39,6 +41,6 @@ public class ServerWorker : BackgroundService
     {
         base.Dispose();
 
-        _gameServer.Dispose();
+        _server.Dispose();
     }
 }

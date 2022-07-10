@@ -12,7 +12,7 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkConnection : INetworkConnection
 {
-    public int Id { get; private set; }
+    public int Id { get; }
     public ConnectionState State { get; protected set; }
     public IPEndPoint EndPoint { get; protected set; }
 
@@ -29,19 +29,20 @@ public class NetworkConnection : INetworkConnection
     protected DateTime LastUpdateTime;
 
     public NetworkConnection(
+        int id,
         UdpClient socket,
         ILogger? logger = null)
     {
+        Id = id;
         Logger = logger ?? Tee.LoggerFactory.CreateLogger("NetworkConnection");
         Socket = socket;
         EndPoint = null!;
     }
 
-    public virtual void Init(int id, IPEndPoint endPoint, SecurityToken securityToken)
+    public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
     {
         Reset();
 
-        Id = id;
         State = ConnectionState.Online;
         EndPoint = endPoint;
         SecurityToken = securityToken;

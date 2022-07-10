@@ -19,9 +19,9 @@ public class NetworkServer : INetworkServer
 {
     public event Action<INetworkConnection> ConnectionAccepted = delegate {  };
 
-    public int MaxConnections { get; set; }
+    public int MaxConnections { get; private set; }
     public int MaxConnectionsPerIp { get; set; }
-    public INetworkPacketUnpacker PacketUnpacker { get; protected set; } = null!;
+    public INetworkPacketUnpacker PacketUnpacker { get; protected set; }
     public IReadOnlyList<INetworkConnection> Connections { get; protected set; } = null!;
 
     protected Dictionary<int, int> MapConnections { get; set; } = null!;
@@ -76,7 +76,7 @@ public class NetworkServer : INetworkServer
 
     protected virtual INetworkConnection CreateEmptyConnection(int id)
     {
-        return new NetworkConnection(Socket!);
+        return new NetworkConnection(id, Socket!);
     }
 
     public bool TryGetConnectionId(IPEndPoint endPoint, out int id)
@@ -142,7 +142,10 @@ public class NetworkServer : INetworkServer
 
                 if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
                 {
-                    throw new NotImplementedException();
+                    if ((ConnectionStateMsg)packet.Data[0] != ConnectionStateMsg.Close)
+                    {
+                        throw new NotImplementedException();
+                    }
                 }
 
                 foreach (var message in Connections[connectionId].ProcessPacket(endPoint, packet))
@@ -232,7 +235,7 @@ public class NetworkServer : INetworkServer
             return false;
         }
 
-        Connections[emptyConnectionId].Init(emptyConnectionId, endPoint, token);
+        Connections[emptyConnectionId].Init(endPoint, token);
         MapConnections.Add(endPoint.GetHashCode(), emptyConnectionId);
 
         Logger.LogDebug("Connection accepted ({EndPoint})", endPoint);

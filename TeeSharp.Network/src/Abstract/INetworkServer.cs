@@ -9,7 +9,7 @@ public interface INetworkServer : IDisposable
 {
     event Action<INetworkConnection> ConnectionAccepted;
 
-    int MaxConnections { get; set; }
+    int MaxConnections { get; }
     int MaxConnectionsPerIp { get; set; }
 
     INetworkPacketUnpacker PacketUnpacker { get; }
