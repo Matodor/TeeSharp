@@ -10,5 +10,7 @@ public interface INetworkConnection
     IPEndPoint EndPoint { get; }
 
     void Init(IPEndPoint endPoint, SecurityToken securityToken);
+    void Disconnect(string reason);
     IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet);
+    void Update();
 }

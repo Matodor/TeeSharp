@@ -56,6 +56,11 @@ public class NetworkConnection : INetworkConnection
         LastUpdateTime = DateTime.UtcNow;
     }
 
+    public void Disconnect(string reason)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Process packet and return messages
     /// </summary>
@@ -129,6 +134,19 @@ public class NetworkConnection : INetworkConnection
         return GetMessagesFromPacket(packet.NumberOfMessages, data);
     }
 
+    public void Update()
+    {
+        if (State == ConnectionState.Offline)
+            return;
+
+        var now = DateTime.UtcNow;
+        var isActive = State is ConnectionState.Pending or ConnectionState.Online;
+        if (isActive && now - LastReceiveTime > TimeSpan.FromSeconds(Settings.Timeout))
+        {
+
+        }
+    }
+
     public IEnumerable<NetworkMessage> GetMessagesFromPacket(
         int numberOfMessages,
         Span<byte> data)
@@ -197,6 +215,8 @@ public class NetworkConnection : INetworkConnection
                 if (!EndPoint.Equals(endPoint))
                     return false;
 
+                State = ConnectionState.Disconnecting;
+                Logger.LogDebug("Connection closed: {ConnectionId}", Id);
                 break;
         }
 

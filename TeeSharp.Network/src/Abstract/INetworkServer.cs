@@ -24,4 +24,5 @@ public interface INetworkServer : IDisposable
 
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
+    void Update();
 }
