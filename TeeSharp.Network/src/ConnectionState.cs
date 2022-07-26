@@ -6,5 +6,6 @@ public enum ConnectionState
     Connect,
     Pending,
     Online,
-    Error,
+    Disconnecting,
+    Timeout,
 }
