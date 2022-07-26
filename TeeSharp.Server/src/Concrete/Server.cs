@@ -19,7 +19,7 @@ using Uuids;
 
 namespace TeeSharp.Server.Concrete;
 
-public class BasicServer : IServer
+public class Server : IServer
 {
     public const long TicksPerMillisecond = 10000;
     public const long TicksPerSecond = TicksPerMillisecond * 1000;
@@ -34,7 +34,7 @@ public class BasicServer : IServer
     protected ILogger Logger { get; set; }
     protected INetworkServer NetworkServer { get; set; }
     protected long PrevTicks { get; set; }
-    protected CancellationTokenSource? CtsServer { get; private set; }
+    protected CancellationTokenSource CtsServer { get; private set; } = null!;
 
     protected TimeSpan TargetElapsedTime { get; }
     protected TimeSpan MaxElapsedTime { get; }
@@ -51,7 +51,7 @@ public class BasicServer : IServer
 
     private readonly IDisposable? _settingsChangesListener;
 
-    public BasicServer(
+    public Server(
         ISettingsChangesNotifier<ServerSettings> serverSettingsNotifier,
         ILogger? logger = null,
         int tickRate = 50)
@@ -157,7 +157,7 @@ public class BasicServer : IServer
         ServerState = ServerState.Running;
         Tick = 0;
 
-        RunMainLoop(CtsServer.Token);
+        RunMainLoop();
         Stop();
 
         ServerState = ServerState.Stopped;
@@ -194,8 +194,10 @@ public class BasicServer : IServer
 
     protected virtual void UpdateNetwork()
     {
-        if (CtsServer!.IsCancellationRequested)
+        if (CtsServer.IsCancellationRequested)
             return;
+
+        NetworkServer.Update();
 
         foreach (var message in NetworkServer.GetMessages(CtsServer.Token))
         {
@@ -246,28 +248,28 @@ public class BasicServer : IServer
         var unPacker = new UnPacker(message.Data);
         if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
         {
-            if (isSystemMsg)
+            if (!isSystemMsg)
+                return;
+
+            if (msgId == ProtocolMessage.Empty)
             {
-                if (msgId == ProtocolMessage.Empty)
-                {
-                    ProcessClientSystemUuidMessage(
-                        message.ConnectionId,
-                        msgUuid,
-                        unPacker,
-                        message.EndPoint,
-                        message.Flags
-                    );
-                }
-                else
-                {
-                    ProcessClientSystemMessage(
-                        message.ConnectionId,
-                        msgId,
-                        unPacker,
-                        message.EndPoint,
-                        message.Flags
-                    );
-                }
+                ProcessClientSystemUuidMessage(
+                    message.ConnectionId,
+                    msgUuid,
+                    unPacker,
+                    message.EndPoint,
+                    message.Flags
+                );
+            }
+            else
+            {
+                ProcessClientSystemMessage(
+                    message.ConnectionId,
+                    msgId,
+                    unPacker,
+                    message.EndPoint,
+                    message.Flags
+                );
             }
         }
         else
@@ -362,16 +364,16 @@ public class BasicServer : IServer
 
     }
 
-    protected virtual void RunMainLoop(CancellationToken cancellationToken)
+    protected virtual void RunMainLoop()
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        CtsServer.Token.ThrowIfCancellationRequested();
 
         BeforeRun();
 
         var accumulatedElapsedTime = TimeSpan.Zero;
         var gameTimer = Stopwatch.StartNew();
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!CtsServer.Token.IsCancellationRequested)
         {
             BeginLoop:
 
