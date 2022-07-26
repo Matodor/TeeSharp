@@ -9,6 +9,7 @@ public interface INetworkServer : IDisposable
 {
     event Action<INetworkConnection> ConnectionAccepted;
 
+    ConnectionSettings ConnectionSettings { get; }
     int MaxConnections { get; }
     int MaxConnectionsPerIp { get; set; }
 
@@ -18,9 +19,9 @@ public interface INetworkServer : IDisposable
     bool TryInit(
         IPEndPoint localEP,
         int maxConnections = 64,
-        int maxConnectionsPerIp = 4);
+        int maxConnectionsPerIp = 4,
+        ConnectionSettings? connectionSettings = null);
 
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
-
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
 }

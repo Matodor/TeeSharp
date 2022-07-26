@@ -20,6 +20,8 @@ public class NetworkConnection : INetworkConnection
     protected ILogger Logger { get; set; }
 
     protected SecurityToken SecurityToken { get; set; }
+    protected ConnectionSettings Settings { get; private set; }
+
     protected int Sequence;
     protected int PeerAck;
     protected int Ack;
@@ -31,12 +33,14 @@ public class NetworkConnection : INetworkConnection
     public NetworkConnection(
         int id,
         UdpClient socket,
+        ConnectionSettings settings,
         ILogger? logger = null)
     {
         Id = id;
         Logger = logger ?? Tee.LoggerFactory.CreateLogger("NetworkConnection");
         Socket = socket;
         EndPoint = null!;
+        Settings = settings;
     }
 
     public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
@@ -106,7 +110,7 @@ public class NetworkConnection : INetworkConnection
         {
             var msg = (ConnectionStateMsg)data[0];
 
-            if (ProcessConnectionStateMsg(endPoint, packet, msg) == false)
+            if (ProcessConnectionStateMsg(endPoint, data.Slice(1), msg) == false)
                 return Enumerable.Empty<NetworkMessage>();
         }
         else if (State == ConnectionState.Pending)
@@ -178,7 +182,7 @@ public class NetworkConnection : INetworkConnection
 
     public bool ProcessConnectionStateMsg(
         IPEndPoint endPoint,
-        NetworkPacketIn packet,
+        Span<byte> data,
         ConnectionStateMsg msg)
     {
         switch (msg)

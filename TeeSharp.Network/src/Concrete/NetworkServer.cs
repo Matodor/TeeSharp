@@ -19,6 +19,7 @@ public class NetworkServer : INetworkServer
 {
     public event Action<INetworkConnection> ConnectionAccepted = delegate {  };
 
+    public ConnectionSettings ConnectionSettings { get; private set; } = null!;
     public int MaxConnections { get; private set; }
     public int MaxConnectionsPerIp { get; set; }
     public INetworkPacketUnpacker PacketUnpacker { get; protected set; }
@@ -45,7 +46,8 @@ public class NetworkServer : INetworkServer
     public virtual bool TryInit(
         IPEndPoint localEP,
         int maxConnections = 64,
-        int maxConnectionsPerIp = 4)
+        int maxConnectionsPerIp = 4,
+        ConnectionSettings? connectionSettings = null)
     {
         if (!NetworkHelper.TryGetUdpClient(localEP, out var socket))
         {
@@ -57,6 +59,7 @@ public class NetworkServer : INetworkServer
         Socket.Client.Blocking = true;
         Socket.Client.ReceiveTimeout = 10;
 
+        ConnectionSettings = connectionSettings ?? new ConnectionSettings();
         MaxConnections = maxConnections;
         MaxConnectionsPerIp = maxConnectionsPerIp;
 
@@ -76,7 +79,7 @@ public class NetworkServer : INetworkServer
 
     protected virtual INetworkConnection CreateEmptyConnection(int id)
     {
-        return new NetworkConnection(id, Socket!);
+        return new NetworkConnection(id, Socket!, ConnectionSettings);
     }
 
     public bool TryGetConnectionId(IPEndPoint endPoint, out int id)
@@ -287,10 +290,13 @@ public class NetworkServer : INetworkServer
 
         for (var id = Connections.Count - 1; id >= 0; id--)
         {
-            if (Connections[id].State == ConnectionState.Offline)
+            switch (Connections[id].State)
             {
-                emptyConnectionId = id;
-                continue;
+                case ConnectionState.Offline:
+                    emptyConnectionId = id;
+                    continue;
+                case ConnectionState.Timeout:
+                    continue;
             }
 
             if (Connections[id].EndPoint.Address.Equals(endPoint.Address))
