@@ -34,7 +34,7 @@ public class Server : IServer
     protected ILogger Logger { get; set; }
     protected INetworkServer NetworkServer { get; set; }
     protected long PrevTicks { get; set; }
-    protected CancellationTokenSource CtsServer { get; private set; } = null!;
+    protected CancellationTokenSource? CtsServer { get; private set; }
 
     protected TimeSpan TargetElapsedTime { get; }
     protected TimeSpan MaxElapsedTime { get; }
@@ -194,7 +194,7 @@ public class Server : IServer
 
     protected virtual void UpdateNetwork()
     {
-        if (CtsServer.IsCancellationRequested)
+        if (CtsServer!.IsCancellationRequested)
             return;
 
         NetworkServer.Update();
@@ -366,7 +366,7 @@ public class Server : IServer
 
     protected virtual void RunMainLoop()
     {
-        CtsServer.Token.ThrowIfCancellationRequested();
+        CtsServer!.Token.ThrowIfCancellationRequested();
 
         BeforeRun();
 
@@ -427,8 +427,8 @@ public class Server : IServer
     {
         if (Tick % TickRate == 0)
         {
-            Logger.LogInformation("Tick: {Tick}", Tick);
-            Logger.LogInformation("GameTime: {GameTime}", GameTime);
+            // Logger.LogInformation("Tick: {Tick}", Tick);
+            // Logger.LogInformation("GameTime: {GameTime}", GameTime);
         }
     }
 
