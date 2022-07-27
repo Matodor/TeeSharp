@@ -361,7 +361,20 @@ public class Server : IServer
             IPEndPoint endpoint,
             NetworkMessageFlags flags)
     {
+        if (!flags.HasFlag(NetworkMessageFlags.Vital) ||
+            Clients[connectionId].State != ServerClientState.PreAuth &&
+            Clients[connectionId].State != ServerClientState.Auth)
+        {
+            return;
+        }
 
+        if (!unPacker.TryGetString(out var version) ||
+            !unPacker.TryGetString(out var password))
+        {
+            return;
+        }
+
+        throw new NotImplementedException();
     }
 
     protected virtual void RunMainLoop()

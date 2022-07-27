@@ -110,9 +110,7 @@ public class NetworkServer : INetworkServer
             }
 
             if (!PacketUnpacker.TryUnpack(data, out var packet))
-            {
                 continue;
-            }
 
             if (packet.Flags.HasFlag(NetworkPacketInFlags.ConnectionLess))
             {
