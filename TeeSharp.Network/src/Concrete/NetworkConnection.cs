@@ -136,7 +136,7 @@ public class NetworkConnection : INetworkConnection
 
     public void Update()
     {
-        if (State == ConnectionState.Offline)
+        if (State is ConnectionState.Offline)
             return;
 
         var now = DateTime.UtcNow;
@@ -205,12 +205,6 @@ public class NetworkConnection : INetworkConnection
     {
         switch (msg)
         {
-            case ConnectionStateMsg.Connect when State == ConnectionState.Offline:
-                break;
-
-            case ConnectionStateMsg.ConnectAccept when State == ConnectionState.Connect:
-                break;
-
             case ConnectionStateMsg.Close:
                 if (!EndPoint.Equals(endPoint))
                     return false;

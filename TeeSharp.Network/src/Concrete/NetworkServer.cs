@@ -161,6 +161,21 @@ public class NetworkServer : INetworkServer
         }
     }
 
+    public void Update()
+    {
+        for (var i = 0; i < Connections.Count; i++)
+        {
+            Connections[i].Update();
+
+            // if(m_aSlots[i].m_Connection.State() == NET_CONNSTATE_ERROR &&
+            //     (!m_aSlots[i].m_Connection.m_TimeoutProtected ||
+            //         !m_aSlots[i].m_Connection.m_TimeoutSituation))
+            // {
+            //     Drop(i, m_aSlots[i].m_Connection.ErrorString());
+            // }
+        }
+    }
+
     protected virtual void ProcessConnectionStateMessage(
         IPEndPoint endPoint,
         NetworkPacketIn packetIn)
