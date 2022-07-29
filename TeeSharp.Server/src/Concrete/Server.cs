@@ -374,7 +374,18 @@ public class Server : IServer
             return;
         }
 
+
+        Clients[connectionId].State = ServerClientState.Connecting;
+        SendCapabilities(connectionId);
         throw new NotImplementedException();
+    }
+
+    protected virtual void SendCapabilities(int connectionId)
+    {
+        // CMsgPacker Msg(NETMSG_CAPABILITIES, true);
+        // Msg.AddInt(SERVERCAP_CURVERSION); // version
+        // Msg.AddInt(SERVERCAPFLAG_DDNET | SERVERCAPFLAG_CHATTIMEOUTCODE | SERVERCAPFLAG_ANYPLAYERFLAG | SERVERCAPFLAG_PINGEX | SERVERCAPFLAG_ALLOWDUMMY | SERVERCAPFLAG_SYNCWEAPONINPUT); // flags
+        // SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
     }
 
     protected virtual void RunMainLoop()
