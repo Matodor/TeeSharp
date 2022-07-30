@@ -21,6 +21,39 @@ public static class CompressionableInt
         0b_0000_1111,
     };
 
+    public static bool TryPack(
+        Span<byte> buffer,
+        int value,
+        ref int bufferIndex)
+    {
+        if (buffer.IsEmpty)
+            return false;
+
+        buffer[bufferIndex] = 0;
+
+        if (value < 0)
+        {
+            buffer[bufferIndex] |= 0b_0100_0000;
+            value = ~value;
+        }
+
+        buffer[bufferIndex] |= (byte)(value & 0b_0011_1111);
+        value >>= 6;
+
+        while (value != 0)
+        {
+            if (bufferIndex + 1 == buffer.Length)
+                return false;
+
+            buffer[bufferIndex++] |= 0b_1000_0000;
+            buffer[bufferIndex] = (byte)(value & 0b_0111_1111);
+            value >>= 7;
+        }
+
+        bufferIndex++;
+        return true;
+    }
+
     public static bool TryUnpack(
         Span<byte> dataIn,
         out int result,

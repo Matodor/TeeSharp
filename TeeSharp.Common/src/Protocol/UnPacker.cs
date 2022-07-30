@@ -14,7 +14,7 @@ public ref struct UnPacker
 
     private Span<byte> _data;
 
-    public UnPacker(byte[] data)
+    public UnPacker(Span<byte> data)
     {
         _data = data;
         DataOriginal = _data;
