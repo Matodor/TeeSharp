@@ -376,16 +376,40 @@ public class Server : IServer
 
 
         Clients[connectionId].State = ServerClientState.Connecting;
-        SendCapabilities(connectionId);
+        SendSupportedCapabilities(connectionId);
+
+        // TODO CHECK VERSION
+        // TODO CHECK PASSWORD
+        // TODO RESERVED SLOT
+
         throw new NotImplementedException();
     }
 
-    protected virtual void SendCapabilities(int connectionId)
+    protected virtual ProtocolCapabilities GetSupportedCapabilities()
     {
-        // CMsgPacker Msg(NETMSG_CAPABILITIES, true);
-        // Msg.AddInt(SERVERCAP_CURVERSION); // version
-        // Msg.AddInt(SERVERCAPFLAG_DDNET | SERVERCAPFLAG_CHATTIMEOUTCODE | SERVERCAPFLAG_ANYPLAYERFLAG | SERVERCAPFLAG_PINGEX | SERVERCAPFLAG_ALLOWDUMMY | SERVERCAPFLAG_SYNCWEAPONINPUT); // flags
+        return
+            ProtocolCapabilities.ChatTimeoutCode |
+            ProtocolCapabilities.AnyPlayerFlag |
+            ProtocolCapabilities.PingExtended |
+            ProtocolCapabilities.SyncWeaponInput;
+    }
+
+    protected virtual void SendSupportedCapabilities(int connectionId)
+    {
+        var packer = new Packer(UuidManager.DDNet.Capabilities, true);
+        packer.AddInt((int)ProtocolCapabilities.CurrentVersion);
+        packer.AddInt((int)GetSupportedCapabilities());
+
         // SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
+        throw new NotImplementedException();
+    }
+
+    protected virtual void SendMessage(
+        int connectionId,
+        Packer packer,
+        NetworkMessageFlags flags)
+    {
+
     }
 
     protected virtual void RunMainLoop()
