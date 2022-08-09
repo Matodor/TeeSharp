@@ -9,6 +9,7 @@ public ref struct Packer
 {
     public const int BufferSize = 2048;
 
+    public Span<byte> Buffer => _buffer.Slice(0, _bufferIndex);
     public bool HasError { get; private set; }
 
     private readonly Span<byte> _buffer;
