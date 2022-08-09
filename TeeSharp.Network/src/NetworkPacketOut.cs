@@ -33,7 +33,6 @@ public ref struct NetworkPacketOut
         NetworkPacketFlags flags = NetworkPacketFlags.None,
         int ack = 0,
         int numberOfMessages = 0,
-        bool isSixup = false,
         int dataSize = 0)
     {
         Flags = flags;

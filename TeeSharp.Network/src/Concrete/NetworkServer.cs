@@ -174,6 +174,30 @@ public class NetworkServer : INetworkServer
         }
     }
 
+    public void Send(
+        int connectionId,
+        Span<byte> data,
+        NetworkMessageFlags flags)
+    {
+        if (data.Length >= NetworkConstants.MaxPayload)
+        {
+            Logger.LogDebug("Dropping packet, packet payload too big ({Length})", data.Length);
+            return;
+        }
+
+        if (flags.HasFlag(NetworkMessageFlags.ConnectionLess))
+        {
+            throw new NotImplementedException();
+            return;
+        }
+
+        if (!Connections[connectionId].QueueMessage(data, flags))
+            return;
+
+        if (flags.HasFlag(NetworkMessageFlags.Flush))
+            Connections[connectionId].FlushMessages();
+    }
+
     protected virtual void ProcessConnectionStateMessage(
         IPEndPoint endPoint,
         NetworkPacketIn packetIn)
