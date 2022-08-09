@@ -400,8 +400,7 @@ public class Server : IServer
         packer.AddInt((int)ProtocolCapabilities.CurrentVersion);
         packer.AddInt((int)GetSupportedCapabilities());
 
-        // SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
-        throw new NotImplementedException();
+        SendMessage(connectionId, packer, NetworkMessageFlags.Vital);
     }
 
     protected virtual void SendMessage(
@@ -409,7 +408,17 @@ public class Server : IServer
         Packer packer,
         NetworkMessageFlags flags)
     {
+        if (packer.HasError)
+            return;
 
+        if (connectionId < 0)
+        {
+            throw new NotImplementedException();
+        }
+        else
+        {
+            NetworkServer.Send(connectionId, packer.Buffer, flags);
+        }
     }
 
     protected virtual void RunMainLoop()
