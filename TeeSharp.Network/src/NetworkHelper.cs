@@ -146,7 +146,7 @@ public static class NetworkHelper
             return;
 
         var packet = new NetworkPacketOut(
-            flags: NetworkPacketInFlags.Connection,
+            flags: NetworkPacketFlags.Connection,
             ack: ack,
             numberOfMessages: 0,
             dataSize: 1 + extraData.Length
@@ -182,6 +182,9 @@ public static class NetworkHelper
 
         if (token != SecurityToken.Unsupported)
         {
+            if (packet.DataSize + StructHelper<SecurityToken>.Size > packet.Data.Length)
+                return;
+
             token.CopyTo(packet.Data.Slice(packet.DataSize));
             packet.DataSize += StructHelper<SecurityToken>.Size;
         }
@@ -190,14 +193,16 @@ public static class NetworkHelper
         {
             compressedSize = 4; // TODO
             bufferSize = compressedSize;
-            packet.Flags |= NetworkPacketInFlags.Compression;
+            packet.Flags |= NetworkPacketFlags.Compression;
+
+            throw new NotImplementedException();
         }
 
         if (compressedSize <= 0 || compressedSize >= packet.Data.Length)
         {
             bufferSize = packet.DataSize;
             packet.Data.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
-            packet.Flags &= ~NetworkPacketInFlags.Compression;
+            packet.Flags &= ~NetworkPacketFlags.Compression;
         }
 
         if (bufferSize < 0)

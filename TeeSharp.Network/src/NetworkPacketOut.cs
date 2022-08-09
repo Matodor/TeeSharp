@@ -7,7 +7,7 @@ public ref struct NetworkPacketOut
     /// <summary>
     ///
     /// </summary>
-    public NetworkPacketInFlags Flags;
+    public NetworkPacketFlags Flags;
 
     /// <summary>
     ///
@@ -30,7 +30,7 @@ public ref struct NetworkPacketOut
     public int DataSize;
 
     public NetworkPacketOut(
-        NetworkPacketInFlags flags = NetworkPacketInFlags.None,
+        NetworkPacketFlags flags = NetworkPacketFlags.None,
         int ack = 0,
         int numberOfMessages = 0,
         bool isSixup = false,

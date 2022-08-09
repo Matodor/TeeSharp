@@ -112,7 +112,7 @@ public class NetworkServer : INetworkServer
             if (!PacketUnpacker.TryUnpack(data, out var packet))
                 continue;
 
-            if (packet.Flags.HasFlag(NetworkPacketInFlags.ConnectionLess))
+            if (packet.Flags.HasFlag(NetworkPacketFlags.ConnectionLess))
             {
                 yield return new NetworkMessage(
                     connectionId: -1,
@@ -126,7 +126,7 @@ public class NetworkServer : INetworkServer
             }
 
             if (packet.Data.Length == 0 &&
-                packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
+                packet.Flags.HasFlag(NetworkPacketFlags.Connection))
             {
                 continue;
             }
@@ -141,7 +141,7 @@ public class NetworkServer : INetworkServer
                 //     throw new NotImplementedException();
                 // }
 
-                if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
+                if (packet.Flags.HasFlag(NetworkPacketFlags.Connection))
                 {
                     if ((ConnectionStateMsg)packet.Data[0] != ConnectionStateMsg.Close)
                     {
@@ -178,7 +178,7 @@ public class NetworkServer : INetworkServer
         IPEndPoint endPoint,
         NetworkPacketIn packetIn)
     {
-        if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(NetworkPacketInFlags.Connection))
+        if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(NetworkPacketFlags.Connection))
         {
             return;
         }

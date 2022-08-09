@@ -14,19 +14,19 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
             return false;
         }
 
-        var flags = (NetworkPacketInFlags) (buffer[0] >> 2);
+        var flags = (NetworkPacketFlags) (buffer[0] >> 2);
 
-        return flags.HasFlag(NetworkPacketInFlags.ConnectionLess)
+        return flags.HasFlag(NetworkPacketFlags.ConnectionLess)
             ? TryUnpackConnectionLessPacket(buffer, out packet)
             : TryUnpackConnectionPacket(flags, buffer, out packet);
     }
 
     protected virtual bool TryUnpackConnectionPacket(
-        NetworkPacketInFlags flags,
+        NetworkPacketFlags flags,
         Span<byte> buffer,
         [NotNullWhen(true)] out NetworkPacketIn? packet)
     {
-        var isSixup = flags.HasFlag(NetworkPacketInFlags.Unused);
+        var isSixup = flags.HasFlag(NetworkPacketFlags.Unused);
         if (isSixup ||
             buffer.Length < NetworkConstants.PacketHeaderSize)
         {
@@ -39,9 +39,9 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         var data = new byte[buffer.Length - NetworkConstants.PacketHeaderSize];
         var extraData = Array.Empty<byte>();
 
-        if (flags.HasFlag(NetworkPacketInFlags.Compression))
+        if (flags.HasFlag(NetworkPacketFlags.Compression))
         {
-            if (flags.HasFlag(NetworkPacketInFlags.Connection))
+            if (flags.HasFlag(NetworkPacketFlags.Connection))
             {
                 packet = null;
                 return false;
@@ -104,7 +104,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         }
 
         packet = new NetworkPacketIn(
-            flags: NetworkPacketInFlags.ConnectionLess,
+            flags: NetworkPacketFlags.ConnectionLess,
             ack: 0,
             numberOfMessages: 0,
             data: data,

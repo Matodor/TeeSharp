@@ -3,7 +3,7 @@ using System;
 namespace TeeSharp.Network;
 
 [Flags]
-public enum NetworkPacketInFlags
+public enum NetworkPacketFlags
 {
     None            = 0,
     Unused          = 1 << 0,

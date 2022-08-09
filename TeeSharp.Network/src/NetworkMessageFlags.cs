@@ -9,4 +9,5 @@ public enum NetworkMessageFlags
     Vital          = 1 << 0,
     ConnectionLess = 1 << 1,
     Flush          = 1 << 2,
+    Extended       = 1 << 3,
 }

@@ -111,7 +111,7 @@ public class NetworkConnection : INetworkConnection
             return Enumerable.Empty<NetworkMessage>();
         }
 
-        if (packet.Flags.HasFlag(NetworkPacketInFlags.Connection))
+        if (packet.Flags.HasFlag(NetworkPacketFlags.Connection))
         {
             var msg = (ConnectionStateMsg)data[0];
 
