@@ -29,6 +29,7 @@ public class NetworkConnection : INetworkConnection
     protected DateTime LastReceiveTime;
     protected DateTime LastSendTime;
     protected DateTime LastUpdateTime;
+    protected readonly NetworkPacketAccumulator MessageAccumulator;
 
     public NetworkConnection(
         int id,
@@ -41,6 +42,7 @@ public class NetworkConnection : INetworkConnection
         Socket = socket;
         EndPoint = null!;
         Settings = settings;
+        MessageAccumulator = new NetworkPacketAccumulator();
     }
 
     public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
@@ -145,6 +147,50 @@ public class NetworkConnection : INetworkConnection
         {
 
         }
+    }
+
+    public void FlushMessages()
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool QueueMessage(Span<byte> data, NetworkMessageFlags flags)
+    {
+        if (flags.HasFlag(NetworkMessageFlags.Vital))
+            Sequence = (Sequence + 1) % NetworkConstants.MaxSequence;
+
+        return QueueMessageInternal(data, flags, false);
+    }
+
+    protected bool QueueMessageInternal(
+        Span<byte> data,
+        NetworkMessageFlags flags,
+        bool saveToResend)
+    {
+        if (State != ConnectionState.Online && State != ConnectionState.Pending)
+            return false;
+
+        var needSize = MessageAccumulator.BufferSize + data.Length + NetworkConstants.PacketHeaderSize;
+        var availableSize = MessageAccumulator.Buffer.Length - StructHelper<SecurityToken>.Size;
+
+        if (needSize > availableSize)
+            FlushMessages();
+
+        var header = new NetworkMessageHeader(flags, data.Length, Sequence);
+        var buffer = MessageAccumulator.Buffer.AsSpan(MessageAccumulator.BufferSize);
+
+        buffer = header.Pack(buffer);
+        data.CopyTo(buffer);
+
+        MessageAccumulator.BufferSize += MessageAccumulator.Buffer.Length - (buffer.Length - data.Length);
+        MessageAccumulator.NumberOfMessages++;
+
+        if (flags.HasFlag(NetworkMessageFlags.Vital) && saveToResend)
+        {
+            throw new NotImplementedException();
+        }
+
+        return true;
     }
 
     public IEnumerable<NetworkMessage> GetMessagesFromPacket(
