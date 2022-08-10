@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
@@ -12,6 +14,8 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkConnection : INetworkConnection
 {
+    public const int MaxResendBufferSize = 1024 * 32;
+
     public int Id { get; }
     public ConnectionState State { get; protected set; }
     public IPEndPoint EndPoint { get; protected set; }
@@ -22,14 +26,54 @@ public class NetworkConnection : INetworkConnection
     protected SecurityToken SecurityToken { get; set; }
     protected ConnectionSettings Settings { get; private set; }
 
-    protected int Sequence;
-    protected int PeerAck;
-    protected int Ack;
+    protected int Sequence { get; set; }
+    protected int PeerAck { get; set; }
+    protected int Ack { get; set; }
 
-    protected DateTime LastReceiveTime;
-    protected DateTime LastSendTime;
-    protected DateTime LastUpdateTime;
-    protected readonly NetworkPacketAccumulator MessageAccumulator;
+    protected DateTime LastReceiveTime { get; set; }
+    protected DateTime LastSendTime { get; set; }
+    protected DateTime LastUpdateTime { get; set; }
+
+    internal PacketAccumulator MessageAccumulator { get; set; }
+    internal IList<MessageForResend> MessagesForResend { get; set; }
+    internal int MessagesForResendDataSize { get; set; }
+
+    internal class PacketAccumulator
+    {
+        internal int NumberOfMessages { get; set; }
+        internal int BufferSize { get; set; }
+        internal readonly byte[] Buffer = new byte[NetworkConstants.MaxPayload];
+    }
+
+    internal class MessageForResend
+    {
+        public static readonly int SizeOf =
+            sizeof(NetworkMessageFlags) +
+            sizeof(int) +
+            StructHelper<IntPtr>.Size +
+            StructHelper<DateTime>.Size +
+            StructHelper<DateTime>.Size;
+
+        internal NetworkMessageFlags Flags { get; }
+        internal int Sequence { get; }
+        internal byte[] Data { get; }
+        internal DateTime LastSendTime { get; set; }
+        internal DateTime FirstSendTime { get; set; }
+
+        public MessageForResend(
+            NetworkMessageFlags flags,
+            int sequence,
+            byte[] data,
+            DateTime lastSendTime,
+            DateTime firstSendTime)
+        {
+            Flags = flags;
+            Sequence = sequence;
+            Data = data;
+            LastSendTime = lastSendTime;
+            FirstSendTime = firstSendTime;
+        }
+    }
 
     public NetworkConnection(
         int id,
@@ -42,7 +86,9 @@ public class NetworkConnection : INetworkConnection
         Socket = socket;
         EndPoint = null!;
         Settings = settings;
-        MessageAccumulator = new NetworkPacketAccumulator();
+        MessageAccumulator = new PacketAccumulator();
+        MessagesForResend = new List<MessageForResend>(32);
+        MessagesForResendDataSize = 0;
     }
 
     public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
@@ -165,7 +211,7 @@ public class NetworkConnection : INetworkConnection
     protected bool QueueMessageInternal(
         Span<byte> data,
         NetworkMessageFlags flags,
-        bool saveToResend)
+        bool fromResend)
     {
         if (State != ConnectionState.Online && State != ConnectionState.Pending)
             return false;
@@ -185,10 +231,23 @@ public class NetworkConnection : INetworkConnection
         MessageAccumulator.BufferSize += MessageAccumulator.Buffer.Length - (buffer.Length - data.Length);
         MessageAccumulator.NumberOfMessages++;
 
-        if (flags.HasFlag(NetworkMessageFlags.Vital) && saveToResend)
-        {
-            throw new NotImplementedException();
-        }
+        if (!flags.HasFlag(NetworkMessageFlags.Vital) || fromResend)
+            return true;
+
+        var mfrSize = MessageForResend.SizeOf * (MessagesForResend.Count + 1);
+        if (mfrSize > MaxResendBufferSize)
+            return false;
+
+        var messageForResend = new MessageForResend(
+            flags: flags,
+            sequence: Sequence,
+            data: data.ToArray(),
+            lastSendTime: DateTime.UtcNow,
+            firstSendTime: DateTime.UtcNow
+        );
+
+        MessagesForResend.Add(messageForResend);
+        MessagesForResendDataSize += data.Length;
 
         return true;
     }
@@ -275,8 +334,17 @@ public class NetworkConnection : INetworkConnection
 
     protected virtual void Reset()
     {
+        State = ConnectionState.Offline;
         Sequence = 0;
         PeerAck = 0;
         Ack = 0;
+
+        LastSendTime = DateTime.MinValue;
+        LastReceiveTime = DateTime.MinValue;
+
+        MessageAccumulator.BufferSize = 0;
+        MessageAccumulator.NumberOfMessages = 0;
+        MessagesForResend.Clear();
+        MessagesForResendDataSize = 0;
     }
 }
