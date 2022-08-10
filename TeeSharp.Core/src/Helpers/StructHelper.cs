@@ -16,7 +16,16 @@ public static class StructHelper<T> where T : struct
     {
         Type = typeof(T);
         IsArray = Type.IsArray;
-        Size = Marshal.SizeOf(Type);
-        ElementSize = Type.IsArray ? Marshal.SizeOf(Type.GetElementType()!) : Size;
+
+        if (Type == typeof(DateTime))
+        {
+            Size = 8;
+            ElementSize = 8;
+        }
+        else
+        {
+            Size = Marshal.SizeOf(Type);
+            ElementSize = Type.IsArray ? Marshal.SizeOf(Type.GetElementType()!) : Size;
+        }
     }
 }
