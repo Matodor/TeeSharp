@@ -165,6 +165,7 @@ public class NetworkServer : INetworkServer
         {
             Connections[i].Update();
 
+            // TODO
             // if(m_aSlots[i].m_Connection.State() == NET_CONNSTATE_ERROR &&
             //     (!m_aSlots[i].m_Connection.m_TimeoutProtected ||
             //         !m_aSlots[i].m_Connection.m_TimeoutSituation))

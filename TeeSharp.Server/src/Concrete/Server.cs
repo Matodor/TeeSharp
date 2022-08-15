@@ -377,6 +377,7 @@ public class Server : IServer
 
         Clients[connectionId].State = ServerClientState.Connecting;
         SendSupportedCapabilities(connectionId);
+        SendMap(connectionId);
 
         // TODO CHECK VERSION
         // TODO CHECK PASSWORD
@@ -491,6 +492,17 @@ public class Server : IServer
 
     protected virtual void AfterUpdate()
     {
+    }
+
+    protected virtual void SendMap(int connectionId)
+    {
+        var mapDetails = new Packer(UuidManager.DDNet.MapDetails, true);
+        throw new NotImplementedException();
+    }
+
+    protected virtual void LoadMap()
+    {
+        throw new NotImplementedException();
     }
 
     public void Dispose()
