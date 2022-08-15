@@ -234,7 +234,7 @@ public class NetworkConnection : INetworkConnection
         if (!flags.HasFlag(NetworkMessageFlags.Vital) || fromResend)
             return true;
 
-        var mfrSize = MessageForResend.SizeOf * (MessagesForResend.Count + 1);
+        var mfrSize = MessageForResend.SizeOf * (MessagesForResend.Count + 1) + MessagesForResendDataSize + data.Length;
         if (mfrSize > MaxResendBufferSize)
             return false;
 
