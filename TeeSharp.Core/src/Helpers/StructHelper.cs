@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace TeeSharp.Core.Helpers;
@@ -7,7 +8,6 @@ public static class StructHelper<T> where T : struct
 {
     // ReSharper disable StaticMemberInGenericType
     public static readonly int Size;
-    public static readonly int ElementSize;
     public static readonly bool IsArray;
     public static readonly Type Type;
     // ReSharper restore StaticMemberInGenericType
@@ -17,15 +17,12 @@ public static class StructHelper<T> where T : struct
         Type = typeof(T);
         IsArray = Type.IsArray;
 
+        if (Unsafe.SizeOf<T>() != Marshal.SizeOf(Type))
+            throw new Exception();
+
         if (Type == typeof(DateTime))
-        {
             Size = 8;
-            ElementSize = 8;
-        }
         else
-        {
-            Size = Marshal.SizeOf(Type);
-            ElementSize = Type.IsArray ? Marshal.SizeOf(Type.GetElementType()!) : Size;
-        }
+            Size = Unsafe.SizeOf<T>();
     }
 }
