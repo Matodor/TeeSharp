@@ -1,6 +1,6 @@
 using System;
-using System.Runtime.CompilerServices;
 using TeeSharp.Core;
+using TeeSharp.Core.Helpers;
 using Uuids;
 
 namespace TeeSharp.Common.Protocol;
@@ -56,7 +56,7 @@ public ref struct Packer
     {
         if (uuid.TryWriteBytes(_buffer.Slice(_bufferIndex)))
         {
-            _bufferIndex += Unsafe.SizeOf<Uuid>();
+            _bufferIndex += StructHelper<Uuid>.Size;
             return;
         }
 

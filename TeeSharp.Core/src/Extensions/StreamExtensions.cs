@@ -10,7 +10,6 @@ public static class StreamExtensions
     public static bool TryRead<T>(this Stream stream, out T output) where T : struct
     {
         var bufferSize = StructHelper<T>.Size;
-
         if (stream.Position + bufferSize >= stream.Length)
         {
             output = default;

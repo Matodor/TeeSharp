@@ -5,7 +5,7 @@ namespace TeeSharp.Map.MapItems;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct DataFileItemTypeInfo
 {
-    public int Type;
+    public MapItemType Type;
     public int ItemsOffset;
     public int ItemsCount;
 }
