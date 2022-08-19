@@ -59,6 +59,8 @@ public class DefaultDataFileReader : IDataFileReader
         if (!stream.TryRead<int>(header.NumberOfRawDataBlocks, out var dataSizes))
             throw new Exception("Get map data offsets error");
 
+        var itemsStartOffset = (int)stream.Position;
+
         using var bufferStream = new MemoryStream((int)stream.Length);
         stream.Position = 0;
         stream.CopyTo(bufferStream);
@@ -70,8 +72,8 @@ public class DefaultDataFileReader : IDataFileReader
             itemsOffsets: itemsOffsets,
             dataOffsets: dataOffsets,
             dataSizes: dataSizes,
-            itemsStartOffset: stream.Position,
-            dataStartOffset: stream.Position + header.ItemsSize
+            itemsStartOffset: itemsStartOffset,
+            dataStartOffset: itemsStartOffset + header.ItemsSize
         );
     }
 }
