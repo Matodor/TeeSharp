@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
-using ComponentAce.Compression.Libs.zlib;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using TeeSharp.Core.Extensions;
 using TeeSharp.Core.Helpers;
@@ -18,12 +19,12 @@ public class DataFile
 {
     public readonly ReadOnlyMemory<byte> Buffer;
     public readonly DataFileHeader Header;
-    public readonly ReadOnlyDictionary<int, DataFileItemTypeInfo> ItemTypes;
+    public readonly ReadOnlyDictionary<MapItemType, DataFileItemTypeInfo> ItemTypes;
     public readonly ReadOnlyCollection<int> ItemsOffsets;
     public readonly ReadOnlyCollection<int> DataOffsets;
     public readonly ReadOnlyCollection<int> DataSizes;
-    public readonly long ItemsStartOffset;
-    public readonly long DataStartOffset;
+    public readonly int ItemsStartOffset;
+    public readonly int DataStartOffset;
 
     protected Dictionary<int, object> DataItems { get; set; }
 
@@ -34,12 +35,12 @@ public class DataFile
         int[] itemsOffsets,
         int[] dataOffsets,
         int[] dataSizes,
-        long itemsStartOffset,
-        long dataStartOffset)
+        int itemsStartOffset,
+        int dataStartOffset)
     {
         Buffer = buffer;
         Header = header;
-        ItemTypes = new ReadOnlyDictionary<int, DataFileItemTypeInfo>(itemTypes.ToDictionary(info => info.Type));
+        ItemTypes = new ReadOnlyDictionary<MapItemType, DataFileItemTypeInfo>(itemTypes.ToDictionary(info => info.Type));
         ItemsOffsets = Array.AsReadOnly(itemsOffsets);
         DataOffsets = Array.AsReadOnly(dataOffsets);
         DataSizes = Array.AsReadOnly(dataSizes);
@@ -48,17 +49,17 @@ public class DataFile
         DataItems = new Dictionary<int, object>();
     }
 
-    public bool HasItemType(int type)
+    public bool HasItemType(MapItemType type)
     {
         return ItemTypes.ContainsKey(type);
     }
 
-    public DataFileItemTypeInfo GetItemType(int type)
+    public DataFileItemTypeInfo GetItemType(MapItemType type)
     {
         return ItemTypes[type];
     }
 
-    public IEnumerable<MapItem<T>> GetItems<T>(int type)
+    public IEnumerable<(DataFileItem Info, T Item)> GetItems<T>(MapItemType type)
         where T : struct, IDataFileItem
     {
         var itemTypeInfo = GetItemType(type);
@@ -66,24 +67,41 @@ public class DataFile
             yield return GetItem<T>(itemTypeInfo.ItemsOffset + i);
     }
 
-    public MapItem<T> GetItem<T>(int index)
+    public (DataFileItem Info, T Item) GetItem<T>(int index)
         where T : struct, IDataFileItem
     {
-        throw new NotImplementedException();
-        // TODO add external item types support from ddnet
-        //
-        // var mapItem = new MapItem<T>();
-        // var offset = ItemsStartOffset + ItemsOffsets[index];
-        //
-        // Stream.Seek(offset, SeekOrigin.Begin);
-        //
-        // if (Stream.Get(out mapItem.Info) &&
-        //     Stream.Get(out mapItem.Item, mapItem.Info.Size))
-        // {
-        //     return mapItem;
-        // }
-        //
-        // throw new Exception($"Get item error at index {index}");
+        // TODO
+        // add external item types support from DDNet
+
+        var offset = ItemsStartOffset + ItemsOffsets[index];
+        var buffer = Buffer.Span.Slice(offset);
+        var itemInfo = buffer.Deserialize<DataFileItem>();
+
+        buffer = buffer.Slice(StructHelper<DataFileItem>.Size, itemInfo.Size);
+        T item;
+
+        if (StructHelper<T>.Size == itemInfo.Size)
+        {
+           item = buffer.Deserialize<T>();
+        }
+        else
+        {
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                throw new Exception("IsReferenceOrContainsReferences");
+
+            if (buffer.Length > StructHelper<T>.Size)
+                throw new ArgumentOutOfRangeException(nameof(T));
+
+            item = new T();
+            ref var itemRef =
+                ref Unsafe.As<T, byte>(ref item);
+            ref var bufferRef =
+                ref MemoryMarshal.GetReference(buffer);
+
+            Unsafe.CopyBlockUnaligned(ref itemRef, ref bufferRef, (uint)buffer.Length);
+        }
+
+        return (itemInfo, item);
     }
 
     public ReadOnlySpan<byte> GetDataAsRaw(int index)
@@ -98,7 +116,7 @@ public class DataFile
 
         var buffer = GetDataBuffer(index);
         if (buffer[^1] == 0)
-            buffer = buffer[0..^1];
+            buffer = buffer[..^1];
 
         DataItems.Add(index, Encoding.UTF8.GetString(buffer));
         return (string) DataItems[index];
@@ -128,38 +146,18 @@ public class DataFile
 
     private ReadOnlySpan<byte> GetDataBuffer(int index)
     {
-        throw new NotImplementedException();
+        var dataSize = index == Header.NumberOfRawDataBlocks - 1
+            ? Header.RawDataBlocksSize - DataOffsets[index]
+            : DataOffsets[index + 1] - DataOffsets[index];
 
-        // var dataSize = index == Header.NumberOfRawDataBlocks - 1
-        //     ? Header.RawDataBlocksSize - DataOffsets[index]
-        //     : DataOffsets[index + 1] - DataOffsets[index];
-        //
-        // var buffer = new Span<byte>(new byte[dataSize]);
-        // Stream.Position = DataStartOffset + DataOffsets[index];
-        //
-        // if (Stream.Read(buffer) != buffer.Length)
-        //     throw new Exception("Readed size not equal expected");
-        //
-        //
-        // Memory<byte>.Empty.Slice()
-        // using var outputStream = new MemoryStream();
-        // using var compressedStream = new MemoryStream(data);
-        // using var inputStream = new InflaterInputStream(compressedStream);
-        //
-        //     inputStream.Co.CopyTo(outputStream);
-        //     outputStream.Position = 0;
-        //     // return outputStream;
-        //
-        //
-        // using (var outMemoryStream = new MemoryStream())
-        // using (var outputZipStream = new ZOutputStream(outMemoryStream))
-        // {
-        //
-        //
-        //     outputZipStream.Write(buffer);
-        //     outputZipStream.finish();
-        //
-        //     return outMemoryStream.ToArray();
-        // }
+        var dataOffset = DataStartOffset + DataOffsets[index];
+        var data = Buffer.Span.Slice(dataOffset, dataSize).ToArray();
+
+        using var outputStream = new MemoryStream();
+        using var compressedStream = new MemoryStream(data);
+        using var inflaterInputStream = new InflaterInputStream(compressedStream);
+
+        inflaterInputStream.CopyTo(outputStream);
+        return outputStream.ToArray();
     }
 }
