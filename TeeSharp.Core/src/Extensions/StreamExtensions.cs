@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.IO;
 using TeeSharp.Core.Helpers;
 
@@ -6,58 +7,52 @@ namespace TeeSharp.Core.Extensions;
 
 public static class StreamExtensions
 {
-    public static bool Get<T>(this Stream stream, out T output, int readSize = 0) where T : struct
+    public static bool TryRead<T>(this Stream stream, out T output) where T : struct
     {
-        if (StructHelper<T>.IsArray || readSize < 0)
+        var bufferSize = StructHelper<T>.Size;
+
+        if (stream.Position + bufferSize >= stream.Length)
         {
             output = default;
             return false;
         }
 
-        readSize = readSize > 0 
-            ? Math.Min(readSize, StructHelper<T>.Size) 
-            : StructHelper<T>.Size;
-            
-        if (stream.Position + readSize >= stream.Length)
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+        if (stream.Read(buffer, 0, bufferSize) != bufferSize)
         {
             output = default;
             return false;
         }
 
-        var buffer = new Span<byte>(new byte[StructHelper<T>.Size]);
-        var readBuffer = readSize != StructHelper<T>.Size
-            ? buffer.Slice(0, readSize)
-            : buffer;
-            
-        if (readBuffer.Length != stream.Read(readBuffer))
-        {
-            output = default;
-            return false;
-        }
+        output = ((ReadOnlySpan<byte>)buffer)
+            .Slice(0, StructHelper<T>.Size)
+            .Deserialize<T>();
 
-        output = buffer.Deserialize<T>();
+        ArrayPool<byte>.Shared.Return(buffer);
         return true;
     }
 
-    public static bool Get<T>(this Stream stream, int count, out Span<T> output) where T : struct
+    public static bool TryRead<T>(this Stream stream, int count, out T[] output) where T : struct
     {
-        var size = StructHelper<T>.ElementSize;
-
-        if (StructHelper<T>.IsArray || 
-            stream.Position + size * count >= stream.Length)
+        var bufferSize = StructHelper<T>.Size * count;
+        if (stream.Position + bufferSize >= stream.Length)
         {
-            output = null;
-            return false;
-        }
-            
-        var buffer = new Span<byte>(new byte[size * count]);
-        if (buffer.Length != stream.Read(buffer))
-        {
-            output = null;
+            output = Array.Empty<T>();
             return false;
         }
 
-        output = buffer.Deserialize<T>(count);
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+        if (stream.Read(buffer, 0, bufferSize) != bufferSize)
+        {
+            output = Array.Empty<T>();
+            return false;
+        }
+
+        output = ((ReadOnlySpan<byte>)buffer)
+            .Slice(0, bufferSize)
+            .Deserialize<T>(count);
+
+        ArrayPool<byte>.Shared.Return(buffer);
         return true;
     }
 }

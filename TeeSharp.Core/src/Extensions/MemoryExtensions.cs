@@ -9,27 +9,23 @@ namespace TeeSharp.Core.Extensions;
 public static class MemoryExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Span<T> Deserialize<T>(this Span<byte> data, int count) where T : struct
+    public static T[] Deserialize<T>(this ReadOnlySpan<byte> data, int count) where T : struct
     {
-        if (StructHelper<T>.IsArray == false &&
-            StructHelper<T>.ElementSize * count <= data.Length)
+        var items = new T[count];
+        for (var i = 0; i < count; i++)
         {
-            return MemoryMarshal.Cast<byte, T>(data);
+            items[i] = data
+                .Slice(StructHelper<T>.Size * i)
+                .Deserialize<T>();
         }
 
-        throw new ArgumentOutOfRangeException(nameof(data));
+        return items;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Deserialize<T>(this Span<byte> data) where T : struct
+    public static T Deserialize<T>(this ReadOnlySpan<byte> data) where T : struct
     {
-        if (StructHelper<T>.IsArray == false &&
-            StructHelper<T>.Size <= data.Length)
-        {
-            return MemoryMarshal.Read<T>(data);
-        }
-
-        throw new ArgumentOutOfRangeException(nameof(data));
+        return MemoryMarshal.Read<T>(data);
     }
 
     public static Span<int> PutString(this Span<int> data, string str)
