@@ -1,11 +1,7 @@
 using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
-using TeeSharp.Core.Extensions;
-using TeeSharp.Core.Helpers;
 
 namespace TeeSharp.Tests;
 
@@ -27,10 +23,10 @@ public class OtherTests
         var str2 = Encoding.UTF8.GetString(array2);
         var str3 = Encoding.UTF8.GetString(array3);
         var str4 = Encoding.UTF8.GetString(buffer.Slice(0, len));
-            
+
         Assert.True(utf8Str == str1);
         Assert.True(utf8Str != str2);
         Assert.True(utf8Str != str3);
         Assert.True(utf8Str == str4);
-    }        
+    }
 }

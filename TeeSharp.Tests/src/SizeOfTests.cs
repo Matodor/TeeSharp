@@ -1,13 +1,11 @@
-using System;
-using System.Linq;
 using NUnit.Framework;
 using TeeSharp.Core.Helpers;
-using TeeSharp.Map;
+using TeeSharp.Map.DataFileItems;
 using TeeSharp.Network;
 
 namespace TeeSharp.Tests;
 
-public class SizeofTests
+public class SizeOfTests
 {
     [Test]
     public void CheckSize()
