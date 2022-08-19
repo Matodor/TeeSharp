@@ -5,16 +5,13 @@ namespace TeeSharp.Benchmark;
 
 internal static class Program
 {
-    static void Main(string[] args)
+    public static void Main()
     {
-        // new SecurityTokensBenchmark().Setup();
-
         string? result;
         int number;
 
         var benchmarks = new[]
         {
-            typeof(SerializationBenchmark),
             typeof(DeserializeBenchmark),
             typeof(DeserializeStructWithArrayBenchmark),
             typeof(SizeofBenchmark),

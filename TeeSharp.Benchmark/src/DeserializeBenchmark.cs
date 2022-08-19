@@ -14,7 +14,7 @@ public class DeserializeBenchmark
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public char[] Id;
-            
+
         public int Version;
         public int Size;
         public int Swaplen;
@@ -24,7 +24,7 @@ public class DeserializeBenchmark
         public int ItemSize;
         public int DataSize;
     }
-        
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct TestStruct1
     {
@@ -40,11 +40,11 @@ public class DeserializeBenchmark
             var ipV4Mapping = new Span<byte>(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255});
             var isIpV4 = ipV4Mapping.SequenceEqual(buffer.Slice(0, 12));
             var port = (serverEndpoint.PortData[0] << 8) | serverEndpoint.PortData[1];
-                
+
             return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
         }
     }
-        
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct TestStruct2
     {
@@ -64,14 +64,14 @@ public class DeserializeBenchmark
                 endpoint._ipData3,
                 endpoint._ipData4,
             }));
-                
+
             var isIpV4 = NetworkConstants.IpV4Mapping.AsSpan().SequenceEqual(buffer.Slice(0, 12));
             var port = (endpoint._portData1 << 8) | endpoint._portData2;
-                
+
             return new IPEndPoint(new IPAddress(isIpV4 ? buffer.Slice(12, 4) : buffer), port);
         }
     }
-        
+
     private static class Struct3
     {
         public static IPEndPoint Get(Span<byte> data)
@@ -84,7 +84,7 @@ public class DeserializeBenchmark
 
         public static IPEndPoint[] GetArray(Span<byte> data)
         {
-            const int sizeOfServerEndpoint = 18; 
+            const int sizeOfServerEndpoint = 18;
             var array = new IPEndPoint[data.Length / sizeOfServerEndpoint];
 
             for (var i = 0; i < array.Length; i++)
@@ -93,7 +93,7 @@ public class DeserializeBenchmark
             return array;
         }
     }
-        
+
     [Benchmark(Description = "IPEndPoint Marshal.PtrToStructure")]
     public void MarshalPtrToStructure()
     {
@@ -103,7 +103,7 @@ public class DeserializeBenchmark
         var endpoint = (IPEndPoint) addr;
         handle.Free();
     }
-        
+
     [Benchmark(Description = "IPEndPoint MemoryMarshal.Cast")]
     public void MemoryMarshalCast()
     {
@@ -122,7 +122,7 @@ public class DeserializeBenchmark
         data.AsSpan().CopyTo(span);
         var endpoint = (IPEndPoint) addr;
     }
-        
+
     [Benchmark(Description = "IPEndPoint MemoryMarshal.Read")]
     public void MemoryMarshalRead()
     {
@@ -130,14 +130,14 @@ public class DeserializeBenchmark
         var addr = MemoryMarshal.Read<TestStruct2>(data.AsSpan());
         var endpoint = (IPEndPoint) addr;
     }
-        
+
     [Benchmark(Description = "IPEndPoint ForwardCast")]
     public void ForwardCast()
     {
         var data = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111};
         var addr = Struct3.Get(data);
     }
-        
+
     [Benchmark(Description = "MemoryMarshal.Read.Multiple")]
     public void MemoryMarshalReadMultiple()
     {
@@ -175,15 +175,13 @@ public class DeserializeBenchmark
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
-        };
+        }.AsSpan();
 
         var size = StructHelper<TestStruct2>.Size;
-        var array = new IPEndPoint[data.Length / size];
+        var endPoints = new IPEndPoint[data.Length / size];
 
-        for (int i = 0; i < size; i++)
-        {
-            array[i] = (IPEndPoint) MemoryMarshal.Read<TestStruct2>(data.AsSpan().Slice(i * size, size));
-        }
+        for (var i = 0; i < endPoints.Length; i++)
+            endPoints[i] = (IPEndPoint)MemoryMarshal.Read<TestStruct2>(data.Slice(i * size, size));
     }
 
     [Benchmark(Description = "MemoryMarshal.Cast.Multiple")]
@@ -224,16 +222,14 @@ public class DeserializeBenchmark
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 0, 123, 32, 111,
         };
-            
+
         var array = MemoryMarshal.Cast<byte, TestStruct2>(data.AsSpan()).ToArray();
-        var addrs = new IPEndPoint[array.Length];
-            
-        for (var i = 0; i < addrs.Length; i++)
-        {
-            addrs[i] = (IPEndPoint) array[i];
-        }
+        var endPoints = new IPEndPoint[array.Length];
+
+        for (var i = 0; i < endPoints.Length; i++)
+            endPoints[i] = (IPEndPoint)array[i];
     }
-        
+
     [Benchmark(Description = "Struct3GetArray")]
     public void Struct3GetArray()
     {
