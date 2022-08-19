@@ -1,7 +1,8 @@
 using System.Runtime.InteropServices;
 
-namespace TeeSharp.Map;
+namespace TeeSharp.Map.MapItems;
 
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct DataFileItemTypeInfo
 {
     public int Type;

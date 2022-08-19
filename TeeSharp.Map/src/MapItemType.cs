@@ -8,5 +8,5 @@ public enum MapItemType
     Envelope,
     Group,
     Layer,
-    EnvelopePoints
+    EnvelopePoints,
 }

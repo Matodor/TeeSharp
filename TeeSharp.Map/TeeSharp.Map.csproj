@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="ComponentAce.Compression.Libs.zlib" Version="1.0.4" />
+      <PackageReference Include="SharpZipLib" Version="1.3.3" />
     </ItemGroup>
 
 </Project>
