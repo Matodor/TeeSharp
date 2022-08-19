@@ -1,66 +1,72 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using TeeSharp.Map;
+using TeeSharp.Map.Abstract;
+using TeeSharp.Map.Concrete;
+using TeeSharp.Map.MapItems;
 
 namespace Examples.Map;
 
 internal static class Program
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    private struct MapItemInfoSettings : IDataFileItem
+    {
+        public MapItemInfo Base;
+        public int DataIndexSettings;
+    }
+
     private const string MapName = "Gold Mine";
+    private const string MapPath = $"maps/{MapName}.map";
 
     private static void Main(string[] args)
     {
-        using (var stream = File.OpenRead($"maps/{MapName}.map"))
-        {
-            if (stream == null)
-            {
-            }
-            else
-            {
-                if (DataFileReader.Read(stream, out var error, out var dataFile))
-                {
-                    Console.WriteLine($"Loaded, map: {MapName}");
+        DataFile dataFile;
 
-                    ShowVersion(dataFile);
-                    ShowImages(dataFile);
-                    ShowInfo(dataFile);
-                    ShowEnvelopes(dataFile);
-                    ShowGroups(dataFile);
-                }
-                else
-                {
-                    Console.WriteLine($"Loading error: {error}");
-                }
-            }
+        try
+        {
+            dataFile = DefaultDataFileReader.Instance.Read(MapPath);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
 
+        Console.WriteLine($"Loaded, map: {MapName}");
+
+        ShowVersion(dataFile);
+        ShowImages(dataFile);
+        ShowInfo(dataFile);
+        ShowEnvelopes(dataFile);
+        ShowGroups(dataFile);
+
+        Console.WriteLine("Press any key to close...");
         Console.ReadKey();
     }
 
     private static void ShowGroups(DataFile dataFile)
     {
-        if (dataFile.HasItemType((int) MapItemType.Group))
+        if (dataFile.HasItemType(MapItemType.Group))
         {
-            foreach (var group in dataFile.GetItems<MapItemGroup>((int) MapItemType.Group))
+            foreach (var (groupInfo, groupItem) in dataFile.GetItems<MapItemGroup>(MapItemType.Group))
             {
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup version: {group.Item.ItemVersion}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup Name: {group.Item.Name}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup OffsetX: {group.Item.OffsetX}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup OffsetY: {group.Item.OffsetY}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ParallaxX: {group.Item.ParallaxX}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ParallaxY: {group.Item.ParallaxY}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup StartLayer: {group.Item.StartLayer}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup NumLayers: {group.Item.LayersCount}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup UseClipping: {group.Item.UseClipping}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ClipX: {group.Item.ClipX}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ClipY: {group.Item.ClipY}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ClipW: {group.Item.ClipWidth}");
-                Console.WriteLine($"[{group.Info.Id}] MapItemGroup ClipH: {group.Item.ClipHeight}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup version: {groupItem.ItemVersion}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup Name: {groupItem.Name}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup OffsetX: {groupItem.OffsetX}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup OffsetY: {groupItem.OffsetY}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ParallaxX: {groupItem.ParallaxX}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ParallaxY: {groupItem.ParallaxY}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup StartLayer: {groupItem.StartLayer}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup NumberOfLayers: {groupItem.NumberOfLayers}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup UseClipping: {groupItem.UseClipping}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ClipX: {groupItem.ClipX}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ClipY: {groupItem.ClipY}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ClipW: {groupItem.ClipWidth}");
+                Console.WriteLine($"[{groupInfo.Id}] MapItemGroup ClipH: {groupItem.ClipHeight}");
                 Console.WriteLine("--------------------------------------");
             }
         }
@@ -68,16 +74,16 @@ internal static class Program
 
     private static void ShowEnvelopes(DataFile dataFile)
     {
-        if (dataFile.HasItemType((int) MapItemType.Envelope))
+        if (dataFile.HasItemType(MapItemType.Envelope))
         {
-            foreach (var envelope in dataFile.GetItems<MapItemEnvelope>((int) MapItemType.Envelope))
+            foreach (var (envelopeInfo, envelopeItem) in dataFile.GetItems<MapItemEnvelope>(MapItemType.Envelope))
             {
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope version: {envelope.Item.ItemVersion}");
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope Channels: {envelope.Item.Channels}");
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope StartPoint: {envelope.Item.StartPoint}");
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope PointsCount: {envelope.Item.PointsCount}");
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope PointsCount: {envelope.Item.Name}");
-                Console.WriteLine($"[{envelope.Info.Id}] MapItemEnvelope IsSynchronized: {envelope.Item.IsSynchronized}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope version: {envelopeItem.ItemVersion}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope Channels: {envelopeItem.Channels}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope StartPoint: {envelopeItem.StartPoint}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope NumberOfPoints: {envelopeItem.NumberOfPoints}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope PointsCount: {envelopeItem.Name}");
+                Console.WriteLine($"[{envelopeInfo.Id}] MapItemEnvelope IsSynchronized: {envelopeItem.IsSynchronized}");
                 Console.WriteLine("--------------------------------------");
             }
         }
@@ -85,36 +91,36 @@ internal static class Program
 
     private static void ShowInfo(DataFile dataFile)
     {
-        if (dataFile.HasItemType((int) MapItemType.Info))
+        if (dataFile.HasItemType(MapItemType.Info))
         {
-            foreach (var mapInfo in dataFile.GetItems<MapItemInfo>((int) MapItemType.Info))
+            foreach (var (info, item) in dataFile.GetItems<MapItemInfoSettings>(MapItemType.Info))
             {
-                Console.WriteLine($"[{mapInfo.Info.Id}] MapItemInfo version: {mapInfo.Item.ItemVersion}");
+                Console.WriteLine($"[{info.Id}] MapItemInfo version: {item.Base.ItemVersion}");
 
-                if (mapInfo.Item.DataIndexAuthor > -1)
+                if (item.Base.DataIndexAuthor > -1)
                 {
-                    var author = dataFile.GetDataAsString(mapInfo.Item.DataIndexAuthor);
-                    Console.WriteLine($"[{mapInfo.Info.Id}] MapItemInfo author: {author}");
+                    var author = dataFile.GetDataAsString(item.Base.DataIndexAuthor);
+                    Console.WriteLine($"[{info.Id}] MapItemInfo author: {author}");
                 }
 
-                if (mapInfo.Item.DataIndexVersion > -1)
+                if (item.Base.DataIndexVersion > -1)
                 {
-                    var version = dataFile.GetDataAsString(mapInfo.Item.DataIndexVersion);
-                    Console.WriteLine($"[{mapInfo.Info.Id}] MapItemInfo version: {version}");
+                    var version = dataFile.GetDataAsString(item.Base.DataIndexVersion);
+                    Console.WriteLine($"[{info.Id}] MapItemInfo version: {version}");
                 }
 
-                if (mapInfo.Item.DataIndexCredits > -1)
+                if (item.Base.DataIndexCredits > -1)
                 {
-                    var credits = dataFile.GetDataAsString(mapInfo.Item.DataIndexCredits);
-                    Console.WriteLine($"[{mapInfo.Info.Id}] MapItemInfo credits: {credits}");
+                    var credits = dataFile.GetDataAsString(item.Base.DataIndexCredits);
+                    Console.WriteLine($"[{info.Id}] MapItemInfo credits: {credits}");
                 }
 
-                if (mapInfo.Item.DataIndexLicense > -1)
+                if (item.Base.DataIndexLicense > -1)
                 {
-                    var license = dataFile.GetDataAsString(mapInfo.Item.DataIndexLicense);
-                    Console.WriteLine($"[{mapInfo.Info.Id}] MapItemInfo license: {license}");
+                    var license = dataFile.GetDataAsString(item.Base.DataIndexLicense);
+                    Console.WriteLine($"[{info.Id}] MapItemInfo license: {license}");
                 }
-                    
+
                 Console.WriteLine("--------------------------------------");
             }
         }
@@ -123,10 +129,10 @@ internal static class Program
     private static void ShowImages(DataFile dataFile)
     {
         Directory.CreateDirectory("images");
-            
-        if (dataFile.HasItemType((int) MapItemType.Image))
+
+        if (dataFile.HasItemType(MapItemType.Image))
         {
-            foreach (var mapImage in dataFile.GetItems<MapItemImage>((int) MapItemType.Image))
+            foreach (var mapImage in dataFile.GetItems<MapItemImage>(MapItemType.Image))
             {
                 var imageName = dataFile.GetDataAsString(mapImage.Item.DataIndexName);
                 Console.WriteLine($"[{mapImage.Info.Id}] Image: {imageName}");
@@ -134,10 +140,10 @@ internal static class Program
 
                 if (!mapImage.Item.IsExternal)
                 {
-                    var data = dataFile.GetDataAsRaw(mapImage.Item.DateIndexImage);
+                    var data = dataFile.GetDataAsRaw(mapImage.Item.DataIndexImage);
                     var picture = PictureFromArgb(mapImage.Item.Width, mapImage.Item.Height, data);
                     var path = Path.Combine(Environment.CurrentDirectory, "images", $"{imageName}.png");
-                        
+
                     picture.Save(path, ImageFormat.Png);
                 }
             }
@@ -152,25 +158,25 @@ internal static class Program
                 {
                     var position = (y * width + x) * 4;
                     var color = Color.FromArgb(
-                        data[position + 3], 
-                        data[position + 0], 
-                        data[position + 1], 
+                        data[position + 3],
+                        data[position + 0],
+                        data[position + 1],
                         data[position + 2]
                     );
-                        
+
                     image.SetPixel(x, y, color);
                 }
             }
 
             return image;
-        } 
+        }
     }
 
     private static void ShowVersion(DataFile dataFile)
     {
-        if (dataFile.HasItemType((int) MapItemType.Version))
+        if (dataFile.HasItemType(MapItemType.Version))
         {
-            foreach (var mapVersion in dataFile.GetItems<MapItemVersion>((int) MapItemType.Version))
+            foreach (var mapVersion in dataFile.GetItems<MapItemVersion>(MapItemType.Version))
             {
                 Console.WriteLine($"[{mapVersion.Info.Id}] MapItemVersion version: {mapVersion.Item.Version}");
                 Console.WriteLine("--------------------------------------");
