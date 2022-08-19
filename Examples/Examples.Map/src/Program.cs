@@ -44,6 +44,9 @@ internal static class Program
         ShowEnvelopes(dataFile);
         ShowGroups(dataFile);
 
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+
         Console.WriteLine("Press any key to close...");
         Console.ReadKey();
     }
@@ -145,6 +148,7 @@ internal static class Program
                     var path = Path.Combine(Environment.CurrentDirectory, "images", $"{imageName}.png");
 
                     picture.Save(path, ImageFormat.Png);
+                    dataFile.UnloadData(mapImage.Item.DataIndexImage);
                 }
             }
         }
