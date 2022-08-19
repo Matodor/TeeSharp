@@ -160,4 +160,9 @@ public class DataFile
         inflaterInputStream.CopyTo(outputStream);
         return outputStream.ToArray();
     }
+
+    public void UnloadData(int index)
+    {
+        DataItems.Remove(index);
+    }
 }
