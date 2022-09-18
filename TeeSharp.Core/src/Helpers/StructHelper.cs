@@ -17,12 +17,16 @@ public static class StructHelper<T> where T : struct
         Type = typeof(T);
         IsArray = Type.IsArray;
 
-        if (Unsafe.SizeOf<T>() != Marshal.SizeOf(Type))
-            throw new Exception();
-
         if (Type == typeof(DateTime))
+        {
             Size = 8;
+        }
         else
+        {
             Size = Unsafe.SizeOf<T>();
+
+            if (Unsafe.SizeOf<T>() != Marshal.SizeOf(Type))
+                throw new Exception();
+        }
     }
 }
