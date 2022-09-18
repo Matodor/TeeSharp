@@ -8,6 +8,7 @@ namespace TeeSharp.Network.Abstract;
 public interface INetworkServer : IDisposable
 {
     event Action<INetworkConnection> ConnectionAccepted;
+    event Action<INetworkConnection, string> ConnectionDropped;
 
     ConnectionSettings ConnectionSettings { get; }
     int MaxConnections { get; }
@@ -27,4 +28,5 @@ public interface INetworkServer : IDisposable
     void Update();
     void Send(int connectionId, Span<byte> data, NetworkMessageFlags networkMessageFlags);
     void SendData(IPEndPoint endPoint, ReadOnlySpan<byte> data, ReadOnlySpan<byte> extraData = default);
+    void Drop(int connectionId, string reason);
 }

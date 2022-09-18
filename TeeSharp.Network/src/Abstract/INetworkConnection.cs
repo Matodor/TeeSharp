@@ -14,6 +14,8 @@ public interface INetworkConnection
     void Disconnect(string reason);
     IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet);
     void Update();
-    void FlushMessages();
+    int FlushMessages();
     bool QueueMessage(Span<byte> data, NetworkMessageFlags flags);
+    void SendConnectionStateMsg(ConnectionStateMsg msg, byte[] extraData);
+    void SendConnectionStateMsg(ConnectionStateMsg msg, string? extraMsg = null);
 }

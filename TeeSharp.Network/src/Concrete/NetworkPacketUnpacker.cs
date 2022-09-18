@@ -36,8 +36,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
 
         var ack = ((buffer[0] & 0b_0000_0011) << 8) | buffer[1];
         var numberOfMessages = buffer[2];
-        var data = new byte[buffer.Length - NetworkConstants.PacketHeaderSize];
-        var extraData = Array.Empty<byte>();
+        byte[] data;
 
         if (flags.HasFlag(NetworkPacketFlags.Compression))
         {
@@ -47,14 +46,24 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
                 return false;
             }
 
-            // TODO: implement Huffman decompress
-            throw new NotImplementedException();
+
+            var decompressBuffer = new byte[NetworkConstants.MaxPayload].AsSpan();
+            var decompressedSize = NetworkHelper.HuffmanCompressor.Decompress(
+                buffer.Slice(NetworkConstants.PacketHeaderSize),
+                decompressBuffer
+            );
+
+            if (decompressedSize < 0)
+            {
+                packet = null;
+                return false;
+            }
+
+            data = decompressBuffer.Slice(0, decompressedSize).ToArray();
         }
         else
         {
-            buffer
-                .Slice(NetworkConstants.PacketHeaderSize, data.Length)
-                .CopyTo(data);
+            data = buffer.Slice(NetworkConstants.PacketHeaderSize).ToArray();
         }
 
         packet = new NetworkPacketIn(
@@ -62,7 +71,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
             ack: ack,
             numberOfMessages: numberOfMessages,
             data: data,
-            extraData: extraData
+            extraData: Array.Empty<byte>()
         );
 
         return true;
@@ -73,7 +82,6 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         [NotNullWhen(true)] out NetworkPacketIn? packet)
     {
         var isSixup = (buffer[0] & 0b_0000_0011) == 0b_0000_0001;
-
         if (isSixup ||
             buffer.Length < NetworkConstants.PacketConnectionLessDataOffset)
         {

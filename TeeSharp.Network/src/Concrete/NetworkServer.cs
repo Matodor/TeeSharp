@@ -146,7 +146,8 @@ public class NetworkServer : INetworkServer
                 {
                     if ((ConnectionStateMsg)packet.Data[0] != ConnectionStateMsg.Close)
                     {
-                        throw new NotImplementedException();
+                        // TODO reconnect
+                        // throw new NotImplementedException();
                     }
                 }
 
