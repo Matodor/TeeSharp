@@ -18,6 +18,7 @@ namespace TeeSharp.Network.Concrete;
 public class NetworkServer : INetworkServer
 {
     public event Action<INetworkConnection> ConnectionAccepted = delegate {  };
+    public event Action<INetworkConnection, string>? ConnectionDropped;
 
     public ConnectionSettings ConnectionSettings { get; private set; } = null!;
     public int MaxConnections { get; private set; }
@@ -175,6 +176,15 @@ public class NetworkServer : INetworkServer
         }
     }
 
+    public static void SendData(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ReadOnlySpan<byte> data,
+        ReadOnlySpan<byte> extraData = default)
+    {
+        NetworkHelper.SendData(client, endPoint, data, extraData);
+    }
+
     public void Send(
         int connectionId,
         Span<byte> data,
@@ -197,6 +207,17 @@ public class NetworkServer : INetworkServer
 
         if (flags.HasFlag(NetworkMessageFlags.Flush))
             Connections[connectionId].FlushMessages();
+    }
+
+    public void Drop(int connectionId, string reason)
+    {
+        var connection = Connections[connectionId];
+        Logger.LogDebug("Drop connection, reason: '{Reason}' ({EndPoint})",
+            reason, connection.EndPoint.ToString());
+
+        MapConnections.Remove(connection.EndPoint.GetHashCode());
+        connection.Disconnect(reason);
+        ConnectionDropped?.Invoke(connection, reason);
     }
 
     protected virtual void ProcessConnectionStateMessage(

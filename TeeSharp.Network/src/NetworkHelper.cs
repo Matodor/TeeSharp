@@ -75,44 +75,35 @@ public static class NetworkHelper
         }
     }
 
-    // public static void SendData(UdpClient client, IPEndPoint endPoint,
-    //     ReadOnlySpan<byte> data,
-    //     ReadOnlySpan<byte> extraData = default)
-    // {
-    //     var bufferSize = NetworkConstants.PacketConnectionLessDataOffset + data.Length;
-    //     if (bufferSize > NetworkConstants.MaxPacketSize)
-    //         throw new Exception("Maximum packet size exceeded.");
-    //
-    //     var buffer = new Span<byte>(new byte[bufferSize]);
-    //     if (extraData.IsEmpty)
-    //     {
-    //         buffer
-    //             .Slice(0, NetworkConstants.PacketConnectionLessDataOffset)
-    //             .Fill(255);
-    //     }
-    //     else
-    //     {
-    //         NetworkConstants.PacketHeaderExtended.CopyTo(buffer);
-    //         extraData
-    //             .Slice(0, NetworkConstants.PacketExtraDataSize)
-    //             .CopyTo(buffer.Slice(NetworkConstants.PacketHeaderExtended.Length));
-    //     }
-    //
-    //     data.CopyTo(buffer.Slice(NetworkConstants.PacketConnectionLessDataOffset));
-    //     client.BeginSend(
-    //         buffer.ToArray(),
-    //         buffer.Length,
-    //         endPoint,
-    //         EndSendCallback,
-    //         client
-    //     );
-    // }
-    //
-    // private static void EndSendCallback(IAsyncResult result)
-    // {
-    //     var client = (UdpClient) result.AsyncState;
-    //     client?.EndSend(result);
-    // }
+    public static void SendData(
+        UdpClient client,
+        IPEndPoint endPoint,
+        ReadOnlySpan<byte> data,
+        ReadOnlySpan<byte> extraData = default)
+    {
+        var bufferSize = NetworkConstants.PacketConnectionLessDataOffset + data.Length + extraData.Length;
+        if (bufferSize > NetworkConstants.MaxPacketSize)
+            throw new Exception("Maximum packet size exceeded.");
+
+        var buffer = new Span<byte>(new byte[bufferSize]);
+
+        if (extraData.IsEmpty)
+        {
+            buffer
+                .Slice(0, NetworkConstants.PacketConnectionLessDataOffset)
+                .Fill(255);
+        }
+        else
+        {
+            NetworkConstants.PacketHeaderExtended.CopyTo(buffer);
+            extraData
+                .Slice(0, NetworkConstants.PacketExtraDataSize)
+                .CopyTo(buffer.Slice(NetworkConstants.PacketHeaderExtended.Length));
+        }
+
+        data.CopyTo(buffer.Slice(NetworkConstants.PacketConnectionLessDataOffset));
+        client.Send(buffer, endPoint);
+    }
 
     public static void SendConnectionStateMsg(
         UdpClient client,
