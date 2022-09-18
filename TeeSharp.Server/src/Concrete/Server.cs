@@ -398,8 +398,8 @@ public class Server : IServer
     protected virtual void SendSupportedCapabilities(int connectionId)
     {
         var packer = new Packer(UuidManager.DDNet.Capabilities, true);
-        packer.AddInt((int)ProtocolCapabilities.CurrentVersion);
-        packer.AddInt((int)GetSupportedCapabilities());
+        packer.AddInteger((int)ProtocolCapabilities.CurrentVersion);
+        packer.AddInteger((int)GetSupportedCapabilities());
 
         SendMessage(connectionId, packer, NetworkMessageFlags.Vital);
     }
@@ -458,6 +458,8 @@ public class Server : IServer
             {
                 accumulatedElapsedTime -= TargetElapsedTime;
                 GameTime += TargetElapsedTime;
+
+                global::System.Console.WriteLine($"Tick: {accumulatedElapsedTime:c}");
 
                 ++Tick;
 

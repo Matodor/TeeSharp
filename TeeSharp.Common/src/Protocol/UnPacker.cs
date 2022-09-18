@@ -61,6 +61,18 @@ public ref struct UnPacker
         return false;
     }
 
+    public bool TryGetBoolean(out bool result)
+    {
+        if (!TryGetInteger(out var resultInt) || resultInt is < 0 or > 1)
+        {
+            result = default;
+            return false;
+        }
+
+        result = resultInt != 0;
+        return true;
+    }
+
     public bool TryGetInteger(out int result)
     {
         if (!HasError && CompressionableInt.TryUnpack(_data, out result, out _data))
