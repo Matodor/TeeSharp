@@ -26,4 +26,5 @@ public interface INetworkServer : IDisposable
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
     void Update();
     void Send(int connectionId, Span<byte> data, NetworkMessageFlags networkMessageFlags);
+    void SendData(IPEndPoint endPoint, ReadOnlySpan<byte> data, ReadOnlySpan<byte> extraData = default);
 }

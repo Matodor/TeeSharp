@@ -27,8 +27,8 @@ public class NetworkServer : INetworkServer
     public IReadOnlyList<INetworkConnection> Connections { get; protected set; } = null!;
 
     protected Dictionary<int, int> MapConnections { get; set; } = null!;
-    protected EndPoint? EndPoint => Socket?.Client.LocalEndPoint;
-    protected UdpClient? Socket { get; set; }
+    protected EndPoint EndPoint => Socket.Client.LocalEndPoint!;
+    protected UdpClient Socket { get; set; } = null!;
     protected ILogger Logger { get; set; }
     protected byte[] SecurityTokenSeed { get; set; } = null!;
 
@@ -65,7 +65,7 @@ public class NetworkServer : INetworkServer
         MaxConnectionsPerIp = maxConnectionsPerIp;
 
         Logger.LogDebug("The network server has been successfully initialized");
-        Logger.LogInformation("Local address: {EndPoint}", EndPoint!.ToString());
+        Logger.LogInformation("Local address: {EndPoint}", EndPoint.ToString());
 
         MapConnections = new Dictionary<int, int>(MaxConnections);
 
@@ -80,7 +80,7 @@ public class NetworkServer : INetworkServer
 
     protected virtual INetworkConnection CreateEmptyConnection(int id)
     {
-        return new NetworkConnection(id, Socket!, ConnectionSettings);
+        return new NetworkConnection(id, Socket, ConnectionSettings);
     }
 
     public bool TryGetConnectionId(IPEndPoint endPoint, out int id)
@@ -92,13 +92,13 @@ public class NetworkServer : INetworkServer
     {
         var endPoint = default(IPEndPoint);
 
-        while (!cancellationToken.IsCancellationRequested && Socket!.Available > 0)
+        while (!cancellationToken.IsCancellationRequested && Socket.Available > 0)
         {
             Span<byte> data;
 
             try
             {
-                data = Socket!.Receive(ref endPoint).AsSpan();
+                data = Socket.Receive(ref endPoint).AsSpan();
             }
             catch (SocketException e)
             {
@@ -176,13 +176,12 @@ public class NetworkServer : INetworkServer
         }
     }
 
-    public static void SendData(
-        UdpClient client,
+    public void SendData(
         IPEndPoint endPoint,
         ReadOnlySpan<byte> data,
         ReadOnlySpan<byte> extraData = default)
     {
-        NetworkHelper.SendData(client, endPoint, data, extraData);
+        NetworkHelper.SendData(Socket, endPoint, data, extraData);
     }
 
     public void Send(
@@ -372,7 +371,7 @@ public class NetworkServer : INetworkServer
         string? extraMsg = null)
     {
         NetworkHelper.SendConnectionStateMsg(
-            Socket!,
+            Socket,
             endPoint,
             msg,
             token,
@@ -388,7 +387,7 @@ public class NetworkServer : INetworkServer
         byte[] extraData)
     {
         NetworkHelper.SendConnectionStateMsg(
-            Socket!,
+            Socket,
             endPoint,
             msg,
             token,
@@ -415,8 +414,11 @@ public class NetworkServer : INetworkServer
 
     public void Dispose()
     {
-        Socket?.Close();
-        Socket?.Dispose();
-        Socket = null;
+        if (Socket != null!)
+        {
+            Socket.Close();
+            Socket.Dispose();
+            Socket = null!;
+        }
     }
 }
