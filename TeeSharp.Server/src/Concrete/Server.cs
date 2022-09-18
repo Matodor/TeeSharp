@@ -44,7 +44,7 @@ public class Server : IServer
 
     protected delegate void MessageCallback(
         int connectionId,
-        UnPacker unPacker,
+        Unpacker unpacker,
         IPEndPoint endPoint,
         NetworkMessageFlags flags
     );
@@ -245,7 +245,7 @@ public class Server : IServer
 
     protected virtual void ProcessClientMessage(NetworkMessage message)
     {
-        var unPacker = new UnPacker(message.Data);
+        var unPacker = new Unpacker(message.Data);
         if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
         {
             if (!isSystemMsg)
@@ -288,13 +288,13 @@ public class Server : IServer
     protected virtual void ProcessClientSystemUuidMessage(
         int connectionId,
         Uuid msgUuid,
-        UnPacker unPacker,
+        Unpacker unpacker,
         IPEndPoint endPoint,
         NetworkMessageFlags flags)
     {
         if (ClientUuidMessageHandlers.TryGetValue(msgUuid, out var callback))
         {
-            callback(connectionId, unPacker, endPoint, flags);
+            callback(connectionId, unpacker, endPoint, flags);
         }
         else
         {
@@ -305,13 +305,13 @@ public class Server : IServer
     protected virtual void ProcessClientSystemMessage(
         int connectionId,
         ProtocolMessage msgId,
-        UnPacker unPacker,
+        Unpacker unpacker,
         IPEndPoint endPoint,
         NetworkMessageFlags flags)
     {
         if (ClientMessageHandlers.TryGetValue(msgId, out var callback))
         {
-            callback(connectionId, unPacker, endPoint, flags);
+            callback(connectionId, unpacker, endPoint, flags);
         }
         else
         {
@@ -323,7 +323,7 @@ public class Server : IServer
         int connectionId,
         ProtocolMessage msgId,
         Uuid msgUuid,
-        UnPacker unPacker,
+        Unpacker unpacker,
         IPEndPoint endPoint,
         NetworkMessageFlags flags)
     {
@@ -332,16 +332,16 @@ public class Server : IServer
 
     protected virtual void OnUuidDDNetClientVersionMessage(
         int connectionId,
-        UnPacker unPacker,
+        Unpacker unpacker,
         IPEndPoint endpoint,
         NetworkMessageFlags flags)
     {
         if (!flags.HasFlag(NetworkMessageFlags.Vital) || Clients[connectionId].State != ServerClientState.PreAuth)
             return;
 
-        if (!unPacker.TryGetUuid(out var connectionUuid) ||
-            !unPacker.TryGetInteger(out var version) ||
-            !unPacker.TryGetString(out var versionStr))
+        if (!unpacker.TryGetUuid(out var connectionUuid) ||
+            !unpacker.TryGetInteger(out var version) ||
+            !unpacker.TryGetString(out var versionStr))
         {
             return;
         }
@@ -357,7 +357,7 @@ public class Server : IServer
 
     protected virtual void OnClientInfoMessage(
             int connectionId,
-            UnPacker unPacker,
+            Unpacker unpacker,
             IPEndPoint endpoint,
             NetworkMessageFlags flags)
     {
@@ -368,8 +368,8 @@ public class Server : IServer
             return;
         }
 
-        if (!unPacker.TryGetString(out var version) ||
-            !unPacker.TryGetString(out var password))
+        if (!unpacker.TryGetString(out var version) ||
+            !unpacker.TryGetString(out var password))
         {
             return;
         }

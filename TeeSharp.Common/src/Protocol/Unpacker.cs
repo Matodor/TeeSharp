@@ -6,7 +6,7 @@ using Uuids;
 
 namespace TeeSharp.Common.Protocol;
 
-public ref struct UnPacker
+public ref struct Unpacker
 {
     public bool HasError { get; private set; }
 
@@ -14,7 +14,7 @@ public ref struct UnPacker
 
     private Span<byte> _data;
 
-    public UnPacker(Span<byte> data)
+    public Unpacker(Span<byte> data)
     {
         _data = data;
         DataOriginal = _data;
