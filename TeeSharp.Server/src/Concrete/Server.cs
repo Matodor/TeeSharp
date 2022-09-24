@@ -311,11 +311,12 @@ public class Server : IServer
     {
         if (ClientMessageHandlers.TryGetValue(msgId, out var callback))
         {
+            Logger.LogDebug("ProcessClientSystemMessage: {Uuid} from {EndPoint}", msgId, endPoint.ToString());
             callback(connectionId, unpacker, endPoint, flags);
         }
         else
         {
-            Logger.LogDebug("Unknown client system message: {Uuid}", msgId);
+            Logger.LogDebug("ProcessClientSystemMessage (unknown): {Uuid} from {EndPoint}", msgId, endPoint.ToString());
         }
     }
 
