@@ -167,13 +167,12 @@ public class NetworkServer : INetworkServer
         {
             Connections[i].Update();
 
-            // TODO
-            // if(m_aSlots[i].m_Connection.State() == NET_CONNSTATE_ERROR &&
-            //     (!m_aSlots[i].m_Connection.m_TimeoutProtected ||
-            //         !m_aSlots[i].m_Connection.m_TimeoutSituation))
-            // {
-            //     Drop(i, m_aSlots[i].m_Connection.ErrorString());
-            // }
+            if (Connections[i].State is ConnectionState.Timeout or ConnectionState.Disconnecting)
+                Drop(i, Connections[i].State switch
+                {
+                    ConnectionState.Timeout => "Timeout",
+                    _ => string.Empty,
+                });
         }
     }
 
@@ -225,11 +224,12 @@ public class NetworkServer : INetworkServer
         NetworkPacketIn packetIn)
     {
         if (packetIn.Data.Length == 0 || !packetIn.Flags.HasFlag(NetworkPacketFlags.Connection))
-        {
             return;
-        }
 
-        switch ((ConnectionStateMsg) packetIn.Data[0])
+        var msg = (ConnectionStateMsg)packetIn.Data[0];
+        Logger.LogDebug("ProcessConnectionStateMessage: {Msg} from {EndPoint}", msg, endPoint.ToString());
+
+        switch (msg)
         {
             case ConnectionStateMsg.Connect:
                 if (packetIn.Data.Length >= 1 + StructHelper<SecurityToken>.Size * 2
@@ -271,7 +271,7 @@ public class NetworkServer : INetworkServer
         if (token == GetToken(endPoint))
             TryAcceptConnection(endPoint, token);
         else
-            Logger.LogDebug("Invalid token ({EndPoint})", endPoint);
+            Logger.LogDebug("Invalid token ({EndPoint})", endPoint.ToString());
     }
 
     protected virtual bool TryAcceptConnection(
@@ -300,7 +300,7 @@ public class NetworkServer : INetworkServer
         Connections[emptyConnectionId].Init(endPoint, token);
         MapConnections.Add(endPoint.GetHashCode(), emptyConnectionId);
 
-        Logger.LogDebug("Connection accepted ({EndPoint})", endPoint);
+        Logger.LogDebug("Connection accepted ({EndPoint})", endPoint.ToString());
         ConnectionAccepted(Connections[emptyConnectionId]);
 
         return true;
@@ -387,6 +387,7 @@ public class NetworkServer : INetworkServer
         SecurityToken token,
         byte[] extraData)
     {
+        Logger.LogDebug("SendConnectionStateMsg: {Msg} to {EndPoint}", msg, endPoint.ToString());
         NetworkHelper.SendConnectionStateMsg(
             Socket,
             endPoint,

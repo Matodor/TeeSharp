@@ -32,24 +32,25 @@ public class NetworkConnection : INetworkConnection
     protected DateTime LastSendTime { get; set; }
     protected DateTime LastUpdateTime { get; set; }
 
-    internal PacketAccumulator MessageAccumulator { get; set; }
-    internal Queue<MessageForResend> MessagesForResend { get; set; }
-    internal int MessagesForResendDataSize { get; set; }
+    protected PacketAccumulator MessageAccumulator { get; set; }
+    protected Queue<MessageForResend> MessagesForResend { get; set; }
+    protected int MessagesForResendDataSize { get; set; }
 
-    internal class PacketAccumulator
+    protected class PacketAccumulator
     {
-        internal int NumberOfMessages { get; set; }
-        internal int BufferSize { get; set; }
-        internal readonly byte[] Buffer = new byte[NetworkConstants.MaxPayload];
+        public NetworkPacketFlags Flags { get; set; } = NetworkPacketFlags.None;
+        public int NumberOfMessages { get; set; }
+        public int BufferSize { get; set; }
+        public readonly byte[] Buffer = new byte[NetworkConstants.MaxPayload];
 
-        internal void Reset()
+        public void Reset()
         {
             BufferSize = 0;
             NumberOfMessages = 0;
         }
     }
 
-    internal class MessageForResend
+    protected class MessageForResend
     {
         public static readonly int SizeOf =
             sizeof(NetworkMessageFlags) +
@@ -58,11 +59,11 @@ public class NetworkConnection : INetworkConnection
             StructHelper<DateTime>.Size +
             StructHelper<DateTime>.Size;
 
-        internal NetworkMessageFlags Flags { get; }
-        internal int Sequence { get; }
-        internal byte[] Data { get; }
-        internal DateTime LastSendTime { get; set; }
-        internal DateTime FirstSendTime { get; set; }
+        public NetworkMessageFlags Flags { get; }
+        public int Sequence { get; }
+        public byte[] Data { get; }
+        public DateTime LastSendTime { get; set; }
+        public DateTime FirstSendTime { get; set; }
 
         public MessageForResend(
             NetworkMessageFlags flags,
@@ -93,9 +94,10 @@ public class NetworkConnection : INetworkConnection
         MessageAccumulator = new PacketAccumulator();
         MessagesForResend = new Queue<MessageForResend>(32);
         MessagesForResendDataSize = 0;
+        State = ConnectionState.Offline;
     }
 
-    public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
+    public void Init(IPEndPoint endPoint, SecurityToken securityToken)
     {
         Reset();
 
@@ -149,7 +151,7 @@ public class NetworkConnection : INetworkConnection
                 "Token mismatch: '{TokenExpected}' != '{TokenGot}' ({EndPoint})",
                 SecurityToken,
                 token,
-                EndPoint
+                EndPoint.ToString()
             );
 
             return Enumerable.Empty<NetworkMessage>();
@@ -174,6 +176,9 @@ public class NetworkConnection : INetworkConnection
 
         PeerAck = packet.Ack;
 
+        if (packet.Flags.HasFlag(NetworkPacketFlags.Resend))
+            ResendMessages();
+
         if (packet.Flags.HasFlag(NetworkPacketFlags.Connection))
         {
             var msg = (ConnectionStateMsg)data[0];
@@ -185,7 +190,7 @@ public class NetworkConnection : INetworkConnection
         {
             LastReceiveTime = DateTime.UtcNow;
             State = ConnectionState.Online;
-            Logger.LogDebug("Connecting online ({EndPoint})", EndPoint);
+            Logger.LogDebug("Connecting online ({EndPoint})", EndPoint.ToString());
         }
 
         if (State == ConnectionState.Online)
@@ -197,16 +202,61 @@ public class NetworkConnection : INetworkConnection
         return GetMessagesFromPacket(packet.NumberOfMessages, data);
     }
 
+    protected void ResendMessages()
+    {
+        foreach (var messageForResend in MessagesForResend)
+            ResendMessage(messageForResend);
+    }
+
+    protected void ResendMessage(MessageForResend message)
+    {
+        if (QueueMessageInternal(message.Data, message.Flags, true))
+            message.LastSendTime = DateTime.UtcNow;
+    }
+
     public void Update()
     {
-        if (State is ConnectionState.Offline)
+        var isActive = State is ConnectionState.Pending or ConnectionState.Online;
+        if (isActive == false)
             return;
 
         var now = DateTime.UtcNow;
-        var isActive = State is ConnectionState.Pending or ConnectionState.Online;
-        if (isActive && now - LastReceiveTime > TimeSpan.FromSeconds(Settings.Timeout))
+        if (now - LastReceiveTime > TimeSpan.FromSeconds(Settings.Timeout))
         {
+            State = ConnectionState.Timeout;
+        }
 
+        if (MessagesForResend.TryPeek(out var messagesForResend))
+        {
+            if (now - messagesForResend.FirstSendTime > TimeSpan.FromSeconds(Settings.Timeout))
+            {
+                State = ConnectionState.Timeout;
+            }
+            else if (now - messagesForResend.LastSendTime > TimeSpan.FromSeconds(1))
+            {
+                ResendMessage(messagesForResend);
+            }
+        }
+
+        switch (State)
+        {
+            case ConnectionState.Online:
+                if (now - LastSendTime > TimeSpan.FromSeconds(0.5))
+                {
+                    var flushedMessages = FlushMessages();
+                    if (flushedMessages > 0)
+                        Logger.LogDebug("Flushed connection due to timeout ({FlushedMessages} messages)", flushedMessages);
+                }
+
+                if (now - LastSendTime > TimeSpan.FromSeconds(1))
+                    SendConnectionStateMsg(ConnectionStateMsg.KeepAlive);
+
+                break;
+
+            case ConnectionState.Pending:
+                if (now - LastSendTime > TimeSpan.FromSeconds(0.5))
+                    SendConnectionStateMsg(ConnectionStateMsg.ConnectAccept, SecurityToken.Magic);
+                break;
         }
     }
 
@@ -217,7 +267,7 @@ public class NetworkConnection : INetworkConnection
             return 0;
 
         var packet = new NetworkPacketOut(
-            flags: NetworkPacketFlags.None,
+            flags: MessageAccumulator.Flags,
             ack: Ack,
             numberOfMessages: numberOfMessages,
             dataSize: MessageAccumulator.BufferSize
@@ -349,9 +399,8 @@ public class NetworkConnection : INetworkConnection
                     if (NetworkHelper.IsSequenceInBackroom(header.Sequence, Ack))
                         continue;
 
-                    Logger.LogDebug("Asking for resend {Sequence} {Ack}",
-                        header.Sequence, (Ack + 1) % NetworkConstants.MaxSequence);
-                    ResendMessages();
+                    Logger.LogDebug("Asking for resend {Sequence} {Ack}", header.Sequence, (Ack + 1) % NetworkConstants.MaxSequence);
+                    MessageAccumulator.Flags |= NetworkPacketFlags.Resend;
                     continue;
                 }
             }
@@ -389,7 +438,7 @@ public class NetworkConnection : INetworkConnection
         return true;
     }
 
-    protected virtual void AckMessages(int ack)
+    protected void AckMessages(int ack)
     {
         while (true)
         {
@@ -403,12 +452,7 @@ public class NetworkConnection : INetworkConnection
         }
     }
 
-    protected virtual void ResendMessages()
-    {
-        throw new NotImplementedException();
-    }
-
-    protected virtual void Reset()
+    protected void Reset()
     {
         State = ConnectionState.Offline;
         Sequence = 0;

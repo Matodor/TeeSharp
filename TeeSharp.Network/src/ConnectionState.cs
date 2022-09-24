@@ -2,9 +2,10 @@ namespace TeeSharp.Network;
 
 public enum ConnectionState
 {
-    Offline = 0,
+    Connecting,
     Pending,
     Online,
-    Disconnecting,
     Timeout,
+    Disconnecting,
+    Offline,
 }
