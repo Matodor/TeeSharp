@@ -97,7 +97,7 @@ public ref struct Packer
         }
 
         var strBytes = Encoding.UTF8.GetBytes(str);
-        if (strBytes.Length + _bufferIndex > _buffer.Length)
+        if (strBytes.Length + 1 + _bufferIndex > _buffer.Length)
         {
             HasError = true;
             return;
@@ -105,5 +105,6 @@ public ref struct Packer
 
         strBytes.CopyTo(_buffer.Slice(_bufferIndex));
         _bufferIndex += strBytes.Length;
+        _buffer[_bufferIndex++] = 0;
     }
 }

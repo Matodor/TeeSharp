@@ -168,11 +168,13 @@ public class NetworkServer : INetworkServer
             Connections[i].Update();
 
             if (Connections[i].State is ConnectionState.Timeout or ConnectionState.Disconnecting)
+            {
                 Drop(i, Connections[i].State switch
                 {
                     ConnectionState.Timeout => "Timeout",
                     _ => string.Empty,
                 });
+            }
         }
     }
 
