@@ -7,9 +7,9 @@ public static class NetworkConstants
 
     public const int MaxPayload = MaxPacketSize - PacketConnectionLessDataOffset;
     public const int MaxPacketSize = 1400;
+    public const int MaxPacketHeaderSize = 3;
     public const int MaxSequence = 1 << 10;
 
     public const int PacketExtraDataSize = 4;
-    public const int PacketHeaderSize = 3;
     public const int PacketConnectionLessDataOffset = 6;
 }

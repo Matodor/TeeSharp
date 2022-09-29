@@ -209,7 +209,7 @@ public static class NetworkHelper
         {
             compressedSize = HuffmanCompressor.Compress(
                 packet.Data.Slice(packet.DataSize),
-                buffer.Slice(NetworkConstants.PacketHeaderSize)
+                buffer.Slice(NetworkConstants.MaxPacketHeaderSize)
             );
 
             bufferSize = compressedSize;
@@ -219,14 +219,14 @@ public static class NetworkHelper
         if (compressedSize <= 0 || compressedSize >= packet.DataSize)
         {
             bufferSize = packet.DataSize;
-            packet.Data.CopyTo(buffer.Slice(NetworkConstants.PacketHeaderSize));
+            packet.Data.CopyTo(buffer.Slice(NetworkConstants.MaxPacketHeaderSize));
             packet.Flags &= ~NetworkPacketFlags.Compression;
         }
 
         if (bufferSize < 0)
             return;
 
-        bufferSize += NetworkConstants.PacketHeaderSize;
+        bufferSize += NetworkConstants.MaxPacketHeaderSize;
         buffer[0] = (byte) ((((int) packet.Flags << 2) & 0b1111_1100) | ((packet.Ack >> 8) & 0b0000_0011));
         buffer[1] = (byte) (packet.Ack & 0b1111_1111);
         buffer[2] = (byte) (packet.NumberOfMessages & 0b1111_1111);

@@ -333,7 +333,7 @@ public class NetworkConnection : INetworkConnection
         if (State != ConnectionState.Online && State != ConnectionState.Pending)
             return false;
 
-        var needSize = MessageAccumulator.BufferSize + data.Length + NetworkConstants.PacketHeaderSize;
+        var needSize = MessageAccumulator.BufferSize + data.Length + NetworkConstants.MaxPacketHeaderSize;
         var availableSize = MessageAccumulator.Buffer.Length - StructHelper<SecurityToken>.Size;
 
         if (needSize > availableSize)
@@ -345,8 +345,12 @@ public class NetworkConnection : INetworkConnection
         buffer = header.Pack(buffer);
         data.CopyTo(buffer);
 
-        MessageAccumulator.BufferSize += MessageAccumulator.Buffer.Length - (buffer.Length - data.Length);
         MessageAccumulator.NumberOfMessages++;
+        MessageAccumulator.BufferSize +=
+            MessageAccumulator.Buffer.Length -
+            MessageAccumulator.BufferSize -
+            buffer.Length +
+            data.Length;
 
         if (!flags.HasFlag(NetworkMessageFlags.Vital) || fromResend)
             return true;

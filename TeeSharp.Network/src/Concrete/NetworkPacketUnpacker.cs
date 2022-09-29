@@ -8,7 +8,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
 {
     public bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacketIn? packet)
     {
-        if (buffer.Length is < NetworkConstants.PacketHeaderSize or > NetworkConstants.MaxPacketSize)
+        if (buffer.Length is < NetworkConstants.MaxPacketHeaderSize or > NetworkConstants.MaxPacketSize)
         {
             packet = null;
             return false;
@@ -28,7 +28,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
     {
         var isSixup = flags.HasFlag(NetworkPacketFlags.Unused);
         if (isSixup ||
-            buffer.Length < NetworkConstants.PacketHeaderSize)
+            buffer.Length < NetworkConstants.MaxPacketHeaderSize)
         {
             packet = null;
             return false;
@@ -49,7 +49,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
 
             var decompressBuffer = new byte[NetworkConstants.MaxPayload].AsSpan();
             var decompressedSize = NetworkHelper.HuffmanCompressor.Decompress(
-                buffer.Slice(NetworkConstants.PacketHeaderSize),
+                buffer.Slice(NetworkConstants.MaxPacketHeaderSize),
                 decompressBuffer
             );
 
@@ -63,7 +63,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         }
         else
         {
-            data = buffer.Slice(NetworkConstants.PacketHeaderSize).ToArray();
+            data = buffer.Slice(NetworkConstants.MaxPacketHeaderSize).ToArray();
         }
 
         packet = new NetworkPacketIn(
