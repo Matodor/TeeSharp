@@ -27,7 +27,7 @@ public static class NetworkHelper
         136, 53, 180, 57, 142, 57, 158, 61, 166, 112, 152, 92, 26, 22, 21, 28, 20, 26, 30, 21,
         32, 27, 20, 17, 23, 21, 30, 22, 22, 21, 27, 25, 17, 27, 23, 18, 39, 26, 15, 21,
         12, 18, 18, 27, 20, 18, 15, 19, 11, 17, 33, 12, 18, 15, 19, 18, 16, 26, 17, 18,
-        9, 10, 25, 22, 22, 17, 20, 16, 6, 16, 15, 20, 14, 18, 24, 335, 1517
+        9, 10, 25, 22, 22, 17, 20, 16, 6, 16, 15, 20, 14, 18, 24, 335, 1517,
     };
 
     static NetworkHelper()
@@ -208,7 +208,7 @@ public static class NetworkHelper
         if (useCompression)
         {
             compressedSize = HuffmanCompressor.Compress(
-                packet.Data.Slice(packet.DataSize),
+                packet.Data.Slice(0, packet.DataSize),
                 buffer.Slice(NetworkConstants.MaxPacketHeaderSize)
             );
 

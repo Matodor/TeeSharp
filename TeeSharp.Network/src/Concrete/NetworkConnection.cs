@@ -53,20 +53,20 @@ public class NetworkConnection : INetworkConnection
     protected class MessageForResend
     {
         public static readonly int SizeOf =
-            sizeof(NetworkMessageFlags) +
+            sizeof(NetworkMessageHeaderFlags) +
             sizeof(int) +
             StructHelper<IntPtr>.Size +
             StructHelper<DateTime>.Size +
             StructHelper<DateTime>.Size;
 
-        public NetworkMessageFlags Flags { get; }
+        public NetworkMessageHeaderFlags Flags { get; }
         public int Sequence { get; }
         public byte[] Data { get; }
         public DateTime LastSendTime { get; set; }
         public DateTime FirstSendTime { get; set; }
 
         public MessageForResend(
-            NetworkMessageFlags flags,
+            NetworkMessageHeaderFlags flags,
             int sequence,
             byte[] data,
             DateTime lastSendTime,
@@ -291,9 +291,9 @@ public class NetworkConnection : INetworkConnection
         return numberOfMessages;
     }
 
-    public bool QueueMessage(Span<byte> data, NetworkMessageFlags flags)
+    public bool QueueMessage(Span<byte> data, NetworkMessageHeaderFlags flags)
     {
-        if (flags.HasFlag(NetworkMessageFlags.Vital))
+        if (flags.HasFlag(NetworkMessageHeaderFlags.Vital))
             Sequence = (Sequence + 1) % NetworkConstants.MaxSequence;
 
         return QueueMessageInternal(data, flags, false);
@@ -302,32 +302,34 @@ public class NetworkConnection : INetworkConnection
     public void SendConnectionStateMsg(ConnectionStateMsg msg, string? extraMsg = null)
     {
         LastSendTime = DateTime.UtcNow;
+
         NetworkHelper.SendConnectionStateMsg(
-            Socket,
-            EndPoint,
-            msg,
-            SecurityToken,
-            0,
-            extraMsg
+            client: Socket,
+            endPoint: EndPoint,
+            msg: msg,
+            token: SecurityToken,
+            ack: Ack,
+            extraMsg: extraMsg
         );
     }
 
     public void SendConnectionStateMsg(ConnectionStateMsg msg, byte[] extraData)
     {
         LastSendTime = DateTime.UtcNow;
+
         NetworkHelper.SendConnectionStateMsg(
-            Socket,
-            EndPoint,
-            msg,
-            SecurityToken,
-            0,
-            extraData
+            client: Socket,
+            endPoint: EndPoint,
+            msg: msg,
+            token: SecurityToken,
+            ack: Ack,
+            extraData: extraData
         );
     }
 
     protected bool QueueMessageInternal(
         Span<byte> data,
-        NetworkMessageFlags flags,
+        NetworkMessageHeaderFlags flags,
         bool fromResend)
     {
         if (State != ConnectionState.Online && State != ConnectionState.Pending)
@@ -352,7 +354,7 @@ public class NetworkConnection : INetworkConnection
             buffer.Length +
             data.Length;
 
-        if (!flags.HasFlag(NetworkMessageFlags.Vital) || fromResend)
+        if (!header.IsVital || fromResend)
             return true;
 
         var mfrSize = MessageForResend.SizeOf * (MessagesForResend.Count + 1) + MessagesForResendDataSize + data.Length;
@@ -392,7 +394,7 @@ public class NetworkConnection : INetworkConnection
             if (data.Length < header.Size)
                 return messages;
 
-            if (header.Flags.HasFlag(NetworkMessageFlags.Vital))
+            if (header.IsVital)
             {
                 if (header.Sequence == (Ack + 1) % NetworkConstants.MaxSequence)
                 {
@@ -412,7 +414,6 @@ public class NetworkConnection : INetworkConnection
             messages.Add(new NetworkMessage(
                 connectionId: Id,
                 endPoint: EndPoint,
-                flags: header.Flags,
                 data: data.Slice(0, header.Size).ToArray(),
                 extraData: Array.Empty<byte>()
             ));
@@ -447,7 +448,7 @@ public class NetworkConnection : INetworkConnection
         while (true)
         {
             if (!MessagesForResend.TryPeek(out var messageForResend) ||
-                !NetworkHelper.IsSequenceInBackroom(messageForResend.Sequence, Ack))
+                !NetworkHelper.IsSequenceInBackroom(messageForResend.Sequence, ack))
             {
                 return;
             }

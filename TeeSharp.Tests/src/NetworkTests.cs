@@ -29,14 +29,13 @@ public class NetworkTests
 
         for (var i = 0; i < 3; i++)
         {
-            var flags = NetworkMessageFlags.Vital;
             var packer = new Packer(ProtocolMessage.ServerMapChange);
             packer.AddString("FlatCity");
             packer.AddInteger(1734907049);
             packer.AddInteger(1772395);
 
             var data = packer.Buffer;
-            var header = new NetworkMessageHeader(flags, data.Length, ++sequence);
+            var header = new NetworkMessageHeader(NetworkMessageHeaderFlags.Vital, data.Length, ++sequence);
             var buffer = messageAccumulator.Buffer.AsSpan(messageAccumulator.BufferSize);
 
             buffer = header.Pack(buffer);

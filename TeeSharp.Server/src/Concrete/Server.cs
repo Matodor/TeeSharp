@@ -45,8 +45,7 @@ public class Server : IServer
     protected delegate void MessageCallback(
         int connectionId,
         Unpacker unpacker,
-        IPEndPoint endPoint,
-        NetworkMessageFlags flags
+        IPEndPoint endPoint
     );
 
     private readonly IDisposable? _settingsChangesListener;
@@ -257,8 +256,7 @@ public class Server : IServer
                     message.ConnectionId,
                     msgUuid,
                     unPacker,
-                    message.EndPoint,
-                    message.Flags
+                    message.EndPoint
                 );
             }
             else
@@ -267,8 +265,7 @@ public class Server : IServer
                     message.ConnectionId,
                     msgId,
                     unPacker,
-                    message.EndPoint,
-                    message.Flags
+                    message.EndPoint
                 );
             }
         }
@@ -279,8 +276,7 @@ public class Server : IServer
                 msgId,
                 msgUuid,
                 unPacker,
-                message.EndPoint,
-                message.Flags
+                message.EndPoint
             );
         }
     }
@@ -289,12 +285,11 @@ public class Server : IServer
         int connectionId,
         Uuid msgUuid,
         Unpacker unpacker,
-        IPEndPoint endPoint,
-        NetworkMessageFlags flags)
+        IPEndPoint endPoint)
     {
         if (ClientUuidMessageHandlers.TryGetValue(msgUuid, out var callback))
         {
-            callback(connectionId, unpacker, endPoint, flags);
+            callback(connectionId, unpacker, endPoint);
         }
         else
         {
@@ -306,13 +301,12 @@ public class Server : IServer
         int connectionId,
         ProtocolMessage msgId,
         Unpacker unpacker,
-        IPEndPoint endPoint,
-        NetworkMessageFlags flags)
+        IPEndPoint endPoint)
     {
         if (ClientMessageHandlers.TryGetValue(msgId, out var callback))
         {
             Logger.LogDebug("ProcessClientSystemMessage: {Uuid} from {EndPoint}", msgId, endPoint.ToString());
-            callback(connectionId, unpacker, endPoint, flags);
+            callback(connectionId, unpacker, endPoint);
         }
         else
         {
@@ -325,8 +319,7 @@ public class Server : IServer
         ProtocolMessage msgId,
         Uuid msgUuid,
         Unpacker unpacker,
-        IPEndPoint endPoint,
-        NetworkMessageFlags flags)
+        IPEndPoint endPoint)
     {
         // ignore
     }
@@ -334,10 +327,9 @@ public class Server : IServer
     protected virtual void OnUuidDDNetClientVersionMessage(
         int connectionId,
         Unpacker unpacker,
-        IPEndPoint endpoint,
-        NetworkMessageFlags flags)
+        IPEndPoint endpoint)
     {
-        if (!flags.HasFlag(NetworkMessageFlags.Vital) || Clients[connectionId].State != ServerClientState.PreAuth)
+        if (Clients[connectionId].State != ServerClientState.PreAuth)
             return;
 
         if (!unpacker.TryGetUuid(out var connectionUuid) ||
@@ -359,11 +351,9 @@ public class Server : IServer
     protected virtual void OnClientInfoMessage(
             int connectionId,
             Unpacker unpacker,
-            IPEndPoint endpoint,
-            NetworkMessageFlags flags)
+            IPEndPoint endpoint)
     {
-        if (!flags.HasFlag(NetworkMessageFlags.Vital) ||
-            Clients[connectionId].State != ServerClientState.PreAuth &&
+        if (Clients[connectionId].State != ServerClientState.PreAuth &&
             Clients[connectionId].State != ServerClientState.Auth)
         {
             return;
@@ -402,13 +392,13 @@ public class Server : IServer
         packer.AddInteger((int)ProtocolCapabilities.CurrentVersion);
         packer.AddInteger((int)GetSupportedCapabilities());
 
-        SendMessage(connectionId, packer, NetworkMessageFlags.Vital);
+        SendMessage(connectionId, packer, NetworkSendFlags.Vital);
     }
 
     protected virtual void SendMessage(
         int connectionId,
         Packer packer,
-        NetworkMessageFlags flags)
+        NetworkSendFlags flags)
     {
         if (packer.HasError)
             return;

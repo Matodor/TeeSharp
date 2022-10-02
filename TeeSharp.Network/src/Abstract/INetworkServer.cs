@@ -26,7 +26,7 @@ public interface INetworkServer : IDisposable
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
     void Update();
-    void Send(int connectionId, Span<byte> data, NetworkMessageFlags networkMessageFlags);
+    void Send(int connectionId, Span<byte> data, NetworkSendFlags sendFlags);
     void SendData(IPEndPoint endPoint, ReadOnlySpan<byte> data, ReadOnlySpan<byte> extraData = default);
     void Drop(int connectionId, string reason);
 }

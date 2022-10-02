@@ -17,11 +17,6 @@ public class NetworkMessage
     /// <summary>
     ///
     /// </summary>
-    public NetworkMessageFlags Flags { get; }
-
-    /// <summary>
-    ///
-    /// </summary>
     public byte[] Data { get; }
 
     /// <summary>
@@ -32,13 +27,11 @@ public class NetworkMessage
     public NetworkMessage(
         int connectionId,
         IPEndPoint endPoint,
-        NetworkMessageFlags flags,
         byte[] data,
         byte[] extraData)
     {
         ConnectionId = connectionId;
         EndPoint = endPoint;
-        Flags = flags;
         Data = data;
         ExtraData = extraData;
     }

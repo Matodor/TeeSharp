@@ -118,7 +118,6 @@ public class NetworkServer : INetworkServer
                 yield return new NetworkMessage(
                     connectionId: -1,
                     endPoint: endPoint,
-                    flags: NetworkMessageFlags.ConnectionLess,
                     data: packet.Data,
                     extraData: packet.ExtraData
                 );
@@ -189,7 +188,7 @@ public class NetworkServer : INetworkServer
     public void Send(
         int connectionId,
         Span<byte> data,
-        NetworkMessageFlags flags)
+        NetworkSendFlags sendFlags)
     {
         if (data.Length >= NetworkConstants.MaxPayload)
         {
@@ -197,16 +196,15 @@ public class NetworkServer : INetworkServer
             return;
         }
 
-        if (flags.HasFlag(NetworkMessageFlags.ConnectionLess))
-        {
-            throw new NotImplementedException();
-            return;
-        }
+        var flags = NetworkMessageHeaderFlags.None;
+
+        if (sendFlags.HasFlag(NetworkSendFlags.Vital))
+            flags |= NetworkMessageHeaderFlags.Vital;
 
         if (!Connections[connectionId].QueueMessage(data, flags))
             return;
 
-        if (flags.HasFlag(NetworkMessageFlags.Flush))
+        if (sendFlags.HasFlag(NetworkSendFlags.Flush))
             Connections[connectionId].FlushMessages();
     }
 

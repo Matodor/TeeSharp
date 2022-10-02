@@ -3,7 +3,7 @@ using System;
 namespace TeeSharp.Network;
 
 [Flags]
-public enum NetworkMessageFlags
+public enum NetworkSendFlags
 {
     None           = 0,
     Vital          = 1 << 0,
