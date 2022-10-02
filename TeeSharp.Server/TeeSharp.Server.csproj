@@ -6,8 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-        <DefineConstants>_WINDOWS</DefineConstants>
+    <PropertyGroup Condition="$(RuntimeIdentifier) == '' OR $(RuntimeIdentifier.StartsWith('win'))">
+        <DefineConstants>$(DefineConstants);_WINDOWS;</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

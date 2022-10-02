@@ -29,7 +29,7 @@
       <ProjectReference Include="..\TeeSharp.Server\TeeSharp.Server.csproj" />
     </ItemGroup>
 
-    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-        <DefineConstants>_WINDOWS</DefineConstants>
+    <PropertyGroup Condition="$(RuntimeIdentifier) == '' OR $(RuntimeIdentifier.StartsWith('win'))">
+        <DefineConstants>$(DefineConstants);_WINDOWS;</DefineConstants>
     </PropertyGroup>
 </Project>
