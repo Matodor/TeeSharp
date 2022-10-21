@@ -157,7 +157,7 @@ public class NetworkConnection : INetworkConnection
             return Enumerable.Empty<NetworkMessage>();
         }
 
-        if (Sequence > PeerAck)
+        if (Sequence >= PeerAck)
         {
             if (packet.Ack < PeerAck ||
                 packet.Ack > Sequence)
@@ -210,7 +210,7 @@ public class NetworkConnection : INetworkConnection
 
     protected void ResendMessage(MessageForResend message)
     {
-        if (QueueMessageInternal(message.Data, message.Flags, true))
+        if (QueueMessageInternal(message.Data, message.Flags, fromResend: true, message.Sequence))
             message.LastSendTime = DateTime.UtcNow;
     }
 
@@ -296,7 +296,7 @@ public class NetworkConnection : INetworkConnection
         if (flags.HasFlag(NetworkMessageHeaderFlags.Vital))
             Sequence = (Sequence + 1) % NetworkConstants.MaxSequence;
 
-        return QueueMessageInternal(data, flags, false);
+        return QueueMessageInternal(data, flags, fromResend: false, Sequence);
     }
 
     public void SendConnectionStateMsg(ConnectionStateMsg msg, string? extraMsg = null)
@@ -330,7 +330,8 @@ public class NetworkConnection : INetworkConnection
     protected bool QueueMessageInternal(
         Span<byte> data,
         NetworkMessageHeaderFlags flags,
-        bool fromResend)
+        bool fromResend,
+        int sequence)
     {
         if (State != ConnectionState.Online && State != ConnectionState.Pending)
             return false;
@@ -341,7 +342,7 @@ public class NetworkConnection : INetworkConnection
         if (needSize > availableSize)
             FlushMessages();
 
-        var header = new NetworkMessageHeader(flags, data.Length, Sequence);
+        var header = new NetworkMessageHeader(flags, data.Length, sequence);
         var buffer = MessageAccumulator.Buffer.AsSpan(MessageAccumulator.BufferSize);
 
         buffer = header.Pack(buffer);
@@ -361,12 +362,13 @@ public class NetworkConnection : INetworkConnection
         if (mfrSize > MaxResendBufferSize)
             return false;
 
+        var now = DateTime.UtcNow;
         var messageForResend = new MessageForResend(
             flags: flags,
-            sequence: Sequence,
+            sequence: sequence,
             data: data.ToArray(),
-            lastSendTime: DateTime.UtcNow,
-            firstSendTime: DateTime.UtcNow
+            lastSendTime: now,
+            firstSendTime: now
         );
 
         MessagesForResend.Enqueue(messageForResend);
