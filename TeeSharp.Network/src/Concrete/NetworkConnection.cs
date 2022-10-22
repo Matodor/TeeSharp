@@ -456,6 +456,7 @@ public class NetworkConnection : INetworkConnection
             }
 
             MessagesForResend.Dequeue();
+            MessagesForResendDataSize -= messageForResend.Data.Length;
         }
     }
 
