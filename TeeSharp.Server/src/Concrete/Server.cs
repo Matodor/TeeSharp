@@ -450,7 +450,7 @@ public class Server : IServer
                 accumulatedElapsedTime -= TargetElapsedTime;
                 GameTime += TargetElapsedTime;
 
-                global::System.Console.WriteLine($"Tick: {accumulatedElapsedTime:c}");
+                Console.WriteLine($"Tick: {accumulatedElapsedTime:c}");
 
                 ++Tick;
 
