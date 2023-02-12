@@ -6,15 +6,17 @@ public static class MasterServerPackets
 {
     public const int BufferOffset = 4;
 
+    public static readonly byte[] GetInfo          = Packet("gie3");
+    public static readonly byte[] Info             = Packet("inf3");
+    public static readonly byte[] InfoExtended     = Packet("iext");
+    public static readonly byte[] InfoExtendedMore = Packet("iex+");
+    public static readonly byte[] Challenge        = Packet("chal");
+
     public static readonly byte[] Heartbeat        = Packet("bea2");
     public static readonly byte[] GetList          = Packet("req2");
     public static readonly byte[] List             = Packet("lis2");
     public static readonly byte[] GetCount         = Packet("cou2");
     public static readonly byte[] Count            = Packet("siz2");
-    public static readonly byte[] GetInfo          = Packet("gie3");
-    public static readonly byte[] Info             = Packet("inf3");
-    public static readonly byte[] InfoExtended     = Packet("iext");
-    public static readonly byte[] InfoExtendedMore = Packet("iex+");
     public static readonly byte[] FirewallCheck    = Packet("fw??");
     public static readonly byte[] FirewallResponse = Packet("fw!!");
     public static readonly byte[] FirewallOk       = Packet("fwok");

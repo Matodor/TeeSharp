@@ -23,7 +23,7 @@ public class ServerWorker : BackgroundService
         _serverSettingsMonitor = serverSettingsMonitor;
         _applicationLifetime = applicationLifetime;
 
-        _server = new TeeSharp.Server.Concrete.Server(
+        _server = new Server(
             new SettingsChangesNotifier<ServerSettings>(serverSettingsMonitor)
         );
     }
