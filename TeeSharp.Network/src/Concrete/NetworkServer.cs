@@ -102,11 +102,6 @@ public class NetworkServer : INetworkServer
             }
             catch (SocketException e)
             {
-                if (e.ErrorCode != (int) SocketError.TimedOut)
-                {
-                    throw;
-                }
-
                 continue;
             }
 
