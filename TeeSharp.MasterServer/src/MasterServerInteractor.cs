@@ -8,7 +8,7 @@ namespace TeeSharp.MasterServer;
 public class MasterServerInteractor
 {
     protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerProtocol> Protocols;
-    protected readonly ILogger? Logger;
+    protected readonly ILogger Logger;
 
     public MasterServerInteractor(ILogger? logger = null)
     {
@@ -22,8 +22,11 @@ public class MasterServerInteractor
         }.ToDictionary(t => t, t => new MasterServerProtocol(t));
     }
 
-    public void ApplySettings()
+    public void UpdateServerInfo(ServerInfo info)
     {
-
+        foreach (var protocol in Protocols.Values)
+        {
+            protocol.Test();
+        }
     }
 }
