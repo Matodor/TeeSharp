@@ -12,5 +12,6 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0-preview.2.22152.2" />
+      <PackageReference Include="Uuids" Version="2.0.0" />
     </ItemGroup>
 </Project>

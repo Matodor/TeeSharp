@@ -11,11 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1-beta1" />
-      <PackageReference Include="Uuids" Version="1.0.3" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="src\Extensions\" />
     </ItemGroup>
 
