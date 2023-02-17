@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using TeeSharp.Common.Protocol;
 using Uuids;
@@ -47,5 +46,14 @@ public class UuidTests
         var uuid = Uuid.Parse("8c001304-8461-3e47-8787-f672b3835bd4");
 
         Assert.AreEqual(uuidCalculated, uuid);
+    }
+
+    [Test]
+    public void TestFormatUuid()
+    {
+        var expected = "8c001304-8461-3e47-8787-f672b3835bd4";
+        var formatted = Uuid.Parse(expected).ToGuidStringLayout().ToString("D");
+
+        Assert.AreEqual(expected, formatted);
     }
 }
