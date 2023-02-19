@@ -12,11 +12,12 @@ internal class Program
 {
     private readonly NetworkServer _networkServer;
     private readonly CancellationTokenSource _cancellationTokenSource;
-
+    private readonly TeeSharp.MasterServer.MasterServerInteractor _interactor;
 
     public static Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
             .WriteTo.Console()
             .CreateLogger();
 
@@ -30,6 +31,7 @@ internal class Program
     {
         _networkServer = new NetworkServer();
         _cancellationTokenSource = new CancellationTokenSource();
+        _interactor = new TeeSharp.MasterServer.MasterServerInteractor();
     }
 
     private async Task MainAsync(string[] args)
@@ -37,9 +39,8 @@ internal class Program
         if (!InitNetwork())
             return;
 
-        var interactor = new TeeSharp.MasterServer.MasterServerInteractor();
 
-        await interactor.UpdateServerInfo(new ServerInfo()
+        await _interactor.UpdateServerInfo(new ServerInfo()
         {
             Name = "TeeSharp - test MasterServerInteractor",
             GameType = "TeeSharp",
@@ -103,21 +104,13 @@ internal class Program
 
         foreach (var message in _networkServer.GetMessages(_cancellationTokenSource.Token))
         {
-            if (message.ConnectionId == -1)
-            {
-                Tee.Logger.LogInformation("{Data}", message.Data.ToString());
+            if (message.ConnectionId != -1)
+                continue;
 
-                // if (message.ExtraData.Length > 0 &&
-                //     MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
-                //     MasterServerPackets.GetInfo.AsSpan()
-                //         .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
-                // {
-                //     var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
-                //     var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
-                //
-                //     SendServerInfoConnectionLess(message.EndPoint, token);
-                // }
-            }
+            if (_interactor.ProcessNetworkMessage(message))
+                continue;
+
+            Tee.Logger.LogInformation("{Data}", message.Data.Length);
         }
     }
 }

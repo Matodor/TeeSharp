@@ -1,7 +1,10 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.MasterServer;
@@ -11,14 +14,18 @@ public class MasterServerProtocol
     public MasterServerProtocolType Type { get; }
     public bool Enabled { get; set; }
 
+    protected readonly ILogger Logger;
+
     private readonly MasterServerInteractor _interactor;
 
     public MasterServerProtocol(
         MasterServerInteractor interactor,
-        MasterServerProtocolType type)
+        MasterServerProtocolType type,
+        ILogger? logger = null)
     {
         _interactor = interactor;
 
+        Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
         Type = type;
     }
 
@@ -45,6 +52,8 @@ public class MasterServerProtocol
         // {
         //     pRegister->HeaderString("Challenge-Token", m_aChallengeToken);
         // }
+
+        Logger.LogDebug("Test: {Headers}", request.Headers.ToString());
 
         var result = await client.SendAsync(request);
         var content = await result.Content.ReadAsStringAsync();
