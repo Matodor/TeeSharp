@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using TeeSharp.Common.Extensions;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
@@ -244,8 +245,8 @@ public class Server : IServer
 
     protected virtual void ProcessClientMessage(NetworkMessage message)
     {
-        var unPacker = new Unpacker(message.Data);
-        if (unPacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
+        var unpacker = new Unpacker(message.Data);
+        if (unpacker.TryGetMessageInfo(out var msgId, out var msgUuid, out var isSystemMsg))
         {
             if (!isSystemMsg)
                 return;
@@ -255,7 +256,7 @@ public class Server : IServer
                 ProcessClientSystemUuidMessage(
                     message.ConnectionId,
                     msgUuid,
-                    unPacker,
+                    unpacker,
                     message.EndPoint
                 );
             }
@@ -264,7 +265,7 @@ public class Server : IServer
                 ProcessClientSystemMessage(
                     message.ConnectionId,
                     msgId,
-                    unPacker,
+                    unpacker,
                     message.EndPoint
                 );
             }
@@ -275,7 +276,7 @@ public class Server : IServer
                 message.ConnectionId,
                 msgId,
                 msgUuid,
-                unPacker,
+                unpacker,
                 message.EndPoint
             );
         }

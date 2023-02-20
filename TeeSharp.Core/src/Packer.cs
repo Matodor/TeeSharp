@@ -1,10 +1,9 @@
 using System;
 using System.Text;
-using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using Uuids;
 
-namespace TeeSharp.Common.Protocol;
+namespace TeeSharp.Core;
 
 public ref struct Packer
 {
@@ -22,16 +21,6 @@ public ref struct Packer
 
         _buffer = new byte[BufferSize];
         _bufferIndex = 0;
-    }
-
-    // public Packer(GameMessage msgId) : this()
-    // {
-    //     AddInteger((int) msgId << 1);
-    // }
-
-    public Packer(ProtocolMessage msgId) : this()
-    {
-        AddInteger((int) msgId << 1 | 1);
     }
 
     public Packer(Uuid msgUuid, bool isSystem) : this()

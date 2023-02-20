@@ -1,6 +1,8 @@
 using System;
 using NUnit.Framework;
+using TeeSharp.Common.Extensions;
 using TeeSharp.Common.Protocol;
+using TeeSharp.Core;
 using TeeSharp.Network;
 
 namespace TeeSharp.Tests;
@@ -29,7 +31,8 @@ public class NetworkTests
 
         for (var i = 0; i < 3; i++)
         {
-            var packer = new Packer(ProtocolMessage.ServerMapChange);
+            var packer = new Packer();
+            packer.AddProtocolMessage(ProtocolMessage.ServerMapChange);
             packer.AddString("FlatCity");
             packer.AddInteger(1734907049);
             packer.AddInteger(1772395);

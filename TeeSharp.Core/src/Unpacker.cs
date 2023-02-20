@@ -1,10 +1,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using TeeSharp.Core;
 using Uuids;
 
-namespace TeeSharp.Common.Protocol;
+namespace TeeSharp.Core;
 
 public ref struct Unpacker
 {
@@ -19,34 +18,6 @@ public ref struct Unpacker
         _data = data;
         DataOriginal = _data;
         HasError = false;
-    }
-
-    public bool TryGetMessageInfo(out ProtocolMessage msgId, out Uuid msgUuid, out bool isSystem)
-    {
-        if (HasError || !TryGetInteger(out var messageInfo))
-        {
-            msgId = default;
-            isSystem = default;
-            msgUuid = default;
-            return false;
-        }
-
-        msgId = (ProtocolMessage)(messageInfo >> 1);
-        isSystem = (messageInfo & 1) != 0;
-
-        switch (msgId)
-        {
-            case < 0 or > (ProtocolMessage) ushort.MaxValue:
-                msgUuid = default;
-                return false;
-
-            case ProtocolMessage.Empty:
-                return TryGetUuid(out msgUuid);
-
-            default:
-                msgUuid = default;
-                return true;
-        }
     }
 
     public bool TryGetUuid(out Uuid result)
