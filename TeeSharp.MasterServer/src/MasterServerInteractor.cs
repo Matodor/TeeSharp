@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,7 +32,6 @@ public class MasterServerInteractor
         ChallengeSecret = Uuid.NewTimeBased();
         VerifyChallengeSecretData = GetVerifyChallengeSecretData();
 
-
         Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
         Protocols = new[]
         {
@@ -45,11 +45,11 @@ public class MasterServerInteractor
     protected byte[] GetVerifyChallengeSecretData()
     {
         var data = (Span<byte>)new byte[MasterServerPackets.Challenge.Length + UuidStrSizeD + 1];
-        var challengePacketSpan = MasterServerPackets.Challenge.AsSpan();
-        var challengeSecretSpan = Encoding.ASCII.GetBytes(ChallengeSecret.ToGuidString() + ":");
+        var challengePacket = MasterServerPackets.Challenge.AsSpan();
+        var challengeSecret = Encoding.ASCII.GetBytes(ChallengeSecret.ToString("d") + ":").AsSpan();
 
-        challengePacketSpan.CopyTo(data);
-        challengeSecretSpan.CopyTo(data.Slice(MasterServerPackets.Challenge.Length));
+        challengePacket.CopyTo(data);
+        challengeSecret.CopyTo(data.Slice(MasterServerPackets.Challenge.Length));
 
         return data.ToArray();
     }
@@ -62,23 +62,29 @@ public class MasterServerInteractor
         }
     }
 
-    public bool ProcessNetworkMessage(NetworkMessage message)
+    public bool ProcessMasterServerPacket(Span<byte> data, IPEndPoint endPoint)
     {
         // ????chalbe48b69f-b08a-11ed-9bf1-57c3acfe7d93:tw0.6/ipv4p+BmhrnUMfiGTUTcsoLHow==
 
-        Logger.LogInformation("ProcessNetworkMessage: {Msg}", Encoding.ASCII.GetString(message.Data));
-        return false;
+        Logger.LogInformation("ProcessMasterServerPacket: {Msg}", Encoding.ASCII.GetString(data));
 
-        // if (message.)
-        // if (message.ExtraData.Length > 0 &&
-        //     MasterServerPackets.GetInfo.Length + 1 <= message.Data.Length &&
-        //     MasterServerPackets.GetInfo.AsSpan()
-        //         .SequenceEqual(message.Data.AsSpan(0, MasterServerPackets.GetInfo.Length)))
-        // {
-        //     var extraToken = ((message.ExtraData[0] << 8) | message.ExtraData[1]) << 8;
-        //     var token = (SecurityToken) (message.Data[MasterServerPackets.GetInfo.Length] | extraToken);
-        //
-        //     SendServerInfoConnectionLess(message.EndPoint, token);
-        // }
+        if (data.Length >= VerifyChallengeSecretData.Length &&
+            data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData))
+        {
+            var unpacker = new Unpacker(data.Slice(VerifyChallengeSecretData.Length));
+            if (unpacker.TryGetString(out var protocol) == false ||
+                unpacker.TryGetString(out var token) == false)
+            {
+                Logger.LogInformation("ProcessMasterServerPacket: Can't unpack protocol and token");
+                return false;
+            }
+
+            // TODO check protocol
+
+            Logger.LogInformation("ProcessMasterServerPacket: {Protocol}:{Token}", protocol, token);
+            return true;
+        }
+
+        return false;
     }
 }

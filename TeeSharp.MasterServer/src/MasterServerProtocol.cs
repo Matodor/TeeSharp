@@ -61,12 +61,12 @@ public class MasterServerProtocol
 
     protected string GetHeaderSecret()
     {
-        return _interactor.Secret.ToGuidString();
+        return _interactor.Secret.ToString("d");
     }
 
     protected string GetHeaderChallengeSecret()
     {
-        return $"{_interactor.ChallengeSecret.ToGuidString()}:{Type.ToStringRepresentation()}";
+        return $"{_interactor.ChallengeSecret.ToString("d")}:{Type.ToStringRepresentation()}";
     }
 
     protected string GetHeaderAddress()

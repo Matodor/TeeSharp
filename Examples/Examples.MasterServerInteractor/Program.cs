@@ -107,7 +107,7 @@ internal class Program
             if (message.ConnectionId != -1)
                 continue;
 
-            if (_interactor.ProcessNetworkMessage(message))
+            if (_interactor.ProcessMasterServerPacket(message.Data, message.EndPoint))
                 continue;
 
             Tee.Logger.LogInformation("{Data}", message.Data.Length);
