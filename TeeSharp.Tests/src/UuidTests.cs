@@ -32,7 +32,7 @@ public class UuidTests
             }
         )
         {
-            var uuidFromStr = Uuid.Parse(uuid);
+            var uuidFromStr = Uuid.ParseExact(uuid, "d");
             var uuidFromBytes = new Uuid(uuidData);
 
             Assert.AreEqual(uuidFromStr, uuidFromBytes);
@@ -43,7 +43,7 @@ public class UuidTests
     public void TestCalculate()
     {
         var uuidCalculated = "clientver@ddnet.tw".CalculateUuid();
-        var uuid = Uuid.Parse("8c001304-8461-3e47-8787-f672b3835bd4");
+        var uuid = Uuid.ParseExact("8c001304-8461-3e47-8787-f672b3835bd4", "d");
 
         Assert.AreEqual(uuidCalculated, uuid);
     }
@@ -52,7 +52,7 @@ public class UuidTests
     public void TestFormatUuid()
     {
         var expected = "8c001304-8461-3e47-8787-f672b3835bd4";
-        var formatted = Uuid.Parse(expected).ToString("d");
+        var formatted = Uuid.ParseExact(expected, "d").ToString("d");
 
         Assert.AreEqual(expected, formatted);
     }

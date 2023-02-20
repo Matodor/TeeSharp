@@ -14,7 +14,7 @@ public static class UuidExtensions
     private const byte ResetReservedMask = 0b_0011_1111;
     private const byte ReservedFlag = 0b_1000_0000;
 
-    private static readonly Uuid TeeworldsNamespace = Uuid.Parse("e05ddaaa-c4e6-4cfb-b642-5d48e80c0029");
+    private static readonly Uuid TeeworldsNamespace = Uuid.ParseExact("e05ddaaa-c4e6-4cfb-b642-5d48e80c0029", "d");
 
     [SuppressMessage("ReSharper", "PossiblyImpureMethodCallOnReadonlyVariable")]
     public static Uuid CalculateUuid(this string str)
