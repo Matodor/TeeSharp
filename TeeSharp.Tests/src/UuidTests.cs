@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using TeeSharp.Common.Protocol;
+using TeeSharp.Core.Extensions;
 using Uuids;
 
 namespace TeeSharp.Tests;
@@ -42,7 +42,7 @@ public class UuidTests
     [Test]
     public void TestCalculate()
     {
-        var uuidCalculated = UuidManager.CalculateUuid("clientver@ddnet.tw");
+        var uuidCalculated = "clientver@ddnet.tw".CalculateUuid();
         var uuid = Uuid.Parse("8c001304-8461-3e47-8787-f672b3835bd4");
 
         Assert.AreEqual(uuidCalculated, uuid);
@@ -52,7 +52,7 @@ public class UuidTests
     public void TestFormatUuid()
     {
         var expected = "8c001304-8461-3e47-8787-f672b3835bd4";
-        var formatted = Uuid.Parse(expected).ToGuidStringLayout().ToString("D");
+        var formatted = Uuid.Parse(expected).ToString("d");
 
         Assert.AreEqual(expected, formatted);
     }
