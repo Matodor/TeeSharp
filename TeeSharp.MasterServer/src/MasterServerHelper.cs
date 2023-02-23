@@ -53,4 +53,29 @@ public static class MasterServerHelper
 
         return buffer;
     }
+
+    public static bool TryParseProtocolType(
+        string protocol,
+        out MasterServerProtocolType type)
+    {
+        switch (protocol)
+        {
+            case "tw0.6/ipv4":
+                type = MasterServerProtocolType.SixIPv4;
+                return true;
+            case "tw0.6/ipv6":
+                type = MasterServerProtocolType.SixIPv6;
+                return true;
+            case "tw0.7/ipv4":
+                type = MasterServerProtocolType.SixupIPv4;
+                return true;
+            case "tw0.7/ipv6":
+                type = MasterServerProtocolType.SixupIPv6;
+                return true;
+
+        }
+
+        type = default;
+        return false;
+    }
 }
