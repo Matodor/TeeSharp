@@ -1,11 +1,10 @@
 using System;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
-using TeeSharp.Core.Extensions;
 
 namespace TeeSharp.MasterServer;
 
@@ -15,6 +14,7 @@ public class MasterServerProtocol
     public bool Enabled { get; set; }
 
     protected readonly ILogger Logger;
+    protected string? ChallengeToken { get; set; }
 
     private readonly MasterServerInteractor _interactor;
 
@@ -29,10 +29,11 @@ public class MasterServerProtocol
         Type = type;
     }
 
-    public async Task Test()
+    public async Task Test(bool sendInfo)
     {
         var client = new HttpClient()
         {
+            // BaseAddress = new Uri("http://127.0.0.1:8080/ddnet/15/register"),
             BaseAddress = new Uri("https://master1.ddnet.org/ddnet/15/register"),
         };
 
@@ -48,15 +49,23 @@ public class MasterServerProtocol
             },
         };
 
-        // if(m_HaveChallengeToken)
-        // {
-        //     pRegister->HeaderString("Challenge-Token", m_aChallengeToken);
-        // }
+        if (sendInfo)
+        {
+            var json = JsonSerializer.Serialize(_interactor.ServerInfo);
+            request.Content = new StringContent(json, Encoding.UTF8);
+            request.Content.Headers.ContentType!.MediaType = "application/json";
+            request.Content.Headers.ContentType!.CharSet = null;
+        }
 
-        Logger.LogDebug("Test: {Headers}", request.Headers.ToString());
+        if (ChallengeToken != null)
+            request.Headers.Add("Challenge-Token", ChallengeToken);
 
-        var result = await client.SendAsync(request);
+        Logger.LogInformation("Test: headers - {Headers}", request.Headers.ToString());
+
+        var result = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
         var content = await result.Content.ReadAsStringAsync();
+
+        Logger.LogInformation("Test: content - {Content}", content);
     }
 
     protected string GetHeaderSecret()
@@ -72,5 +81,13 @@ public class MasterServerProtocol
     protected string GetHeaderAddress()
     {
         return $"{Type.ToScheme()}connecting-address.invalid:{8303}";
+    }
+
+    public void ProcessToken(string token)
+    {
+        ChallengeToken = token;
+        Logger.LogInformation("ProcessToken: got token {Protocol}:{Token}", Type, ChallengeToken);
+
+        Test(true).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 }

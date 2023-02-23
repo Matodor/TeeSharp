@@ -54,34 +54,46 @@ public class MasterServerInteractor
         return data.ToArray();
     }
 
+    public ServerInfo ServerInfo { get; set; }
+
     public async Task UpdateServerInfo(ServerInfo info)
     {
+        ServerInfo = info;
+
         foreach (var protocol in Protocols.Values)
         {
-            await protocol.Test();
+            await protocol.Test(false);
         }
     }
 
     public bool ProcessMasterServerPacket(Span<byte> data, IPEndPoint endPoint)
     {
-        // ????chalbe48b69f-b08a-11ed-9bf1-57c3acfe7d93:tw0.6/ipv4p+BmhrnUMfiGTUTcsoLHow==
-
         Logger.LogInformation("ProcessMasterServerPacket: {Msg}", Encoding.ASCII.GetString(data));
 
         if (data.Length >= VerifyChallengeSecretData.Length &&
             data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData))
         {
             var unpacker = new Unpacker(data.Slice(VerifyChallengeSecretData.Length));
-            if (unpacker.TryGetString(out var protocol) == false ||
+            if (unpacker.TryGetString(out var protocolStr) == false ||
                 unpacker.TryGetString(out var token) == false)
             {
                 Logger.LogInformation("ProcessMasterServerPacket: Can't unpack protocol and token");
                 return false;
             }
 
-            // TODO check protocol
+            if (!MasterServerHelper.TryParseProtocolType(protocolStr, out var protocolType))
+            {
+                Logger.LogInformation("ProcessMasterServerPacket: Unknown protocol type");
+                return false;
+            }
 
-            Logger.LogInformation("ProcessMasterServerPacket: {Protocol}:{Token}", protocol, token);
+            if (!Protocols.TryGetValue(protocolType, out var protocol))
+            {
+                Logger.LogInformation("ProcessMasterServerPacket: Unsupported protocol type");
+                return false;
+            }
+
+            protocol.ProcessToken(token);
             return true;
         }
 
