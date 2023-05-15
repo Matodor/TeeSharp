@@ -39,8 +39,7 @@ internal class Program
         if (!InitNetwork())
             return;
 
-
-        await _interactor.UpdateServerInfo(new ServerInfo()
+        var info = new ServerInfo
         {
             Name = "TeeSharp - test MasterServerInteractor",
             GameType = "TeeSharp",
@@ -48,7 +47,7 @@ internal class Program
             Version = "0.6.4",
             MaxPlayers = 32,
             MaxClients = 32,
-            Map = new ServerInfoMap
+            Map =
             {
                 Name = "test",
                 Size = 128,
@@ -68,10 +67,14 @@ internal class Program
                     Skin = new ServerInfoClientSkin
                     {
                         Name = "pinky",
+                        ColorBody = 0,
+                        ColorFeet = 0,
                     },
                 },
             },
-        });
+        };
+
+        _interactor.UpdateServerInfo(info);
 
         Console.CancelKeyPress += (_, e) =>
         {

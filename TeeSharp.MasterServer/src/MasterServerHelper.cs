@@ -78,4 +78,25 @@ public static class MasterServerHelper
         type = default;
         return false;
     }
+
+    public static bool TryParseRegisterResponseStatus(
+        string text,
+        out MasterServerRegisterResponseStatus status)
+    {
+        switch (text)
+        {
+            case "success":
+                status = MasterServerRegisterResponseStatus.Ok;
+                return true;
+            case "need_challenge":
+                status = MasterServerRegisterResponseStatus.NeedChallenge;
+                return true;
+            case "need_info":
+                status = MasterServerRegisterResponseStatus.NeedInfo;
+                return true;
+        }
+
+        status = default;
+        return false;
+    }
 }

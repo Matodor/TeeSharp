@@ -43,4 +43,83 @@ public class MasterServerTests
 
         CollectionAssert.AreEqual(buffer1, buffer2);
     }
+
+
+
+    [Test]
+    public void ShouldEqualsServerInfo()
+    {
+        var info1 = new ServerInfo
+        {
+            Name = "TeeSharp - test MasterServerInteractor",
+            GameType = "TeeSharp",
+            HasPassword = true,
+            Version = "0.6.4",
+            MaxPlayers = 32,
+            MaxClients = 32,
+            Map = new ServerInfoMap
+            {
+                Name = "test",
+                Size = 128,
+                Checksum = "test",
+            },
+            Clients = new ServerInfoClient[]
+            {
+                new()
+                {
+                    Name = "Matodor",
+                    IsAfk = true,
+                    Team = -1,
+                    Clan = "test",
+                    Country = 0,
+                    IsPlayer = true,
+                    Score = 666,
+                    Skin = new ServerInfoClientSkin
+                    {
+                        Name = "pinky",
+                        ColorBody = 0,
+                        ColorFeet = 0,
+                    },
+                },
+            },
+        };
+
+
+        var info2 = new ServerInfo
+        {
+            Name = "TeeSharp - test MasterServerInteractor",
+            GameType = "TeeSharp",
+            HasPassword = true,
+            Version = "0.6.4",
+            MaxPlayers = 32,
+            MaxClients = 32,
+            Map = new ServerInfoMap
+            {
+                Name = "test",
+                Size = 128,
+                Checksum = "test",
+            },
+            Clients = new ServerInfoClient[]
+            {
+                new()
+                {
+                    Name = "Matodor",
+                    IsAfk = true,
+                    Team = -1,
+                    Clan = "test",
+                    Country = 0,
+                    IsPlayer = true,
+                    Score = 666,
+                    Skin = new ServerInfoClientSkin
+                    {
+                        Name = "pinky",
+                        ColorBody = 0,
+                        ColorFeet = 0,
+                    },
+                },
+            },
+        };
+
+        Assert.AreEqual(info1, info2);
+    }
 }

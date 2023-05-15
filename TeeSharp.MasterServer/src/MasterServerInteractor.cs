@@ -2,14 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
-using TeeSharp.Core.Extensions;
-using TeeSharp.Core.Helpers;
-using TeeSharp.Network;
 using Uuids;
 
 namespace TeeSharp.MasterServer;
@@ -20,11 +17,16 @@ public class MasterServerInteractor
 
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
+    public int Port { get; private set; } = 8303;
+    public MasterServerRegisterResponseStatus LatestResponseStatus { get; private set; }
 
-    protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerProtocol> Protocols;
+    protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerInteractorProtocol> Protocols;
     protected readonly ILogger Logger;
-
     protected readonly byte[] VerifyChallengeSecretData;
+
+    private ServerInfo? _serverInfo = null;
+    private int _serverInfoSerial = 0;
+    private object _serverInfoLock = new();
 
     public MasterServerInteractor(ILogger? logger = null)
     {
@@ -39,7 +41,7 @@ public class MasterServerInteractor
             // MasterServerProtocolType.SixIPv6,
             // MasterServerProtocolType.SixupIPv4,
             // MasterServerProtocolType.SixupIPv6,
-        }.ToDictionary(t => t, t => new MasterServerProtocol(this, t));
+        }.ToDictionary(t => t, t => new MasterServerInteractorProtocol(this, t));
     }
 
     protected byte[] GetVerifyChallengeSecretData()
@@ -54,49 +56,62 @@ public class MasterServerInteractor
         return data.ToArray();
     }
 
-    public ServerInfo ServerInfo { get; set; }
-
-    public async Task UpdateServerInfo(ServerInfo info)
+    public void UpdateServerInfo(ServerInfo info)
     {
-        ServerInfo = info;
+        if (_serverInfo != null &&
+            _serverInfo.Equals(info) != false)
+        {
+            Logger.LogInformation("UpdateServerInfo: ignore");
+            return;
+        }
+
+        _serverInfo = info;
+        _serverInfoSerial++;
+
+        var json = JsonSerializer.Serialize(_serverInfo);
 
         foreach (var protocol in Protocols.Values)
         {
-            await protocol.Test(false);
+            protocol.SendInfo(json, _serverInfoSerial).ContinueWith(ContinuationRegister);
         }
+    }
+
+    private void ContinuationRegister(Task<MasterServerRegisterResponseStatus?> obj)
+    {
+        // throw new NotImplementedException();
     }
 
     public bool ProcessMasterServerPacket(Span<byte> data, IPEndPoint endPoint)
     {
         Logger.LogInformation("ProcessMasterServerPacket: {Msg}", Encoding.ASCII.GetString(data));
 
-        if (data.Length >= VerifyChallengeSecretData.Length &&
-            data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData))
+        if (data.Length < VerifyChallengeSecretData.Length ||
+            data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData) == false)
         {
-            var unpacker = new Unpacker(data.Slice(VerifyChallengeSecretData.Length));
-            if (unpacker.TryGetString(out var protocolStr) == false ||
-                unpacker.TryGetString(out var token) == false)
-            {
-                Logger.LogInformation("ProcessMasterServerPacket: Can't unpack protocol and token");
-                return false;
-            }
-
-            if (!MasterServerHelper.TryParseProtocolType(protocolStr, out var protocolType))
-            {
-                Logger.LogInformation("ProcessMasterServerPacket: Unknown protocol type");
-                return false;
-            }
-
-            if (!Protocols.TryGetValue(protocolType, out var protocol))
-            {
-                Logger.LogInformation("ProcessMasterServerPacket: Unsupported protocol type");
-                return false;
-            }
-
-            protocol.ProcessToken(token);
-            return true;
+            return false;
         }
 
-        return false;
+        var unpacker = new Unpacker(data.Slice(VerifyChallengeSecretData.Length));
+        if (unpacker.TryGetString(out var protocolStr) == false ||
+            unpacker.TryGetString(out var token) == false)
+        {
+            Logger.LogInformation("ProcessMasterServerPacket: Can't unpack protocol and token");
+            return false;
+        }
+
+        if (!MasterServerHelper.TryParseProtocolType(protocolStr, out var protocolType))
+        {
+            Logger.LogInformation("ProcessMasterServerPacket: Unknown protocol type");
+            return false;
+        }
+
+        if (!Protocols.TryGetValue(protocolType, out var protocol))
+        {
+            Logger.LogInformation("ProcessMasterServerPacket: Unsupported protocol type");
+            return false;
+        }
+
+        protocol.ProcessToken(token);
+        return true;
     }
 }
