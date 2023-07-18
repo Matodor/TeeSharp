@@ -13,6 +13,7 @@ internal static class Program
         var benchmarks = new[]
         {
             typeof(DeserializeBenchmark),
+            typeof(DeserializeMapHeaderBenchmark),
             typeof(DeserializeStructWithArrayBenchmark),
             typeof(SizeofBenchmark),
             typeof(CastIpEndpointBenchmark),
