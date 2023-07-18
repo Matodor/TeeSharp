@@ -20,8 +20,10 @@ public class CoreTests
     [Test]
     public void IntsToStr()
     {
-        var ints = new int[3] {-840829713, -454036864, -2139062272}.AsSpan();
-        Assert.AreEqual("Matodor", ints.GetString());
+        var ints1 = new int[3] {-840829713, -454036864, -2139062272}.AsSpan();
+        var ints2 = new int[3] {-403512842, -436608526, -458379264}.AsSpan();
+        Assert.AreEqual("Matodor", ints1.GetString());
+        Assert.AreEqual("graveyard-0", ints2.GetString());
     }
 
 #if _WINDOWS
