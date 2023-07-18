@@ -18,7 +18,7 @@ public class MasterServerInteractor
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
     public int Port { get; private set; } = 8303;
-    public MasterServerRegisterResponseStatus LatestResponseStatus { get; private set; }
+    public MasterServerResponseCode LatestResponseCode { get; private set; }
 
     protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerInteractorProtocol> Protocols;
     protected readonly ILogger Logger;
@@ -59,7 +59,7 @@ public class MasterServerInteractor
     public void UpdateServerInfo(ServerInfo info)
     {
         if (_serverInfo != null &&
-            _serverInfo.Equals(info) != false)
+            _serverInfo.Equals(info))
         {
             Logger.LogInformation("UpdateServerInfo: ignore");
             return;
@@ -72,11 +72,14 @@ public class MasterServerInteractor
 
         foreach (var protocol in Protocols.Values)
         {
-            protocol.SendInfo(json, _serverInfoSerial).ContinueWith(ContinuationRegister);
+            protocol
+                .SendInfo(json, _serverInfoSerial)
+                .ContinueWith(ProcessResponse)
+                .ConfigureAwait(false);
         }
     }
 
-    private void ContinuationRegister(Task<MasterServerRegisterResponseStatus?> obj)
+    private void ProcessResponse(Task<MasterServerResponse?> task)
     {
         // throw new NotImplementedException();
     }

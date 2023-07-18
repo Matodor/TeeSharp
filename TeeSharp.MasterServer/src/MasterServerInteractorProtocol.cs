@@ -13,10 +13,11 @@ public class MasterServerInteractorProtocol
 {
     public MasterServerProtocolType Type { get; }
     public bool Enabled { get; set; }
+    public DateTime LastRequest { get; private set; }
+    public DateTime NextRequest { get; private set; }
 
-    protected readonly ILogger Logger;
     protected string? ChallengeToken { get; set; }
-    protected DateTime LastTest { get; set; } = DateTime.MinValue;
+    protected readonly ILogger Logger;
 
     private readonly MasterServerInteractor _interactor;
 
@@ -31,9 +32,7 @@ public class MasterServerInteractorProtocol
         Type = type;
     }
 
-    public async Task<MasterServerRegisterResponseStatus?> SendInfo(
-        string serverInfoJson,
-        int serverInfoSerial)
+    public async Task<MasterServerResponse?> SendInfo(string infoJson, int infoSerial)
     {
         var client = new HttpClient
         {
@@ -41,21 +40,21 @@ public class MasterServerInteractorProtocol
             // BaseAddress = new Uri("https://master1.ddnet.org/ddnet/15/register"),
         };
 
-        var requestContent = new StringContent(serverInfoJson, Encoding.UTF8);
+        var requestContent = new StringContent(infoJson, Encoding.UTF8);
         requestContent.Headers.ContentType!.MediaType = "application/json";
         requestContent.Headers.ContentType!.CharSet = null;
 
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
+            Content = requestContent,
             Headers =
             {
                 {"Address", GetHeaderAddress()},
                 {"Secret", GetHeaderSecret()},
                 {"Challenge-Secret", GetHeaderChallengeSecret()},
-                {"Info-Serial", serverInfoSerial.ToString()},
+                {"Info-Serial", infoSerial.ToString()},
             },
-            Content = requestContent,
         };
 
         if (ChallengeToken != null)
@@ -65,6 +64,9 @@ public class MasterServerInteractorProtocol
 
         using var result = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
         await using var contentStream = await result.Content.ReadAsStreamAsync();
+
+        LastRequest = DateTime.UtcNow;
+        NextRequest = LastRequest.AddSeconds(15);
 
         JsonDocument jsonDocument;
         JsonElement jsonResponse;
@@ -108,7 +110,7 @@ public class MasterServerInteractorProtocol
         jsonDocument.Dispose();
         client.Dispose();
 
-        return status;
+        return new MasterServerResponse(infoSerial, status);
     }
 
     protected string GetHeaderSecret()

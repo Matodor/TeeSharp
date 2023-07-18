@@ -1,6 +1,6 @@
 namespace TeeSharp.MasterServer;
 
-public enum MasterServerRegisterResponseStatus
+public enum MasterServerResponseCode
 {
     None = 0,
     Ok,

@@ -81,18 +81,18 @@ public static class MasterServerHelper
 
     public static bool TryParseRegisterResponseStatus(
         string text,
-        out MasterServerRegisterResponseStatus status)
+        out MasterServerResponseCode status)
     {
         switch (text)
         {
             case "success":
-                status = MasterServerRegisterResponseStatus.Ok;
+                status = MasterServerResponseCode.Ok;
                 return true;
             case "need_challenge":
-                status = MasterServerRegisterResponseStatus.NeedChallenge;
+                status = MasterServerResponseCode.NeedChallenge;
                 return true;
             case "need_info":
-                status = MasterServerRegisterResponseStatus.NeedInfo;
+                status = MasterServerResponseCode.NeedInfo;
                 return true;
         }
 
