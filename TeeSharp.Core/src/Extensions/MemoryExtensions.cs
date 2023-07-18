@@ -60,7 +60,7 @@ public static class MemoryExtensions
 
     public static string GetString(this Span<int> data)
     {
-        var buffer = (Span<byte>) stackalloc byte[data.Length * sizeof(int) + 1];
+        var buffer = (Span<byte>) stackalloc byte[data.Length * sizeof(int)];
         var length = 0;
 
         for (var i = 0; i < data.Length; i++)
@@ -83,10 +83,10 @@ public static class MemoryExtensions
             buffer[i * 4 + 3] = (byte) ((data[i] & 0xFF) - 128);
             if (buffer[i * 4 + 3] < 32)
                 break;
-            length++;
-        }
 
-        buffer[length] = 0;
+            if (i < data.Length - 1)
+                length++;
+        }
 
         return length == 0
             ? string.Empty
