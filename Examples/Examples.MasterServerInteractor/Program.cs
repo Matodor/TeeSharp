@@ -31,7 +31,11 @@ internal class Program
     {
         _networkServer = new NetworkServer();
         _cancellationTokenSource = new CancellationTokenSource();
-        _interactor = new TeeSharp.MasterServer.MasterServerInteractor();
+        _interactor = new TeeSharp.MasterServer.MasterServerInteractor()
+        {
+            // Endpoint = new Uri("https://master1.ddnet.org/ddnet/15/register"),
+            Endpoint = new Uri("http://127.0.0.1:8080/ddnet/15/register"),
+        };
     }
 
     private async Task MainAsync(string[] args)
@@ -89,6 +93,7 @@ internal class Program
         }
 
         Tee.Logger.LogInformation("shutdown");
+        _interactor.Dispose();
     }
 
     private bool InitNetwork()
