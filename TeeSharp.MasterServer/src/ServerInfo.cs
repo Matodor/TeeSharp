@@ -30,7 +30,7 @@ public class ServerInfo : IEquatable<ServerInfo>
     public ServerInfoMap Map { get; set; } = new();
 
     [JsonPropertyName("clients")]
-    public IList<ServerInfoClient> Clients { get; set; } = ArraySegment<ServerInfoClient>.Empty;
+    public IEnumerable<ServerInfoClient> Clients { get; set; } = Array.Empty<ServerInfoClient>();
 
     public bool Equals(ServerInfo? other)
     {

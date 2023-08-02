@@ -22,7 +22,10 @@ public class ServerInfoMap : IEquatable<ServerInfoMap>
         if (ReferenceEquals(this, other))
             return true;
 
-        return Name == other.Name && Checksum == other.Checksum && Size == other.Size;
+        return
+            Name == other.Name &&
+            Checksum == other.Checksum &&
+            Size == other.Size;
     }
 
     public override bool Equals(object? obj)

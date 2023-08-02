@@ -1,8 +1,9 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
@@ -11,111 +12,94 @@ namespace TeeSharp.MasterServer;
 
 public class MasterServerInteractorProtocol
 {
-    public MasterServerProtocolType Type { get; }
     public bool Enabled { get; set; }
+    public MasterServerProtocolType Type { get; }
     public DateTime LastRequest { get; private set; }
     public DateTime NextRequest { get; private set; }
 
     protected string? ChallengeToken { get; set; }
     protected readonly ILogger Logger;
 
+    private readonly HttpClient _client;
     private readonly MasterServerInteractor _interactor;
 
     public MasterServerInteractorProtocol(
         MasterServerInteractor interactor,
         MasterServerProtocolType type,
+        HttpClient client,
         ILogger? logger = null)
     {
+        _client = client;
         _interactor = interactor;
 
         Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
         Type = type;
     }
 
-    public async Task<MasterServerResponse?> SendInfo(string infoJson, int infoSerial)
+    protected HttpRequestMessage GetRequest()
     {
-        var client = new HttpClient
-        {
-            BaseAddress = new Uri("http://127.0.0.1:9090/ddnet/15/register"),
-            // BaseAddress = new Uri("https://master1.ddnet.org/ddnet/15/register"),
-        };
-
-        var requestContent = new StringContent(infoJson, Encoding.UTF8);
-        requestContent.Headers.ContentType!.MediaType = "application/json";
-        requestContent.Headers.ContentType!.CharSet = null;
-
-        var request = new HttpRequestMessage
+        return new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            Content = requestContent,
             Headers =
             {
-                {"Address", GetHeaderAddress()},
-                {"Secret", GetHeaderSecret()},
-                {"Challenge-Secret", GetHeaderChallengeSecret()},
-                {"Info-Serial", infoSerial.ToString()},
+                { MasterServerInteractorHeaders.Address, GetHeaderAddress() },
+                { MasterServerInteractorHeaders.ChallengeSecret, GetHeaderChallengeSecret() },
             },
         };
+    }
+
+    public async Task<MasterServerResponse> SendInfoAsync(string infoJson)
+    {
+        var request = GetRequest();
+
+        request.Content = new StringContent(infoJson, Encoding.UTF8,
+            new MediaTypeHeaderValue(MediaTypeNames.Application.Json, null));
 
         if (ChallengeToken != null)
-            request.Headers.Add("Challenge-Token", ChallengeToken);
+        {
+            request.Headers.Add(
+                name: MasterServerInteractorHeaders.ChallengeToken,
+                value: ChallengeToken
+            );
+        }
 
-        Logger.LogInformation("Test: headers - {Headers}", request.Headers.ToString());
-
-        using var result = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
-        await using var contentStream = await result.Content.ReadAsStreamAsync();
+        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+        await using var contentStream = await response.Content.ReadAsStreamAsync();
 
         LastRequest = DateTime.UtcNow;
         NextRequest = LastRequest.AddSeconds(15);
 
-        JsonDocument jsonDocument;
-        JsonElement jsonResponse;
+        using var jsonDocument = await JsonDocument.ParseAsync(contentStream);
 
-        try
-        {
-            jsonDocument = await JsonDocument.ParseAsync(contentStream);
-            jsonResponse = jsonDocument.RootElement;
-        }
-        catch (JsonException e)
-        {
-            // do nothing
-            throw;
-        }
-
+        var jsonResponse = jsonDocument.RootElement;
         if (jsonResponse.TryGetProperty("status", out var elementStatus) == false ||
             elementStatus.ValueKind != JsonValueKind.String)
         {
             Logger.LogWarning("Invalid json response from masterserver");
-            return null;
+            return new MasterServerResponse(MasterServerResponseCode.Error);
         }
 
         var statusStr = elementStatus.GetString()!;
         if (statusStr == "error")
         {
-            if (jsonResponse.TryGetProperty("message", out var elementMessage) &&
-                elementMessage.ValueKind == JsonValueKind.String)
+            if (jsonResponse.TryGetProperty("message", out var messageProp) &&
+                messageProp.ValueKind == JsonValueKind.String)
             {
-                Logger.LogWarning("Got error from masterserver ({Status})", elementMessage.GetString()!);
+                Logger.LogWarning("Got error from masterserver ({Type}:{Status})", Type, messageProp.GetString()!);
             }
 
-            return null;
+            return new MasterServerResponse(MasterServerResponseCode.Error);
         }
 
         if (MasterServerHelper.TryParseRegisterResponseStatus(statusStr, out var status) == false)
         {
-            Logger.LogWarning("Invalid status from masterserver ({Status})", statusStr);
-            return null;
+            Logger.LogWarning("Invalid status from masterserver ({Type}:{Status})", Type, statusStr);
+            return new MasterServerResponse(MasterServerResponseCode.Error);
         }
 
-        jsonDocument.Dispose();
-        client.Dispose();
-
-        return new MasterServerResponse(infoSerial, status);
-    }
-
-    protected string GetHeaderSecret()
-    {
-        return _interactor.Secret.ToString("d");
+        Logger.LogInformation("Got response from masterserver ({Type}:{Status})", Type, status);
+        return new MasterServerResponse(status);
     }
 
     protected string GetHeaderChallengeSecret()

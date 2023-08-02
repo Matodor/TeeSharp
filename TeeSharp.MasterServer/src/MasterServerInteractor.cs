@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
@@ -11,47 +15,76 @@ using Uuids;
 
 namespace TeeSharp.MasterServer;
 
-public class MasterServerInteractor
+public class MasterServerInteractor : IDisposable
 {
-    protected const int UuidStrSizeD = 36;
-
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
+
     public int Port { get; private set; } = 8303;
-    public MasterServerResponseCode LatestResponseCode { get; private set; }
+
+    public required Uri Endpoint
+    {
+        get => _httpClient.BaseAddress ?? throw new NullReferenceException(nameof(_httpClient.BaseAddress));
+        set => _httpClient.BaseAddress = value;
+    }
 
     protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerInteractorProtocol> Protocols;
     protected readonly ILogger Logger;
     protected readonly byte[] VerifyChallengeSecretData;
 
-    private ServerInfo? _serverInfo = null;
-    private int _serverInfoSerial = 0;
+    private MasterServerResponseCode _latestResponseCode = MasterServerResponseCode.None;
+    private int _latestInfoSerial = -1;
+
+    private ServerInfo? _serverInfo;
+    private int _serverInfoSerial;
+    private int _totalRequests = 0;
     private object _serverInfoLock = new();
+    private readonly HttpClient _httpClient;
 
     public MasterServerInteractor(ILogger? logger = null)
     {
         Secret = Uuid.NewTimeBased();
         ChallengeSecret = Uuid.NewTimeBased();
         VerifyChallengeSecretData = GetVerifyChallengeSecretData();
-
         Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
+
+        _httpClient = CreateClient();
+
         Protocols = new[]
         {
             MasterServerProtocolType.SixIPv4,
-            // MasterServerProtocolType.SixIPv6,
-            // MasterServerProtocolType.SixupIPv4,
-            // MasterServerProtocolType.SixupIPv6,
-        }.ToDictionary(t => t, t => new MasterServerInteractorProtocol(this, t));
+            MasterServerProtocolType.SixIPv6,
+            MasterServerProtocolType.SixupIPv4,
+            MasterServerProtocolType.SixupIPv6,
+        }.ToDictionary(
+            t => t,
+            t => new MasterServerInteractorProtocol(this, t, _httpClient)
+            {
+                Enabled = true,
+            }
+        );
+    }
+
+    protected virtual HttpClient CreateClient()
+    {
+        return new HttpClient
+        {
+            DefaultRequestHeaders =
+            {
+                { MasterServerInteractorHeaders.Secret, GetHeaderSecret() },
+                { MasterServerInteractorHeaders.InfoSerial, _serverInfoSerial.ToString() },
+            },
+        };
     }
 
     protected byte[] GetVerifyChallengeSecretData()
     {
-        var data = (Span<byte>)new byte[MasterServerPackets.Challenge.Length + UuidStrSizeD + 1];
         var challengePacket = MasterServerPackets.Challenge.AsSpan();
         var challengeSecret = Encoding.ASCII.GetBytes(ChallengeSecret.ToString("d") + ":").AsSpan();
+        var data = (Span<byte>)new byte[challengePacket.Length + challengeSecret.Length];
 
         challengePacket.CopyTo(data);
-        challengeSecret.CopyTo(data.Slice(MasterServerPackets.Challenge.Length));
+        challengeSecret.CopyTo(data.Slice(challengePacket.Length));
 
         return data.ToArray();
     }
@@ -73,14 +106,24 @@ public class MasterServerInteractor
         foreach (var protocol in Protocols.Values)
         {
             protocol
-                .SendInfo(json, _serverInfoSerial)
-                .ContinueWith(ProcessResponse)
+                .SendInfoAsync(json)
+                .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial))
                 .ConfigureAwait(false);
         }
     }
 
-    private void ProcessResponse(Task<MasterServerResponse?> task)
+    protected string GetHeaderSecret()
     {
+        return Secret.ToString("d");
+    }
+
+    private void ProcessResponse(Task<MasterServerResponse> task, object? state)
+    {
+        var (requestId, infoSerial) = ((int, int))state!;
+
+        // if (task.Exception != null)
+        //     throw task.Exception;
+
         // throw new NotImplementedException();
     }
 
@@ -91,6 +134,7 @@ public class MasterServerInteractor
         if (data.Length < VerifyChallengeSecretData.Length ||
             data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData) == false)
         {
+            Logger.LogInformation("ProcessMasterServerPacket: Got erroneous challenge packet");
             return false;
         }
 
@@ -116,5 +160,10 @@ public class MasterServerInteractor
 
         protocol.ProcessToken(token);
         return true;
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
     }
 }

@@ -1,3 +1,3 @@
 namespace TeeSharp.MasterServer;
 
-public record MasterServerResponse(int Serial, MasterServerResponseCode Code);
+public record MasterServerResponse(MasterServerResponseCode Code);
