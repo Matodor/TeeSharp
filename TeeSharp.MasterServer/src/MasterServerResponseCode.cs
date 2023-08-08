@@ -6,5 +6,4 @@ public enum MasterServerResponseCode
     Ok,
     NeedChallenge,
     NeedInfo,
-    Error,
 }

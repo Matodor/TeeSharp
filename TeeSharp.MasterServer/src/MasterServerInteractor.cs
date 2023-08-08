@@ -19,7 +19,7 @@ public class MasterServerInteractor : IDisposable
 {
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
-
+    public string? ChallengeToken { get; private set; }
     public int Port { get; private set; } = 8303;
 
     public required Uri Endpoint
@@ -28,21 +28,25 @@ public class MasterServerInteractor : IDisposable
         set => _httpClient.BaseAddress = value;
     }
 
+    protected readonly CancellationTokenSource Cts;
     protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerInteractorProtocol> Protocols;
     protected readonly ILogger Logger;
     protected readonly byte[] VerifyChallengeSecretData;
 
     private MasterServerResponseCode _latestResponseCode = MasterServerResponseCode.None;
     private int _latestInfoSerial = -1;
+    private int _latestRequestId = -1;
 
     private ServerInfo? _serverInfo;
     private int _serverInfoSerial;
-    private int _totalRequests = 0;
-    private object _serverInfoLock = new();
+    private int _totalRequests;
+
+    private readonly object _responseLock = new();
     private readonly HttpClient _httpClient;
 
-    public MasterServerInteractor(ILogger? logger = null)
+    public MasterServerInteractor(CancellationTokenSource cts, ILogger? logger = null)
     {
+        Cts = cts;
         Secret = Uuid.NewTimeBased();
         ChallengeSecret = Uuid.NewTimeBased();
         VerifyChallengeSecretData = GetVerifyChallengeSecretData();
@@ -77,6 +81,11 @@ public class MasterServerInteractor : IDisposable
         };
     }
 
+    protected string GetHeaderSecret()
+    {
+        return Secret.ToString("d");
+    }
+
     protected byte[] GetVerifyChallengeSecretData()
     {
         var challengePacket = MasterServerPackets.Challenge.AsSpan();
@@ -87,6 +96,11 @@ public class MasterServerInteractor : IDisposable
         challengeSecret.CopyTo(data.Slice(challengePacket.Length));
 
         return data.ToArray();
+    }
+
+    public void Update()
+    {
+
     }
 
     public void UpdateServerInfo(ServerInfo info)
@@ -101,40 +115,64 @@ public class MasterServerInteractor : IDisposable
         _serverInfo = info;
         _serverInfoSerial++;
 
-        var json = JsonSerializer.Serialize(_serverInfo);
+        SendRegister(sendInfo: true);
+    }
 
-        foreach (var protocol in Protocols.Values)
+    protected void SendRegister(bool sendInfo)
+    {
+        if (_serverInfo == null)
+            return;
+
+        var json = sendInfo
+            ? JsonSerializer.Serialize(_serverInfo)
+            : null;
+
+        foreach (var protocol in Protocols.Values.Where(p => p.Enabled))
         {
             protocol
-                .SendInfoAsync(json)
-                .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial))
+                .RegisterAsync(json, Cts.Token)
+                .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial), Cts.Token)
                 .ConfigureAwait(false);
         }
     }
 
-    protected string GetHeaderSecret()
-    {
-        return Secret.ToString("d");
-    }
-
     private void ProcessResponse(Task<MasterServerResponse> task, object? state)
     {
+        if (task.Exception != null)
+        {
+            Logger.LogCritical(task.Exception, "SendInfoAsync an exception was thrown");
+            return;
+        }
+
+        if (task.Result.Successful == false)
+            return;
+
         var (requestId, infoSerial) = ((int, int))state!;
 
-        // if (task.Exception != null)
-        //     throw task.Exception;
+        lock (_responseLock)
+        {
+            if (_latestRequestId < requestId)
+            {
+                _latestRequestId = requestId;
+                _latestResponseCode = task.Result.Code;
 
-        // throw new NotImplementedException();
+                if (_latestResponseCode == MasterServerResponseCode.Ok &&
+                    _latestInfoSerial < infoSerial)
+                {
+                    _latestInfoSerial = infoSerial;
+                }
+
+                Logger.LogInformation("ProcessResponse (latest): RequestId={RequestId} Code={Code} Info={InfoSerial}", requestId, task.Result.Code, infoSerial);
+            }
+        }
     }
 
     public bool ProcessMasterServerPacket(Span<byte> data, IPEndPoint endPoint)
     {
-        Logger.LogInformation("ProcessMasterServerPacket: {Msg}", Encoding.ASCII.GetString(data));
-
         if (data.Length < VerifyChallengeSecretData.Length ||
             data.Slice(0, VerifyChallengeSecretData.Length).SequenceEqual(VerifyChallengeSecretData) == false)
         {
-            Logger.LogInformation("ProcessMasterServerPacket: Got erroneous challenge packet");
+            Logger.LogDebug("ProcessMasterServerPacket: Got erroneous challenge packet");
             return false;
         }
 
@@ -142,28 +180,58 @@ public class MasterServerInteractor : IDisposable
         if (unpacker.TryGetString(out var protocolStr) == false ||
             unpacker.TryGetString(out var token) == false)
         {
-            Logger.LogInformation("ProcessMasterServerPacket: Can't unpack protocol and token");
-            return false;
+            Logger.LogDebug("ProcessMasterServerPacket: Can't unpack protocol and token");
+            return true;
         }
 
         if (!MasterServerHelper.TryParseProtocolType(protocolStr, out var protocolType))
         {
-            Logger.LogInformation("ProcessMasterServerPacket: Unknown protocol type");
-            return false;
+            Logger.LogDebug("ProcessMasterServerPacket: Unknown protocol type");
+            return true;
         }
 
         if (!Protocols.TryGetValue(protocolType, out var protocol))
         {
-            Logger.LogInformation("ProcessMasterServerPacket: Unsupported protocol type");
-            return false;
+            Logger.LogDebug("ProcessMasterServerPacket: Unsupported protocol type");
+            return true;
         }
 
-        protocol.ProcessToken(token);
+        if (ChallengeToken == token)
+            return true;
+
+        _httpClient.DefaultRequestHeaders.Remove(MasterServerInteractorHeaders.ChallengeToken);
+        _httpClient.DefaultRequestHeaders.Add(MasterServerInteractorHeaders.ChallengeToken, token);
+
+        ChallengeToken = token;
+        Logger.LogInformation("ProcessMasterServerPacket: Protocol={Protocol} Token={Token}", protocol.Type, token);
+
+        var sendRegister = false;
+
+        lock (_responseLock)
+        {
+            if (_latestResponseCode == MasterServerResponseCode.NeedChallenge)
+            {
+                sendRegister = true;
+            }
+        }
+
+        if (sendRegister)
+            SendRegister(sendInfo: false);
+
         return true;
     }
 
     public void Dispose()
     {
-        _httpClient.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _httpClient.Dispose();
+        }
     }
 }

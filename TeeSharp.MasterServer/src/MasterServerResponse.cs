@@ -1,3 +1,6 @@
 namespace TeeSharp.MasterServer;
 
-public record MasterServerResponse(MasterServerResponseCode Code);
+public record MasterServerResponse(
+    bool Successful,
+    MasterServerResponseCode Code = MasterServerResponseCode.None
+);
