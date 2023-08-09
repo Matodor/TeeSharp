@@ -15,8 +15,6 @@ public class MasterServerInteractorProtocol
 {
     public bool Enabled { get; set; }
     public MasterServerProtocolType Type { get; }
-    public DateTime LastResponse { get; private set; }
-    public DateTime NextRequest { get; private set; }
 
     protected readonly ILogger Logger;
 
@@ -81,9 +79,6 @@ public class MasterServerInteractorProtocol
         await using var contentStream = await response.Content
             .ReadAsStreamAsync(cancellationToken)
             .ConfigureAwait(false);
-
-        LastResponse = DateTime.UtcNow;
-        NextRequest = LastResponse.AddSeconds(15);
 
         using var jsonDocument = await JsonDocument
             .ParseAsync(contentStream, cancellationToken: cancellationToken)

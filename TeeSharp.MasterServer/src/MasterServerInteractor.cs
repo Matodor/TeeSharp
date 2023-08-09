@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
+using TeeSharp.Core.Extensions;
 using Uuids;
 
 namespace TeeSharp.MasterServer;
@@ -37,12 +38,14 @@ public class MasterServerInteractor : IDisposable
     private int _latestInfoSerial = -1;
     private int _latestRequestId = -1;
 
+    private DateTime _nextRequest;
+    private Task? _registerTask;
     private ServerInfo? _serverInfo;
     private int _serverInfoSerial;
     private int _totalRequests;
 
-    private readonly object _responseLock = new();
     private readonly HttpClient _httpClient;
+    private readonly object _responseLock = new();
 
     public MasterServerInteractor(CancellationTokenSource cts, ILogger? logger = null)
     {
@@ -100,7 +103,26 @@ public class MasterServerInteractor : IDisposable
 
     public void Update()
     {
+        if (_serverInfo == null ||
+            _registerTask is { IsCompleted: false })
+        {
+            return;
+        }
 
+        var sendRegister = false;
+        var sendInfo = false;
+
+        lock (_responseLock)
+        {
+            if (_nextRequest < DateTime.Now)
+            {
+                sendRegister = true;
+                sendInfo = _latestResponseCode == MasterServerResponseCode.NeedInfo;
+            }
+        }
+
+        if (sendRegister)
+            SendRegister(sendInfo: sendInfo);
     }
 
     public void UpdateServerInfo(ServerInfo info)
@@ -115,6 +137,7 @@ public class MasterServerInteractor : IDisposable
         _serverInfo = info;
         _serverInfoSerial++;
 
+        // TODO: immediately send new info if it changes, but at most once per second.
         SendRegister(sendInfo: true);
     }
 
@@ -123,17 +146,26 @@ public class MasterServerInteractor : IDisposable
         if (_serverInfo == null)
             return;
 
+        Logger.LogInformation("SendRegister");
+
         var json = sendInfo
             ? JsonSerializer.Serialize(_serverInfo)
             : null;
 
-        foreach (var protocol in Protocols.Values.Where(p => p.Enabled))
+        _registerTask = Task.WhenAll(
+            Protocols.Values
+                .Where(protocol => protocol.Enabled)
+                .Select(protocol => protocol
+                    .RegisterAsync(json, Cts.Token)
+                    .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial), Cts.Token)
+                    .Tap(t => t.ConfigureAwait(false))
+                )
+        );
+
+        _registerTask.ContinueWith(task =>
         {
-            protocol
-                .RegisterAsync(json, Cts.Token)
-                .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial), Cts.Token)
-                .ConfigureAwait(false);
-        }
+            Logger.LogInformation("SendRegister task completed");
+        });
     }
 
     private void ProcessResponse(Task<MasterServerResponse> task, object? state)
@@ -160,6 +192,10 @@ public class MasterServerInteractor : IDisposable
                     _latestInfoSerial < infoSerial)
                 {
                     _latestInfoSerial = infoSerial;
+                }
+                else if (_latestResponseCode == MasterServerResponseCode.NeedInfo)
+                {
+                    _nextRequest = DateTime.Now;
                 }
 
                 Logger.LogInformation("ProcessResponse (latest): RequestId={RequestId} Code={Code} Info={InfoSerial}", requestId, task.Result.Code, infoSerial);
@@ -205,18 +241,13 @@ public class MasterServerInteractor : IDisposable
         ChallengeToken = token;
         Logger.LogInformation("ProcessMasterServerPacket: Protocol={Protocol} Token={Token}", protocol.Type, token);
 
-        var sendRegister = false;
-
         lock (_responseLock)
         {
             if (_latestResponseCode == MasterServerResponseCode.NeedChallenge)
             {
-                sendRegister = true;
+                _nextRequest = DateTime.Now;
             }
         }
-
-        if (sendRegister)
-            SendRegister(sendInfo: false);
 
         return true;
     }
