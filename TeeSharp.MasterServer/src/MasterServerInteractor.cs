@@ -20,6 +20,8 @@ public class MasterServerInteractor : IDisposable
 {
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
+    public long ServerInfoSerial => _serverInfoSerial;
+    public long TotalRequests => _totalRequests;
 
     public string? ChallengeToken
     {
@@ -41,15 +43,15 @@ public class MasterServerInteractor : IDisposable
     protected readonly byte[] VerifyChallengeSecretData;
 
     private MasterServerResponseCode _latestResponseCode = MasterServerResponseCode.None;
-    private int _latestInfoSerial = -1;
-    private int _latestRequestId = -1;
+    private long _latestInfoSerial = -1;
+    private long _latestRequestId = -1;
 
     private DateTime _prevRequest;
     private DateTime _nextRequest;
     private Task? _registerTask;
     private ServerInfo? _serverInfo;
-    private int _serverInfoSerial;
-    private int _totalRequests;
+    private long _serverInfoSerial;
+    private long _totalRequests;
 
     private readonly HttpClient _httpClient;
     private readonly object _responseLock = new();
@@ -87,7 +89,6 @@ public class MasterServerInteractor : IDisposable
             DefaultRequestHeaders =
             {
                 { MasterServerInteractorHeaders.Secret, GetHeaderSecret() },
-                { MasterServerInteractorHeaders.InfoSerial, _serverInfoSerial.ToString() },
             },
         };
     }

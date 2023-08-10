@@ -17,7 +17,7 @@ internal class Program
     public static Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Debug()
             .WriteTo.Console()
             .CreateLogger();
 

@@ -43,6 +43,7 @@ public class MasterServerInteractorProtocol
             {
                 { MasterServerInteractorHeaders.Address, GetHeaderAddress() },
                 { MasterServerInteractorHeaders.ChallengeSecret, GetHeaderChallengeSecret() },
+                { MasterServerInteractorHeaders.InfoSerial, GetHeaderInfoSerial() },
             },
         };
     }
@@ -55,6 +56,11 @@ public class MasterServerInteractorProtocol
     protected string GetHeaderChallengeSecret()
     {
         return $"{_interactor.ChallengeSecret.ToString("d")}:{Type.ToStringRepresentation()}";
+    }
+
+    protected string GetHeaderInfoSerial()
+    {
+        return _interactor.ServerInfoSerial.ToString();
     }
 
     public async Task<MasterServerResponse> RegisterAsync(
