@@ -20,7 +20,13 @@ public class MasterServerInteractor : IDisposable
 {
     public Uuid Secret { get; }
     public Uuid ChallengeSecret { get; }
-    public string? ChallengeToken { get; private set; }
+
+    public string? ChallengeToken
+    {
+        get => _challengeToken;
+        private set => SetChallengeToken(value);
+    }
+
     public int Port { get; private set; } = 8303;
 
     public required Uri Endpoint
@@ -29,7 +35,7 @@ public class MasterServerInteractor : IDisposable
         set => _httpClient.BaseAddress = value;
     }
 
-    protected readonly CancellationTokenSource Cts;
+    protected readonly CancellationToken CancellationToken;
     protected readonly IReadOnlyDictionary<MasterServerProtocolType, MasterServerInteractorProtocol> Protocols;
     protected readonly ILogger Logger;
     protected readonly byte[] VerifyChallengeSecretData;
@@ -38,6 +44,7 @@ public class MasterServerInteractor : IDisposable
     private int _latestInfoSerial = -1;
     private int _latestRequestId = -1;
 
+    private DateTime _prevRequest;
     private DateTime _nextRequest;
     private Task? _registerTask;
     private ServerInfo? _serverInfo;
@@ -46,10 +53,11 @@ public class MasterServerInteractor : IDisposable
 
     private readonly HttpClient _httpClient;
     private readonly object _responseLock = new();
+    private string? _challengeToken;
 
-    public MasterServerInteractor(CancellationTokenSource cts, ILogger? logger = null)
+    public MasterServerInteractor(CancellationToken cancellationToken, ILogger? logger = null)
     {
-        Cts = cts;
+        CancellationToken = cancellationToken;
         Secret = Uuid.NewTimeBased();
         ChallengeSecret = Uuid.NewTimeBased();
         VerifyChallengeSecretData = GetVerifyChallengeSecretData();
@@ -117,7 +125,9 @@ public class MasterServerInteractor : IDisposable
             if (_nextRequest < DateTime.Now)
             {
                 sendRegister = true;
-                sendInfo = _latestResponseCode == MasterServerResponseCode.NeedInfo;
+                sendInfo =
+                    _latestResponseCode == MasterServerResponseCode.NeedInfo ||
+                    _latestInfoSerial != _serverInfoSerial;
             }
         }
 
@@ -130,42 +140,50 @@ public class MasterServerInteractor : IDisposable
         if (_serverInfo != null &&
             _serverInfo.Equals(info))
         {
-            Logger.LogInformation("UpdateServerInfo: ignore");
+            Logger.LogTrace("UpdateServerInfo: Ignore");
             return;
         }
+
+        Logger.LogDebug("Got new server info");
 
         _serverInfo = info;
         _serverInfoSerial++;
 
-        // TODO: immediately send new info if it changes, but at most once per second.
-        SendRegister(sendInfo: true);
+        lock (_responseLock)
+        {
+            _nextRequest = new DateTime(Math.Min(
+                _prevRequest.Ticks + TimeSpan.FromSeconds(1).Ticks,
+                _nextRequest.Ticks
+            ));
+        }
     }
 
-    protected void SendRegister(bool sendInfo)
+    public void SendRegister(bool sendInfo)
     {
         if (_serverInfo == null)
             return;
 
-        Logger.LogInformation("SendRegister");
+        Logger.LogDebug("Registering...");
 
         var json = sendInfo
             ? JsonSerializer.Serialize(_serverInfo)
             : null;
 
+        lock (_responseLock)
+        {
+            _prevRequest = DateTime.Now;
+            _nextRequest = DateTime.Now + TimeSpan.FromSeconds(15);
+        }
+
         _registerTask = Task.WhenAll(
             Protocols.Values
                 .Where(protocol => protocol.Enabled)
                 .Select(protocol => protocol
-                    .RegisterAsync(json, Cts.Token)
-                    .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial), Cts.Token)
+                    .RegisterAsync(json, CancellationToken)
+                    .ContinueWith(ProcessResponse, (++_totalRequests, _serverInfoSerial), CancellationToken)
                     .Tap(t => t.ConfigureAwait(false))
                 )
         );
-
-        _registerTask.ContinueWith(task =>
-        {
-            Logger.LogInformation("SendRegister task completed");
-        });
     }
 
     private void ProcessResponse(Task<MasterServerResponse> task, object? state)
@@ -198,7 +216,7 @@ public class MasterServerInteractor : IDisposable
                     _nextRequest = DateTime.Now;
                 }
 
-                Logger.LogInformation("ProcessResponse (latest): RequestId={RequestId} Code={Code} Info={InfoSerial}", requestId, task.Result.Code, infoSerial);
+                Logger.LogDebug("Got response (latest): RequestId={RequestId} Code={Code} Info={InfoSerial}", requestId, task.Result.Code, infoSerial);
             }
         }
     }
@@ -235,11 +253,8 @@ public class MasterServerInteractor : IDisposable
         if (ChallengeToken == token)
             return true;
 
-        _httpClient.DefaultRequestHeaders.Remove(MasterServerInteractorHeaders.ChallengeToken);
-        _httpClient.DefaultRequestHeaders.Add(MasterServerInteractorHeaders.ChallengeToken, token);
-
-        ChallengeToken = token;
-        Logger.LogInformation("ProcessMasterServerPacket: Protocol={Protocol} Token={Token}", protocol.Type, token);
+        SetChallengeToken(token);
+        Logger.LogDebug("Got challenge token: Protocol={Protocol} Token={Token}", protocol.Type, token);
 
         lock (_responseLock)
         {
@@ -250,6 +265,15 @@ public class MasterServerInteractor : IDisposable
         }
 
         return true;
+    }
+
+    private void SetChallengeToken(string? token)
+    {
+        _challengeToken = token;
+        _httpClient.DefaultRequestHeaders.Remove(MasterServerInteractorHeaders.ChallengeToken);
+
+        if (token != null)
+            _httpClient.DefaultRequestHeaders.Add(MasterServerInteractorHeaders.ChallengeToken, token);
     }
 
     public void Dispose()
