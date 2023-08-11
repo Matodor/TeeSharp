@@ -29,7 +29,7 @@ public class MasterServerInteractor : IDisposable
         private set => SetChallengeToken(value);
     }
 
-    public int Port { get; private set; } = 8303;
+    public int Port { get; set; } = 8303;
 
     public required Uri Endpoint
     {
