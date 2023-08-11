@@ -123,7 +123,7 @@ internal class Program
             Version = "0.6.4",
             MaxPlayers = 32,
             MaxClients = 32,
-            Map =
+            Map = new ServerInfoMap
             {
                 Name = "test",
                 Size = 128,
