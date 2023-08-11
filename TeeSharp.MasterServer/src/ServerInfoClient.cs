@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace TeeSharp.MasterServer;
@@ -7,31 +6,31 @@ namespace TeeSharp.MasterServer;
 public class ServerInfoClient : IEquatable<ServerInfoClient>
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [JsonPropertyName("clan")]
-    public string Clan { get; set; } = string.Empty;
+    public string Clan { get; init; } = string.Empty;
 
     [JsonPropertyName("country")]
-    public int Country { get; set; }
+    public int Country { get; init; }
 
     [JsonPropertyName("score")]
-    public int Score { get; set; }
+    public int Score { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("skin")]
-    public ServerInfoClientSkin? Skin { get; set; }
+    public ServerInfoClientSkin? Skin { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("team")]
-    public int? Team { get; set; }
+    public int? Team { get; init; }
 
     [JsonPropertyName("is_player")]
-    public bool IsPlayer { get; set; }
+    public bool IsPlayer { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("afk")]
-    public bool? IsAfk { get; set; }
+    public bool? IsAfk { get; init; }
 
     public bool Equals(ServerInfoClient? other)
     {
@@ -63,7 +62,6 @@ public class ServerInfoClient : IEquatable<ServerInfoClient>
         return Equals((ServerInfoClient)obj);
     }
 
-    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode()
     {
         return HashCode.Combine(Name, Clan, Country, Score, IsPlayer, Skin, IsAfk, Team);

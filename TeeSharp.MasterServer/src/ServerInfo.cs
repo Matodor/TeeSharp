@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -9,28 +8,28 @@ namespace TeeSharp.MasterServer;
 public class ServerInfo : IEquatable<ServerInfo>
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [JsonPropertyName("game_type")]
-    public string GameType { get; set; } = string.Empty;
+    public string GameType { get; init; } = string.Empty;
 
     [JsonPropertyName("version")]
-    public string Version { get; set; } = string.Empty;
+    public string Version { get; init; } = string.Empty;
 
     [JsonPropertyName("max_clients")]
-    public int MaxClients { get; set; }
+    public int MaxClients { get; init; }
 
     [JsonPropertyName("max_players")]
-    public int MaxPlayers { get; set; }
+    public int MaxPlayers { get; init; }
 
     [JsonPropertyName("passworded")]
-    public bool HasPassword { get; set; }
+    public bool HasPassword { get; init; }
 
     [JsonPropertyName("map")]
-    public ServerInfoMap Map { get; set; } = new();
+    public ServerInfoMap Map { get; init; } = new();
 
     [JsonPropertyName("clients")]
-    public IEnumerable<ServerInfoClient> Clients { get; set; } = Array.Empty<ServerInfoClient>();
+    public IEnumerable<ServerInfoClient> Clients { get; init; } = Array.Empty<ServerInfoClient>();
 
     public bool Equals(ServerInfo? other)
     {
@@ -62,7 +61,6 @@ public class ServerInfo : IEquatable<ServerInfo>
         return Equals((ServerInfo)obj);
     }
 
-    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode()
     {
         return HashCode.Combine(

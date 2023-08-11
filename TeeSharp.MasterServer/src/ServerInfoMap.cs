@@ -7,13 +7,13 @@ namespace TeeSharp.MasterServer;
 public class ServerInfoMap : IEquatable<ServerInfoMap>
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [JsonPropertyName("sha256")]
-    public string Checksum { get; set; } = string.Empty;
+    public string Checksum { get; init; } = string.Empty;
 
     [JsonPropertyName("size")]
-    public int Size { get; set; } = 0;
+    public int Size { get; init; } = 0;
 
     public bool Equals(ServerInfoMap? other)
     {
@@ -40,7 +40,6 @@ public class ServerInfoMap : IEquatable<ServerInfoMap>
         return Equals((ServerInfoMap)obj);
     }
 
-    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode()
     {
         return HashCode.Combine(Name, Checksum, Size);

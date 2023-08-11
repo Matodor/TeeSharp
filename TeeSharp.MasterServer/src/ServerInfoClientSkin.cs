@@ -7,15 +7,15 @@ namespace TeeSharp.MasterServer;
 public class ServerInfoClientSkin : IEquatable<ServerInfoClientSkin>
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("color_body")]
-    public int? ColorBody { get; set; }
+    public int? ColorBody { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("color_feet")]
-    public int? ColorFeet { get; set; }
+    public int? ColorFeet { get; init; }
 
     public bool Equals(ServerInfoClientSkin? other)
     {
@@ -42,7 +42,6 @@ public class ServerInfoClientSkin : IEquatable<ServerInfoClientSkin>
         return Equals((ServerInfoClientSkin)obj);
     }
 
-    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode()
     {
         return HashCode.Combine(Name, ColorBody, ColorFeet);
