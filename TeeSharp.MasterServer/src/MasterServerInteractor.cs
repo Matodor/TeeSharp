@@ -198,7 +198,7 @@ public class MasterServerInteractor : IDisposable
         if (task.Result.Successful == false)
             return;
 
-        var (requestId, infoSerial) = ((int, int))state!;
+        var (requestId, infoSerial) = ((long, long))state!;
 
         lock (_responseLock)
         {
