@@ -391,7 +391,8 @@ public class NetworkConnection : INetworkConnection
 
         for (var i = 0; i < numberOfMessages; i++)
         {
-            data = header.Unpack(data);
+            if (header.TryUnpack(data, out data) == false)
+                return messages;
 
             if (data.Length < header.Size)
                 return messages;

@@ -25,17 +25,33 @@ public class NetworkMessageHeader
         Sequence = sequence;
     }
 
-    public Span<byte> Unpack(Span<byte> data)
+    public bool TryUnpack(Span<byte> data, out Span<byte> dataOut)
     {
+        if (data.Length < 2)
+        {
+            dataOut = default;
+            return false;
+        }
+
         Flags = (NetworkMessageHeaderFlags)(data[0] >> 6 & 0b_0000_0011);
         Size = (data[0] & 0b_0011_1111) << 4 | data[1] & 0b_0000_1111;
         Sequence = -1;
 
         if (!Flags.HasFlag(NetworkMessageHeaderFlags.Vital))
-            return data.Slice(2);
+        {
+            dataOut = data.Slice(2);
+            return true;
+        }
+
+        if (data.Length < 3)
+        {
+            dataOut = default;
+            return false;
+        }
 
         Sequence = (data[1] & -0b_0001_0000) << 2 | data[2];
-        return data.Slice(3);
+        dataOut = data.Slice(3);
+        return true;
     }
 
     public Span<byte> Pack(Span<byte> data)
