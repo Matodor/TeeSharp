@@ -191,7 +191,7 @@ public class MasterServerInteractor : IDisposable
     {
         if (task.Exception != null)
         {
-            Logger.LogCritical(task.Exception, "SendInfoAsync an exception was thrown");
+            Logger.LogDebug(task.Exception, "SendInfoAsync an exception was thrown");
             return;
         }
 
