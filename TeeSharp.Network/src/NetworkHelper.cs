@@ -13,8 +13,8 @@ public static class NetworkHelper
 {
     public static readonly HuffmanCompressor HuffmanCompressor;
 
-    private static readonly uint[] Frequencies = new uint[]
-    {
+    private static readonly uint[] Frequencies =
+    [
         1 << 30, 4545, 2657, 431, 1950, 919, 444, 482, 2244, 617, 838, 542, 715, 1814, 304, 240, 754, 212, 647, 186,
         283, 131, 146, 166, 543, 164, 167, 136, 179, 859, 363, 113, 157, 154, 204, 108, 137, 180, 202, 176,
         872, 404, 168, 134, 151, 111, 113, 109, 120, 126, 129, 100, 41, 20, 16, 22, 18, 18, 17, 19,
@@ -28,7 +28,7 @@ public static class NetworkHelper
         32, 27, 20, 17, 23, 21, 30, 22, 22, 21, 27, 25, 17, 27, 23, 18, 39, 26, 15, 21,
         12, 18, 18, 27, 20, 18, 15, 19, 11, 17, 33, 12, 18, 15, 19, 18, 16, 26, 17, 18,
         9, 10, 25, 22, 22, 17, 20, 16, 6, 16, 15, 20, 14, 18, 24, 335, 1517,
-    };
+    ];
 
     static NetworkHelper()
     {
@@ -82,24 +82,6 @@ public static class NetworkHelper
         return mostSuitableIp != null;
     }
 
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static bool TryGetUdpClient(IPEndPoint? localEP, [NotNullWhen(true)] out UdpClient? client)
-    {
-        try
-        {
-            client = localEP == null
-                ? new UdpClient()
-                : new UdpClient(localEP);
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            client = null;
-            return false;
-        }
-    }
-
     public static void SendData(
         UdpClient client,
         IPEndPoint endPoint,
@@ -145,7 +127,7 @@ public static class NetworkHelper
             token: token,
             ack: ack,
             extraData: extraMsg == null
-                ? Array.Empty<byte>()
+                ? []
                 : Encoding.UTF8.GetBytes(extraMsg)
         );
     }

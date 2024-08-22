@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Core;
 
 namespace TeeSharp.MasterServer;
@@ -30,7 +31,7 @@ public class MasterServerInteractorProtocol
         _client = client;
         _interactor = interactor;
 
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
+        Logger = logger ?? NullLogger.Instance;
         Type = type;
     }
 

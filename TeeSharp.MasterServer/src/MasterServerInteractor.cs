@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Core;
 using TeeSharp.Core.Extensions;
 using Uuids;
@@ -63,7 +64,7 @@ public class MasterServerInteractor : IDisposable
         Secret = Uuid.NewTimeBased();
         ChallengeSecret = Uuid.NewTimeBased();
         VerifyChallengeSecretData = GetVerifyChallengeSecretData();
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger(nameof(MasterServerInteractor));
+        Logger = logger ?? NullLogger.Instance;
 
         _httpClient = CreateClient();
 

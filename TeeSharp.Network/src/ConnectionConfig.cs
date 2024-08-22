@@ -1,6 +1,6 @@
 namespace TeeSharp.Network;
 
-public class ConnectionSettings
+public class ConnectionConfig
 {
     /// <summary>
     /// Time in seconds after which the connection is considered timeouted

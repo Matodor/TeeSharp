@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Network.Abstract;
@@ -22,7 +23,7 @@ public class NetworkConnection : INetworkConnection
     protected ILogger Logger { get; set; }
 
     protected SecurityToken SecurityToken { get; set; }
-    protected ConnectionSettings Settings { get; private set; }
+    protected ConnectionConfig Config { get; private set; }
 
     protected int Sequence { get; set; }
     protected int PeerAck { get; set; }
@@ -83,14 +84,14 @@ public class NetworkConnection : INetworkConnection
     public NetworkConnection(
         int id,
         UdpClient socket,
-        ConnectionSettings settings,
-        ILogger? logger = null)
+        ConnectionConfig config,
+        ILoggerFactory? loggerFactory = default)
     {
         Id = id;
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger("NetworkConnection");
+        Logger = loggerFactory?.CreateLogger("NetworkConnection") ?? NullLogger.Instance;
         Socket = socket;
         EndPoint = null!;
-        Settings = settings;
+        Config = config;
         MessageAccumulator = new PacketAccumulator();
         MessagesForResend = new Queue<MessageForResend>(32);
         MessagesForResendDataSize = 0;
@@ -135,11 +136,11 @@ public class NetworkConnection : INetworkConnection
     public IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet)
     {
         if (State == ConnectionState.Offline)
-            return Enumerable.Empty<NetworkMessage>();
+            return [];
 
         var data = packet.Data.AsSpan();
         if (data.Length < StructHelper<SecurityToken>.Size)
-            return Enumerable.Empty<NetworkMessage>();
+            return [];
 
         var tokenOffset = data.Length - StructHelper<SecurityToken>.Size;
         var token = (SecurityToken)data.Slice(tokenOffset);
@@ -154,7 +155,7 @@ public class NetworkConnection : INetworkConnection
                 EndPoint.ToString()
             );
 
-            return Enumerable.Empty<NetworkMessage>();
+            return [];
         }
 
         if (Sequence >= PeerAck)
@@ -162,7 +163,7 @@ public class NetworkConnection : INetworkConnection
             if (packet.Ack < PeerAck ||
                 packet.Ack > Sequence)
             {
-                return Enumerable.Empty<NetworkMessage>();
+                return [];
             }
         }
         else
@@ -170,7 +171,7 @@ public class NetworkConnection : INetworkConnection
             if (packet.Ack < PeerAck &&
                 packet.Ack > Sequence)
             {
-                return Enumerable.Empty<NetworkMessage>();
+                return [];
             }
         }
 
@@ -184,7 +185,7 @@ public class NetworkConnection : INetworkConnection
             var msg = (ConnectionStateMsg)data[0];
 
             if (ProcessConnectionStateMsg(endPoint, data.Slice(1), msg) == false)
-                return Enumerable.Empty<NetworkMessage>();
+                return [];
         }
         else if (State == ConnectionState.Pending)
         {
@@ -221,14 +222,14 @@ public class NetworkConnection : INetworkConnection
             return;
 
         var now = DateTime.UtcNow;
-        if (now - LastReceiveTime > TimeSpan.FromSeconds(Settings.Timeout))
+        if (now - LastReceiveTime > TimeSpan.FromSeconds(Config.Timeout))
         {
             State = ConnectionState.Timeout;
         }
 
         if (MessagesForResend.TryPeek(out var messagesForResend))
         {
-            if (now - messagesForResend.FirstSendTime > TimeSpan.FromSeconds(Settings.Timeout))
+            if (now - messagesForResend.FirstSendTime > TimeSpan.FromSeconds(Config.Timeout))
             {
                 State = ConnectionState.Timeout;
             }
@@ -383,7 +384,7 @@ public class NetworkConnection : INetworkConnection
     {
         if (data.IsEmpty || numberOfMessages <= 0)
         {
-            return Enumerable.Empty<NetworkMessage>();
+            return [];
         }
 
         var header = new NetworkMessageHeader();
@@ -418,7 +419,7 @@ public class NetworkConnection : INetworkConnection
                 connectionId: Id,
                 endPoint: EndPoint,
                 data: data.Slice(0, header.Size).ToArray(),
-                extraData: Array.Empty<byte>()
+                extraData: []
             ));
 
             data = data.Slice(header.Size);
@@ -435,7 +436,7 @@ public class NetworkConnection : INetworkConnection
         switch (msg)
         {
             case ConnectionStateMsg.Close:
-                if (!EndPoint.Equals(endPoint))
+                if (EndPoint.Equals(endPoint) == false)
                     return false;
 
                 State = ConnectionState.Disconnecting;

@@ -29,6 +29,8 @@ internal static class Program
             typeof(UuidBenchmark),
             typeof(TupleBenchmark),
             typeof(CallbacksDictionaryVsListBenchmark),
+            typeof(FieldVsPropertyBenchmark),
+            typeof(StopwatchVsDateTimeBenchmark),
         };
 
         do

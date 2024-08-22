@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Core;
 using TeeSharp.Server.Old.Abstract;
 using Uuids;
@@ -21,6 +22,6 @@ public class ServerClient : IServerClient
         ILogger? logger = null)
     {
         Id = id;
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger("NetworkConnection");
+        Logger = logger ?? NullLogger.Instance;
     }
 }

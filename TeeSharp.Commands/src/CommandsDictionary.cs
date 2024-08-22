@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Commands.Builders;
 using TeeSharp.Core;
 
@@ -46,7 +47,7 @@ public class CommandsDictionary : ICommandsDictionary
 
     public CommandsDictionary(ILogger? logger = null)
     {
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger("Commands");
+        Logger = logger ?? NullLogger.Instance;
         Dictionary = new Dictionary<string, CommandInfo>();
     }
 

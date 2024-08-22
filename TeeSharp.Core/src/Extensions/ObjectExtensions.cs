@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace TeeSharp.Core.Extensions;
 
@@ -8,5 +9,11 @@ public static class ObjectExtensions
     {
         callback(target);
         return target;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Cast<T>(this object target)
+    {
+        return (T) target;
     }
 }

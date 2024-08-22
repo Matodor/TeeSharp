@@ -16,6 +16,7 @@ public ref struct Unpacker
     public Unpacker(Span<byte> data)
     {
         _data = data;
+
         DataOriginal = _data;
         HasError = false;
     }

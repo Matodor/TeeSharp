@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Common.Extensions;
 using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
@@ -67,7 +68,7 @@ public class Server : IServer
         SetClientUuidMessageHandlers();
         SetClientMessageHandlers();
 
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger("GameServer");
+        Logger = logger ?? NullLogger.Instance;
         Settings = serverSettingsNotifier.Current;
         ServerState = ServerState.StartsUp;
         NetworkServer = CreateNetworkServer();
@@ -129,11 +130,15 @@ public class Server : IServer
 
     protected virtual bool TryInitNetworkServer()
     {
-        return NetworkServer.TryInit(
-            localEP: GetNetworkServerBindAddress(),
-            maxConnections: Settings.MaxConnections,
-            maxConnectionsPerIp: Settings.MaxConnectionsPerIp
-        );
+        return false;
+        // return NetworkServer.TryInit(
+        //     new NetworkServerConfig
+        //     {
+        //         MaxConnections = Settings.MaxConnections,
+        //         MaxConnectionsPerIp = Settings.MaxConnectionsPerIp,
+        //     },
+        //     out _
+        // );
     }
 
     public void Run(CancellationToken cancellationToken)
@@ -182,14 +187,14 @@ public class Server : IServer
         Uuid msgUuid,
         MessageCallback callback)
     {
-        ClientUuidMessageHandlers.AddOrOverride(msgUuid, callback);
+        ClientUuidMessageHandlers[msgUuid] = callback;
     }
 
     protected virtual void SetClientMessageHandler(
         ProtocolMessage msgId,
         MessageCallback callback)
     {
-        ClientMessageHandlers.AddOrOverride(msgId, callback);
+        ClientMessageHandlers[msgId] = callback;
     }
 
     protected virtual void UpdateNetwork()

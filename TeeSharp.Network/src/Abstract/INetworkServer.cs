@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading;
 
@@ -10,19 +11,12 @@ public interface INetworkServer : IDisposable
     event Action<INetworkConnection> ConnectionAccepted;
     event Action<INetworkConnection, string> ConnectionDropped;
 
-    ConnectionSettings ConnectionSettings { get; }
-    int MaxConnections { get; }
-    int MaxConnectionsPerIp { get; set; }
-
+    NetworkServerConfig Config { get; }
     INetworkPacketUnpacker PacketUnpacker { get; }
     IReadOnlyList<INetworkConnection> Connections { get; }
 
-    bool TryInit(
-        IPEndPoint localEP,
-        int maxConnections = 64,
-        int maxConnectionsPerIp = 4,
-        ConnectionSettings? connectionSettings = null);
-
+    void Init(NetworkServerConfig config);
+    bool TryGetLocalEndPoint([NotNullWhen(true)] out EndPoint? localEndPoint);
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);
     void Update();

@@ -8,13 +8,12 @@ public readonly struct SecurityToken : IEquatable<SecurityToken>
 {
     public static readonly SecurityToken Unknown = -1;
     public static readonly SecurityToken Unsupported = 0;
-    public static readonly SecurityToken Magic = BitConverter.ToInt32(new []
-    {
+    public static readonly SecurityToken Magic = BitConverter.ToInt32([
         (byte) 'T',
         (byte) 'K',
         (byte) 'E',
         (byte) 'N',
-    });
+    ]);
 
     private readonly int _value;
 

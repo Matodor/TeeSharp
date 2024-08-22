@@ -71,7 +71,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
             ack: ack,
             numberOfMessages: numberOfMessages,
             data: data,
-            extraData: Array.Empty<byte>()
+            extraData: []
         );
 
         return true;
@@ -108,7 +108,7 @@ public class NetworkPacketUnpacker : INetworkPacketUnpacker
         }
         else
         {
-            extraData = Array.Empty<byte>();
+            extraData = [];
         }
 
         packet = new NetworkPacketIn(

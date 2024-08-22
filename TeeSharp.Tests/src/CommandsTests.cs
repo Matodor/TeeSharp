@@ -18,13 +18,6 @@ namespace TeeSharp.Tests;
 
 public class CommandsTests
 {
-    [OneTimeSetUp]
-    public void Init()
-    {
-        Tee.Logger = NullLogger.Instance;
-        Tee.LoggerFactory = NullLoggerFactory.Instance;
-    }
-
     [Test]
     public void ShouldExecuteCommandWithParams()
     {

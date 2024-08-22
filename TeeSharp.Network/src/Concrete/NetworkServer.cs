@@ -9,32 +9,36 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using Microsoft.Extensions.Logging;
-using TeeSharp.Core;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Network.Abstract;
 
 namespace TeeSharp.Network.Concrete;
 
+[SuppressMessage("ReSharper", "ClassWithVirtualMembersNeverInherited.Global")]
 public class NetworkServer : INetworkServer
 {
     public event Action<INetworkConnection> ConnectionAccepted = delegate {  };
     public event Action<INetworkConnection, string>? ConnectionDropped;
 
-    public ConnectionSettings ConnectionSettings { get; private set; } = null!;
-    public int MaxConnections { get; private set; }
-    public int MaxConnectionsPerIp { get; set; }
+    public NetworkServerConfig Config { get; protected set; } = null!;
     public INetworkPacketUnpacker PacketUnpacker { get; protected set; }
     public IReadOnlyList<INetworkConnection> Connections { get; protected set; } = null!;
+
+    protected ILoggerFactory? LoggerFactory { get; set; }
+    protected ILogger Logger { get; set; }
 
     protected Dictionary<int, int> MapConnections { get; set; } = null!;
     protected EndPoint EndPoint => Socket.Client.LocalEndPoint!;
     protected UdpClient Socket { get; set; } = null!;
-    protected ILogger Logger { get; set; }
     protected byte[] SecurityTokenSeed { get; set; } = null!;
 
-    public NetworkServer(ILogger? logger = null)
+    private bool _disposedValue;
+
+    public NetworkServer(ILoggerFactory? loggerFactory = default)
     {
-        Logger = logger ?? Tee.LoggerFactory.CreateLogger("NetworkServer");
+        LoggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+        Logger = LoggerFactory.CreateLogger("NetworkServer");
         PacketUnpacker = CreatePacketUnpacker();
     }
 
@@ -43,52 +47,68 @@ public class NetworkServer : INetworkServer
         return new NetworkPacketUnpacker();
     }
 
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public virtual bool TryInit(
-        IPEndPoint localEP,
-        int maxConnections = 64,
-        int maxConnectionsPerIp = 4,
-        ConnectionSettings? connectionSettings = null)
+    public static IPEndPoint GetBindAddress(int port, string bindAddress)
     {
-        if (!NetworkHelper.TryGetUdpClient(localEP, out var socket))
+        var ip = string.IsNullOrEmpty(bindAddress)
+            ? IPAddress.Any
+            : IPAddress.Parse(bindAddress);
+
+        return new IPEndPoint(ip, port);
+    }
+
+    public virtual void Init(NetworkServerConfig config)
+    {
+        var localEP = GetBindAddress(config.Port, config.BindAddress);
+
+        try
         {
-            Logger.LogError("Error creating UdpClient for endpoint: {LocalEP}", localEP);
-            return false;
+            Config = config;
+            Socket = new UdpClient(localEP);
+            Socket.Client.Blocking = true;
+            Socket.Client.ReceiveTimeout = 10;
+        }
+        catch (Exception e)
+        {
+            if (e is SocketException { SocketErrorCode: SocketError.AddressAlreadyInUse })
+                Logger.LogError("Couldn't open socket, port {Port} already be in use", Config.Port);
+            else
+                Logger.LogError(exception: e, message: "Couldn't open socket");
+
+            throw;
         }
 
-        Socket = socket;
-        Socket.Client.Blocking = true;
-        Socket.Client.ReceiveTimeout = 10;
-
-        ConnectionSettings = connectionSettings ?? new ConnectionSettings();
-        MaxConnections = maxConnections;
-        MaxConnectionsPerIp = maxConnectionsPerIp;
-
-        Logger.LogDebug("The network server has been successfully initialized");
-        Logger.LogInformation("Local address: {EndPoint}", EndPoint.ToString());
-
-        MapConnections = new Dictionary<int, int>(MaxConnections);
-
-        Connections = Enumerable.Range(0, MaxConnections)
+        Logger.LogInformation("Network server initialized, local address: {EndPoint}", EndPoint.ToString());
+        MapConnections = new Dictionary<int, int>(Config.MaxConnections);
+        Connections = Enumerable.Range(0, Config.MaxConnections)
            .Select(CreateEmptyConnection)
            .ToArray();
 
         RefreshSecurityTokenSeed();
+    }
 
+    protected virtual INetworkConnection CreateEmptyConnection(int connectionId)
+    {
+        return new NetworkConnection(connectionId, Socket, Config.Connection, LoggerFactory);
+    }
+
+    public bool TryGetLocalEndPoint([NotNullWhen(true)] out EndPoint? localEndPoint)
+    {
+        if (Socket == null!)
+        {
+            localEndPoint = null;
+            return false;
+        }
+
+        localEndPoint = Socket.Client.LocalEndPoint!;
         return true;
     }
 
-    protected virtual INetworkConnection CreateEmptyConnection(int id)
-    {
-        return new NetworkConnection(id, Socket, ConnectionSettings);
-    }
-
-    public bool TryGetConnectionId(IPEndPoint endPoint, out int id)
+    public virtual bool TryGetConnectionId(IPEndPoint endPoint, out int id)
     {
         return MapConnections.TryGetValue(endPoint.GetHashCode(), out id);
     }
 
-    public IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken)
+    public virtual IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken)
     {
         var endPoint = default(IPEndPoint);
 
@@ -100,12 +120,12 @@ public class NetworkServer : INetworkServer
             {
                 data = Socket.Receive(ref endPoint).AsSpan();
             }
-            catch (SocketException e)
+            catch (SocketException)
             {
                 continue;
             }
 
-            if (!PacketUnpacker.TryUnpack(data, out var packet))
+            if (PacketUnpacker.TryUnpack(data, out var packet) == false)
                 continue;
 
             if (packet.Flags.HasFlag(NetworkPacketFlags.ConnectionLess))
@@ -155,7 +175,7 @@ public class NetworkServer : INetworkServer
         }
     }
 
-    public void Update()
+    public virtual void Update()
     {
         for (var i = 0; i < Connections.Count; i++)
         {
@@ -172,7 +192,7 @@ public class NetworkServer : INetworkServer
         }
     }
 
-    public void SendData(
+    public virtual void SendData(
         IPEndPoint endPoint,
         ReadOnlySpan<byte> data,
         ReadOnlySpan<byte> extraData = default)
@@ -180,7 +200,7 @@ public class NetworkServer : INetworkServer
         NetworkHelper.SendData(Socket, endPoint, data, extraData);
     }
 
-    public void Send(
+    public virtual void Send(
         int connectionId,
         Span<byte> data,
         NetworkSendFlags sendFlags)
@@ -192,24 +212,23 @@ public class NetworkServer : INetworkServer
         }
 
         var flags = NetworkMessageHeaderFlags.None;
-
         if (sendFlags.HasFlag(NetworkSendFlags.Vital))
             flags |= NetworkMessageHeaderFlags.Vital;
 
-        if (!Connections[connectionId].QueueMessage(data, flags))
+        if (Connections[connectionId].QueueMessage(data, flags) == false)
             return;
 
         if (sendFlags.HasFlag(NetworkSendFlags.Flush))
             Connections[connectionId].FlushMessages();
     }
 
-    public void Drop(int connectionId, string reason)
+    public virtual void Drop(int connectionId, string reason)
     {
         var connection = Connections[connectionId];
-        Logger.LogDebug("Drop connection, reason: '{Reason}' ({EndPoint})",
-            reason, connection.EndPoint.ToString());
 
+        Logger.LogDebug("Drop connection, reason: '{Reason}' ({EndPoint})", reason, connection.EndPoint.ToString());
         MapConnections.Remove(connection.EndPoint.GetHashCode());
+
         connection.Disconnect(reason);
         ConnectionDropped?.Invoke(connection, reason);
     }
@@ -280,7 +299,7 @@ public class NetworkServer : INetworkServer
             return false;
         }
 
-        if (GetConnectionsCountWithSameAddress(endPoint, out var emptyConnectionId) + 1 > MaxConnectionsPerIp)
+        if (GetConnectionsCountWithSameAddress(endPoint, out var emptyConnectionId) + 1 > Config.MaxConnectionsPerIp)
         {
             OnRejectConnectionToManySameIP(endPoint, token);
             return false;
@@ -321,7 +340,7 @@ public class NetworkServer : INetworkServer
             endPoint: endPoint,
             msg: ConnectionStateMsg.Close,
             token: token,
-            extraMsg: $"Only {MaxConnectionsPerIp} players with the same IP are allowed"
+            extraMsg: $"Only {Config.MaxConnectionsPerIp} players with the same IP are allowed"
         );
     }
 
@@ -411,11 +430,25 @@ public class NetworkServer : INetworkServer
 
     public void Dispose()
     {
-        if (Socket != null!)
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposedValue)
+            return;
+
+        if (disposing)
         {
-            Socket.Close();
-            Socket.Dispose();
-            Socket = null!;
+            if (Socket != null!)
+            {
+                Socket.Close();
+                Socket.Dispose();
+                Socket = null!;
+            }
         }
+
+        _disposedValue = true;
     }
 }
