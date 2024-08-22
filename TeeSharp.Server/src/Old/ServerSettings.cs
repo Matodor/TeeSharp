@@ -1,6 +1,6 @@
 using System;
 
-namespace TeeSharp.Server;
+namespace TeeSharp.Server.Old;
 
 public class ServerSettings
 {

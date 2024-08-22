@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Uuids;
 
-namespace TeeSharp.Server.Abstract;
+namespace TeeSharp.Server.Old.Abstract;
 
 public interface IServerClient
 {

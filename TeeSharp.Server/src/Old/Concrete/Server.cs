@@ -15,10 +15,10 @@ using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
 using TeeSharp.Network.Concrete;
-using TeeSharp.Server.Abstract;
+using TeeSharp.Server.Old.Abstract;
 using Uuids;
 
-namespace TeeSharp.Server.Concrete;
+namespace TeeSharp.Server.Old.Concrete;
 
 public class Server : IServer
 {

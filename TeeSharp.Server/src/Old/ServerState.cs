@@ -1,4 +1,4 @@
-namespace TeeSharp.Server;
+namespace TeeSharp.Server.Old;
 
 public enum ServerState
 {

@@ -12,6 +12,7 @@ internal static class Program
 
         var benchmarks = new[]
         {
+            typeof(RefParameterVsValueType),
             typeof(DeserializeBenchmark),
             typeof(DeserializeMapHeaderBenchmark),
             typeof(DeserializeStructWithArrayBenchmark),
@@ -27,6 +28,7 @@ internal static class Program
             typeof(ImplicitCastBenchmark),
             typeof(UuidBenchmark),
             typeof(TupleBenchmark),
+            typeof(CallbacksDictionaryVsListBenchmark),
         };
 
         do

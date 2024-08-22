@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using TeeSharp.Core;
-using TeeSharp.Server;
-using TeeSharp.Server.Abstract;
-using TeeSharp.Server.Concrete;
+using TeeSharp.Server.Old;
+using TeeSharp.Server.Old.Abstract;
+using TeeSharp.Server.Old.Concrete;
 
 namespace Examples.BasicServer;
 

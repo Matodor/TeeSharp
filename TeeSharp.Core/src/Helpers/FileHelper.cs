@@ -30,4 +30,19 @@ public static class FileHelper
             ? dir
             : Path.Combine(dir, relativePath);
     }
+
+    public static string FormatBytes(long bytes, int precision = 2)
+    {
+        if (bytes == 0) {
+            return "0 B";
+        }
+
+        bytes = Math.Abs(bytes);
+
+        var @base = Math.Log(bytes, 1024);
+        var place = (int) Math.Floor(@base);
+        var suffixes = new [] { "B", "KB", "MB", "GB", "TB" };
+
+        return Math.Round(Math.Pow(1024, @base - place), precision) + " " + suffixes[place];
+    }
 }

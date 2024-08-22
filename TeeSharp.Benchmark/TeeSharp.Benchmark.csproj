@@ -4,17 +4,15 @@
         <OutputType>Exe</OutputType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>default</LangVersion>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-      <PackageReference Include="Uuids" Version="1.0.3" />
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Examples\Examples.ServerBrowser\Examples.ServerBrowser.csproj" />
       <ProjectReference Include="..\TeeSharp.Core\TeeSharp.Core.csproj" />
       <ProjectReference Include="..\TeeSharp.Map\TeeSharp.Map.csproj" />
       <ProjectReference Include="..\TeeSharp.MasterServer\TeeSharp.MasterServer.csproj" />

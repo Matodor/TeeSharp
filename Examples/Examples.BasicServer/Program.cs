@@ -1,6 +1,6 @@
 using Examples.BasicServer;
 using Serilog;
-using TeeSharp.Server;
+using TeeSharp.Server.Old;
 
 const string consoleLogFormat =
     "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}][{Level:u3}][{SourceContext}] {Message}{NewLine}{Exception}";

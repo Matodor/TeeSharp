@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using TeeSharp.Core;
-using TeeSharp.Server.Abstract;
+using TeeSharp.Server.Old.Abstract;
 using Uuids;
 
-namespace TeeSharp.Server.Concrete;
+namespace TeeSharp.Server.Old.Concrete;
 
 public class ServerClient : IServerClient
 {
