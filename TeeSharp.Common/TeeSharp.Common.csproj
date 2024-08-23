@@ -13,5 +13,4 @@
     <ItemGroup>
       <Folder Include="src\Extensions\" />
     </ItemGroup>
-
 </Project>

@@ -20,7 +20,6 @@ internal static class Program
             typeof(CastIpEndpointBenchmark),
             typeof(VirtualCallBenchmark),
             typeof(HasFlagBenchmark),
-            typeof(ProcessMessagesBenchmark),
             typeof(FindAddrBenchmark),
             typeof(HashBenchmark),
             typeof(SecurityTokensBenchmark),
@@ -31,6 +30,7 @@ internal static class Program
             typeof(CallbacksDictionaryVsListBenchmark),
             typeof(FieldVsPropertyBenchmark),
             typeof(StopwatchVsDateTimeBenchmark),
+            typeof(ConvertEnumToIntBenchmark),
         };
 
         do

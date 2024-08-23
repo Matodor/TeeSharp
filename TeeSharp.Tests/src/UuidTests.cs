@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using TeeSharp.Common;
 using TeeSharp.Core.Extensions;
 using Uuids;
 
@@ -42,7 +43,7 @@ public class UuidTests
     [Test]
     public void TestCalculate()
     {
-        var uuidCalculated = "clientver@ddnet.tw".CalculateUuid();
+        var uuidCalculated = Protocol.MessageExtended.CalculateUuid("clientver@ddnet.tw");
         var uuid = Uuid.ParseExact("8c001304-8461-3e47-8787-f672b3835bd4", "d");
 
         Assert.AreEqual(uuidCalculated, uuid);

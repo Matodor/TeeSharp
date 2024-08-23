@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using TeeSharp.Common;
 using TeeSharp.Common.Extensions;
-using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
-using TeeSharp.Core.Extensions;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
@@ -51,7 +49,7 @@ public partial class Server
     protected INetworkServer NetworkServer { get; set; }
 
     protected IDictionary<Uuid, MessageCallback> ClientUuidMessageHandlers { get; set; }
-    protected IDictionary<ProtocolMessage, MessageCallback> ClientMessageHandlers { get; set; }
+    protected IDictionary<Protocol.Message, MessageCallback> ClientMessageHandlers { get; set; }
 
     protected delegate void MessageCallback(int connectionId, Unpacker unpacker, IPEndPoint endPoint);
 
@@ -71,7 +69,7 @@ public partial class Server
         NetworkServer.ConnectionDropped += NetworkServerOnConnectionDropped;
 
         ClientUuidMessageHandlers = new Dictionary<Uuid, MessageCallback>();
-        ClientMessageHandlers = new Dictionary<ProtocolMessage, MessageCallback>();
+        ClientMessageHandlers = new Dictionary<Protocol.Message, MessageCallback>();
 
         SetClientUuidMessageHandlers();
         SetClientMessageHandlers();
@@ -95,20 +93,20 @@ public partial class Server
 
     protected virtual void SetClientUuidMessageHandlers()
     {
-        ClientUuidMessageHandlers[UuidManager.DDNet.ClientVersion] = OnClientMessageDDNetVersion;
-        ClientUuidMessageHandlers[UuidManager.DDNet.Ping] = OnClientMessageDDNetPing;
+        ClientUuidMessageHandlers[Protocol.MessageExtended.DDNet.ClientVersion] = OnClientMessageDDNetVersion;
+        ClientUuidMessageHandlers[Protocol.MessageExtended.DDNet.Ping] = OnClientMessageDDNetPing;
     }
 
     protected virtual void SetClientMessageHandlers()
     {
-        ClientMessageHandlers[ProtocolMessage.ClientInfo] = OnClientMessageInfo;
-        ClientMessageHandlers[ProtocolMessage.ClientRequestMapData] = OnClientMessageRequestMapData;
-        ClientMessageHandlers[ProtocolMessage.ClientReady] = OnClientMessageReady;
-        ClientMessageHandlers[ProtocolMessage.ClientEnterGame] = OnClientMessageEnterGame;
-        ClientMessageHandlers[ProtocolMessage.ClientInput] = OnClientMessageInput;
-        ClientMessageHandlers[ProtocolMessage.ClientRconCommand] = OnClientMessageRconCommand;
-        ClientMessageHandlers[ProtocolMessage.ClientRconAuth] = OnClientMessageRconAuth;
-        ClientMessageHandlers[ProtocolMessage.Ping] = OnClientMessagePing;
+        ClientMessageHandlers[Protocol.Message.ClientInfo] = OnClientMessageInfo;
+        ClientMessageHandlers[Protocol.Message.ClientRequestMapData] = OnClientMessageRequestMapData;
+        ClientMessageHandlers[Protocol.Message.ClientReady] = OnClientMessageReady;
+        ClientMessageHandlers[Protocol.Message.ClientEnterGame] = OnClientMessageEnterGame;
+        ClientMessageHandlers[Protocol.Message.ClientInput] = OnClientMessageInput;
+        ClientMessageHandlers[Protocol.Message.ClientRconCommand] = OnClientMessageRconCommand;
+        ClientMessageHandlers[Protocol.Message.ClientRconAuth] = OnClientMessageRconAuth;
+        ClientMessageHandlers[Protocol.Message.Ping] = OnClientMessagePing;
     }
 
     public virtual async Task StopAsync()
@@ -291,7 +289,7 @@ public partial class Server
                 // return;
             }
 
-            if (msgId == ProtocolMessage.Empty)
+            if (msgId == Protocol.Message.Empty)
             {
                 ProcessClientSystemUuidMessage(
                     message.ConnectionId,
@@ -340,7 +338,7 @@ public partial class Server
 
     protected virtual void ProcessClientSystemMessage(
         int connectionId,
-        ProtocolMessage msgId,
+        Protocol.Message msgId,
         Unpacker unpacker,
         IPEndPoint endPoint)
     {
@@ -356,7 +354,7 @@ public partial class Server
 
     protected virtual void ProcessUnknownClientMessage(
         int connectionId,
-        ProtocolMessage msgId,
+        Protocol.Message msgId,
         Uuid msgUuid,
         Unpacker unpacker,
         IPEndPoint endPoint)

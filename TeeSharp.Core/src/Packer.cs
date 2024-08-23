@@ -28,6 +28,11 @@ public ref struct Packer
         AddInteger(value ? 1 : 0);
     }
 
+    public void AddEnum(Enum value)
+    {
+        AddInteger(value.GetHashCode());
+    }
+
     public void AddInteger(int value)
     {
         if (HasError)

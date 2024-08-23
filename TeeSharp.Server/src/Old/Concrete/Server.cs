@@ -6,12 +6,11 @@ using System.Net;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using TeeSharp.Common;
 using TeeSharp.Common.Extensions;
-using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Common.Settings;
-using TeeSharp.Core.Extensions;
 using TeeSharp.MasterServer;
 using TeeSharp.Network;
 using TeeSharp.Network.Abstract;
@@ -42,7 +41,7 @@ public class Server : IServer
     protected TimeSpan MaxElapsedTime { get; }
 
     protected Dictionary<Uuid, MessageCallback> ClientUuidMessageHandlers { get; set; }
-    protected Dictionary<ProtocolMessage, MessageCallback> ClientMessageHandlers { get; set; }
+    protected Dictionary<Protocol.Message, MessageCallback> ClientMessageHandlers { get; set; }
 
     protected delegate void MessageCallback(
         int connectionId,
@@ -64,7 +63,7 @@ public class Server : IServer
         MaxElapsedTime = TimeSpan.FromMilliseconds(500);
 
         ClientUuidMessageHandlers = new Dictionary<Uuid, MessageCallback>();
-        ClientMessageHandlers = new Dictionary<ProtocolMessage, MessageCallback>();
+        ClientMessageHandlers = new Dictionary<Protocol.Message, MessageCallback>();
         SetClientUuidMessageHandlers();
         SetClientMessageHandlers();
 
@@ -91,12 +90,12 @@ public class Server : IServer
 
     protected virtual void SetClientUuidMessageHandlers()
     {
-        SetClientUuidMessageHandler(UuidManager.DDNet.ClientVersion, OnUuidDDNetClientVersionMessage);
+        SetClientUuidMessageHandler(Protocol.MessageExtended.DDNet.ClientVersion, OnUuidDDNetClientVersionMessage);
     }
 
     protected virtual void SetClientMessageHandlers()
     {
-        SetClientMessageHandler(ProtocolMessage.ClientInfo, OnClientInfoMessage);
+        SetClientMessageHandler(Protocol.Message.ClientInfo, OnClientInfoMessage);
     }
 
     protected virtual INetworkServer CreateNetworkServer()
@@ -191,7 +190,7 @@ public class Server : IServer
     }
 
     protected virtual void SetClientMessageHandler(
-        ProtocolMessage msgId,
+        Protocol.Message msgId,
         MessageCallback callback)
     {
         ClientMessageHandlers[msgId] = callback;
@@ -256,7 +255,7 @@ public class Server : IServer
             if (!isSystemMsg)
                 return;
 
-            if (msgId == ProtocolMessage.Empty)
+            if (msgId == Protocol.Message.Empty)
             {
                 ProcessClientSystemUuidMessage(
                     message.ConnectionId,
@@ -305,7 +304,7 @@ public class Server : IServer
 
     protected virtual void ProcessClientSystemMessage(
         int connectionId,
-        ProtocolMessage msgId,
+        Protocol.Message msgId,
         Unpacker unpacker,
         IPEndPoint endPoint)
     {
@@ -322,7 +321,7 @@ public class Server : IServer
 
     protected virtual void ProcessUnknownClientMessage(
         int connectionId,
-        ProtocolMessage msgId,
+        Protocol.Message msgId,
         Uuid msgUuid,
         Unpacker unpacker,
         IPEndPoint endPoint)
@@ -383,20 +382,21 @@ public class Server : IServer
         throw new NotImplementedException();
     }
 
-    protected virtual ProtocolCapabilities GetSupportedCapabilities()
+    protected virtual Protocol.Capabilities GetSupportedCapabilities()
     {
         return
-            ProtocolCapabilities.ChatTimeoutCode |
-            ProtocolCapabilities.AnyPlayerFlag |
-            ProtocolCapabilities.PingExtended |
-            ProtocolCapabilities.SyncWeaponInput;
+            Protocol.Capabilities.ChatTimeoutCode |
+            Protocol.Capabilities.AnyPlayerFlag |
+            Protocol.Capabilities.PingExtended |
+            Protocol.Capabilities.SyncWeaponInput;
     }
 
     protected virtual void SendSupportedCapabilities(int connectionId)
     {
-        var packer = new Packer(UuidManager.DDNet.Capabilities, true);
-        packer.AddInteger((int)ProtocolCapabilities.CurrentVersion);
-        packer.AddInteger((int)GetSupportedCapabilities());
+        var packer = new Packer();
+        packer.AddProtocolMessageExtended(Protocol.MessageExtended.DDNet.Capabilities, true);
+        packer.AddEnum(Protocol.Capabilities.CurrentVersion);
+        packer.AddEnum(GetSupportedCapabilities());
 
         SendMessage(connectionId, packer, NetworkSendFlags.Vital);
     }
@@ -495,7 +495,7 @@ public class Server : IServer
 
     protected virtual void SendMap(int connectionId)
     {
-        var mapDetails = new Packer(UuidManager.DDNet.MapDetails, true);
+        // var mapDetails = new Packer(Pro.DDNet.MapDetails, true);
         throw new NotImplementedException();
     }
 
