@@ -369,7 +369,6 @@ public partial class Server
         throw new NotImplementedException();
     }
 
-
     protected virtual void OnClientMessageDDNetPing(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
     {
         throw new NotImplementedException();

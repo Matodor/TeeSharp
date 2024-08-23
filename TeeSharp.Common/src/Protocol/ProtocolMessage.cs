@@ -1,36 +1,44 @@
-namespace TeeSharp.Common.Protocol;
+using System.Diagnostics.CodeAnalysis;
 
-public enum ProtocolMessage
+namespace TeeSharp.Common;
+
+[SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
+public partial class Protocol
 {
-    Empty = 0,
-    ClientInfo,
+    public enum Message
+    {
+        Empty = 0,
+        ClientInfo,
 
-    ServerMapChange,
-    ServerMapData,
-    ServerConnectionReady,
-    ServerSnap,
-    ServerSnapEmpty,
-    ServerSnapSingle,
-    ServerSnapSmall,
-    ServerInputTiming,
-    ServerRconAuthStatus,
-    ServerRconLine,
-    ServerAuthChallenge,
-    ServerAuthResult,
+        ServerMapChange,
+        ServerMapData,
+        ServerConnectionReady,
+        ServerSnap,
+        ServerSnapEmpty,
+        ServerSnapSingle,
+        ServerSnapSmall,
+        ServerInputTiming,
+        ServerRconAuthStatus,
+        ServerRconLine,
+        ServerAuthChallenge,
+        ServerAuthResult,
 
-    ClientReady,
-    ClientEnterGame,
-    ClientInput,
-    ClientRconCommand,
-    ClientRconAuth,
-    ClientRequestMapData,
-    ClientAuthStart,
-    ClientAuthResponse,
+        ClientReady,
+        ClientEnterGame,
+        ClientInput,
+        ClientRconCommand,
+        ClientRconAuth,
+        ClientRequestMapData,
+        ClientAuthStart,
+        ClientAuthResponse,
 
-    Ping,
-    PingReply,
-    Error,
+        Ping,
+        PingReply,
+        Error,
 
-    ServerRconCommandAdd,
-    ServerRconCommandRemove,
+        ServerRconCommandAdd,
+        ServerRconCommandRemove,
+    }
 }

@@ -1,4 +1,3 @@
-using TeeSharp.Common.Protocol;
 using TeeSharp.Core;
 using Uuids;
 
@@ -8,33 +7,33 @@ public static class UnpackerExtensions
 {
     public static bool TryGetMessageInfo(
         this Unpacker unpacker,
-        out ProtocolMessage msgId,
-        out Uuid msgUuid,
+        out Protocol.Message message,
+        out Uuid messageExtended,
         out bool isSystem)
     {
         if (unpacker.HasError ||
             unpacker.TryGetInteger(out var messageInfo) == false)
         {
-            msgId = default;
+            message = default;
             isSystem = default;
-            msgUuid = default;
+            messageExtended = default;
             return false;
         }
 
-        msgId = (ProtocolMessage)(messageInfo >> 1);
+        message = (Protocol.Message)(messageInfo >> 1);
         isSystem = (messageInfo & 1) != 0;
 
-        switch (msgId)
+        switch (message)
         {
-            case < 0 or > (ProtocolMessage) ushort.MaxValue:
-                msgUuid = default;
+            case < 0 or > (Protocol.Message) ushort.MaxValue:
+                messageExtended = default;
                 return false;
 
-            case ProtocolMessage.Empty:
-                return unpacker.TryGetUuid(out msgUuid);
+            case Protocol.Message.Empty:
+                return unpacker.TryGetUuid(out messageExtended);
 
             default:
-                msgUuid = default;
+                messageExtended = default;
                 return true;
         }
     }

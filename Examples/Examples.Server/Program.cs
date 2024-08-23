@@ -11,7 +11,7 @@ internal class Program
     public static async Task Main(string[] args)
     {
         var loggerFactory = LoggerFactory.Create(builder => builder
-            .SetMinimumLevel(LogLevel.Debug)
+            .SetMinimumLevel(LogLevel.Trace)
             .AddConsole()
         );
 

@@ -23,12 +23,6 @@ public ref struct Packer
         _bufferIndex = 0;
     }
 
-    public Packer(Uuid msgUuid, bool isSystem) : this()
-    {
-        AddInteger(isSystem ? 1 : 0);
-        AddUuid(msgUuid);
-    }
-
     public void AddBoolean(bool value)
     {
         AddInteger(value ? 1 : 0);
