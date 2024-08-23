@@ -18,7 +18,7 @@ using Uuids;
 
 namespace TeeSharp.Server;
 
-public partial class Server
+public class Server
 {
     /// <summary>
     /// Current tick
@@ -38,6 +38,7 @@ public partial class Server
     /// <summary>
     /// TODO
     /// </summary>
+    public ClientsContainer Clients { get; protected set; }
 
     /// <summary>
     /// TODO
@@ -68,11 +69,17 @@ public partial class Server
         NetworkServer.ConnectionAccepted += NetworkServerOnConnectionAccepted;
         NetworkServer.ConnectionDropped += NetworkServerOnConnectionDropped;
 
+        Clients = CreateClientsContainer();
         ClientUuidMessageHandlers = new Dictionary<Uuid, MessageCallback>();
         ClientMessageHandlers = new Dictionary<Protocol.Message, MessageCallback>();
 
         SetClientUuidMessageHandlers();
         SetClientMessageHandlers();
+    }
+
+    protected virtual ClientsContainer CreateClientsContainer()
+    {
+        return new ClientsContainer(NetworkServer.Connections.Count);
     }
 
     protected virtual INetworkServer CreateNetworkServer()
@@ -83,12 +90,14 @@ public partial class Server
     protected virtual void NetworkServerOnConnectionAccepted(
         INetworkConnection connection)
     {
+        var client = Clients.GetByConnectionId(connection.Id);
     }
 
     protected virtual void NetworkServerOnConnectionDropped(
         INetworkConnection connection,
         string reason)
     {
+        var client = Clients.GetByConnectionId(connection.Id);
     }
 
     protected virtual void SetClientUuidMessageHandlers()

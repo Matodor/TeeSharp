@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using TeeSharp.Common;
 using TeeSharp.Server;
 
 namespace Examples.Server;
