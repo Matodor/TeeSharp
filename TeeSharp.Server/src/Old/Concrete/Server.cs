@@ -100,7 +100,7 @@ public class Server : IServer
 
     protected virtual INetworkServer CreateNetworkServer()
     {
-        return new NetworkServer();
+        return new NetworkServer(null!);
     }
 
     protected virtual void OnChangeSettings(ServerSettings changedSettings)

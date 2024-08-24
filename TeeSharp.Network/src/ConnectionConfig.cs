@@ -5,5 +5,5 @@ public class ConnectionConfig
     /// <summary>
     /// Time in seconds after which the connection is considered timeouted
     /// </summary>
-    public int Timeout { get; set; } = 10;
+    public int Timeout { get; set; } = 100;
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 
 namespace TeeSharp.Network.Abstract;
 
@@ -10,6 +11,7 @@ public interface INetworkConnection
     ConnectionState State { get; }
     IPEndPoint EndPoint { get; }
 
+    void SetSocket(UdpClient socket);
     void Init(IPEndPoint endPoint, SecurityToken securityToken);
     void Disconnect(string reason);
     IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet);

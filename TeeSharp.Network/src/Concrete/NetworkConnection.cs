@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using TeeSharp.Core;
 using TeeSharp.Core.Helpers;
 using TeeSharp.Network.Abstract;
 
@@ -19,11 +17,11 @@ public class NetworkConnection : INetworkConnection
     public ConnectionState State { get; protected set; }
     public IPEndPoint EndPoint { get; protected set; }
 
-    protected UdpClient Socket { get; set; }
+    protected UdpClient Socket { get; set; } = null!;
     protected ILogger Logger { get; set; }
 
     protected SecurityToken SecurityToken { get; set; }
-    protected ConnectionConfig Config { get; private set; }
+    protected ConnectionConfig Config { get; }
 
     protected int Sequence { get; set; }
     protected int PeerAck { get; set; }
@@ -81,15 +79,10 @@ public class NetworkConnection : INetworkConnection
         }
     }
 
-    public NetworkConnection(
-        int id,
-        UdpClient socket,
-        ConnectionConfig config,
-        ILoggerFactory? loggerFactory = default)
+    public NetworkConnection(int id, ConnectionConfig config, ILogger? logger = default)
     {
         Id = id;
-        Logger = loggerFactory?.CreateLogger("NetworkConnection") ?? NullLogger.Instance;
-        Socket = socket;
+        Logger = logger ?? NullLogger.Instance;
         EndPoint = null!;
         Config = config;
         MessageAccumulator = new PacketAccumulator();
@@ -98,7 +91,12 @@ public class NetworkConnection : INetworkConnection
         State = ConnectionState.Offline;
     }
 
-    public void Init(IPEndPoint endPoint, SecurityToken securityToken)
+    public virtual void SetSocket(UdpClient socket)
+    {
+        Socket = socket;
+    }
+
+    public virtual void Init(IPEndPoint endPoint, SecurityToken securityToken)
     {
         Reset();
 
@@ -111,7 +109,7 @@ public class NetworkConnection : INetworkConnection
         LastUpdateTime = DateTime.UtcNow;
     }
 
-    public void Disconnect(string reason)
+    public virtual void Disconnect(string reason)
     {
         if (State is ConnectionState.Offline)
             return;
@@ -133,7 +131,7 @@ public class NetworkConnection : INetworkConnection
     /// <param name="endPoint"></param>
     /// <param name="packet"></param>
     /// <returns></returns>
-    public IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet)
+    public virtual IEnumerable<NetworkMessage> ProcessPacket(IPEndPoint endPoint, NetworkPacketIn packet)
     {
         if (State == ConnectionState.Offline)
             return [];
@@ -203,19 +201,19 @@ public class NetworkConnection : INetworkConnection
         return GetMessagesFromPacket(packet.NumberOfMessages, data);
     }
 
-    protected void ResendMessages()
+    protected virtual void ResendMessages()
     {
         foreach (var messageForResend in MessagesForResend)
             ResendMessage(messageForResend);
     }
 
-    protected void ResendMessage(MessageForResend message)
+    protected virtual void ResendMessage(MessageForResend message)
     {
         if (QueueMessageInternal(message.Data, message.Flags, fromResend: true, message.Sequence))
             message.LastSendTime = DateTime.UtcNow;
     }
 
-    public void Update()
+    public virtual void Update()
     {
         var isActive = State is ConnectionState.Pending or ConnectionState.Online;
         if (isActive == false)
@@ -261,7 +259,7 @@ public class NetworkConnection : INetworkConnection
         }
     }
 
-    public int FlushMessages()
+    public virtual int FlushMessages()
     {
         var numberOfMessages = MessageAccumulator.NumberOfMessages;
         if (numberOfMessages == 0)
@@ -292,7 +290,7 @@ public class NetworkConnection : INetworkConnection
         return numberOfMessages;
     }
 
-    public bool QueueMessage(Span<byte> data, NetworkMessageHeaderFlags flags)
+    public virtual bool QueueMessage(Span<byte> data, NetworkMessageHeaderFlags flags)
     {
         if (flags.HasFlag(NetworkMessageHeaderFlags.Vital))
             Sequence = (Sequence + 1) % NetworkConstants.MaxSequence;
@@ -300,7 +298,7 @@ public class NetworkConnection : INetworkConnection
         return QueueMessageInternal(data, flags, fromResend: false, Sequence);
     }
 
-    public void SendConnectionStateMsg(ConnectionStateMsg msg, string? extraMsg = null)
+    public virtual void SendConnectionStateMsg(ConnectionStateMsg msg, string? extraMsg = null)
     {
         LastSendTime = DateTime.UtcNow;
 
@@ -314,7 +312,7 @@ public class NetworkConnection : INetworkConnection
         );
     }
 
-    public void SendConnectionStateMsg(ConnectionStateMsg msg, byte[] extraData)
+    public virtual void SendConnectionStateMsg(ConnectionStateMsg msg, byte[] extraData)
     {
         LastSendTime = DateTime.UtcNow;
 
@@ -328,7 +326,7 @@ public class NetworkConnection : INetworkConnection
         );
     }
 
-    protected bool QueueMessageInternal(
+    protected virtual bool QueueMessageInternal(
         Span<byte> data,
         NetworkMessageHeaderFlags flags,
         bool fromResend,
@@ -378,7 +376,7 @@ public class NetworkConnection : INetworkConnection
         return true;
     }
 
-    public IEnumerable<NetworkMessage> GetMessagesFromPacket(
+    public virtual IEnumerable<NetworkMessage> GetMessagesFromPacket(
         int numberOfMessages,
         Span<byte> data)
     {
@@ -428,7 +426,7 @@ public class NetworkConnection : INetworkConnection
         return messages;
     }
 
-    public bool ProcessConnectionStateMsg(
+    public virtual bool ProcessConnectionStateMsg(
         IPEndPoint endPoint,
         Span<byte> data,
         ConnectionStateMsg msg)
@@ -447,7 +445,7 @@ public class NetworkConnection : INetworkConnection
         return true;
     }
 
-    protected void AckMessages(int ack)
+    protected virtual void AckMessages(int ack)
     {
         while (true)
         {
@@ -462,7 +460,7 @@ public class NetworkConnection : INetworkConnection
         }
     }
 
-    protected void Reset()
+    protected virtual void Reset()
     {
         State = ConnectionState.Offline;
         Sequence = 0;

@@ -15,7 +15,7 @@ public interface INetworkServer : IDisposable
     INetworkPacketUnpacker PacketUnpacker { get; }
     IReadOnlyList<INetworkConnection> Connections { get; }
 
-    void Init(NetworkServerConfig config);
+    void Init();
     bool TryGetLocalEndPoint([NotNullWhen(true)] out EndPoint? localEndPoint);
     bool TryGetConnectionId(IPEndPoint endPoint, out int id);
     IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken);

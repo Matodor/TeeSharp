@@ -20,6 +20,9 @@ namespace TeeSharp.Server;
 
 public class Server
 {
+    public event Action<Server, INetworkConnection> OnConnectionAccept = delegate {};
+    public event Action<Server, INetworkConnection> OnConnectionDrop = delegate {};
+
     /// <summary>
     /// Current tick
     /// </summary>
@@ -38,19 +41,24 @@ public class Server
     /// <summary>
     /// TODO
     /// </summary>
-    public ClientsContainer Clients { get; protected set; }
+    public ClientsContainer Clients { get; }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public int ClientsCount => Clients.All.Count;
 
     /// <summary>
     /// TODO
     /// </summary>
     public ServerConfig Config { get; }
 
+    protected INetworkServer NetworkServer { get; }
     protected ILogger Logger { get; set; }
     protected ILoggerFactory LoggerFactory { get; set; }
-    protected INetworkServer NetworkServer { get; set; }
 
-    protected IDictionary<Uuid, MessageCallback> ClientUuidMessageHandlers { get; set; }
-    protected IDictionary<Protocol.Message, MessageCallback> ClientMessageHandlers { get; set; }
+    protected IDictionary<Uuid, MessageCallback> ClientUuidMessageHandlers { get; }
+    protected IDictionary<Protocol.Message, MessageCallback> ClientMessageHandlers { get; }
 
     protected delegate void MessageCallback(int connectionId, Unpacker unpacker, IPEndPoint endPoint);
 
@@ -84,13 +92,17 @@ public class Server
 
     protected virtual INetworkServer CreateNetworkServer()
     {
-        return new NetworkServer(LoggerFactory);
+        return new NetworkServer(Config.Network, LoggerFactory);
     }
 
     protected virtual void NetworkServerOnConnectionAccepted(
         INetworkConnection connection)
     {
-        var client = Clients.GetByConnectionId(connection.Id);
+        Clients.GetByConnectionId(connection.Id)
+            .Reset()
+            .SetState(ClientState.PreAuth);
+
+        OnConnectionAccept(this, connection);
     }
 
     protected virtual void NetworkServerOnConnectionDropped(
@@ -98,6 +110,8 @@ public class Server
         string reason)
     {
         var client = Clients.GetByConnectionId(connection.Id);
+
+        OnConnectionDrop(this, connection);
     }
 
     protected virtual void SetClientUuidMessageHandlers()
@@ -192,7 +206,7 @@ public class Server
     {
         try
         {
-            NetworkServer.Init(Config.Network);
+            NetworkServer.Init();
         }
         catch (Exception)
         {
@@ -286,6 +300,8 @@ public class Server
         {
             if (isSystemMsg == false)
             {
+                throw new NotImplementedException();
+
                 // if (_clients[message.ConnectionId].ClientState >= ClientState.Ready)
                 // {
                 //     GameContext.Instance.OnMessage(
@@ -373,15 +389,76 @@ public class Server
 
     protected virtual void OnClientMessageDDNetVersion(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
     {
-        throw new NotImplementedException();
-    }
+        Logger.LogDebug("OnClientMessageDDNetVersion");
 
-    protected virtual void OnClientMessageDDNetPing(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
-    {
-        throw new NotImplementedException();
+        var client = Clients.GetByConnectionId(connectionId);
+        if (client.State != ClientState.PreAuth)
+            return;
+
+        if (!unpacker.TryGetUuid(out var connectionUuid) ||
+            !unpacker.TryGetInteger(out var versionNum) ||
+            !unpacker.TryGetString(out var version))
+        {
+            return;
+        }
+
+        if (versionNum < 0 || string.IsNullOrWhiteSpace(version))
+            return;
+
+        client
+            .SetConnectionUuid(connectionUuid)
+            .SetDDNetVersion(version, versionNum)
+            .SetState(ClientState.Auth);
     }
 
     protected virtual void OnClientMessageInfo(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
+    {
+        var client = Clients.GetByConnectionId(connectionId);
+        if (client.State is not (ClientState.PreAuth or ClientState.Auth))
+            return;
+
+        if (!unpacker.TryGetString(out var version))
+            return;
+
+        client.SetVersion(version);
+
+        if (!CheckClientVersion(client, out var reason))
+        {
+            NetworkServer.Drop(connectionId, reason);
+            return;
+        }
+
+        if (!unpacker.TryGetString(out var password))
+            return;
+
+        if (!string.IsNullOrEmpty(Config.Password) && Config.Password != password)
+        {
+            NetworkServer.Drop(connectionId, "Wrong password");
+            return;
+        }
+
+        if (client.Id >= ClientsCount - Config.ReservedSlots)
+        {
+            if (CheckReservedSlotPassword(client, password))
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                NetworkServer.Drop(connectionId, "This server is full");
+                return;
+            }
+        }
+
+        client.SetState(ClientState.Connecting);
+
+        // TODO
+        // SendRconType(client, requireUsername);
+        SendSupportedCapabilities(client);
+        SendMap(client);
+    }
+
+    protected virtual void OnClientMessageDDNetPing(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
     {
         throw new NotImplementedException();
     }
@@ -419,6 +496,117 @@ public class Server
     protected virtual void OnClientMessagePing(int connectionId, Unpacker unpacker, IPEndPoint endpoint)
     {
         throw new NotImplementedException();
+    }
+
+    protected virtual Protocol.Capabilities GetSupportedCapabilities()
+    {
+        var capabilities =
+            Protocol.Capabilities.ChatTimeoutCode |
+            Protocol.Capabilities.AnyPlayerFlag |
+            Protocol.Capabilities.PingExtended |
+            Protocol.Capabilities.SyncWeaponInput |
+            Protocol.Capabilities.DDNet;
+
+        if (Config.AllowDummy)
+            capabilities |= Protocol.Capabilities.AllowDummy;
+
+        return capabilities;
+    }
+
+    protected virtual bool CheckClientVersion(Client client, [NotNullWhen(false)] out string? reason)
+    {
+        // TODO
+        //
+        // if (_clients[clientId].ClientState != ClientState.GotClientVersion ||
+        //     _clients[clientId].ClientVersion < 18000)
+        // {
+        //     NetworkServer.Drop(clientId, "Download the latest DDNet client from https://ddnet.org/");
+        //     return;
+        // }
+
+        reason = null;
+        return true;
+    }
+
+    protected virtual bool CheckReservedSlotPassword(Client client, string password)
+    {
+        throw new NotImplementedException();
+    }
+
+    protected virtual void SendRconType(Client client, bool requireUsername)
+    {
+        var packer = new Packer();
+        packer.AddProtocolMessageExtended(Protocol.MessageExtended.DDNet.RconType, true);
+        packer.AddBoolean(requireUsername);
+
+        SendMessage(client, packer, NetworkSendFlags.Vital);
+    }
+
+    protected virtual void SendSupportedCapabilities(Client client)
+    {
+        var packer = new Packer();
+        packer.AddProtocolMessageExtended(Protocol.MessageExtended.DDNet.Capabilities, true);
+        packer.AddEnum(Protocol.Capabilities.CurrentVersion);
+        packer.AddEnum(GetSupportedCapabilities());
+
+        SendMessage(client, packer, NetworkSendFlags.Vital);
+    }
+
+    protected virtual void SendMap(Client client)
+    {
+        // // UuidManager.DDNet.Capabilities
+        // {
+        //     cl_map_download_url
+        //
+        //     var mapUrl = $"https://raw.githubusercontent.com/tee-community/FlatCity-maps/main/{GetMapName()}.map";
+        //     var packer = new Packer(UuidManager.DDNet.MapDetails, true);
+        //
+        //     packer.AddString(GetMapName());
+        //     packer.AddRaw(Map.Sha256.Span);
+        //     packer.AddInteger((int)Map.Checksum);
+        //     packer.AddInteger(Map.Size);
+        //     packer.AddString(mapUrl);
+        //
+        //     SendMessage(clientId, packer, NetworkSendFlags.Vital);
+        // }
+
+        // ProtocolMessage.ServerMapChange
+        {
+            var packer = new Packer();
+            packer.AddProtocolMessage(Protocol.Message.ServerMapChange);
+            // packer.AddString(GetMapName());
+            // packer.AddInteger((int)Map.Checksum);
+            // packer.AddInteger(Map.Size);
+
+            packer.AddString("dm1");
+            packer.AddInteger(unchecked((int)4061503086));
+            packer.AddInteger(5805);
+
+            SendMessage(client, packer, NetworkSendFlags.Vital | NetworkSendFlags.Flush);
+        }
+    }
+
+    public void SendMessage(Client? client, Packer packer, NetworkSendFlags flags)
+    {
+        if (packer.HasError)
+            return;
+
+        if (client == null)
+        {
+            throw new NotImplementedException();
+
+            // for (var i = 0; i < _clients.Length; i++)
+            // {
+            //     if (_clients[i].ClientState != ClientState.InGame)
+            //         continue;
+            //
+            //     NetworkServer.Send(i, packer.Buffer, flags);
+            // }
+        }
+        else
+        {
+            NetworkServer.Send(client.Id, packer.Buffer, flags);
+        }
     }
 }
 

@@ -21,30 +21,37 @@ public class NetworkServer : INetworkServer
     public event Action<INetworkConnection> ConnectionAccepted = delegate {  };
     public event Action<INetworkConnection, string>? ConnectionDropped;
 
-    public NetworkServerConfig Config { get; protected set; } = null!;
+    public NetworkServerConfig Config { get; }
     public INetworkPacketUnpacker PacketUnpacker { get; protected set; }
-    public IReadOnlyList<INetworkConnection> Connections { get; protected set; } = null!;
+    public IReadOnlyList<INetworkConnection> Connections { get; }
 
-    protected ILoggerFactory? LoggerFactory { get; set; }
     protected ILogger Logger { get; set; }
-
-    protected Dictionary<int, int> MapConnections { get; set; } = null!;
+    protected Dictionary<int, int> ConnectionsMap { get; }
     protected EndPoint EndPoint => Socket.Client.LocalEndPoint!;
     protected UdpClient Socket { get; set; } = null!;
     protected byte[] SecurityTokenSeed { get; set; } = null!;
 
     private bool _disposedValue;
 
-    public NetworkServer(ILoggerFactory? loggerFactory = default)
+    public NetworkServer(NetworkServerConfig config, ILoggerFactory? loggerFactory = default)
     {
-        LoggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
-        Logger = LoggerFactory.CreateLogger("NetworkServer");
+        Config = config;
+        Logger = loggerFactory?.CreateLogger("NetworkServer") ?? NullLogger.Instance;
         PacketUnpacker = CreatePacketUnpacker();
+        ConnectionsMap = new Dictionary<int, int>(Config.MaxConnections);
+        Connections = Enumerable.Range(0, Config.MaxConnections)
+            .Select(CreateEmptyConnection)
+            .ToArray();
     }
 
     protected virtual INetworkPacketUnpacker CreatePacketUnpacker()
     {
         return new NetworkPacketUnpacker();
+    }
+
+    protected virtual INetworkConnection CreateEmptyConnection(int connectionId)
+    {
+        return new NetworkConnection(connectionId, Config.Connection, Logger);
     }
 
     public static IPEndPoint GetBindAddress(int port, string bindAddress)
@@ -56,13 +63,12 @@ public class NetworkServer : INetworkServer
         return new IPEndPoint(ip, port);
     }
 
-    public virtual void Init(NetworkServerConfig config)
+    public virtual void Init()
     {
-        var localEP = GetBindAddress(config.Port, config.BindAddress);
+        var localEP = GetBindAddress(Config.Port, Config.BindAddress);
 
         try
         {
-            Config = config;
             Socket = new UdpClient(localEP);
             Socket.Client.Blocking = true;
             Socket.Client.ReceiveTimeout = 10;
@@ -77,21 +83,19 @@ public class NetworkServer : INetworkServer
             throw;
         }
 
-        Logger.LogInformation("Network server initialized, local address: {EndPoint}", EndPoint.ToString());
-        MapConnections = new Dictionary<int, int>(Config.MaxConnections);
-        Connections = Enumerable.Range(0, Config.MaxConnections)
-           .Select(CreateEmptyConnection)
-           .ToArray();
-
+        SetConnectionsSocket();
         RefreshSecurityTokenSeed();
+
+        Logger.LogInformation("Network server initialized, local address: {EndPoint}", EndPoint.ToString());
     }
 
-    protected virtual INetworkConnection CreateEmptyConnection(int connectionId)
+    protected virtual void SetConnectionsSocket()
     {
-        return new NetworkConnection(connectionId, Socket, Config.Connection, LoggerFactory);
+        foreach (var connection in Connections)
+            connection.SetSocket(Socket);
     }
 
-    public bool TryGetLocalEndPoint([NotNullWhen(true)] out EndPoint? localEndPoint)
+    public virtual bool TryGetLocalEndPoint([NotNullWhen(true)] out EndPoint? localEndPoint)
     {
         if (Socket == null!)
         {
@@ -105,7 +109,7 @@ public class NetworkServer : INetworkServer
 
     public virtual bool TryGetConnectionId(IPEndPoint endPoint, out int id)
     {
-        return MapConnections.TryGetValue(endPoint.GetHashCode(), out id);
+        return ConnectionsMap.TryGetValue(endPoint.GetHashCode(), out id);
     }
 
     public virtual IEnumerable<NetworkMessage> GetMessages(CancellationToken cancellationToken)
@@ -211,11 +215,18 @@ public class NetworkServer : INetworkServer
             return;
         }
 
+        if (sendFlags.HasFlag(NetworkSendFlags.ConnectionLess))
+        {
+            // throw new NotImplementedException();
+            return;
+        }
+
         var flags = NetworkMessageHeaderFlags.None;
+
         if (sendFlags.HasFlag(NetworkSendFlags.Vital))
             flags |= NetworkMessageHeaderFlags.Vital;
 
-        if (Connections[connectionId].QueueMessage(data, flags) == false)
+        if (!Connections[connectionId].QueueMessage(data, flags))
             return;
 
         if (sendFlags.HasFlag(NetworkSendFlags.Flush))
@@ -225,10 +236,10 @@ public class NetworkServer : INetworkServer
     public virtual void Drop(int connectionId, string reason)
     {
         var connection = Connections[connectionId];
+        Logger.LogDebug("Drop connection, reason: '{Reason}' ({EndPoint})",
+            reason, connection.EndPoint.ToString());
 
-        Logger.LogDebug("Drop connection, reason: '{Reason}' ({EndPoint})", reason, connection.EndPoint.ToString());
-        MapConnections.Remove(connection.EndPoint.GetHashCode());
-
+        ConnectionsMap.Remove(connection.EndPoint.GetHashCode());
         connection.Disconnect(reason);
         ConnectionDropped?.Invoke(connection, reason);
     }
@@ -250,6 +261,24 @@ public class NetworkServer : INetworkServer
                     && packetIn.Data.AsSpan(1, StructHelper<SecurityToken>.Size) == SecurityToken.Magic)
                 {
                     OnConnectionStateConnectMsg(endPoint, packetIn);
+                }
+                else
+                {
+                    // TODO (?)
+
+                    SendConnectionStateMsg(
+                        endPoint: endPoint,
+                        msg: ConnectionStateMsg.ConnectAccept,
+                        token: SecurityToken.Unsupported,
+                        extraData: Array.Empty<byte>()
+                    );
+
+                    SendConnectionStateMsg(
+                        endPoint: endPoint,
+                        msg: ConnectionStateMsg.Close,
+                        token: SecurityToken.Unsupported,
+                        extraMsg: "Download the latest DDNet client from https://ddnet.org/"
+                    );
                 }
 
                 break;
@@ -312,7 +341,7 @@ public class NetworkServer : INetworkServer
         }
 
         Connections[emptyConnectionId].Init(endPoint, token);
-        MapConnections.Add(endPoint.GetHashCode(), emptyConnectionId);
+        ConnectionsMap.Add(endPoint.GetHashCode(), emptyConnectionId);
 
         Logger.LogDebug("Connection accepted ({EndPoint})", endPoint.ToString());
         ConnectionAccepted(Connections[emptyConnectionId]);

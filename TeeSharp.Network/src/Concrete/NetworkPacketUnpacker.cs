@@ -6,7 +6,7 @@ namespace TeeSharp.Network.Concrete;
 
 public class NetworkPacketUnpacker : INetworkPacketUnpacker
 {
-    public bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacketIn? packet)
+    public virtual bool TryUnpack(Span<byte> buffer, [NotNullWhen(true)] out NetworkPacketIn? packet)
     {
         if (buffer.Length is < NetworkConstants.MaxPacketHeaderSize or > NetworkConstants.MaxPacketSize)
         {
