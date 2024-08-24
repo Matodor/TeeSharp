@@ -6,7 +6,7 @@ namespace TeeSharp.Common.Extensions;
 public static class UnpackerExtensions
 {
     public static bool TryGetMessageInfo(
-        this Unpacker unpacker,
+        this ref Unpacker unpacker,
         out Protocol.Message message,
         out Uuid messageExtended,
         out bool isSystem)
