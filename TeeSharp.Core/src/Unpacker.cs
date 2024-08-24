@@ -9,9 +9,9 @@ public ref struct Unpacker
 {
     public bool HasError { get; private set; }
 
-    public readonly Span<byte> DataOriginal;
+    public readonly ReadOnlySpan<byte> DataOriginal;
 
-    private Span<byte> _data;
+    private ReadOnlySpan<byte> _data;
 
     public Unpacker(Span<byte> data)
     {
@@ -55,7 +55,7 @@ public ref struct Unpacker
         return false;
     }
 
-    public bool TryGetRaw(int size, out Span<byte> result)
+    public bool TryGetRaw(int size, out ReadOnlySpan<byte> result)
     {
         if (HasError || size < 0 || size > _data.Length)
         {

@@ -55,9 +55,9 @@ public static class CompressionableInt
     }
 
     public static bool TryUnpack(
-        Span<byte> dataIn,
+        ReadOnlySpan<byte> dataIn,
         out int result,
-        out Span<byte> dataOut)
+        out ReadOnlySpan<byte> dataOut)
     {
         if (dataIn.IsEmpty)
         {
